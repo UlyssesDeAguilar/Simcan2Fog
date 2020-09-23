@@ -30,3 +30,21 @@
 *.exe
 *.out
 *.app
+
+# Omnet
+**/SIMCAN-2.0
+out/
+out/**
+doc/**
+*.o
+**/.DS_Store
+**/*_m.h
+**/*_m.cc
+.settings/*.*
+**/.tkenvrc
+**/.cmdenv-log
+src/*.exe
+src/.tmp*
+simulations/**/.qtenvrc
+simulations/**/results/
+simulations/**/results/*.*
