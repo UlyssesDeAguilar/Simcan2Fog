@@ -1,0 +1,4 @@
+#!/bin/sh
+cd `dirname $0`
+../src/SIMCAN-2.0  -n .:../src $*
+# for shared lib, use: opp_run -l ../src/simcan_2_0 -n .:../src $*
