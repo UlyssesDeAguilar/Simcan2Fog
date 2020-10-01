@@ -1,12 +1,12 @@
 #
-# OMNeT++/OMNEST Makefile for SIMCAN-2.0
+# OMNeT++/OMNEST Makefile for Simcan2Cloud
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -Isrc -I.
+#  opp_makemake -f --deep -O out -I.
 #
 
 # Name of target to be created (-o option)
-TARGET = SIMCAN-2.0$(D)$(EXE_SUFFIX)
+TARGET = Simcan2Cloud$(D)$(EXE_SUFFIX)
 TARGET_DIR = .
 
 # User interface (uncomment one) (-u option)
@@ -16,7 +16,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -Isrc -I.
+INCLUDE_PATH = -I.
 
 # Additional object and library files to link with
 EXTRA_OBJS =
@@ -81,6 +81,7 @@ OBJS = \
     $O/Management/dataClasses/VmInstance.o \
     $O/Management/dataClasses/VmInstanceCollection.o \
     $O/Management/parser/AppListParser.o \
+    $O/Management/parser/DataCenterConfigParser.o \
     $O/Management/parser/DataCenterListParser.o \
     $O/Management/parser/DataCenterReservationListParser.o \
     $O/Management/parser/SlaListParser.o \

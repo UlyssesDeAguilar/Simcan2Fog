@@ -22,12 +22,10 @@ module OperatingSystem
     gates:
         input fromApps[];			// Input gates from the applications vectors       
         input fromCpu;				// Input gate from the CPU schedulers vector
-        input in;					// Input gate from the network switch
         
 
         output toApps[];			// Output gate to the applications vectors       
         output toCpu;				// Output gate to the CPU schedulers vector
-        output out;					// Output gate to the network switch
 
 
     submodules:

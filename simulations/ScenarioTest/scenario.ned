@@ -42,8 +42,8 @@ module DataCenter_A{
 		// ---------------------------------------------------------------
 		//   Definition of Computing Racks
 		// ---------------------------------------------------------------
-		rackCmp_Rack_A_000:CloudRack;
-		rackSto_Rack_B_000:CloudRack;
+		rackCmp_Rack_A_0:CloudRack;
+		rackSto_Rack_B_0:CloudRack;
 
 		// ---------------------------------------------------------------
 		//   Definition of Network
@@ -66,10 +66,10 @@ module DataCenter_A{
 		dcManager.in <-- ned.IdealChannel <-- fromCloudProvider;
 
 		// Connections between computing racks and the network
-		rackCmp_Rack_A_000.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
-		rackCmp_Rack_A_000.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
-		rackSto_Rack_B_000.out --> DataCenterEth40G_channel --> dataCenterNetwork.inStorage++;
-		rackSto_Rack_B_000.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outStorage++;
+		rackCmp_Rack_A_0.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
+		rackCmp_Rack_A_0.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
+		rackSto_Rack_B_0.out --> DataCenterEth40G_channel --> dataCenterNetwork.inStorage++;
+		rackSto_Rack_B_0.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outStorage++;
 
 }
 
