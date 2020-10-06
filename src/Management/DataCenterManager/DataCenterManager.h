@@ -87,6 +87,12 @@ public:
         virtual void handleVmRequestFits(SIMCAN_Message *sm);
 
         bool checkVmUserFit(SM_UserVM*& userVM_Rq);
+
+        virtual Hypervisor* selectNode (const VM_Request& vmRequest);
+
+        //TODO: refactorizar. esta duplicado en provider.
+        int calculateTotalCoresRequested(SM_UserVM* userVM_Rq);
+        int getTotalCoresByVmType(std::string strVmType);
 };
 
 #endif

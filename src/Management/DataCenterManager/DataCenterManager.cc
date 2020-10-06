@@ -1,4 +1,5 @@
 #include "DataCenterManager.h"
+#include "Management/utils/LogUtils.h"
 
 Define_Module(DataCenterManager);
 
@@ -54,7 +55,7 @@ int DataCenterManager::initDataCenterMetadata (){
             for (int nNodeIndex=0; nNodeIndex < numNodes; nNodeIndex++) {
                 pNodeModule = pBoardModule->getSubmodule("blade", nNodeIndex);
 
-                storeNodeMetada(pNodeModule);
+                storeNodeMetadata(pNodeModule);
 
             }
         }
@@ -71,6 +72,7 @@ int DataCenterManager::storeNodeMetadata(cModule *pNodeModule) {
     int result = SC_OK;
     cModule *pHypervisorModule;
     Hypervisor *pHypervisor;
+    int numCores;
 
     pHypervisorModule = pNodeModule->getSubmodule("osModule")->getSubmodule("hypervisor");
 
@@ -142,7 +144,7 @@ void DataCenterManager::processSelfMessage (cMessage *msg){
 
 void DataCenterManager::processRequestMessage (SIMCAN_Message *sm){
     if (sm->getOperation () == SM_VM_Req){
-        handleVmRequestFits(SIMCAN_Message *sm);
+        handleVmRequestFits(sm);
     }
 
 }
@@ -159,9 +161,11 @@ void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
         userVM_Rq->printUserVM();
         //Check if is a VmRequest or a subscribe
         if (checkVmUserFit(userVM_Rq))
+            EV_FATAL << "Ok" << endl;
             //acceptVmRequest(userVM_Rq);
         else
             //rejectVmRequest(userVM_Rq);
+            EV_FATAL << "Fail" << endl;
       }
     else
       {
@@ -236,27 +240,27 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 hypervisor = selectNode(vmRequest);
 
                 //We need to know the price of the Node.
-                userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
-                bRet &= bAccepted;
+                //userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
+                //bRet &= bAccepted;
 
-                if(!bRet)
-                  {
-                    clearVMReq (userVM_Rq, i);
-                    EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << endl;
-                  }
-                else
-                  {
-                    //Getting VM and scheduling renting timeout
-                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.nRentTime_t2);
-
-                    //Update value
-                    nAvailableCores = datacenterCollection->getTotalAvailableCores();
-                    EV_DEBUG << "checkVmUserFit - The VM: " << i << " has been handled and stored sucessfully, available cores: "<< nAvailableCores << endl;
-                  }
+//                if(!bRet)
+//                  {
+//                    clearVMReq (userVM_Rq, i);
+//                    EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << endl;
+//                  }
+//                else
+//                  {
+//                    //Getting VM and scheduling renting timeout
+//                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.nRentTime_t2);
+//
+//                    //Update value
+//                    nAvailableCores = datacenterCollection->getTotalAvailableCores();
+//                    EV_DEBUG << "checkVmUserFit - The VM: " << i << " has been handled and stored sucessfully, available cores: "<< nAvailableCores << endl;
+//                  }
               }
             //Update the data
-            nAvailableCores = datacenterCollection->getTotalAvailableCores();
-            nTotalCores = datacenterCollection->getTotalCores();
+            //nAvailableCores = datacenterCollection->getTotalAvailableCores();
+            //nTotalCores = datacenterCollection->getTotalCores();
 
             EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: "<< nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
           }
@@ -287,9 +291,59 @@ void DataCenterManager::processResponseMessage (SIMCAN_Message *sm){
 
 }
 
-void DataCenterManager::selectNode (const VM_Request& vmRequest){
+Hypervisor* DataCenterManager::selectNode (const VM_Request& vmRequest){
     VirtualMachine *pVMBase;
+    int numCoresRequested;
+    std::map<int, std::vector<Hypervisor*>>::iterator it;
 
     pVMBase = findVirtualMachine(vmRequest.strVmType);
+    numCoresRequested = pVMBase->getNumCores();
 
+    for (it = mapHypervisorPerNodes.begin(); it != mapHypervisorPerNodes.end(); ++it){
+        int key = it->first;
+        EV_FATAL << key;
+    }
+
+
+}
+
+
+
+int DataCenterManager::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
+{
+    int nRet, nRequestedVms;
+    VM_Request vmRequest;
+
+    nRet=nRequestedVms=0;
+    if(userVM_Rq != NULL)
+    {
+        nRequestedVms = userVM_Rq->getTotalVmsRequests();
+
+        for(int i=0;i<nRequestedVms;i++)
+        {
+            vmRequest = userVM_Rq->getVms(i);
+
+            nRet+=getTotalCoresByVmType(vmRequest.strVmType);
+        }
+    }
+    EV_DEBUG << "User:" << userVM_Rq->getUserID() << " has requested: "<< nRet << " cores" << endl;
+
+    return nRet;
+}
+
+int DataCenterManager::getTotalCoresByVmType(std::string strVmType)
+{
+    int nRet;
+    VirtualMachine* pVmType;
+
+    nRet=0;
+
+    pVmType = findVirtualMachine(strVmType);
+
+    if(pVmType != NULL)
+    {
+        nRet = pVmType->getNumCores();
+    }
+
+    return nRet;
 }

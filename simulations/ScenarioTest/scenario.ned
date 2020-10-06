@@ -43,8 +43,7 @@ module DataCenter_A{
 		//   Definition of Computing Racks
 		// ---------------------------------------------------------------
 		rackCmp_Rack_A_0:CloudRack;
-		rackSto_Rack_B_0:CloudRack;
-
+		
 		// ---------------------------------------------------------------
 		//   Definition of Network
 		// ---------------------------------------------------------------
@@ -52,8 +51,8 @@ module DataCenter_A{
 			gates:
 				inComm[1];
 				outComm[1];
-				inStorage[1];
-				outStorage[1];
+				inStorage[0];
+				outStorage[0];
 		}
 
 	// ---------------------------------------------------------------
@@ -68,8 +67,6 @@ module DataCenter_A{
 		// Connections between computing racks and the network
 		rackCmp_Rack_A_0.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
 		rackCmp_Rack_A_0.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
-		rackSto_Rack_B_0.out --> DataCenterEth40G_channel --> dataCenterNetwork.inStorage++;
-		rackSto_Rack_B_0.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outStorage++;
 
 }
 
@@ -93,7 +90,7 @@ network ScenarioTest{
 		// ---------------------------------------------------------------
 		//   Definition of the data-centers
 		// ---------------------------------------------------------------
-		dc_DataCenter_A_000:DataCenter_A{
+		dc_DataCenter_A_0:DataCenter_A{
 			parameters:
 				appList=appList;
 				vmList=vmList;
@@ -134,8 +131,8 @@ network ScenarioTest{
 	connections allowunconnected:
 
 		// Connections between the cloud provider and each data-center manager
-		cloudProvider.toDataCenter++ --> ned.IdealChannel --> dc_DataCenter_A_000.fromCloudProvider;
-		cloudProvider.fromDataCenter++ <-- ned.IdealChannel <-- dc_DataCenter_A_000.toCloudProvider;
+		cloudProvider.toDataCenter++ --> ned.IdealChannel --> dc_DataCenter_A_0.fromCloudProvider;
+		cloudProvider.fromDataCenter++ <-- ned.IdealChannel <-- dc_DataCenter_A_0.toCloudProvider;
 
 		cloudProvider.toUserGenerator --> ned.IdealChannel --> userGenerator.fromCloudProvider;
 		userGenerator.toCloudProvider --> ned.IdealChannel --> cloudProvider.fromUserGenerator;

@@ -30,7 +30,6 @@
 class CloudProviderBase_firstBestFit: public CloudProviderBase {
 
 protected:
-
     /** Collection of datacenters*/
     IDataCenterCollection *datacenterCollection;
 

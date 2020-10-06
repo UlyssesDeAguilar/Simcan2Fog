@@ -19,9 +19,11 @@ void CloudProviderBase_firstBestFit::initialize(){
     // Init data-center structures
     //Fill the meta-structures created to improve the performance of the cloudprovider
     initializeDataCenterCollection();
-    loadNodes();
+    //loadNodes();
     initializeSelfHandlers();
     initializeRequestHandlers();
+
+
 
 
     bFinished = false;
@@ -746,9 +748,11 @@ void CloudProviderBase_firstBestFit::handleVmRequestFits(SIMCAN_Message *sm)
         userVM_Rq->printUserVM();
         //Check if is a VmRequest or a subscribe
         if (checkVmUserFit(userVM_Rq))
-            acceptVmRequest(userVM_Rq);
+            //acceptVmRequest(userVM_Rq);
+            EV_FATAL << "OK" << endl;
         else
-            rejectVmRequest(userVM_Rq);
+            EV_FATAL << "Fail" << endl;
+            //rejectVmRequest(userVM_Rq);
       }
     else
       {
@@ -1171,78 +1175,82 @@ bool CloudProviderBase_firstBestFit::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 strVmId;
 
     bAccepted = bRet = true;
-    if(userVM_Rq != nullptr)
-      {
-        nRequestedVms = userVM_Rq->getTotalVmsRequests();
 
-        EV_DEBUG << "checkVmUserFit- Init" << endl;
-        EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << userVM_Rq->getUserID() << endl;
 
-        //Before starting the process, it is neccesary to check if the
-        nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
-        nAvailableCores = datacenterCollection->getTotalAvailableCores();
+    sendRequestMessage (userVM_Rq, toDataCenterGates[0]);
 
-        if(nTotalRequestedCores<=nAvailableCores)
-          {
-            nTotalCores = datacenterCollection->getTotalCores();
-            EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores<< " vs Available ["<< nAvailableCores << "/" <<nTotalCores << "]"<<endl;
-
-            strUserName = userVM_Rq->getUserID();
-            //Process all the VMs
-            for(int i=0;i<nRequestedVms && bRet;i++)
-              {
-                EV_DEBUG << endl <<"checkVmUserFit - Trying to handle the VM: " << i << endl;
-
-                //Get the VM request
-                VM_Request& vmRequest = userVM_Rq->getVms(i);
-
-                //Create and fill the noderesource  with the VMrequest
-                NodeResourceRequest *pNode = generateNode(strUserName, vmRequest);
-
-                //Send the request to the DC
-                bAccepted = datacenterCollection->handleVmRequest(pNode);
-
-                //We need to know the price of the Node.
-                userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
-                bRet &= bAccepted;
-
-                if(!bRet)
-                  {
-                    clearVMReq (userVM_Rq, i);
-                    EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << endl;
-                  }
-                else
-                  {
-                    //Getting VM and scheduling renting timeout
-                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.nRentTime_t2);
-
-                    //Update value
-                    nAvailableCores = datacenterCollection->getTotalAvailableCores();
-                    EV_DEBUG << "checkVmUserFit - The VM: " << i << " has been handled and stored sucessfully, available cores: "<< nAvailableCores << endl;
-                  }
-              }
-            //Update the data
-            nAvailableCores = datacenterCollection->getTotalAvailableCores();
-            nTotalCores = datacenterCollection->getTotalCores();
-
-            EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: "<< nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
-          }
-        else
-          {
-            EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
-            bRet = false;
-          }
-
-        if(bRet)
-            EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << endl;
-        else
-            EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << endl;
-      }
-    else
-      {
-        EV_ERROR << "checkVmUserFit - WARNING!! nullpointer detected" <<endl;
-        bRet = false;
-      }
+//    if(userVM_Rq != nullptr)
+//      {
+//        nRequestedVms = userVM_Rq->getTotalVmsRequests();
+//
+//        EV_DEBUG << "checkVmUserFit- Init" << endl;
+//        EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << userVM_Rq->getUserID() << endl;
+//
+//        //Before starting the process, it is neccesary to check if the
+//        nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
+//        nAvailableCores = datacenterCollection->getTotalAvailableCores();
+//
+//        if(nTotalRequestedCores<=nAvailableCores)
+//          {
+//            nTotalCores = datacenterCollection->getTotalCores();
+//            EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores<< " vs Available ["<< nAvailableCores << "/" <<nTotalCores << "]"<<endl;
+//
+//            strUserName = userVM_Rq->getUserID();
+//            //Process all the VMs
+//            for(int i=0;i<nRequestedVms && bRet;i++)
+//              {
+//                EV_DEBUG << endl <<"checkVmUserFit - Trying to handle the VM: " << i << endl;
+//
+//                //Get the VM request
+//                VM_Request& vmRequest = userVM_Rq->getVms(i);
+//
+//                //Create and fill the noderesource  with the VMrequest
+//                NodeResourceRequest *pNode = generateNode(strUserName, vmRequest);
+//
+//                //Send the request to the DC
+//                bAccepted = datacenterCollection->handleVmRequest(pNode);
+//
+//                //We need to know the price of the Node.
+//                userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
+//                bRet &= bAccepted;
+//
+//                if(!bRet)
+//                  {
+//                    clearVMReq (userVM_Rq, i);
+//                    EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << endl;
+//                  }
+//                else
+//                  {
+//                    //Getting VM and scheduling renting timeout
+//                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.nRentTime_t2);
+//
+//                    //Update value
+//                    nAvailableCores = datacenterCollection->getTotalAvailableCores();
+//                    EV_DEBUG << "checkVmUserFit - The VM: " << i << " has been handled and stored sucessfully, available cores: "<< nAvailableCores << endl;
+//                  }
+//              }
+//            //Update the data
+//            nAvailableCores = datacenterCollection->getTotalAvailableCores();
+//            nTotalCores = datacenterCollection->getTotalCores();
+//
+//            EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: "<< nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
+//          }
+//        else
+//          {
+//            EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
+//            bRet = false;
+//          }
+//
+//        if(bRet)
+//            EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << endl;
+//        else
+//            EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << endl;
+//      }
+//    else
+//      {
+//        EV_ERROR << "checkVmUserFit - WARNING!! nullpointer detected" <<endl;
+//        bRet = false;
+//      }
 
     EV_DEBUG << "checkVmUserFit- End" << endl;
 
