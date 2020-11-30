@@ -45,9 +45,6 @@ OBJS = \
     $O/Management/CloudProviders/CloudProviderBase/CloudProviderBase.o \
     $O/Management/CloudProviders/CloudProviderBase_firstBestFit/CloudProviderBase_firstBestFit.o \
     $O/Management/CloudProviders/CloudProviderBase_firstBestFit/NodeResourceInfo.o \
-    $O/Management/CloudProviders/CloudProviderBase_firstBestFit/NodeResourceRequest.o \
-    $O/Management/CloudProviders/CloudProviderFirstFitSingleUser/CloudProviderFirstFitSingleUser.o \
-    $O/Management/CloudProviders/CloudProviderFirstFitSingleUser/NodeUser.o \
     $O/Management/CloudProviders/CloudProvider_firstBestFit/CloudProvider_firstBestFit.o \
     $O/Management/DataCenterManager/DataCenterManager.o \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
@@ -68,6 +65,7 @@ OBJS = \
     $O/Management/dataClasses/DataCenterReservation.o \
     $O/Management/dataClasses/Node.o \
     $O/Management/dataClasses/NodeInfo.o \
+    $O/Management/dataClasses/NodeResourceRequest.o \
     $O/Management/dataClasses/NodeUserInfo_.o \
     $O/Management/dataClasses/Rack.o \
     $O/Management/dataClasses/RackInfo.o \

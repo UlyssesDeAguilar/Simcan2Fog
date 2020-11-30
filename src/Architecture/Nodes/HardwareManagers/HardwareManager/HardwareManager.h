@@ -10,6 +10,13 @@ using namespace omnetpp;
  */
 class HardwareManager : public cSimpleModule{
 
+    public:
+
+        int getAvailableCores();
+
+        unsigned int* allocateCores(int numCores);
+        int deallocateCores(int numCores);
+
     private:
 
        /** Indicates if this module is able to virtualize hardware */
@@ -18,11 +25,15 @@ class HardwareManager : public cSimpleModule{
        /** Number of CPU cores managed by this module */
        unsigned int numCpuCores;
 
+       unsigned int numAvailableCpuCores;
+
        /** Maximum number of VMs executed in this computer */
        unsigned int maxVMs;
 
        /** Maximum number of users executed in this computer */
        unsigned int maxUsers;
+
+       bool *freeCoresArrayPtr;
 
 
 

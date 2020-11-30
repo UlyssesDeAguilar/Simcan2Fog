@@ -2,9 +2,20 @@
 #define __SIMCAN_2_0_HARDWARE_REDIRECTOR_H_
 
 #include "Core/cSIMCAN_Core.h"
+#include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
+#include "OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.h"
+#include "Management/dataClasses/NodeResourceRequest.h"
+#include "Management/dataClasses/Application.h"
 
 
 class Hypervisor :public cSIMCAN_Core{
+
+    public:
+
+        int getAvailableCores();
+        cModule* allocateNewResources(NodeResourceRequest* pResourceRequest);
+        void deallocateVmResources(std::string strVmId);
+//        int executeApp(Application* appType);
 
 	protected:
 
@@ -13,7 +24,7 @@ class Hypervisor :public cSIMCAN_Core{
 
         /** Maximum number of VMs allocated in this computer */
         unsigned int maxVMs;
-
+        unsigned int numAllocatedVms;
 
         /** Input gate from Apps. */
         cGate** fromAppsGates;
@@ -26,6 +37,18 @@ class Hypervisor :public cSIMCAN_Core{
 
         /** Output gate to CPU. */
         cGate** toCPUGates;
+
+        HardwareManager* pHardwareManager;
+
+        cModule *pHardwareManagerModule;
+        cModule **pAppsVectorsArray;
+        cModule *pAppsVectors;
+        cModule **pCpuSchedArray;
+        cModule *pCpuScheds;
+
+        std::map<string, int> mapVmScheduler;
+        std::map<std::string, NodeResourceRequest*> mapResourceRequestPerVm;
+
 
 
 
@@ -61,8 +84,8 @@ class Hypervisor :public cSIMCAN_Core{
 	 	* Module ending.
 	 	*/ 
 	    void finish();
-	    
-	    
+
+
 	private:
 	
 	   /**

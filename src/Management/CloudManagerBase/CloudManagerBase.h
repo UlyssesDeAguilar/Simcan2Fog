@@ -6,6 +6,20 @@
 #include "Management/parser/SlaListParser.h"
 #include "Management/parser/VmListParser.h"
 #include "Management/parser/AppListParser.h"
+#include "Management/utils/LogUtils.h"
+#include "Messages/SM_CloudProvider_Control_m.h"
+#include <algorithm>
+#include <functional>
+
+
+#define INITIAL_STAGE  "INITIAL_STAGE"
+#define EXEC_APP_END  "EXEC_APP_END"
+#define EXEC_VM_RENT_TIMEOUT "EXEC_VM_RENT_TIMEOUT"
+#define EXEC_APP_END_SINGLE "EXEC_APP_END_SINGLE"
+#define EXEC_APP_END_SINGLE_TIMEOUT "EXEC_APP_END_SINGLE_TIMEOUT"
+#define MANAGE_SUBSCRIBTIONS  "MANAGE_SUBSCRIBTIONS"
+#define USER_SUBSCRIPTION_TIMEOUT  "SUBSCRIPTION_TIMEOUT"
+#define SIMCAN_MESSAGE "SIMCAN_Message"
 
 /**
  * Base class for Cloud Managers.
@@ -33,6 +47,11 @@ class CloudManagerBase: public cSIMCAN_Core{
         /** Vector that contains the types of users generated in the current simulation */
         std::vector<CloudUser*> userTypes;
 
+        /** Handler maps */
+        std::map<std::string, std::function<void(cMessage*)>> selfHandlers;
+        std::map<int, std::function<void(SIMCAN_Message*)>> requestHandlers;
+        std::map<int, std::function<void(SIMCAN_Message*)>> responseHandlers;
+
         /**
          * Destructor
          */
@@ -42,6 +61,10 @@ class CloudManagerBase: public cSIMCAN_Core{
          * Initialize method. Invokes the parsing process to allocate the existing VMs and users in the corresponding data structures.
          */
         virtual void initialize();
+
+        virtual void initializeSelfHandlers(){};
+        virtual void initializeRequestHandlers(){};
+        virtual void initializeResponseHandlers(){};
 
         /**
          * Parses the config of the simulation.
@@ -129,21 +152,21 @@ class CloudManagerBase: public cSIMCAN_Core{
         *
         * @param msg Received (self) message.
         */
-        virtual void processSelfMessage (cMessage *msg) = 0;
+        virtual void processSelfMessage (cMessage *msg) override;
 
        /**
         * Process a request message.
         *
         * @param sm Incoming message.
         */
-        virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
+        virtual void processRequestMessage (SIMCAN_Message *sm) override;
 
        /**
         * Process a response message from an external module.
         *
         * @param sm Incoming message.
         */
-        virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
+        virtual void processResponseMessage (SIMCAN_Message *sm) override;
 };
 
 #endif

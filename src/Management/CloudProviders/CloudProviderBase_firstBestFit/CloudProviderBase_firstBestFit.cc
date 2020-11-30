@@ -1,6 +1,4 @@
 #include "CloudProviderBase_firstBestFit.h"
-#include "Management/utils/LogUtils.h"
-#include <algorithm>
 
 Define_Module(CloudProviderBase_firstBestFit);
 
@@ -20,11 +18,6 @@ void CloudProviderBase_firstBestFit::initialize(){
     //Fill the meta-structures created to improve the performance of the cloudprovider
     initializeDataCenterCollection();
     //loadNodes();
-    initializeSelfHandlers();
-    initializeRequestHandlers();
-
-
-
 
     bFinished = false;
     scheduleAt(SimTime(), new cMessage(INITIAL_STAGE));
@@ -57,37 +50,31 @@ void CloudProviderBase_firstBestFit::initializeRequestHandlers() {
     requestHandlers[SM_APP_Req] = [this](SIMCAN_Message *msg) -> void { return handleUserAppRequest(msg); };
 }
 
+
+void CloudProviderBase_firstBestFit::initializeResponseHandlers() {
+    responseHandlers[SM_VM_Res_Accept] = [this](SIMCAN_Message *msg) -> void { return handleResponseAccept(msg); };
+}
+
 void CloudProviderBase_firstBestFit::processRequestMessage (SIMCAN_Message *sm)
 {
     SM_CloudProvider_Control* userControl;
-    std::map<int, std::function<void(SIMCAN_Message*)>>::iterator it;
 
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
 
-    it = requestHandlers.find(sm->getOperation());
+    userControl = dynamic_cast<SM_CloudProvider_Control *>(sm);
 
-    if (it == requestHandlers.end())
+    if(userControl != nullptr)
       {
-        userControl = dynamic_cast<SM_CloudProvider_Control *>(sm);
-
-        if(userControl != nullptr)
-          {
-            EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received end of party"  << endl;
-            //Stop the checking process.
-            bFinished = true;
-            cancelAndDelete(userControl);
-          }
-        else
-          {
-            EV_INFO << "Unknown message:"  << sm->getName() << endl;
-          }
-      }
-    else
-      {
-        //Perform the operations...
-        it->second(sm);
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received end of party"  << endl;
+        //Stop the checking process.
+        bFinished = true;
+        cancelAndDelete(userControl);
+      } else {
+          CloudProviderBase::processRequestMessage(sm);
       }
 }
+
+
 
 void CloudProviderBase_firstBestFit::loadNodes()
 {
@@ -488,22 +475,7 @@ void CloudProviderBase_firstBestFit::handleAppExecEnd(cMessage *msg) {
 }
 */
 
-void CloudProviderBase_firstBestFit::processSelfMessage (cMessage *msg){
-    std::map<std::string, std::function<void(cMessage*)>>::iterator it;
 
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
-
-    it = selfHandlers.find(msg->getName());
-
-    if (it != selfHandlers.end())
-        it->second(msg);  //Perform the operations...
-    else
-        error ("Unknown self message [%s]", msg->getName());
-
-    cancelAndDelete(msg);
-
-    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End" << endl;
-}
 
 void CloudProviderBase_firstBestFit::handleSubscriptionTimeout(cMessage *msg)
 {
@@ -815,137 +787,139 @@ void CloudProviderBase_firstBestFit::handleUserAppRequest(SIMCAN_Message *sm)
 
     if(userAPP_Rq != nullptr)
       {
-        //Las aplicaciones estan relacionadas con las VM
-        //Hay que relacionar la APP con la VM para asi poder terminar con ella.
-        bHandle = false;
-        int bitLength = ((cPacket *)userAPP_Rq)->getBitLength();
-        //APPRequest
-        userAPP_Rq->printUserAPP();
+        sendRequestMessage (userAPP_Rq, toDataCenterGates[0]);
 
-        strUsername = userAPP_Rq->getUserID();
-        it = acceptedUsersRqMap.find(strUsername);
-
-        if(it != acceptedUsersRqMap.end())
-          {
-            pUserVmRequest = it->second;
-
-            EV_INFO << "Executing the VMs corresponding with the user: " << strUsername << " | Total: "<< pUserVmRequest->getVmsArraySize() << endl;
-
-            //First step consists in calculating the total units of time spent in executing the application.
-            if(userAPP_Rq->getArrayAppsSize() > 0)
-              {
-                for(int j = 0; j < pUserVmRequest->getVmsArraySize(); j++)
-                  {
-                    //Getting VM and scheduling renting timeout
-                    vmRequest = pUserVmRequest->getVms(j);
-                    //scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
-
-                    strVmId = vmRequest.strVmId;
-                    vmType = searchVmPerType(pUserVmRequest->getVmRequestType(j));
-
-                    double totalTimePerCore[vmType->getNumCores()];
-
-                    for (int i = 0; i < vmType->getNumCores(); i++)
-                        totalTimePerCore[i] = 0;
-
-                    for(int i = 0; i < userAPP_Rq->getAppArraySize(); i++)
-                      {
-                        //Get the app
-                        userApp = userAPP_Rq->getApp(i);
-
-                        if (userApp.eState != appFinishedOK && userApp.eState != appFinishedError) {
-
-
-                            if(strVmId.compare(userApp.vmId)==0)
-                              {
-                                appType = searchAppPerType(userApp.strAppType);
-
-                                if(appType != nullptr)
-                                  {
-                                    //Assing the app to core with less utilization time
-                                    //std::sort(totalTimePerCore, totalTimePerCore+vmType->getNumCores());
-                                    int minIndex = std::min_element(totalTimePerCore, totalTimePerCore+vmType->getNumCores()) - totalTimePerCore;
-                                    nTotalTime = SimTime(TEMPORAL_calculateTotalTime(appType));
-                                    appStartTime = simTime() + SimTime(totalTimePerCore[minIndex]);
-
-                                    if (userApp.eState == appFinishedTimeout)
-                                      {
-                                        userAPP_Rq->decreaseFinishedApps();
-                                        appExecutedTime = SimTime(userApp.finishTime - userApp.startTime);
-                                        if (appExecutedTime>0)
-                                          {
-                                            nTotalTime -= appExecutedTime;
-                                            appStartTime -= appExecutedTime;
-                                          }
-
-
-                                      }
-
-
-
-                                    totalTimePerCore[minIndex] = totalTimePerCore[minIndex] + nTotalTime.dbl();
-
-                                    strAppName = userApp.strApp;
-
-                                    //Create new Message
-                                    pMsgFinish = scheduleAppTimeout(EXEC_APP_END_SINGLE, strUsername, strAppName, strVmId, totalTimePerCore[minIndex]);
-
-                                    userAPP_Rq->getApp(i).startTime = appStartTime.dbl();
-                                    userAPP_Rq->getApp(i).pMsgTimeout = pMsgFinish;
-                                    //userApp.vmId =  vmRequest.strVmId;
-
-                                    //Change status to running
-                                    userAPP_Rq->changeState(strAppName, strVmId, appRunning);
-                                    userAPP_Rq->changeStateByIndex(i, strAppName, appRunning);
-                                    //userAPP_Rq->setVmIdByIndex(i, userApp.strIp, strVmId);
-
-
-                                    bHandle = true;
-
-                                  }
-                                else
-                                  {
-                                    error ("%s - Unable to find App. Wrong AppType [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), appType);
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-            else
-              {
-                EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has the application list empty!"<< endl;
-                throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] The list of applications of a the user is empty!!").c_str());
-              }
-
-
-
-          }
-        else
-          {
-            EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has not previously registered!!"<< endl;
-          }
-
-        if(bHandle)
-        {
-            std::map<std::string, SM_UserAPP*>::iterator appIt = handlingAppsRqMap.find(strUsername);
-            if(appIt == handlingAppsRqMap.end())
-              {
-                //Registering the appRq
-                handlingAppsRqMap[strUsername] = userAPP_Rq;
-              }
-            else
-              {
-                SM_UserAPP *uapp = appIt->second;
-                uapp->update(userAPP_Rq);
-                delete userAPP_Rq; //Delete ephemeral message after update global message.
-              }
-        }
-        else
-          {
-            userAPP_Rq->setResult(0);
-            rejectAppRequest(userAPP_Rq);
-          }
+//        //Las aplicaciones estan relacionadas con las VM
+//        //Hay que relacionar la APP con la VM para asi poder terminar con ella.
+//        bHandle = false;
+//        int bitLength = ((cPacket *)userAPP_Rq)->getBitLength();
+//        //APPRequest
+//        userAPP_Rq->printUserAPP();
+//
+//        strUsername = userAPP_Rq->getUserID();
+//        it = acceptedUsersRqMap.find(strUsername);
+//
+//        if(it != acceptedUsersRqMap.end())
+//          {
+//            pUserVmRequest = it->second;
+//
+//            EV_INFO << "Executing the VMs corresponding with the user: " << strUsername << " | Total: "<< pUserVmRequest->getVmsArraySize() << endl;
+//
+//            //First step consists in calculating the total units of time spent in executing the application.
+//            if(userAPP_Rq->getArrayAppsSize() > 0)
+//              {
+//                for(int j = 0; j < pUserVmRequest->getVmsArraySize(); j++)
+//                  {
+//                    //Getting VM and scheduling renting timeout
+//                    vmRequest = pUserVmRequest->getVms(j);
+//                    //scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
+//
+//                    strVmId = vmRequest.strVmId;
+//                    vmType = searchVmPerType(pUserVmRequest->getVmRequestType(j));
+//
+//                    double totalTimePerCore[vmType->getNumCores()];
+//
+//                    for (int i = 0; i < vmType->getNumCores(); i++)
+//                        totalTimePerCore[i] = 0;
+//
+//                    for(int i = 0; i < userAPP_Rq->getAppArraySize(); i++)
+//                      {
+//                        //Get the app
+//                        userApp = userAPP_Rq->getApp(i);
+//
+//                        if (userApp.eState != appFinishedOK && userApp.eState != appFinishedError) {
+//
+//
+//                            if(strVmId.compare(userApp.vmId)==0)
+//                              {
+//                                appType = searchAppPerType(userApp.strAppType);
+//
+//                                if(appType != nullptr)
+//                                  {
+//                                    //Assing the app to core with less utilization time
+//                                    //std::sort(totalTimePerCore, totalTimePerCore+vmType->getNumCores());
+//                                    int minIndex = std::min_element(totalTimePerCore, totalTimePerCore+vmType->getNumCores()) - totalTimePerCore;
+//                                    nTotalTime = SimTime(TEMPORAL_calculateTotalTime(appType));
+//                                    appStartTime = simTime() + SimTime(totalTimePerCore[minIndex]);
+//
+//                                    if (userApp.eState == appFinishedTimeout)
+//                                      {
+//                                        userAPP_Rq->decreaseFinishedApps();
+//                                        appExecutedTime = SimTime(userApp.finishTime - userApp.startTime);
+//                                        if (appExecutedTime>0)
+//                                          {
+//                                            nTotalTime -= appExecutedTime;
+//                                            appStartTime -= appExecutedTime;
+//                                          }
+//
+//
+//                                      }
+//
+//
+//
+//                                    totalTimePerCore[minIndex] = totalTimePerCore[minIndex] + nTotalTime.dbl();
+//
+//                                    strAppName = userApp.strApp;
+//
+//                                    //Create new Message
+//                                    pMsgFinish = scheduleAppTimeout(EXEC_APP_END_SINGLE, strUsername, strAppName, strVmId, totalTimePerCore[minIndex]);
+//
+//                                    userAPP_Rq->getApp(i).startTime = appStartTime.dbl();
+//                                    userAPP_Rq->getApp(i).pMsgTimeout = pMsgFinish;
+//                                    //userApp.vmId =  vmRequest.strVmId;
+//
+//                                    //Change status to running
+//                                    userAPP_Rq->changeState(strAppName, strVmId, appRunning);
+//                                    userAPP_Rq->changeStateByIndex(i, strAppName, appRunning);
+//                                    //userAPP_Rq->setVmIdByIndex(i, userApp.strIp, strVmId);
+//
+//
+//                                    bHandle = true;
+//
+//                                  }
+//                                else
+//                                  {
+//                                    error ("%s - Unable to find App. Wrong AppType [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), appType);
+//                                  }
+//                              }
+//                          }
+//                      }
+//                  }
+//              }
+//            else
+//              {
+//                EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has the application list empty!"<< endl;
+//                throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] The list of applications of a the user is empty!!").c_str());
+//              }
+//
+//
+//
+//          }
+//        else
+//          {
+//            EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has not previously registered!!"<< endl;
+//          }
+//
+//        if(bHandle)
+//        {
+//            std::map<std::string, SM_UserAPP*>::iterator appIt = handlingAppsRqMap.find(strUsername);
+//            if(appIt == handlingAppsRqMap.end())
+//              {
+//                //Registering the appRq
+//                handlingAppsRqMap[strUsername] = userAPP_Rq;
+//              }
+//            else
+//              {
+//                SM_UserAPP *uapp = appIt->second;
+//                uapp->update(userAPP_Rq);
+//                delete userAPP_Rq; //Delete ephemeral message after update global message.
+//              }
+//        }
+//        else
+//          {
+//            userAPP_Rq->setResult(0);
+//            rejectAppRequest(userAPP_Rq);
+//          }
       }
     else
       {
@@ -1095,9 +1069,6 @@ void CloudProviderBase_firstBestFit::storeVmSubscribe(SM_UserVM* userVM_Rq)
     }
 }
 
-void CloudProviderBase_firstBestFit::processResponseMessage (SIMCAN_Message *sm){
-
-}
 
 NodeResourceRequest* CloudProviderBase_firstBestFit::generateNode(std::string strUserName, VM_Request vmRequest)
 {
@@ -1479,4 +1450,8 @@ int CloudProviderBase_firstBestFit::calculateTotalCoresRequested(SM_UserVM* user
     EV_DEBUG << "User:" << userVM_Rq->getUserID() << " has requested: "<< nRet << " cores" << endl;
 
     return nRet;
+}
+
+void CloudProviderBase_firstBestFit::handleResponseAccept(SIMCAN_Message *sm) {
+    sendResponseMessage(sm);
 }

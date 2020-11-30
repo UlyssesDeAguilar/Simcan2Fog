@@ -4,6 +4,10 @@ CloudManagerBase::~CloudManagerBase(){
     vmTypes.clear();
     userTypes.clear();
     appTypes.clear();
+
+    selfHandlers.clear();
+    requestHandlers.clear();
+    responseHandlers.clear();
 }
 
 
@@ -12,6 +16,10 @@ void CloudManagerBase::initialize(){
     cSIMCAN_Core::initialize();
 
     parseConfig();
+
+    initializeSelfHandlers();
+    initializeRequestHandlers();
+    initializeResponseHandlers();
 
 }
 
@@ -107,6 +115,57 @@ int CloudManagerBase::parseUsersList (){
 //    }
 //    return result;
 }
+
+
+void CloudManagerBase::processSelfMessage (cMessage *msg){
+    std::map<std::string, std::function<void(cMessage*)>>::iterator it;
+
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
+
+    it = selfHandlers.find(msg->getName());
+
+    if (it != selfHandlers.end())
+        it->second(msg);  //Perform the operations...
+    else
+        error ("Unknown self message [%s]", msg->getName());
+
+    cancelAndDelete(msg);
+
+    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End" << endl;
+}
+
+void CloudManagerBase::processRequestMessage (SIMCAN_Message *sm)
+{
+    SM_CloudProvider_Control* userControl;
+    std::map<int, std::function<void(SIMCAN_Message*)>>::iterator it;
+
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
+
+    it = requestHandlers.find(sm->getOperation());
+
+    if (it != requestHandlers.end())
+      {
+        it->second(sm);
+      }
+
+}
+
+void CloudManagerBase::processResponseMessage (SIMCAN_Message *sm){
+    SM_CloudProvider_Control* userControl;
+    std::map<int, std::function<void(SIMCAN_Message*)>>::iterator it;
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
+
+    it = responseHandlers.find(sm->getResult());
+
+    if (it != responseHandlers.end())
+      {
+        //Perform the operations...
+        it->second(sm);
+      }
+}
+
+
+
 
 std::string CloudManagerBase::appsToString (){
 

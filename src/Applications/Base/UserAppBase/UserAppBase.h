@@ -46,29 +46,29 @@ class UserAppBase: public cSIMCAN_Core{
 
 
 
-                           /**
-                            * Structure that represents a connection between two TCP applications.
-                            */
-                            struct SIMCAN_App_Connector{
-                                string localAddress;			/**< Local Address. */
-                                string destAddress;				/**< Destination Address. */
-                                int localPort;					/**< Local Port */
-                                int destPort;					/**< Destination Port */
-                                int id;							/**< Local connection ID */
-                                int connectionId;				/**< Connection Id (for sockets) */
-                            };
-                            typedef struct SIMCAN_App_Connector connector;
+       /**
+        * Structure that represents a connection between two TCP applications.
+        */
+        struct SIMCAN_App_Connector{
+            string localAddress;			/**< Local Address. */
+            string destAddress;				/**< Destination Address. */
+            int localPort;					/**< Local Port */
+            int destPort;					/**< Destination Port */
+            int id;							/**< Local connection ID */
+            int connectionId;				/**< Connection Id (for sockets) */
+        };
+        typedef struct SIMCAN_App_Connector connector;
 
-                            /**< Local IP */
-                            string appLocalIP;
+        /**< Local IP */
+        string appLocalIP;
 
-                            /**< Local port */
-                            int appLocalPort;
+        /**< Local port */
+        int appLocalPort;
 
-                           /** connector vector that contains the corresponding data to establish connection with servers.
-                            * Note: Must be initialized on derived classes.
-                            */
-                            vector <connector> connections;
+       /** connector vector that contains the corresponding data to establish connection with servers.
+        * Note: Must be initialized on derived classes.
+        */
+        vector <connector> connections;
 
 
 		
@@ -96,18 +96,18 @@ class UserAppBase: public cSIMCAN_Core{
 		virtual void processSelfMessage (cMessage *msg) = 0;
 
 
-	   /**
-		* Process a request message.
-		* @param sm Request message.
-		*/
-		virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
-
-
-	   /**
-		* Process a response message from a module in the local node.
-		* @param sm Response message.
-		*/
-		virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
+//	   /**
+//		* Process a request message.
+//		* @param sm Request message.
+//		*/
+//		virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
+//
+//
+//	   /**
+//		* Process a response message from a module in the local node.
+//		* @param sm Response message.
+//		*/
+//		virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
 		
 		
 
@@ -128,6 +128,7 @@ class UserAppBase: public cSIMCAN_Core{
 		 */
 		void SIMCAN_request_cpuTime (simtime_t cpuTime);
 		
+		void SIMCAN_abort_request_cpu ();
 		
 		
 	private:

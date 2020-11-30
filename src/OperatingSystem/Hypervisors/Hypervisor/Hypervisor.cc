@@ -4,6 +4,8 @@ Define_Module (Hypervisor);
 
 
 Hypervisor::~Hypervisor(){
+    mapVmScheduler.clear();
+    mapResourceRequestPerVm.clear();
 }
 
 void Hypervisor::initialize(){
@@ -13,9 +15,17 @@ void Hypervisor::initialize(){
 	    // Init the super-class
 	    cSIMCAN_Core::initialize();
 
+
+
+        getParentModule()->getParentModule()->getSubmodule("hardwareManager");
+
+        if (pHardwareManager == nullptr)
+            error ("HardwareManager not found!");
+
 	        // Init module parameters
             isVirtualHardware = par ("isVirtualHardware");
             maxVMs = (unsigned int) par ("maxVMs");
+            numAllocatedVms = 0;
 
             // Get the number of gates for each vector
             numAppGates = gateSize ("fromApps");
@@ -45,6 +55,22 @@ void Hypervisor::initialize(){
                 fromCPUGates [i] = gate ("fromCpuScheduler", i);
                 toCPUGates [i] = gate ("toCpuScheduler", i);
             }
+
+            pAppsVectors = getParentModule()->getParentModule()->getSubmodule("appsVectors", 0);
+            pAppsVectorsArray = new cModule* [pAppsVectors->getVectorSize()];
+
+            for (int i=0; i<pAppsVectors->getVectorSize(); i++)
+                pAppsVectorsArray[i] = getParentModule()->getParentModule()->getSubmodule("appsVectors", i);
+
+            pCpuScheds = getParentModule()->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0);
+            pCpuSchedArray = new cModule* [pCpuScheds->getVectorSize()];
+
+            for (int i=0; i<pCpuScheds->getVectorSize(); i++)
+                pCpuSchedArray[i] = getParentModule()->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", i);
+
+
+            pHardwareManagerModule = getParentModule()->getParentModule()->getSubmodule("hardwareManager");
+            pHardwareManager = check_and_cast<HardwareManager*>(pHardwareManagerModule);
 }
 
 
@@ -110,6 +136,28 @@ void Hypervisor::processRequestMessage (SIMCAN_Message *sm){
             }
             else{
                 //TODO: Manage users/VMs to redirec requests to the corresponding CPU scheduler
+
+                // Debug
+                EV_INFO << "Sending request message to CPU."<< endl << sm->contentsToString(showMessageContents, showMessageTrace).c_str() << endl;
+
+                // Checks for the next module
+                if (sm->getNextModuleIndex() == SM_UnsetValue){
+                    error ("Unset value for nextModuleIndex... and there are several output gates. %s", sm->contentsToString(showMessageContents, showMessageTrace).c_str());
+                }
+
+                // Next module index is out of bounds...
+                else if ((sm->getNextModuleIndex() < 0) || (sm->getNextModuleIndex() >= gateSize("toCpuScheduler"))){
+                    error ("nextModuleIndex %d is out of bounds [%d]", sm->getNextModuleIndex(), gateSize("toCpuScheduler"));
+                }
+
+                // Everything is OK... send the message! ;)
+                else{
+
+                    // Debug (Debug)
+                    EV_DEBUG << "(processRequestMessage) Sending request message. There are several output gates -> toOutputGates["<< sm->getNextModuleIndex() << "]" << endl << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+
+                    sendRequestMessage (sm, toCPUGates[sm->getNextModuleIndex()]);
+                }
             }
         }
 
@@ -228,3 +276,125 @@ void Hypervisor::processResponseMessage (SIMCAN_Message *sm){
 	sendResponseMessage (sm);
 }
 
+int Hypervisor::getAvailableCores() {
+    return pHardwareManager->getAvailableCores();
+}
+
+cModule* Hypervisor::allocateNewResources(NodeResourceRequest* pResourceRequest) {
+    unsigned int* cpuCoreIndex;
+    cpuCoreIndex = pHardwareManager->allocateCores(pResourceRequest->getTotalCpUs());
+
+    if (cpuCoreIndex == nullptr)
+        return nullptr;
+
+    cModule *pVmSchedulerModule = pCpuSchedArray[numAllocatedVms];
+    cModule *pVmAppVectorModule = pAppsVectorsArray[numAllocatedVms];
+
+    mapResourceRequestPerVm[pResourceRequest->getVmId()] = pResourceRequest;
+    mapVmScheduler[pResourceRequest->getVmId()] = numAllocatedVms;
+
+    numAllocatedVms++;
+
+    CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR*> (pVmSchedulerModule);
+    int nManagedCpuCores = pResourceRequest->getTotalCpUs();
+
+    bool* isCPU_Idle = new bool [nManagedCpuCores];
+    for (int i=0; i<nManagedCpuCores; i++)
+        isCPU_Idle[i] = true;
+
+    pVmScheduler->setManagedCpuCores(nManagedCpuCores);
+    pVmScheduler->setCpuCoreIndex(cpuCoreIndex);
+    pVmScheduler->setIsCpuIdle(isCPU_Idle);
+    pVmScheduler->setIsRunning(true);
+
+    return pVmAppVectorModule;
+}
+
+void Hypervisor::deallocateVmResources(std::string strVmId) {
+    std::map<std::string, NodeResourceRequest*>::iterator requestIt;
+    NodeResourceRequest* pResourceRequest;
+    std::map<string, int>::iterator schedulerIt;
+    int nSchedulerIndex;
+
+
+    requestIt = mapResourceRequestPerVm.find(strVmId);
+    schedulerIt = mapVmScheduler.find(strVmId);
+
+    if (requestIt==mapResourceRequestPerVm.end() || schedulerIt==mapVmScheduler.end())
+        return;
+
+    pResourceRequest = requestIt->second;
+    nSchedulerIndex = schedulerIt->second;
+
+    pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs());
+
+    cModule *pVmSchedulerModule = pCpuSchedArray[nSchedulerIndex];
+    CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR*> (pVmSchedulerModule);
+
+    pVmScheduler->setIsRunning(false);
+}
+
+//int Hypervisor::executeApp(Application* appType)
+//{
+//    int nInputDataSize, nOutputDataSize, nMIs, nIterations, nTotalTime;
+//    int nReadTime, nWriteTime, nProcTime;
+//    AppParameter* paramInputDataSize, *paramOutputDataSize, *paramMIs, *paramIterations;
+//
+//    nTotalTime = nInputDataSize = nOutputDataSize = nMIs = nIterations = nTotalTime = 0;
+//
+//    //TODO: Cuidado con esto a ver si no peta.
+//    //Esto es un apaño temporal para no ejecutarlo en los datacenters reales
+//    if(appType!=NULL && appType->getAppName().compare("AppDataIntensive")==0)
+//    {
+//        //DatasetInput
+//        paramInputDataSize = appType->getParameterByName("inputDataSize");
+//        paramOutputDataSize = appType->getParameterByName("outputDataSize");
+//        paramMIs = appType->getParameterByName("MIs");
+//        paramIterations = appType->getParameterByName("iterations");
+//
+//        if(paramInputDataSize != nullptr)
+//        {
+//            nInputDataSize = std::stoi(paramInputDataSize->getValue());
+//        }
+//        if(paramOutputDataSize != nullptr)
+//        {
+//            nOutputDataSize = std::stoi(paramOutputDataSize->getValue());
+//        }
+//        if(paramMIs != nullptr)
+//        {
+//            nMIs = std::stoi(paramMIs->getValue());
+//        }
+//        if(paramIterations != nullptr)
+//        {
+//            nIterations = std::stoi(paramIterations->getValue());
+//        }
+//
+////        getParentModule()->getParentModule()->getSubmodule('appsVectors', 0);
+//
+//        cModuleType *moduleType = cModuleType::get(appType->getType().c_str());
+//
+//
+////        cModule *moduleApp = moduleType->create(appType->getAppName(), , , );
+//
+//
+////        //TODO: Esto está hecho a fuego con 1 sola app. Diversificar.
+////        //Leer 10 GB (transmision por red+carga en disco)
+////        nReadTime = nInputDataSize*1024/SPEED_R_DISK;
+////
+////        //Escribir Gb (escritura en disco y envío por red);
+////        nWriteTime = nOutputDataSize*1024/SPEED_W_DISK;
+////
+////        //Procesar 10GB
+////        nProcTime = nMIs/CPU_SPEED;
+////
+////        nTotalTime = (nReadTime+nWriteTime+nProcTime)*nIterations;
+////
+////        EV_INFO << "The total executing, R: " << nReadTime << " | W: " << nWriteTime << " | P: " << nProcTime << " | Total: " << nTotalTime<< endl;
+//    }
+//    else if(appType!=NULL && appType->getAppName().compare("otraApp"))
+//    {
+//
+//    }
+//
+//    return nTotalTime;
+//}

@@ -23,6 +23,7 @@ void UserAppBase::initialize(){
         appInstance = newAppInstance;
         debugUserAppBase = par ("debugUserAppBase");
 
+
         // Init cGates
         inGate = gate ("in");
         outGate = gate ("out");
@@ -69,11 +70,14 @@ void UserAppBase::SIMCAN_request_cpu (double MIs){
 		sm_cpu->setOperation (SM_ExecCpu);
 		
 		// Set the corresponding parameters
+		sm_cpu->setAppInstance(appInstance);
 		sm_cpu->setUseMis(true);
 		sm_cpu->setMisToExecute(MIs);
 
 		// Update message length
 		sm_cpu->updateLength ();
+
+		sm_cpu->setNextModuleIndex(getParentModule()->getParentModule()->getIndex());
 
 		// Debug (Trace)
         if (debugUserAppBase)
@@ -81,6 +85,26 @@ void UserAppBase::SIMCAN_request_cpu (double MIs){
 
 		// Send the request to the Operating System
 		sendRequestMessage (sm_cpu, outGate);
+}
+
+void UserAppBase::SIMCAN_abort_request_cpu (){
+
+    SM_CPU_Message *sm_cpu;     // Request message!
+
+        // Creates the message
+        sm_cpu = new SM_CPU_Message ();
+        sm_cpu->setOperation (SM_AbortCpu);
+
+        sm_cpu->setAppInstance(appInstance);
+
+        sm_cpu->setNextModuleIndex(getParentModule()->getParentModule()->getIndex());
+
+        // Debug (Trace)
+        if (debugUserAppBase)
+            EV_TRACE << "(SIMCAN_request_cpu): Message ready to abort a CPU request."<< endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
+
+        // Send the request to the Operating System
+        sendRequestMessage (sm_cpu, outGate);
 }
 
 void UserAppBase::SIMCAN_request_cpuTime (simtime_t cpuTime){
@@ -92,6 +116,7 @@ void UserAppBase::SIMCAN_request_cpuTime (simtime_t cpuTime){
 		sm_cpu->setOperation (SM_ExecCpu);
 		
 		// Set the corresponding parameters
+		sm_cpu->setAppInstance(appInstance);
 		sm_cpu->setUseTime (true);
 		sm_cpu->setCpuTime (cpuTime);
 		

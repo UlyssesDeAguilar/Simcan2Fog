@@ -63,12 +63,13 @@ protected:
     /**
      * Initializes the self message handlers.
      */
-    virtual void initializeSelfHandlers();
+    virtual void initializeSelfHandlers() override;
 
     /**
      * Initializes the response handlers.
      */
-    virtual void initializeResponseHandlers();
+    virtual void initializeResponseHandlers() override;
+
 
     virtual void execute(CloudUserInstance *pUserInstance, SM_UserVM *userVm);
 

@@ -13,7 +13,15 @@
  * @date 2009-03-11
  */
 class CpuSchedulerRR :public cSIMCAN_Core{
-
+public:
+    unsigned int* getCpuCoreIndex() const;
+    void setCpuCoreIndex(unsigned int *cpuCoreIndex);
+    bool isRunning() const;
+    void setIsRunning(bool bRunning);
+    unsigned int getManagedCpuCores() const;
+    void setManagedCpuCores(unsigned int managedCpuCores);
+    bool* getIsCpuIdle() const;
+    void setIsCpuIdle(bool *isCpuIdle);
 
 	protected:
 
@@ -30,7 +38,7 @@ class CpuSchedulerRR :public cSIMCAN_Core{
         int quantum;
 
         /** Flag that indicates if this scheduler is currently used */
-        bool isRunning;
+        bool bRunning;
 
         /** Array to show the CPU with an idle state */
         bool* isCPU_Idle;
@@ -40,6 +48,7 @@ class CpuSchedulerRR :public cSIMCAN_Core{
 
         /** Request queue array */
         cQueue requestsQueue;
+        cQueue abortsQueue;
 
         /** Output gate to the Hypervisor. */
         cGate* toHypervisorGate;
@@ -73,6 +82,8 @@ class CpuSchedulerRR :public cSIMCAN_Core{
 	 	* Module ending.
 	 	*/ 
 	    void finish();
+	    bool deleteFromRequestsQueue (SIMCAN_Message *sm);
+	    bool deleteFromAbortsQueue (SIMCAN_Message *sm);
 	    
 	    
 	private:
@@ -108,6 +119,8 @@ class CpuSchedulerRR :public cSIMCAN_Core{
 		 * @return The index of an idle CPU or SC_NotFound if all CPU are busy.
 		 */ 
 		int searchIdleCPU ();
+
+
 };
 
 #endif

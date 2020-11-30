@@ -5,6 +5,7 @@ Define_Module (CpuSchedulerRR);
 
 CpuSchedulerRR::~CpuSchedulerRR(){
 	requestsQueue.clear();			
+	abortsQueue.clear();
 }
 
 
@@ -40,7 +41,7 @@ void CpuSchedulerRR::initialize(){
         // Non-virtual hardware. Using all the cpu cores
         if (!isVirtualHardware){
 
-            isRunning = true;
+            bRunning = true;
 
             managedCpuCores = numCpuCores;
 
@@ -61,7 +62,7 @@ void CpuSchedulerRR::initialize(){
 
        // Using virtual hardware.
        else{
-           isRunning = false;
+           bRunning = false;
            isCPU_Idle = nullptr;
            cpuCoreIndex = nullptr;
            managedCpuCores = 0;
@@ -69,7 +70,7 @@ void CpuSchedulerRR::initialize(){
 
         // Show additional data
         if (showInitValues){
-            EV_INFO << "isRunning:" << std::boolalpha << isRunning << " - managedCpuCores:" << managedCpuCores << endl;
+            EV_INFO << "isRunning:" << std::boolalpha << bRunning << " - managedCpuCores:" << managedCpuCores << endl;
         }
 }
 
@@ -122,7 +123,7 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
 
 
 	    // This scheduler is idle
-	    if (!isRunning){
+	    if (!bRunning){
 	        error ("Scheduler is not running and a request has been received.%s", sm_cpu->contentsToString(showMessageContents, showMessageTrace).c_str());
 	    }
 
@@ -130,9 +131,14 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
 	    else{
 
             EV_DEBUG << "(processRequestMessage) Processing request."<< endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
-
+            if (sm->getOperation () == SM_AbortCpu) {
+                if (!deleteFromRequestsQueue(sm))
+                    abortsQueue.insert(sm);
+                else
+                    delete(sm);
+            }
             // Check if this request has something to execute
-            if ((!sm_cpu->getUseTime()) && (!sm_cpu->getUseMis())){
+            else if ((!sm_cpu->getUseTime()) && (!sm_cpu->getUseMis())){
                 error ("Empty CPU request.%s", sm->contentsToString(showMessageContents, showMessageTrace).c_str());
             }
 
@@ -159,7 +165,7 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
                 else{
 
                     // Set the CPU core for this request
-                    sm_cpu->setNextModuleIndex(cpuIndex);
+                    sm_cpu->setNextModuleIndex(cpuCoreIndex[cpuIndex]);
 
                     // Update state!
                     isCPU_Idle[cpuIndex]=false;
@@ -174,6 +180,39 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
 	    }
 }
 
+bool CpuSchedulerRR::deleteFromRequestsQueue (SIMCAN_Message *sm)
+{
+    SM_CPU_Message *sm_cpu;
+    bool bFound = false;
+     // Cast to CPU Message!
+    sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
+
+    for (cQueue::Iterator iter(requestsQueue); !iter.end() && !bFound; iter++) {
+        SM_CPU_Message *msg = (SM_CPU_Message *) *iter;
+        if (msg->getAppInstance().compare(sm_cpu->getAppInstance())==0) {
+            requestsQueue.remove(msg);
+            bFound = true;
+        }
+    }
+
+    return bFound;
+}
+
+bool CpuSchedulerRR::deleteFromAbortsQueue (SIMCAN_Message *sm){
+    SM_CPU_Message *sm_cpu;
+    bool bFound = false;
+     // Cast to CPU Message!
+    sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
+
+    for (cQueue::Iterator iter(abortsQueue); !iter.end() && !bFound; iter++) {
+        SM_CPU_Message *msg = (SM_CPU_Message *) *iter;
+        if (msg->getAppInstance().compare(sm_cpu->getAppInstance())==0) {
+            abortsQueue.remove(msg);
+            bFound = true;
+        }
+
+    }
+}
 
 void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
 
@@ -189,7 +228,7 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
 
 
 	    // Zombie request arrives. This scheduler has been disabled!
-        if (!isRunning){
+        if (!bRunning){
             EV_DEBUG << "(processResponseMessage) Zombie request arrived:" << endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
             delete(sm);
         }
@@ -209,9 +248,16 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
 
             EV_DEBUG << "(processResponseMessage) Arrives a message from CPU core:" << cpuIndex << endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
 
+            if (deleteFromAbortsQueue(sm)) {
+                delete(sm);
+            }
             // Current computing block has not been completely executed
-            if (!sm_cpu->getIsCompleted()){
+            else if (!sm_cpu->getIsCompleted()){
                 EV_INFO << "Request CPU not completed... Pushing to queue." << endl;
+//                SM_CPU_Message *sm_cpu_status = sm_cpu->dup();
+//                sm_cpu_status->setIsResponse(true);
+//                sendResponseMessage(sm_cpu_status);
+
                 sm_cpu->setIsResponse(false);
                 requestsQueue.insert (sm_cpu);
             }
@@ -219,6 +265,7 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
             // Current block has been completely executed
             else{
                 EV_INFO << "Request CPU completed. Sending it back to the application." << endl;
+                sm_cpu->setResult(SM_APP_Res_Accept);
                 sm_cpu->setIsResponse(true);
                 sendResponseMessage (sm_cpu);
             }
@@ -259,6 +306,37 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
         }
 }
 
+unsigned int* CpuSchedulerRR::getCpuCoreIndex() const {
+    return cpuCoreIndex;
+}
+
+void CpuSchedulerRR::setCpuCoreIndex(unsigned int *cpuCoreIndex) {
+    this->cpuCoreIndex = cpuCoreIndex;
+}
+
+bool CpuSchedulerRR::isRunning() const {
+    return bRunning;
+}
+
+void CpuSchedulerRR::setIsRunning(bool bRunning) {
+    this->bRunning = bRunning;
+}
+
+unsigned int CpuSchedulerRR::getManagedCpuCores() const {
+    return managedCpuCores;
+}
+
+void CpuSchedulerRR::setManagedCpuCores(unsigned int managedCpuCores) {
+    this->managedCpuCores = managedCpuCores;
+}
+
+bool* CpuSchedulerRR::getIsCpuIdle() const {
+    return isCPU_Idle;
+}
+
+void CpuSchedulerRR::setIsCpuIdle(bool *isCpuIdle) {
+    isCPU_Idle = isCpuIdle;
+}
 
 int CpuSchedulerRR::searchIdleCPU (){
 	
@@ -287,4 +365,6 @@ int CpuSchedulerRR::searchIdleCPU (){
 
 	return result;
 }
+
+
 

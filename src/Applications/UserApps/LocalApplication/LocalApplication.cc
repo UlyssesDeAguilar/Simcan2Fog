@@ -11,6 +11,8 @@ void LocalApplication::initialize(){
 		// Init the super-class
 		UserAppBase::initialize();
 
+		connections = vector <connector> ();
+
 		// App Module parameters
 		inputDataSize  = (int) par ("inputDataSize") * MB;
 		outputDataSize  = (int) par ("outputDataSize") * MB;
@@ -42,6 +44,8 @@ void LocalApplication::finish(){
 
 	// Finish the super-class
     UserAppBase::finish();
+
+
 }
 
 void LocalApplication::processSelfMessage (cMessage *msg){
@@ -126,6 +130,15 @@ void LocalApplication::executeCPUrequest(){
 
 	// Execute the request!
 	SIMCAN_request_cpu(MIs);
+}
+
+void LocalApplication::sendAbortRequest(){
+
+    // Log (INFO)
+    EV_INFO << "Aborting CPU execution" << endl;
+
+    // Execute the request!
+    SIMCAN_abort_request_cpu();
 }
 
 void LocalApplication::printResults (){

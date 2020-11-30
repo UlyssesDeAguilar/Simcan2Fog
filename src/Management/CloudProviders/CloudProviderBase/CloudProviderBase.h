@@ -98,28 +98,28 @@ class CloudProviderBase : public CloudManagerBase{
         * @param msg Arrived message.
         * @return Gate (out) to module that sent <b>msg</b> or \a nullptr if gate not found.
         */
-        virtual cGate* getOutGate (cMessage *msg);
+        virtual cGate* getOutGate (cMessage *msg) override;
 
-       /**
-        * Process a self message.
-        *
-        * @param msg Received (self) message.
-        */
-        virtual void processSelfMessage (cMessage *msg) = 0;
-
-        /**
-        * Process a request message.
-        *
-        * @param sm Incoming message.
-        */
-        virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
-
-        /**
-        * Process a response message from an external module.
-        *
-        * @param sm Incoming message.
-        */
-        virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
+//       /**
+//        * Process a self message.
+//        *
+//        * @param msg Received (self) message.
+//        */
+//        virtual void processSelfMessage (cMessage *msg) = 0;
+//
+//        /**
+//        * Process a request message.
+//        *
+//        * @param sm Incoming message.
+//        */
+//        virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
+//
+//        /**
+//        * Process a response message from an external module.
+//        *
+//        * @param sm Incoming message.
+//        */
+//        virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
 
 };
 

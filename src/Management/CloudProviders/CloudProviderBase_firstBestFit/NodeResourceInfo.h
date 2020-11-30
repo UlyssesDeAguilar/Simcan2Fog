@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <omnetpp.h>
-#include "NodeResourceRequest.h"
+#include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/dataClasses/NodeInfo.h"
 using namespace omnetpp;
 

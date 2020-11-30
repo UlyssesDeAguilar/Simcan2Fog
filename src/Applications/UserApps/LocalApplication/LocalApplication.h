@@ -26,6 +26,7 @@ class LocalApplication: public UserAppBase{
 
 		/** Number of MIs to be executed */
 		unsigned int MIs;
+		unsigned int currentMisToExecute;
 
 		/** Number of iterations to be performed */
 		unsigned int iterations;
@@ -120,6 +121,8 @@ class LocalApplication: public UserAppBase{
 		* @param sm Request message.
 		*/
 		void processResponseMessage (SIMCAN_Message *sm);
+
+		void sendAbortRequest();
 
 
 	private:

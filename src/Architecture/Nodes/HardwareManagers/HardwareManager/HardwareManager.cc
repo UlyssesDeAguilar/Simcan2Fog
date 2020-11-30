@@ -9,8 +9,9 @@ void HardwareManager::initialize(){
         // Obtain the parameters of the module
         isVirtualHardware = par ("isVirtualHardware");
         maxVMs = par ("maxVMs");
-        numCpuCores = par ("numCpuCores");
+        numAvailableCpuCores = numCpuCores = par ("numCpuCores");
         maxUsers = par ("maxUsers");
+        freeCoresArrayPtr = new bool[numCpuCores];
 
         // Check consistency (cloud environments)
         if (isVirtualHardware){
@@ -36,6 +37,9 @@ void HardwareManager::initialize(){
                 error ("The parameter maxUsers must be a positive value (>0)");
         }
 
+
+        for (int i=0; i<numCpuCores; i++)
+            freeCoresArrayPtr[i] = true;
 
 
 //        // Create user vector
@@ -65,4 +69,46 @@ void HardwareManager::initialize(){
 
 void HardwareManager::handleMessage(cMessage *msg){
     // TODO - Generated method body
+}
+
+int HardwareManager::getAvailableCores() {
+    return numAvailableCpuCores;
+}
+
+unsigned int* HardwareManager::allocateCores(int numCores){
+    if (numCores > numAvailableCpuCores)
+        return nullptr;
+
+    int numAllocatedCores = 0;
+    bool allocatedCore;
+    unsigned int* cpuCoreIndex = new unsigned int [numCores];
+    for (int i=0; i<numCores; i++) {
+        allocatedCore = false;
+        for (int j=0; j<numCpuCores && !allocatedCore; j++) {
+            if (freeCoresArrayPtr[j]) {
+                cpuCoreIndex[i] = j;
+                freeCoresArrayPtr[j] = false;
+                numAllocatedCores++;
+                allocatedCore = true;
+            }
+        }
+    }
+
+    if (numAllocatedCores < numCores) {
+        for (int i=0; i<numAllocatedCores; i++) {
+            freeCoresArrayPtr[cpuCoreIndex[i]] = true;
+        }
+        cpuCoreIndex = nullptr;
+    } else {
+        int newNumAvailableCores = numAvailableCpuCores - numCores;
+        numAvailableCpuCores = newNumAvailableCores > 0 ? newNumAvailableCores : 0;
+    }
+
+    return cpuCoreIndex;
+}
+
+int HardwareManager::deallocateCores(int numCores){
+    int newNumAvailableCores = numAvailableCpuCores + numCores;
+    numAvailableCpuCores = newNumAvailableCores > numCpuCores ? numCpuCores : newNumAvailableCores;
+    return numAvailableCpuCores;
 }

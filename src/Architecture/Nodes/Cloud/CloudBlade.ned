@@ -19,8 +19,8 @@ import simcan2.Architecture.Cpu.CpuProcessor.CpuProcessor;
 //
 // @author Alberto N&uacute;&ntilde;ez Covarrubias
 // @date 2016-05-01
-module CloudBlade{
-    
+module CloudBlade
+{
     parameters:
         @labels(node,ethernet-node);
 
@@ -30,19 +30,19 @@ module CloudBlade{
         int maxUsers;												// Maximum number of users allowed to launch applications (For cloud environments, maxUsers=maxVMs)
         int maxVMs;													// Maximum number of VMs allocated in this blade (For non-cloud environments, use maxVMs=1)
         int numCpuCores;											// Number of CPU cores  
-        
-		string hardwareManagerType = default("HardwareManager");	// Hardware manager type
+
+        string hardwareManagerType = default("HardwareManager");	// Hardware manager type
         string hypervisorType = default("Hypervisor");				// Hypervisor type
         string cpuSchedulerType = default("CpuSchedulerRR");		// CPU Scheduler type
         string cpuCoreType = default("CpuCore");					// Type of the CPU cores
 
         @display("bgb=548,431,,black,3;bgi=circuit,t");
-                
- 	gates:
-    	input in;
-		output out;   
-        
-        
+
+    gates:
+        input in;
+        output out;
+
+
     submodules:
 
         cpu: CpuProcessor {
@@ -81,9 +81,9 @@ module CloudBlade{
             parameters:
                 numApps = numApps;
                 staticAppAssignment = staticAppAssignment;
-                @display("p=83,373,r,120;i=user");
+                @display("p=106,348,r,120;i=user");
         }
-    
+
 
     connections allowunconnected:
 

@@ -3,25 +3,16 @@
 
 #include "Management/CloudProviders/CloudProviderBase/CloudProviderBase.h"
 #include "Management/dataClasses/DataCenterInfoCollection.h"
+#include "Management/dataClasses/NodeResourceRequest.h"
 #include "NodeResourceInfo.h"
 #include "Messages/SM_UserVM.h"
 #include "Messages/SM_UserAPP.h"
 #include "Messages/SM_UserAPP_Finish_m.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
-#include <functional>
 
 #define CPU_SPEED       30000
 #define SPEED_W_DISK    120
 #define SPEED_R_DISK    250
-
-#define INITIAL_STAGE  "INITIAL_STAGE"
-#define EXEC_APP_END  "EXEC_APP_END"
-#define EXEC_VM_RENT_TIMEOUT "EXEC_VM_RENT_TIMEOUT"
-#define EXEC_APP_END_SINGLE "EXEC_APP_END_SINGLE"
-#define EXEC_APP_END_SINGLE_TIMEOUT "EXEC_APP_END_SINGLE_TIMEOUT"
-#define MANAGE_SUBSCRIBTIONS  "MANAGE_SUBSCRIBTIONS"
-#define USER_SUBSCRIPTION_TIMEOUT  "SUBSCRIPTION_TIMEOUT"
-#define SIMCAN_MESSAGE "SIMCAN_Message"
 
 /**
  * Class that parses information about the data-centers.
@@ -48,10 +39,6 @@ protected:
     /** Flag that indicates if the process has been finished*/
     bool bFinished;
 
-    /** Handler maps */
-    std::map<std::string, std::function<void(cMessage*)>> selfHandlers;
-    std::map<int, std::function<void(SIMCAN_Message*)>> requestHandlers;
-
     /** Destructor */
     ~CloudProviderBase_firstBestFit();
 
@@ -67,24 +54,13 @@ protected:
      * Initializes the request handlers.
      */
     virtual void initializeRequestHandlers();
-
-    /**
-     * Process a self message.
-     * @param msg Self message.
-     */
-    virtual void processSelfMessage(cMessage *msg);
+    virtual void initializeResponseHandlers();
 
     /**
      * Process a request message.
      * @param sm Request message.
      */
-    virtual void processRequestMessage(SIMCAN_Message *sm);
-
-    /**
-     * Process a response message from a module in the local node.
-     * @param sm Response message.
-     */
-    virtual void processResponseMessage(SIMCAN_Message *sm);
+    virtual void processRequestMessage(SIMCAN_Message *sm) override;
 
     //################################################################
     //API
@@ -93,6 +69,7 @@ protected:
      * @param userAPP_Rq User APP request.
      */
     virtual void handleUserAppRequest(SIMCAN_Message *sm);
+    virtual void handleResponseAccept(SIMCAN_Message *sm);
 
     /**
      * Check if the user request fits in the datacenter

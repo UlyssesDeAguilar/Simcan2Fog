@@ -30,6 +30,5 @@ void DummyApplication::processRequestMessage (SIMCAN_Message *sm){
 }
 
 void DummyApplication::processResponseMessage (SIMCAN_Message *sm){
-
-
+    delete sm;
 }

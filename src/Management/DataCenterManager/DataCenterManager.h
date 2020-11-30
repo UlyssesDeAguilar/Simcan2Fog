@@ -3,6 +3,7 @@
 
 #include "Management/CloudManagerBase/CloudManagerBase.h"
 #include "Management/dataClasses/CloudUserInstance.h"
+#include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/parser/DataCenterConfigParser.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 
@@ -25,6 +26,8 @@ public:
 
         int nTotalAvailableCores;
 
+        std::map<std::string, Hypervisor*> acceptedVMsMap;
+
         /** Users */
         std::vector<CloudUserInstance*> users;
 
@@ -38,6 +41,9 @@ public:
         std::vector<DataCenter*> dataCentersBase;
 
         std::map<int, std::vector<Hypervisor*>> mapHypervisorPerNodes;
+        std::map<std::string, cModule*> mapAppsVectorModulePerVm;
+        std::map<std::string, bool*> mapAppsRunningInVectorModulePerVm;
+
 
         ~DataCenterManager();
         virtual void initialize();
@@ -45,6 +51,9 @@ public:
         int initDataCenterMetadata();
 
 
+        virtual void initializeSelfHandlers() override;
+        virtual void initializeRequestHandlers() override;
+        void processResponseMessage (SIMCAN_Message *sm) override;
        /**
         * Parsea el parametro con la lista de aplicaciones al vector de aplicaciones
         */
@@ -62,37 +71,42 @@ public:
         */
         virtual cGate* getOutGate (cMessage *msg);
 
-       /**
-        * Process a self message.
-        * @param msg Self message.
-        */
-        virtual void processSelfMessage (cMessage *msg);
-
-       /**
-        * Process a request message.
-        * @param sm Request message.
-        */
-        virtual void processRequestMessage (SIMCAN_Message *sm);
-
-       /**
-        * Process a response message from a module in the local node.
-        * @param sm Response message.
-        */
-        virtual void processResponseMessage (SIMCAN_Message *sm);
-
         virtual int storeNodeMetadata(cModule *pNodeModule);
 
         virtual void parseConfig() override;
 
         virtual void handleVmRequestFits(SIMCAN_Message *sm);
+        virtual void handleExecVmRentTimeout(cMessage *msg);
 
         bool checkVmUserFit(SM_UserVM*& userVM_Rq);
 
-        virtual Hypervisor* selectNode (const VM_Request& vmRequest);
+        virtual Hypervisor* selectNode (string strUserName, const VM_Request& vmRequest);
 
         //TODO: refactorizar. esta duplicado en provider.
         int calculateTotalCoresRequested(SM_UserVM* userVM_Rq);
         int getTotalCoresByVmType(std::string strVmType);
+        NodeResourceRequest* generateNode(std::string strUserName, VM_Request vmRequest);
+        void  fillVmFeatures(std::string strVmType, NodeResourceRequest*& pNode);
+
+
+        Application* searchAppPerType(std::string strAppType);
+        void handleUserAppRequest(SIMCAN_Message *sm);
+        void  acceptVmRequest(SM_UserVM* userVM_Rq);
+        void  rejectVmRequest(SM_UserVM* userVM_Rq);
+
+        SM_UserVM_Finish* scheduleRentingTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime);
+        void clearVMReq (SM_UserVM*& userVM_Rq, int lastId);
+
+        //Helpers
+        cModule* getAppsVectorModulePerVm(std::string strVmId);
+        void deleteAppFromModule(cModule *pVmAppModule);
+        cModule* getFreeAppModuleInVector(std::string strVmId);
+        Hypervisor* getNodeHypervisorByVm(std::string strVmId);
+        bool* getAppsRunningInVectorModuleByVm(std::string strVmId);
+        void createDummyAppInAppModule(cModule *pVmAppModule);
+        void cleanAppVectorModule(cModule *pVmAppVectorModule);
+        void abortAllApps(std::string strVmId);
+        void deallocateVmResources(std::string strVmId);
 };
 
 #endif

@@ -66,6 +66,7 @@ static const int SM_APP_Res_Timeout=10007;
 
 /** SIMCAN Message Execution (CPU) */
 static const int SM_ExecCpu = 1000;
+static const int SM_AbortCpu = 1001;
 
 /** Infinite quantum */
 static const int SM_CpuInfiniteQuantum = -1;
