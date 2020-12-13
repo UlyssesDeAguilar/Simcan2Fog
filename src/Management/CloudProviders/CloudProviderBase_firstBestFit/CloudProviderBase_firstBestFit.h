@@ -70,6 +70,11 @@ protected:
      */
     virtual void handleUserAppRequest(SIMCAN_Message *sm);
     virtual void handleResponseAccept(SIMCAN_Message *sm);
+    virtual void handleResponseReject(SIMCAN_Message *sm);
+//    virtual void handleResponseVmTimeout(SIMCAN_Message *sm);
+    virtual void handleResponseAppAccept(SIMCAN_Message *sm);
+    virtual void handleResponseAppTimeout(SIMCAN_Message *sm);
+//    virtual void handleResponseAppEndSingle(SIMCAN_Message *sm);
 
     /**
      * Check if the user request fits in the datacenter
@@ -149,6 +154,8 @@ protected:
      * @param userVM_Rq User VM request
      */
     virtual void handleVmSubscription(SIMCAN_Message *sm);
+    virtual void handleResponseNotifySubcription(SIMCAN_Message* sm);
+    virtual void handleResponseRejectSubcription(SIMCAN_Message* sm);
 
     /**
      * Handles the finalisation of an application.

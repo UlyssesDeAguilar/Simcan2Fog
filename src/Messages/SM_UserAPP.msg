@@ -27,6 +27,7 @@ message SM_UserAPP extends SIMCAN_Message{
     
     @customize(true);
     
+    string appId;    
     string vmId;    
     string userID;		// ID of the user instance
     APP_Request app[];  // List of applications

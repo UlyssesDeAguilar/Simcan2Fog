@@ -107,8 +107,14 @@ unsigned int* HardwareManager::allocateCores(int numCores){
     return cpuCoreIndex;
 }
 
-int HardwareManager::deallocateCores(int numCores){
+int HardwareManager::deallocateCores(int numCores, unsigned int* cpuCoreIndex){
+    for (int i=0; i<numCores; i++) {
+        freeCoresArrayPtr[cpuCoreIndex[i]] = true;
+    }
+
+
     int newNumAvailableCores = numAvailableCpuCores + numCores;
     numAvailableCpuCores = newNumAvailableCores > numCpuCores ? numCpuCores : newNumAvailableCores;
+
     return numAvailableCpuCores;
 }

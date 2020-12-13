@@ -1,12 +1,17 @@
 #include "DataCenterManager.h"
 #include "Management/utils/LogUtils.h"
+#include "Applications/UserApps/LocalApplication/LocalApplication.h"
+
 
 Define_Module(DataCenterManager);
 
 DataCenterManager::~DataCenterManager(){
     acceptedVMsMap.clear();
+    handlingAppsRqMap.clear();
     mapHypervisorPerNodes.clear();
     mapAppsVectorModulePerVm.clear();
+    mapAppsModulePerId.clear();
+    mapAppsRunningInVectorModulePerVm.clear();
 }
 
 void DataCenterManager::initialize(){
@@ -158,7 +163,7 @@ void DataCenterManager::initializeSelfHandlers() {
  */
 void DataCenterManager::initializeRequestHandlers() {
     requestHandlers[SM_VM_Req] = [this](SIMCAN_Message *msg) -> void { return handleVmRequestFits(msg); };
-//    requestHandlers[SM_VM_Sub] = [this](SIMCAN_Message *msg) -> void { return handleVmSubscription(msg); };
+    requestHandlers[SM_VM_Sub] = [this](SIMCAN_Message *msg) -> void { return handleVmSubscription(msg); };
     requestHandlers[SM_APP_Req] = [this](SIMCAN_Message *msg) -> void { return handleUserAppRequest(msg); };
 }
 
@@ -193,6 +198,17 @@ Application* DataCenterManager::searchAppPerType(std::string strAppType)
         appTypeRet = nullptr;
 
     return appTypeRet;
+}
+
+SM_UserAPP* DataCenterManager::getUserAppRequestPerUser(std::string strUserId) {
+    SM_UserAPP *pUserApp = nullptr;
+    std::map<std::string, SM_UserAPP*>::iterator it;
+    it = handlingAppsRqMap.find(strUserId);
+    if (it != handlingAppsRqMap.end())
+    {
+        pUserApp = it->second;
+    }
+    return pUserApp;
 }
 
 cModule* DataCenterManager::getAppsVectorModulePerVm(std::string strVmId) {
@@ -257,15 +273,25 @@ bool* DataCenterManager::getAppsRunningInVectorModuleByVm(std::string strVmId) {
     return appsRunningArr;
 }
 
+unsigned int* DataCenterManager::getAppModuleById(std::string appInstance) {
+    unsigned int* appModule = nullptr;
+    std::map<std::string, unsigned int*>::iterator it;
+
+    it = mapAppsModulePerId.find(appInstance);
+    if (it != mapAppsModulePerId.end()) {
+        appModule = it->second;
+
+    }
+    return appModule;
+}
+
+
 void DataCenterManager::createDummyAppInAppModule(cModule *pVmAppModule) {
     std::string strAppType = "simcan2.Applications.UserApps.DummyApp.DummyApplication";
     cModuleType *moduleType = cModuleType::get(strAppType.c_str());
 
     if (pVmAppModule==nullptr)
         return;
-
-    // Disconnect and delete dummy app
-    deleteAppFromModule(pVmAppModule);
 
     cModule *moduleApp = moduleType->create("app", pVmAppModule);
     moduleApp->finalizeParameters();
@@ -288,15 +314,32 @@ void DataCenterManager::cleanAppVectorModule(cModule *pVmAppVectorModule){
 
     for (int i=0; i < numMaxApps; i++) {
         pVmAppModule = pVmAppVectorModule->getSubmodule("appModule", i);
+        // Disconnect and delete dummy app
+        deleteAppFromModule(pVmAppModule);
         createDummyAppInAppModule(pVmAppModule);
     }
 }
 
-void DataCenterManager::deleteAppFromModule(cModule *pVmAppModule) {
+void DataCenterManager::storeAppFromModule(cModule *pVmAppModule) {
     cModule *pDummyAppModule = pVmAppModule->getSubmodule("app");
     pVmAppModule->gate("fromHub")->disconnect();
     pVmAppModule->gate("toHub")->getPreviousGate()->disconnect();
+    pDummyAppModule->changeParentTo(this);
+    std::string appInstance = pDummyAppModule->par("appInstance");
+    LocalApplication *ptrAppInstance = dynamic_cast<LocalApplication*>(pDummyAppModule);
+    unsigned int *appStateArr = new unsigned int[2];
+    appStateArr[0] = ptrAppInstance->getCurrentIteration();
+    appStateArr[1] = ptrAppInstance->getCurrentRemainingMIs();
+    //ptrAppInstance->sendAbortRequest();
+    mapAppsModulePerId[appInstance] = appStateArr;
+    pDummyAppModule->deleteModule();
+}
+
+void DataCenterManager::deleteAppFromModule(cModule *pVmAppModule) {
+    cModule *pDummyAppModule = pVmAppModule->getSubmodule("app");
     pDummyAppModule->callFinish();
+    pVmAppModule->gate("fromHub")->disconnect();
+    pVmAppModule->gate("toHub")->getPreviousGate()->disconnect();
     pDummyAppModule->deleteModule();
 }
 
@@ -399,12 +442,27 @@ void DataCenterManager::handleUserAppRequest(SIMCAN_Message *sm)
            // Disconnect and delete dummy app
            deleteAppFromModule(pVmAppModule);
 
-           cModule *moduleApp = moduleType->create("app", pVmAppModule);
-           moduleApp->par("appInstance") = userApp.strApp;
-           moduleApp->par("inputDataSize") = nInputDataSize;
-           moduleApp->par("outputDataSize") = nOutputDataSize;
-           moduleApp->par("MIs") = nMIs;
-           moduleApp->par("iterations") = nIterations;
+           cModule *moduleApp;
+
+           moduleApp = moduleType->create("app", pVmAppModule);
+          moduleApp->par("appInstance") = userApp.strApp;
+          moduleApp->par("vmInstance") = userApp.vmId;
+          moduleApp->par("userInstance") = strUsername;
+          moduleApp->par("inputDataSize") = nInputDataSize;
+          moduleApp->par("outputDataSize") = nOutputDataSize;
+          moduleApp->par("MIs") = nMIs;
+          moduleApp->par("iterations") = nIterations;
+
+           unsigned int *appStateArr = getAppModuleById(userApp.strApp);
+
+           if (appStateArr !=nullptr) {
+               LocalApplication *appInstancePtr = dynamic_cast<LocalApplication*>(moduleApp);
+               appInstancePtr->setCurrentIteration(appStateArr[0]);
+               appInstancePtr->setCurrentRemainingMIs(appStateArr[1]);
+               mapAppsModulePerId.erase(userApp.strApp);
+               moduleApp->par("initialized") = true;
+           }
+
            moduleApp->finalizeParameters();
 
            pVmAppModule->gate("fromHub")->connectTo(moduleApp->gate("in"));
@@ -414,7 +472,14 @@ void DataCenterManager::handleUserAppRequest(SIMCAN_Message *sm)
            // create internals, and schedule it
            moduleApp->buildInside();
            moduleApp->scheduleStart(simTime());
+
            moduleApp->callInitialize();
+
+           userAPP_Rq->changeState(userApp.strApp, userApp.vmId, appRunning);
+//           userAPP_Rq->changeStateByIndex(i, userApp.strApp, appRunning);
+
+
+
         }
         else if(appType!=NULL && appType->getAppName().compare("otraApp"))
         {
@@ -423,7 +488,76 @@ void DataCenterManager::handleUserAppRequest(SIMCAN_Message *sm)
       }
     bHandle = true;
 
+    if (bHandle) {
+        std::map<std::string, SM_UserAPP*>::iterator appIt = handlingAppsRqMap.find(strUsername);
+        if(appIt == handlingAppsRqMap.end())
+          {
+            //Registering the appRq
+            handlingAppsRqMap[strUsername] = userAPP_Rq;
+          }
+        else
+          {
+            SM_UserAPP *uapp = appIt->second;
+            uapp->update(userAPP_Rq);
+            delete userAPP_Rq; //Delete ephemeral message after update global message.
+          }
+    }
+
 }
+
+//void DataCenterManager::checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId) {
+//    std::string strUsername;
+//
+//    if (pUserApp != nullptr)
+//      {
+//        strUsername = pUserApp->getUserID();
+//        if (pUserApp->allAppsFinished(strVmId))
+//          {
+//            if (pUserApp->allAppsFinishedOK(strVmId))
+//              {
+//                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+//                << " - All the apps corresponding with the user "
+//                << strUsername
+//                << " have finished successfully" << endl;
+//
+//                pUserApp->printUserAPP();
+//
+//                //Notify the user the end of the execution
+//                acceptAppRequest(pUserApp, strVmId);
+//
+//              }
+//            else
+//              {
+//                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+//                << " - All the apps corresponding with the user "
+//                << strUsername
+//                << " have finished with some errors" << endl;
+//
+//                //Check the subscription queue
+//                //updateSubsQueue();
+//
+//                //if (!pUserApp->getFinished())
+//                timeoutAppRequest(pUserApp, strVmId);  //Notify the user the end of the execution
+//              }
+//
+//            //Delete the application on the hashmap
+//            //handlingAppsRqMap.erase(strUsername);
+//          }
+//        else
+//          {
+//            EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+//                    << " - Total apps finished: "
+//                    << pUserApp->getNFinishedApps() << " of "
+//                    << pUserApp->getAppArraySize() << endl;
+//          }
+//      }
+//    else
+//      {
+//        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+//        << " - WARNING! Null pointer parameter "
+//        << strUsername << endl;
+//      }
+//}
 
 void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
 {
@@ -449,6 +583,115 @@ void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
       }
 }
+
+void DataCenterManager::handleVmSubscription(SIMCAN_Message *sm)
+{
+    SM_UserVM *userVM_Rq;
+
+    userVM_Rq = dynamic_cast<SM_UserVM*>(sm);
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Subscribe operation"  << endl;
+
+    if(userVM_Rq != nullptr)
+      {
+        if (checkVmUserFit(userVM_Rq))
+            notifySubscription(userVM_Rq);
+        else
+            rejectVmSubscribe(userVM_Rq); //Store the vmRequest
+      }
+    else
+      {
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
+      }
+}
+
+void DataCenterManager::rejectVmSubscribe(SM_UserVM* userVM_Rq)
+{
+    EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << endl;
+    EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
+
+    //Fill the message
+    userVM_Rq->setIsResponse(true);
+    userVM_Rq->setOperation(SM_VM_Notify);
+    userVM_Rq->setResult(SM_APP_Sub_Reject);
+
+    //Send the values
+    sendResponseMessage(userVM_Rq);
+}
+
+void DataCenterManager::notifySubscription(SM_UserVM* userVM_Rq)
+{
+    SM_UserVM_Finish* pMsgTimeout;
+    EV_INFO << "Notifying request from user: " << userVM_Rq->getUserID() << endl;
+    EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
+
+    //Fill the message
+    userVM_Rq->setIsResponse(true);
+    userVM_Rq->setOperation(SM_VM_Notify);
+    userVM_Rq->setResult(SM_APP_Sub_Accept);
+
+    //Cancel the timeout event
+//    pMsgTimeout = userVM_Rq->getTimeoutSubscribeMsg();
+//    if(pMsgTimeout != nullptr)
+//    {
+//        cancelAndDelete(pMsgTimeout);
+//        userVM_Rq->setTimeoutSubscribeMsg(nullptr);
+//    }
+
+    //Send the values
+    sendResponseMessage(userVM_Rq);
+}
+
+void DataCenterManager::handleAppExecEndSingle(std::string strUsername, std::string strVmId, std::string strAppName, int appIndexInVector) {
+    SM_UserAPP *pUserApp;
+    pUserApp = getUserAppRequestPerUser(strUsername);
+
+    if (pUserApp == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app request message from the User!!").c_str());
+
+//    endSingleAppResponse(pUserApp, strVmId, strAppName);
+//    scheduleAppTimeout(EXEC_APP_END_SINGLE, strUsername, strAppName, strVmId, SimTime());
+
+    EV_INFO << "The execution of the App [" << strAppName
+                           << " / " << strVmId
+                           << "] launched by the user " << strUsername
+                           << " has finished" << endl;
+
+    pUserApp->increaseFinishedApps();
+    //Check for a possible timeout
+    if (!pUserApp->isFinishedKO(strAppName, strVmId))
+      {
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+        << " - Changing status of the application [ app: "
+        << strAppName << " | vmId: " << strVmId << endl;
+        pUserApp->printUserAPP();
+
+        pUserApp->changeState(strAppName, strVmId, appFinishedOK);
+        pUserApp->setEndTime(strAppName, strVmId, simTime().dbl());
+      }
+
+
+    cModule *pVmAppVectorModule = nullptr;
+    bool *runningAppsArr;
+
+    pVmAppVectorModule = getAppsVectorModulePerVm(strVmId);
+
+    if (pVmAppVectorModule == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app ventor module for the VM!!").c_str());
+
+    int numMaxApps = pVmAppVectorModule->par("numApps");
+
+    if (appIndexInVector >= numMaxApps)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app ventor module for the VM!!").c_str());
+
+    runningAppsArr = getAppsRunningInVectorModuleByVm(strVmId);
+
+    if (runningAppsArr == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app runing vector for the VM!!").c_str());
+
+    runningAppsArr[appIndexInVector] = false;
+}
+
+
 
 void  DataCenterManager::acceptVmRequest(SM_UserVM* userVM_Rq)
 {
@@ -536,6 +779,8 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
             EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores<< " vs Available ["<< nAvailableCores << "/" <<nTotalCores << "]"<<endl;
 
             strUserName = userVM_Rq->getUserID();
+            if (strUserName.compare("(0)User_A[65/100]")==0)
+                EV_DEBUG << endl <<"Parar: " << endl;
             //Process all the VMs
             for(int i=0;i<nRequestedVms && bRet;i++)
               {
@@ -615,13 +860,15 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
 
 void DataCenterManager::abortAllApps(std::string strVmId)
 {
-    cModule *pVmAppModule, *pVmAppVectorModule = getAppsVectorModulePerVm(strVmId);
+    cModule *pAppModule, *pVmAppModule, *pVmAppVectorModule = getAppsVectorModulePerVm(strVmId);
     bool *appRunningArr = getAppsRunningInVectorModuleByVm(strVmId);
     int numMaxApps = pVmAppVectorModule->par("numApps");
 
     for (int i=0; i < numMaxApps; i++) {
         if (appRunningArr[i]){
             pVmAppModule = pVmAppVectorModule->getSubmodule("appModule", i);
+            //deleteAppFromModule(pVmAppModule);
+            storeAppFromModule(pVmAppModule);
             createDummyAppInAppModule(pVmAppModule);
             appRunningArr[i] = false;
         }
@@ -667,65 +914,131 @@ void DataCenterManager::handleExecVmRentTimeout(cMessage *msg) {
                            << "] launched by the user " << strUsername
                            << " has finished" << endl;
 
-    abortAllApps(strVmId);
-
     deallocateVmResources(strVmId);
-//        //Check the Application status
-//        it = handlingAppsRqMap.find(strUsername);
-//        if (it != handlingAppsRqMap.end())
-//          {
-//            pUserApp = it->second;
-//
-//            //Check the application status
-//            if (pUserApp != nullptr)
-//              {
-//
-//                EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << endl;
-//                EV_INFO
-//                << "Checking the status of the applications which are running over this VM"
-//                << endl;
-//
-//                //Abort the running applications
-//                if (!pUserApp->allAppsFinished(strVmId))
-//                  {
-//                    EV_INFO << "Aborting running applications" << endl;
-//                    abortAllApps(pUserApp, strVmId);
-//                  }
-//                // Check the result and send it
-//                checkAllAppsFinished(pUserApp, strVmId);
-//
-//
-////                else
-////                  {
-////                    EV_INFO << "All the applications have already finished" << endl;
-////                    bAlreadyFinished = true;
-////                  }
-//
-//
-//                //Check if all the applications of the user have finished
-////                if (pUserApp->allAppsFinished() && !pUserApp->getFinished() && !bAlreadyFinished)
-////                  {
-////                    //Notify the user the end of the execution
-////                    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - EXEC_VM_RENT_TIMEOUT Init" << endl;
-////
-////                    //if so, notify this.
-////                    //timeoutAppRequest(pUserApp);
-////                    //if so. Delete the application on the hashmap
-////                    handlingAppsRqMap.erase(strUsername);
-////                  }
-//              }
-//          }
+
+    pUserApp = getUserAppRequestPerUser(strUsername);
+
+    if (pUserApp == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app request message from the User!!").c_str());
+
+//    acceptAppRequest(pUserApp, strVmId);
+
+        //Check the Application status
+
+
+        EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << endl;
+        EV_INFO
+        << "Checking the status of the applications which are running over this VM"
+        << endl;
+
+        //Abort the running applications
+        if (!pUserApp->allAppsFinished(strVmId))
+          {
+            EV_INFO << "Aborting running applications" << endl;
+            abortAllApps(strVmId);
+            pUserApp->abortAllApps(strVmId);
+          }
+        // Check the result and send it
+        checkAllAppsFinished(pUserApp, strVmId);
 
 
         EV_INFO << "Freeing resources..." << endl;
-//
-//        //Free the VM resources
-//        freeVm(strVmId);
-//
-//        //Check the subscription queue
-//        updateSubsQueue();
+
 }
 
+void DataCenterManager::checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId) {
+    std::string strUsername;
+
+    if (pUserApp != nullptr)
+      {
+        strUsername = pUserApp->getUserID();
+        if (pUserApp->allAppsFinished(strVmId))
+          {
+            if (pUserApp->allAppsFinishedOK(strVmId))
+              {
+                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                << " - All the apps corresponding with the user "
+                << strUsername
+                << " have finished successfully" << endl;
+
+                pUserApp->printUserAPP();
+
+                //Notify the user the end of the execution
+                acceptAppRequest(pUserApp, strVmId);
+
+              }
+            else
+              {
+                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                << " - All the apps corresponding with the user "
+                << strUsername
+                << " have finished with some errors" << endl;
+
+                //Check the subscription queue
+                //updateSubsQueue();
+
+                //if (!pUserApp->getFinished())
+                timeoutAppRequest(pUserApp, strVmId);  //Notify the user the end of the execution
+              }
+
+            //Delete the application on the hashmap
+            //handlingAppsRqMap.erase(strUsername);
+          }
+        else
+          {
+            EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                    << " - Total apps finished: "
+                    << pUserApp->getNFinishedApps() << " of "
+                    << pUserApp->getAppArraySize() << endl;
+          }
+      }
+    else
+      {
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+        << " - WARNING! Null pointer parameter "
+        << strUsername << endl;
+      }
+}
+
+void  DataCenterManager::acceptAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId)
+{
+    EV_INFO << "Sending vm end to the CP:" << userAPP_Rq->getUserID() << endl;
+
+    SM_UserAPP* userAPP_Res = userAPP_Rq->dup();
+    userAPP_Res->printUserAPP();
+
+    userAPP_Res->setVmId(strVmId.c_str());
+    userAPP_Res->setFinished(true);
+
+    //Fill the message
+    userAPP_Res->setIsResponse(true);
+    userAPP_Res->setOperation(SM_APP_Rsp);
+    userAPP_Res->setResult(SM_APP_Res_Accept);
+
+    //Send the values
+    sendResponseMessage(userAPP_Res);
+
+}
+
+void  DataCenterManager::timeoutAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId)
+{
+    EV_INFO << "Sending timeout to the user:" << userAPP_Rq->getUserID() << endl;
+    EV_INFO << "Last id gate: " << userAPP_Rq->getLastGateId() << endl;
+
+    SM_UserAPP* userAPP_Res = userAPP_Rq->dup(strVmId);
+    userAPP_Res->printUserAPP();
+
+    userAPP_Res->setVmId(strVmId.c_str());
+
+    //Fill the message
+    userAPP_Res->setIsResponse(true);
+    userAPP_Res->setOperation(SM_APP_Rsp);
+    userAPP_Res->setResult(SM_APP_Res_Timeout);
+
+    //Send the values
+    sendResponseMessage(userAPP_Res);
+
+}
 
 void DataCenterManager::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
 {
@@ -795,6 +1108,7 @@ Hypervisor* DataCenterManager::selectNode (string strUserName, const VM_Request&
                         bool *runningAppsArr = new bool[numMaxApps]{false};
                         mapAppsRunningInVectorModulePerVm[vmRequest.strVmId] = runningAppsArr;
                         bHandled = true;
+                        return pHypervisor;
                     }
 
                 }
@@ -803,7 +1117,7 @@ Hypervisor* DataCenterManager::selectNode (string strUserName, const VM_Request&
         }
     }
 
-    return pHypervisor;
+    return nullptr;
 }
 
 
@@ -877,3 +1191,22 @@ void  DataCenterManager::fillVmFeatures(std::string strVmType, NodeResourceReque
     }
 
 }
+
+//SM_UserAPP_Finish* DataCenterManager::scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime)
+//{
+//    SM_UserAPP_Finish *pMsgFinish = new SM_UserAPP_Finish();
+//
+//    pMsgFinish->setUserID(strUserName.c_str());
+//    pMsgFinish->setStrApp(strAppName.c_str());
+//
+//    if(!strVmId.empty())
+//        pMsgFinish ->setStrVmId(strVmId.c_str());
+//
+//    pMsgFinish->setNTotalTime(totalTime);
+//    pMsgFinish->setName(name.c_str());
+//
+//    EV_INFO << "Scheduling time rental Msg, " << strAppName << " at " << simTime().dbl() + totalTime << "s" << endl;
+//    scheduleAt(simTime() + SimTime(totalTime), pMsgFinish);
+//
+//    return pMsgFinish;
+//}

@@ -23,6 +23,9 @@ const std::string Timer_WaitToConnect = "Timer: Wait to connect";
 /** Message to wait for the execution step*/
 const std::string Timer_WaitToExecute = "Timer: Wait to execute";
 
+/** Message to wait for the resume step*/
+const std::string Timer_WaitToResume = "Timer: Wait to resume";
+
 /** Message to wait for the execution step*/
 const std::string Timer_Latency = "Timer: Latency";
 
@@ -55,6 +58,7 @@ static const int SM_APP_Rsp= 505;
 static const int SM_VM_Res_Accept=10001;
 static const int SM_VM_Res_Reject=10002;
 static const int SM_APP_Sub_Accept=10003;
+static const int SM_APP_Sub_Reject=10008;
 static const int SM_APP_Sub_Timeout=10004;
 static const int SM_APP_Res_Accept=10005;
 static const int SM_APP_Res_Reject=10006;

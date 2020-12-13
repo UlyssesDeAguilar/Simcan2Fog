@@ -5,6 +5,7 @@
 #include <string>
 #include "../Messages/SM_CPU_Message.h"
 #include "include/SIMCAN_types.h"
+#include "Management/utils/LogUtils.h"
 
 using namespace omnetpp;
 using std::string;

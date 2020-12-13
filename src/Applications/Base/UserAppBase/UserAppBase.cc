@@ -21,7 +21,13 @@ void UserAppBase::initialize(){
         testID = newTestID;
         const char *newAppInstance = par ("appInstance");
         appInstance = newAppInstance;
+        const char *newVmInstance = par ("vmInstance");
+        vmInstance = newVmInstance;
+        const char *newUserInstance = par ("userInstance");
+        userInstance = newUserInstance;
         debugUserAppBase = par ("debugUserAppBase");
+
+        nextModuleIndex = getParentModule()->getParentModule()->getIndex();
 
 
         // Init cGates
@@ -70,14 +76,14 @@ void UserAppBase::SIMCAN_request_cpu (double MIs){
 		sm_cpu->setOperation (SM_ExecCpu);
 		
 		// Set the corresponding parameters
-		sm_cpu->setAppInstance(appInstance);
+		sm_cpu->setAppInstance(appInstance.c_str());
 		sm_cpu->setUseMis(true);
 		sm_cpu->setMisToExecute(MIs);
 
 		// Update message length
 		sm_cpu->updateLength ();
 
-		sm_cpu->setNextModuleIndex(getParentModule()->getParentModule()->getIndex());
+		sm_cpu->setNextModuleIndex(nextModuleIndex);
 
 		// Debug (Trace)
         if (debugUserAppBase)
@@ -95,9 +101,9 @@ void UserAppBase::SIMCAN_abort_request_cpu (){
         sm_cpu = new SM_CPU_Message ();
         sm_cpu->setOperation (SM_AbortCpu);
 
-        sm_cpu->setAppInstance(appInstance);
+        sm_cpu->setAppInstance(appInstance.c_str());
 
-        sm_cpu->setNextModuleIndex(getParentModule()->getParentModule()->getIndex());
+        sm_cpu->setNextModuleIndex(nextModuleIndex);
 
         // Debug (Trace)
         if (debugUserAppBase)
@@ -116,7 +122,7 @@ void UserAppBase::SIMCAN_request_cpuTime (simtime_t cpuTime){
 		sm_cpu->setOperation (SM_ExecCpu);
 		
 		// Set the corresponding parameters
-		sm_cpu->setAppInstance(appInstance);
+		sm_cpu->setAppInstance(appInstance.c_str());
 		sm_cpu->setUseTime (true);
 		sm_cpu->setCpuTime (cpuTime);
 		

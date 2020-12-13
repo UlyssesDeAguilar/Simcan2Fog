@@ -2,6 +2,7 @@
 #define __LOCAL_APPLICATION_H_
 
 #include <omnetpp.h>
+#include "Management/DataCenterManager/DataCenterManager.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
 
 /**
@@ -14,8 +15,13 @@
  * @date 2009-03-13
  */
 class LocalApplication: public UserAppBase{
+public:
+    unsigned int getCurrentIteration() const;
+    void setCurrentIteration(unsigned int currentIteration);
+    unsigned int getCurrentRemainingMIs() const;
+    void setCurrentRemainingMIs(unsigned int currentRemainingMIs);
+    void sendAbortRequest();
 
-	
 	protected:
 
         /** Size of the data to be read (in bytes) */
@@ -26,7 +32,7 @@ class LocalApplication: public UserAppBase{
 
 		/** Number of MIs to be executed */
 		unsigned int MIs;
-		unsigned int currentMisToExecute;
+		unsigned int currentRemainingMIs;
 
 		/** Number of iterations to be performed */
 		unsigned int iterations;
@@ -85,7 +91,7 @@ class LocalApplication: public UserAppBase{
 		/** Execute write operation */
 		bool executeWrite;
 		
-
+		DataCenterManager *pDataCenterManager;
 				
 								
 		
@@ -122,7 +128,8 @@ class LocalApplication: public UserAppBase{
 		*/
 		void processResponseMessage (SIMCAN_Message *sm);
 
-		void sendAbortRequest();
+
+		void sendEndResponse();
 
 
 	private:

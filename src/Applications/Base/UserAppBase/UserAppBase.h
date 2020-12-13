@@ -34,6 +34,8 @@ class UserAppBase: public cSIMCAN_Core{
 
         /**< Name of the application's instance */
         string appInstance;
+        string vmInstance;
+        string userInstance;
 
         /**< Show log messages of UserAppBase (for deep-debugging purpose only) */
         bool debugUserAppBase;
@@ -44,6 +46,7 @@ class UserAppBase: public cSIMCAN_Core{
         /**< Output gate to OS. */
         cGate* outGate;
 
+        int nextModuleIndex;
 
 
        /**

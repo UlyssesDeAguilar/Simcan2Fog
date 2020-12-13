@@ -125,32 +125,40 @@ void CpuCore::processRequestMessage (SIMCAN_Message *sm){
 	    // Casting
 		sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
 
-		// Link pending message
-		pendingMessage = sm_cpu;
+		if (sm_cpu->getOperation() == SM_AbortCpu) {
+		    pendingMessage = nullptr;
+		    cancelEvent(latencyMessage);
+		} else {
 
-		EV_DEBUG << "(processRequestMessage) Processing request."<< endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
 
-		// Check the quantum is >0
-		if ((sm_cpu->getQuantum() <= 0) && (sm_cpu->getQuantum() != SM_CpuInfiniteQuantum)){
-		    error ("CPU request with quantum=0. %s", sm_cpu->contentsToString(showMessageContents, showMessageTrace).c_str());
-		}
 
-		// There is at least 1 execution tick!
-		else{
+            // Link pending message
+            pendingMessage = sm_cpu;
 
-            // Execute current request
-            if (sm_cpu->getUseTime()){
-                EV_INFO << "Executing one tick (CPU request in time unit)" << endl;
-                sm_cpu->executeTime(tick);
+            EV_DEBUG << "(processRequestMessage) Processing request."<< endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
+
+            // Check the quantum is >0
+            if ((sm_cpu->getQuantum() <= 0) && (sm_cpu->getQuantum() != SM_CpuInfiniteQuantum)){
+                error ("CPU request with quantum=0. %s", sm_cpu->contentsToString(showMessageContents, showMessageTrace).c_str());
             }
+
+            // There is at least 1 execution tick!
             else{
-                EV_INFO << "Executing one tick (CPU request in MIs unit)" << endl;
-                sm_cpu->executeMIs(ipt);
-            }
 
-            // Execute a tick
-            scheduleAt (simTime()+tick, latencyMessage);
-		}
+                // Execute current request
+                if (sm_cpu->getUseTime()){
+                    EV_INFO << "Executing one tick (CPU request in time unit)" << endl;
+                    sm_cpu->executeTime(tick);
+                }
+                else{
+                    EV_INFO << "Executing one tick (CPU request in MIs unit)" << endl;
+                    sm_cpu->executeMIs(ipt);
+                }
+
+                // Execute a tick
+                scheduleAt (simTime()+tick, latencyMessage);
+            }
+	    }
 }
 
 

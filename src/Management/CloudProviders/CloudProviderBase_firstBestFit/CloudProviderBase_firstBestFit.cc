@@ -53,6 +53,12 @@ void CloudProviderBase_firstBestFit::initializeRequestHandlers() {
 
 void CloudProviderBase_firstBestFit::initializeResponseHandlers() {
     responseHandlers[SM_VM_Res_Accept] = [this](SIMCAN_Message *msg) -> void { return handleResponseAccept(msg); };
+    responseHandlers[SM_VM_Res_Reject] = [this](SIMCAN_Message *msg) -> void { return handleResponseReject(msg); };
+    responseHandlers[SM_APP_Res_Accept] = [this](SIMCAN_Message *msg) -> void { return handleResponseAppAccept(msg); };
+    responseHandlers[SM_APP_Res_Timeout] = [this](SIMCAN_Message *msg) -> void { return handleResponseAppTimeout(msg); };
+    responseHandlers[SM_APP_Sub_Accept] = [this](SIMCAN_Message *msg) -> void { return handleResponseNotifySubcription(msg); };
+    responseHandlers[SM_APP_Sub_Reject] = [this](SIMCAN_Message *msg) -> void { return handleResponseRejectSubcription(msg); };
+//    responseHandlers[SM_APP_End_Single] = [this](SIMCAN_Message *msg) -> void { return handleResponseAppEndSingle(msg); };
 }
 
 void CloudProviderBase_firstBestFit::processRequestMessage (SIMCAN_Message *sm)
@@ -441,7 +447,7 @@ void CloudProviderBase_firstBestFit::handleExecVmRentTimeout(cMessage *msg) {
         EV_INFO << "Freeing resources..." << endl;
 
         //Free the VM resources
-        freeVm(strVmId);
+//        freeVm(strVmId);
 
         //Check the subscription queue
         updateSubsQueue();
@@ -502,8 +508,8 @@ void CloudProviderBase_firstBestFit::handleSubscriptionTimeout(cMessage *msg)
             EV_TRACE << __func__ << " - User found at position:" << nIndex << endl;
             userVmSub = subscribeQueue.at(nIndex);
 
-            if (strcmp(userVmSub->getStrVmId(), "") == 0)
-                freeUserVms(strUsername);
+//            if (strcmp(userVmSub->getStrVmId(), "") == 0)
+//                freeUserVms(strUsername);
 
             dWaitingSub = (simTime().dbl())-(userVmSub->getDStartSubscriptionTime());
             dMaxSubTime = userVmSub->getMaxSubscribetime(0);
@@ -532,7 +538,7 @@ void CloudProviderBase_firstBestFit::handleSubscriptionTimeout(cMessage *msg)
             EV_TRACE << __func__ << " - User " << strUsername << " not found in queue list" << endl;
           }
         //Check the subscription queue
-        updateSubsQueue();
+        //updateSubsQueue();
       }
     else
       {
@@ -597,15 +603,18 @@ void CloudProviderBase_firstBestFit::updateSubsQueue()
     {
         userVmSub = subscribeQueue.at(i);
 
+        userVmSub->setOperation(SM_VM_Sub);
+        userVmSub->setResult(0);
+
         if(checkVmUserFit(userVmSub))
         {
             EV_INFO << "Notifying subscription of user: "<< userVmSub->getUserID() << endl;
-            notifySubscription(userVmSub);
+//            notifySubscription(userVmSub);
 
             //Remove from queue
             subscribeQueue.erase(subscribeQueue.begin()+i);
-            if (strcmp(userVmSub->getStrVmId(), "") == 0)
-                acceptedUsersRqMap[userVmSub->getUserID()] = userVmSub;
+//            if (strcmp(userVmSub->getStrVmId(), "") == 0)
+//                acceptedUsersRqMap[userVmSub->getUserID()] = userVmSub;
             i--;
         }
     }
@@ -742,9 +751,11 @@ void CloudProviderBase_firstBestFit::handleVmSubscription(SIMCAN_Message *sm)
     if(userVM_Rq != nullptr)
       {
         if (checkVmUserFit(userVM_Rq))
-            notifySubscription(userVM_Rq);
+            EV_FATAL << "OK" << endl;
+//            notifySubscription(userVM_Rq);
         else
-            storeVmSubscribe(userVM_Rq); //Store the vmRequest
+            EV_FATAL << "Fail" << endl;
+//            storeVmSubscribe(userVM_Rq); //Store the vmRequest
       }
     else
       {
@@ -787,7 +798,23 @@ void CloudProviderBase_firstBestFit::handleUserAppRequest(SIMCAN_Message *sm)
 
     if(userAPP_Rq != nullptr)
       {
-        sendRequestMessage (userAPP_Rq, toDataCenterGates[0]);
+
+//            strUsername = userAPP_Rq->getUserID();
+//
+//            std::map<std::string, SM_UserAPP*>::iterator appIt = handlingAppsRqMap.find(strUsername);
+//            if(appIt == handlingAppsRqMap.end())
+//              {
+//                //Registering the appRq
+//                handlingAppsRqMap[strUsername] = userAPP_Rq;
+//              }
+//            else
+//              {
+//                SM_UserAPP *uapp = appIt->second;
+//                uapp->update(userAPP_Rq);
+//                //delete userAPP_Rq; //Delete ephemeral message after update global message.
+//              }
+            sendRequestMessage (userAPP_Rq, toDataCenterGates[0]);
+
 
 //        //Las aplicaciones estan relacionadas con las VM
 //        //Hay que relacionar la APP con la VM para asi poder terminar con ella.
@@ -1011,6 +1038,17 @@ int CloudProviderBase_firstBestFit::TEMPORAL_calculateTotalTime(Application* app
 
     return nTotalTime;
 }
+void CloudProviderBase_firstBestFit::handleResponseRejectSubcription(SIMCAN_Message* sm)
+{
+
+    SM_UserVM *userVM_Rq = dynamic_cast<SM_UserVM*>(sm);
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request"  << endl;
+
+    if(userVM_Rq == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
+
+    storeVmSubscribe(userVM_Rq);
+}
 void CloudProviderBase_firstBestFit::notifySubscription(SM_UserVM* userVM_Rq)
 {
     SM_UserVM_Finish* pMsgTimeout;
@@ -1058,11 +1096,16 @@ void CloudProviderBase_firstBestFit::storeVmSubscribe(SM_UserVM* userVM_Rq)
         dMaxSubscribeTime = userVM_Rq->getMaxSubscribetime(0);
         EV_INFO << "Subscribing the VM request from user:" << strUserName << " | max sub time: " << dMaxSubscribeTime<<endl;
 
-        pMsg = scheduleRentingTimeout(USER_SUBSCRIPTION_TIMEOUT, userVM_Rq->getUserID(), "", dMaxSubscribeTime);
+        pMsg = userVM_Rq->getTimeoutSubscribeMsg();
+        if (pMsg==nullptr)
+        {
+            pMsg = scheduleRentingTimeout(USER_SUBSCRIPTION_TIMEOUT, userVM_Rq->getUserID(), "", dMaxSubscribeTime);
 
-        //Store the VM subscription until there exist the Vms necessaries
-        userVM_Rq->setDStartSubscriptionTime(simTime().dbl());
-        userVM_Rq->setTimeoutSubscribeMsg(pMsg);
+            //Store the VM subscription until there exist the Vms necessaries
+            userVM_Rq->setDStartSubscriptionTime(simTime().dbl());
+            userVM_Rq->setTimeoutSubscribeMsg(pMsg);
+        }
+
         subscribeQueue.push_back(userVM_Rq);
 
         //scheduleAt(simTime() + SimTime(dMaxSubscribeTime), pMsg);
@@ -1147,7 +1190,9 @@ bool CloudProviderBase_firstBestFit::checkVmUserFit(SM_UserVM*& userVM_Rq)
 
     bAccepted = bRet = true;
 
+    userVM_Rq->setIsResponse(false);
 
+    //TODO: Select datacenter
     sendRequestMessage (userVM_Rq, toDataCenterGates[0]);
 
 //    if(userVM_Rq != nullptr)
@@ -1452,6 +1497,102 @@ int CloudProviderBase_firstBestFit::calculateTotalCoresRequested(SM_UserVM* user
     return nRet;
 }
 
+void CloudProviderBase_firstBestFit::handleResponseReject(SIMCAN_Message *sm) {
+    sendResponseMessage(sm);
+}
+
 void CloudProviderBase_firstBestFit::handleResponseAccept(SIMCAN_Message *sm) {
     sendResponseMessage(sm);
 }
+
+void CloudProviderBase_firstBestFit::handleResponseAppAccept(SIMCAN_Message *sm) {
+    updateSubsQueue();
+    sendResponseMessage(sm);
+//    acceptAppRequest(userAPP_Rq, userAPP_Rq->getVmId());
+}
+void CloudProviderBase_firstBestFit::handleResponseAppTimeout(SIMCAN_Message *sm) {
+    updateSubsQueue();
+    sendResponseMessage(sm);
+}
+void CloudProviderBase_firstBestFit::handleResponseNotifySubcription(SIMCAN_Message *sm) {
+
+    SM_UserVM *userVM_Rq;
+    SM_UserVM_Finish *pMsg;
+
+    userVM_Rq = dynamic_cast<SM_UserVM*>(sm);
+
+    if(userVM_Rq == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
+
+//    EV_INFO << "Notifying subscription of user: "<< userVmSub->getUserID() << endl;
+//        //notifySubscription(userVmSub);
+
+//    //Finally, notify if there is enough space to handle a new notification
+//    for(int i=0;i<subscribeQueue.size();i++)
+//    {
+//        userVmSub = subscribeQueue.at(i);
+//
+//        if (strcmp(userVmSub->getUserID(), userVM_Rq->getUserID())==0 && strcmp(userVmSub->getStrVmId(), userVM_Rq->getStrVmId())==0) {
+//            //Remove from queue
+//            subscribeQueue.erase(subscribeQueue.begin()+i);
+//        }
+//
+//
+//    }
+    pMsg = userVM_Rq->getTimeoutSubscribeMsg();
+    if (pMsg != nullptr) {
+        userVM_Rq->setTimeoutSubscribeMsg(nullptr);
+        cancelAndDelete(pMsg);
+
+    }
+
+    sendResponseMessage(sm);
+}
+
+//void CloudProviderBase_firstBestFit::handleResponseVmTimeout(SIMCAN_Message *sm) {
+//    SM_UserAPP *userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
+//    std::string strUserName, strVmId;
+//
+//    if(userAPP_Rq == nullptr)
+//        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userAPP_Rq. Nullpointer!!").c_str());
+//
+//    strUserName = userAPP_Rq->getUserID();
+//    strVmId = userAPP_Rq->getVmId();
+//
+//    scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, strVmId, 0);
+//
+//    delete (sm);
+////    acceptAppRequest(userAPP_Rq, userAPP_Rq->getVmId());
+//}
+//void CloudProviderBase_firstBestFit::handleResponseAppEndSingle(SIMCAN_Message *sm) {
+//    SM_UserAPP *userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
+//    std::string strUserName, strVmId, strAppName;
+//
+//    if(userAPP_Rq == nullptr)
+//        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userAPP_Rq. Nullpointer!!").c_str());
+//
+//    strUserName = userAPP_Rq->getUserID();
+//    strVmId = userAPP_Rq->getVmId();
+//    strAppName = userAPP_Rq->getAppId();
+//
+//    scheduleAppTimeout(EXEC_APP_END_SINGLE, strUserName, strAppName, strVmId, 0);
+//
+//    delete (sm);
+////    acceptAppRequest(userAPP_Rq, userAPP_Rq->getVmId());
+//}
+
+//void CloudProviderBase_firstBestFit::handleResponseVmTimeout(SIMCAN_Message *sm) {
+//
+//}
+//
+//void CloudProviderBase_firstBestFit::handleResponseAppEndSingle(SIMCAN_Message *sm) {
+//    std::string strUsername, strAppName, strVmId;
+//    SM_UserAPP *userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
+//
+//    if(userAPP_Rq != nullptr)
+//    {
+//        strUsername = userAPP_Rq->getUserID();
+//        strAppName
+//        scheduleAppTimeout(EXEC_APP_END_SINGLE, strUsername, strAppName, strVmId, SimTime());
+//    }
+//}

@@ -100,8 +100,8 @@ cGate* CpuSchedulerRR::getOutGate (cMessage *msg){
         }
 
         // Msg arrives from an unknown gate
-        else
-            error ("Message received from an unknown gate [%s]", msg->getName());
+//        else
+//            error ("Message received from an unknown gate [%s]", msg->getName());
 
 
 	return outGate;
@@ -121,6 +121,18 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
 	 // Cast to CPU Message!
 	sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
 
+	if (sm_cpu == nullptr)
+        error ("%s - Unable to cast msg to SM_CPU_Message*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
+
+	if (sm_cpu->getOperation() == SM_AbortCpu)
+	{
+	    if (!deleteFromRequestsQueue(sm))
+            abortsQueue.insert(sm);
+        else
+            delete(sm);
+	} else {
+
+
 
 	    // This scheduler is idle
 	    if (!bRunning){
@@ -131,14 +143,12 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
 	    else{
 
             EV_DEBUG << "(processRequestMessage) Processing request."<< endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
-            if (sm->getOperation () == SM_AbortCpu) {
-                if (!deleteFromRequestsQueue(sm))
-                    abortsQueue.insert(sm);
-                else
-                    delete(sm);
-            }
-            // Check if this request has something to execute
-            else if ((!sm_cpu->getUseTime()) && (!sm_cpu->getUseMis())){
+//            if (sm->getOperation () == SM_AbortCpu) {
+
+//            }
+//            // Check if this request has something to execute
+//            else
+            if ((!sm_cpu->getUseTime()) && (!sm_cpu->getUseMis())){
                 error ("Empty CPU request.%s", sm->contentsToString(showMessageContents, showMessageTrace).c_str());
             }
 
@@ -178,6 +188,7 @@ void CpuSchedulerRR::processRequestMessage (SIMCAN_Message *sm){
                 }
             }
 	    }
+	}
 }
 
 bool CpuSchedulerRR::deleteFromRequestsQueue (SIMCAN_Message *sm)
@@ -189,7 +200,7 @@ bool CpuSchedulerRR::deleteFromRequestsQueue (SIMCAN_Message *sm)
 
     for (cQueue::Iterator iter(requestsQueue); !iter.end() && !bFound; iter++) {
         SM_CPU_Message *msg = (SM_CPU_Message *) *iter;
-        if (msg->getAppInstance().compare(sm_cpu->getAppInstance())==0) {
+        if (strcmp(msg->getAppInstance(), sm_cpu->getAppInstance())==0) {
             requestsQueue.remove(msg);
             bFound = true;
         }
@@ -206,7 +217,7 @@ bool CpuSchedulerRR::deleteFromAbortsQueue (SIMCAN_Message *sm){
 
     for (cQueue::Iterator iter(abortsQueue); !iter.end() && !bFound; iter++) {
         SM_CPU_Message *msg = (SM_CPU_Message *) *iter;
-        if (msg->getAppInstance().compare(sm_cpu->getAppInstance())==0) {
+        if (strcmp(msg->getAppInstance(),sm_cpu->getAppInstance())==0) {
             abortsQueue.remove(msg);
             bFound = true;
         }
@@ -216,7 +227,7 @@ bool CpuSchedulerRR::deleteFromAbortsQueue (SIMCAN_Message *sm){
 
 void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
 
-	int cpuIndex;
+	int realCpuIndex, virtualCpuIndex;
 	cMessage* unqueuedMessage;
 	SIMCAN_Message *nextRequest;
 	SM_CPU_Message *sm_cpu;
@@ -237,26 +248,29 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
         else{
 
             // Update CPU state!
-            cpuIndex = sm_cpu->getNextModuleIndex();
+            realCpuIndex = sm_cpu->getNextModuleIndex();
+            virtualCpuIndex = getVirtualCpuIndex(realCpuIndex);
 
             // Check bounds
-            if ((cpuIndex >= managedCpuCores) || (cpuIndex < 0))
-                error ("\nCPU index error:%d. There are %d CPUs attached. %s\n", cpuIndex, managedCpuCores, sm_cpu->contentsToString(showMessageContents, showMessageTrace).c_str());
+            if ((virtualCpuIndex >= managedCpuCores) || (virtualCpuIndex < 0))
+                error ("\nCPU index error:%d. There are %d CPUs attached. %s\n", realCpuIndex, managedCpuCores, sm_cpu->contentsToString(showMessageContents, showMessageTrace).c_str());
             else
-                isCPU_Idle[cpuIndex] = true;
+                isCPU_Idle[virtualCpuIndex] = true;
 
 
-            EV_DEBUG << "(processResponseMessage) Arrives a message from CPU core:" << cpuIndex << endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
+            EV_DEBUG << "(processResponseMessage) Arrives a message from CPU core:" << realCpuIndex << endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
 
-            if (deleteFromAbortsQueue(sm)) {
-                delete(sm);
-            }
-            // Current computing block has not been completely executed
-            else if (!sm_cpu->getIsCompleted()){
+//            if (deleteFromAbortsQueue(sm)) {
+//                delete(sm);
+//            }
+//            else
+
+            if (!sm_cpu->getIsCompleted()){//            // Current computing block has not been completely executed
+
                 EV_INFO << "Request CPU not completed... Pushing to queue." << endl;
-//                SM_CPU_Message *sm_cpu_status = sm_cpu->dup();
-//                sm_cpu_status->setIsResponse(true);
-//                sendResponseMessage(sm_cpu_status);
+                SM_CPU_Message *sm_cpu_status = sm_cpu->dup();
+                sm_cpu_status->setIsResponse(true);
+                sendResponseMessage(sm_cpu_status);
 
                 sm_cpu->setIsResponse(false);
                 requestsQueue.insert (sm_cpu);
@@ -265,7 +279,7 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
             // Current block has been completely executed
             else{
                 EV_INFO << "Request CPU completed. Sending it back to the application." << endl;
-                sm_cpu->setResult(SM_APP_Res_Accept);
+                //sm_cpu->setResult(SM_APP_Res_Accept);
                 sm_cpu->setIsResponse(true);
                 sendResponseMessage (sm_cpu);
             }
@@ -281,10 +295,10 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
                 nextRequest = check_and_cast<SIMCAN_Message *>(unqueuedMessage);
 
                 // Set the cpu core index
-                nextRequest->setNextModuleIndex(cpuIndex);
+                nextRequest->setNextModuleIndex(realCpuIndex);
 
                 // Update state!
-                isCPU_Idle[cpuIndex]=false;
+                isCPU_Idle[virtualCpuIndex]=false;
 
                 sm_cpuNext = check_and_cast<SM_CPU_Message *>(nextRequest);
 
@@ -293,7 +307,7 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
 
                 // Debug
                 EV_DEBUG << "(processResponseMessage) CPU idle found..." << endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
-                EV_INFO << "Sending message to CPU["<< cpuIndex << "]" << endl;
+                EV_INFO << "Sending message to CPU["<< realCpuIndex << "]" << endl;
 
                 // Send!
                 sendRequestMessage (nextRequest, toHubGate);
@@ -306,6 +320,12 @@ void CpuSchedulerRR::processResponseMessage (SIMCAN_Message *sm){
         }
 }
 
+int CpuSchedulerRR::getVirtualCpuIndex(unsigned int realCpuIndex) {
+    for (unsigned int i=0; i<managedCpuCores; i++)
+        if (cpuCoreIndex[i] == realCpuIndex)
+            return i;
+    return -1;
+}
 unsigned int* CpuSchedulerRR::getCpuCoreIndex() const {
     return cpuCoreIndex;
 }
@@ -319,6 +339,8 @@ bool CpuSchedulerRR::isRunning() const {
 }
 
 void CpuSchedulerRR::setIsRunning(bool bRunning) {
+    if (this->bRunning && !bRunning)
+        stopAllProcess();
     this->bRunning = bRunning;
 }
 
@@ -366,5 +388,29 @@ int CpuSchedulerRR::searchIdleCPU (){
 	return result;
 }
 
+void CpuSchedulerRR::stopAllProcess() {
+    requestsQueue.clear();
+    for (unsigned int i=0; i<managedCpuCores; i++)
+            if (!isCPU_Idle[i])
+                stopCpu(i);
+}
+
+void CpuSchedulerRR::stopCpu(unsigned int virtualCpuIndex) {
+    SM_CPU_Message *sm_cpu;     // Request message!
+
+    // Creates the message
+    sm_cpu = new SM_CPU_Message ();
+    take(sm_cpu);
+    sm_cpu->setOperation (SM_AbortCpu);
+
+    // Update message length
+    sm_cpu->updateLength ();
+
+    // Set the CPU core for this request
+    sm_cpu->setNextModuleIndex(cpuCoreIndex[virtualCpuIndex]);
+
+    // Send the request to the CPU processor
+    sendRequestMessage (sm_cpu, toHubGate);
+}
 
 

@@ -93,6 +93,9 @@ void cSIMCAN_Core::sendRequestMessage (SIMCAN_Message *sm, cGate* gate){
 
 void cSIMCAN_Core::sendResponseMessage (SIMCAN_Message *sm){
 
+    if (sm->getResult()==10008)
+        EV_INFO << "Parar" << endl;
+
 	int gateId;
 
 		// Get the gateId to send back the message
@@ -144,7 +147,7 @@ void cSIMCAN_Core::processCurrentRequestMessage (){
 
 
 		// There is no pending request!
-		if (!isPendingRequest()){
+		//if (!isPendingRequest()){
 
 			// While exists enqueued requests
 			if (!queue.isEmpty()){
@@ -170,15 +173,15 @@ void cSIMCAN_Core::processCurrentRequestMessage (){
                 if (debugSimcanCore)
                     EV_TRACE << "(processCurrentRequestMessage): No pending requests and queue is empty"<< endl;
 			}
-		}
-
-		// There is a pending request
-		else{
-
-		    // Debug (Trace)
-            if (debugSimcanCore)
-                EV_TRACE << "(processCurrentRequestMessage): There is a pending requests..."<< endl;
-		}
+//		}
+//
+//		// There is a pending request
+//		else{
+//
+//		    // Debug (Trace)
+//            if (debugSimcanCore)
+//                EV_TRACE << "(processCurrentRequestMessage): There is a pending requests..."<< endl;
+//		}
 }
 
 bool cSIMCAN_Core::isPendingRequest (){

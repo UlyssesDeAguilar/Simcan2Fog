@@ -84,6 +84,9 @@ public:
 	    void finish();
 	    bool deleteFromRequestsQueue (SIMCAN_Message *sm);
 	    bool deleteFromAbortsQueue (SIMCAN_Message *sm);
+	    int getVirtualCpuIndex(unsigned int realCpuIndex);
+	    void stopAllProcess();
+	    void stopCpu(unsigned int virtualCpuIndex);
 	    
 	    
 	private:

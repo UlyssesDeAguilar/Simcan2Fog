@@ -25,7 +25,7 @@ void Hypervisor::initialize(){
 	        // Init module parameters
             isVirtualHardware = par ("isVirtualHardware");
             maxVMs = (unsigned int) par ("maxVMs");
-            numAllocatedVms = 0;
+//            numAllocatedVms = 0;
 
             // Get the number of gates for each vector
             numAppGates = gateSize ("fromApps");
@@ -64,10 +64,12 @@ void Hypervisor::initialize(){
 
             pCpuScheds = getParentModule()->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0);
             pCpuSchedArray = new cModule* [pCpuScheds->getVectorSize()];
-
+            freeSchedArray = new bool [pCpuScheds->getVectorSize()];
             for (int i=0; i<pCpuScheds->getVectorSize(); i++)
+            {
                 pCpuSchedArray[i] = getParentModule()->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", i);
-
+                freeSchedArray[i] = true;
+            }
 
             pHardwareManagerModule = getParentModule()->getParentModule()->getSubmodule("hardwareManager");
             pHardwareManager = check_and_cast<HardwareManager*>(pHardwareManagerModule);
@@ -124,7 +126,7 @@ void Hypervisor::processRequestMessage (SIMCAN_Message *sm){
         EV_DEBUG << "(processRequestMessage) Message arrives from applications."<< endl << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
 
         // CPU operation?
-        if (sm->getOperation () == SM_ExecCpu){
+        if (sm->getOperation () == SM_ExecCpu || sm->getOperation () == SM_AbortCpu ){
 
             // Virtual HW! There is only 1 CPU scheduler
             if (!isVirtualHardware){
@@ -287,13 +289,25 @@ cModule* Hypervisor::allocateNewResources(NodeResourceRequest* pResourceRequest)
     if (cpuCoreIndex == nullptr)
         return nullptr;
 
-    cModule *pVmSchedulerModule = pCpuSchedArray[numAllocatedVms];
-    cModule *pVmAppVectorModule = pAppsVectorsArray[numAllocatedVms];
+    bool allocatedVm = false;
+    int nSchedulerIndex = -1;
+
+    for (int i=0; i<maxVMs && !allocatedVm; i++) {
+        if (freeSchedArray[i]) {
+            nSchedulerIndex = i;
+            freeSchedArray[nSchedulerIndex] = false;
+            allocatedVm = true;
+        }
+    }
+
+    if (!allocatedVm)
+        return nullptr;
+
+    cModule *pVmSchedulerModule = pCpuSchedArray[nSchedulerIndex];
+    cModule *pVmAppVectorModule = pAppsVectorsArray[nSchedulerIndex];
 
     mapResourceRequestPerVm[pResourceRequest->getVmId()] = pResourceRequest;
-    mapVmScheduler[pResourceRequest->getVmId()] = numAllocatedVms;
-
-    numAllocatedVms++;
+    mapVmScheduler[pResourceRequest->getVmId()] = nSchedulerIndex;
 
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR*> (pVmSchedulerModule);
     int nManagedCpuCores = pResourceRequest->getTotalCpUs();
@@ -326,10 +340,15 @@ void Hypervisor::deallocateVmResources(std::string strVmId) {
     pResourceRequest = requestIt->second;
     nSchedulerIndex = schedulerIt->second;
 
-    pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs());
+
 
     cModule *pVmSchedulerModule = pCpuSchedArray[nSchedulerIndex];
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR*> (pVmSchedulerModule);
+
+    unsigned int* cpuCoreIndex;
+    cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
+    pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs(), cpuCoreIndex);
+    freeSchedArray[nSchedulerIndex] = true;
 
     pVmScheduler->setIsRunning(false);
 }

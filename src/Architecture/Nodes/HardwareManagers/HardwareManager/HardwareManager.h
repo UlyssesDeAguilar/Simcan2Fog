@@ -15,7 +15,7 @@ class HardwareManager : public cSimpleModule{
         int getAvailableCores();
 
         unsigned int* allocateCores(int numCores);
-        int deallocateCores(int numCores);
+        int deallocateCores(int numCores, unsigned int* cpuCoreIndex);
 
     private:
 

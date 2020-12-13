@@ -6,6 +6,7 @@
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/parser/DataCenterConfigParser.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
+//#include "Applications/UserApps/LocalApplication/LocalApplication.h"
 
 /**
  * Module that implementa a data-center manager for cloud environments
@@ -17,6 +18,9 @@ public:
     int getNTotalCores() const;
     void setNTotalCores(int nTotalCores);
 
+public:
+    void handleAppExecEndSingle(std::string strUsername, std::string strVmId, std::string strAppName, int appIndex);
+
     protected:
 
         /** Show information of DataCenters */
@@ -27,6 +31,7 @@ public:
         int nTotalAvailableCores;
 
         std::map<std::string, Hypervisor*> acceptedVMsMap;
+        std::map<std::string, SM_UserAPP*> handlingAppsRqMap;
 
         /** Users */
         std::vector<CloudUserInstance*> users;
@@ -42,6 +47,7 @@ public:
 
         std::map<int, std::vector<Hypervisor*>> mapHypervisorPerNodes;
         std::map<std::string, cModule*> mapAppsVectorModulePerVm;
+        std::map<std::string, unsigned int*> mapAppsModulePerId;
         std::map<std::string, bool*> mapAppsRunningInVectorModulePerVm;
 
 
@@ -103,10 +109,20 @@ public:
         cModule* getFreeAppModuleInVector(std::string strVmId);
         Hypervisor* getNodeHypervisorByVm(std::string strVmId);
         bool* getAppsRunningInVectorModuleByVm(std::string strVmId);
+        unsigned int* getAppModuleById(std::string appInstance);
         void createDummyAppInAppModule(cModule *pVmAppModule);
         void cleanAppVectorModule(cModule *pVmAppVectorModule);
         void abortAllApps(std::string strVmId);
         void deallocateVmResources(std::string strVmId);
+        SM_UserAPP* getUserAppRequestPerUser(std::string strUserId);
+        void  acceptAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
+        void  timeoutAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
+        void  endSingleAppResponse(SM_UserAPP* userAPP_Rq, std::string strVmId, std::string strAppName);
+        void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);
+        void rejectVmSubscribe(SM_UserVM* userVM_Rq);
+        void notifySubscription(SM_UserVM* userVM_Rq);
+        void handleVmSubscription(SIMCAN_Message *sm);
+        void storeAppFromModule(cModule *pVmAppModule);
 };
 
 #endif

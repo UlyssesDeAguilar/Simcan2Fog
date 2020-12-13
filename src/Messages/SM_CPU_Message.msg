@@ -22,6 +22,8 @@ message SM_CPU_Message extends SIMCAN_Message{
     int cpuPriority = 0;				// Priority 
     
     bool isCompleted = false;			// Flag that indicates if this request has been completely processed
+    
+    string appInstance = "";
 }
 
 

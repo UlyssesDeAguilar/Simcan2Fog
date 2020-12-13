@@ -19,6 +19,7 @@ void DummyApplication::finish(){
 
 	// Finish the super-class
     UserAppBase::finish();
+
 }
 
 void DummyApplication::processSelfMessage (cMessage *msg){

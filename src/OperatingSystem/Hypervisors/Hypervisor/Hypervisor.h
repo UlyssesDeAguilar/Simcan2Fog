@@ -24,7 +24,7 @@ class Hypervisor :public cSIMCAN_Core{
 
         /** Maximum number of VMs allocated in this computer */
         unsigned int maxVMs;
-        unsigned int numAllocatedVms;
+//        unsigned int numAllocatedVms;
 
         /** Input gate from Apps. */
         cGate** fromAppsGates;
@@ -45,6 +45,8 @@ class Hypervisor :public cSIMCAN_Core{
         cModule *pAppsVectors;
         cModule **pCpuSchedArray;
         cModule *pCpuScheds;
+
+        bool *freeSchedArray;
 
         std::map<string, int> mapVmScheduler;
         std::map<std::string, NodeResourceRequest*> mapResourceRequestPerVm;
