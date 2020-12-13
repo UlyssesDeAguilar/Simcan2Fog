@@ -289,6 +289,12 @@ cModule* Hypervisor::allocateNewResources(NodeResourceRequest* pResourceRequest)
     if (cpuCoreIndex == nullptr)
         return nullptr;
 
+    if (!pHardwareManager->allocateRam(pResourceRequest->getTotalMemory()))
+    {
+        pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs(), cpuCoreIndex);
+        return nullptr;
+    }
+
     bool allocatedVm = false;
     int nSchedulerIndex = -1;
 
@@ -349,6 +355,7 @@ void Hypervisor::deallocateVmResources(std::string strVmId) {
     cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
     pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs(), cpuCoreIndex);
     freeSchedArray[nSchedulerIndex] = true;
+    pHardwareManager->deallocateRam(pResourceRequest->getTotalMemory());
 
     pVmScheduler->setIsRunning(false);
 }

@@ -5,6 +5,9 @@
 #include "Management/DataCenterManager/DataCenterManager.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
 
+#define IO_READ_OPERATION "IO_READ_OPERATION"
+#define IO_WRITE_OPERATION "IO_WRITE_OPERATION"
+
 /**
  * @class LocalApplication LocalApplication.h "LocalApplication.h"
  *
@@ -138,6 +141,7 @@ public:
 		* Method that creates and sends a CPU request.
 		*/
 		void executeCPUrequest();
+		void executeIORequest();
 
 	   /**
 		* Print results.

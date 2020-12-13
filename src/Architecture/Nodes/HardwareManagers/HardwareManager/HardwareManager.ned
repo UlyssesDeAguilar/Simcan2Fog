@@ -12,4 +12,6 @@ simple HardwareManager like IHardwareManager{
         int maxVMs;							// Maximum number of VMs allocated in this blade (For non-cloud environments, use "1")
         int numCpuCores;					// Number of CPUs	
         int maxUsers;						// Maximum number of users allowed to launch applications (For cloud environments, maxUsers=maxVMs)
+        double memorySize @unit(GB);
+        double diskSize @unit(GB);
 }

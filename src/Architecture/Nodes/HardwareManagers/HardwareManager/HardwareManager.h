@@ -13,9 +13,12 @@ class HardwareManager : public cSimpleModule{
     public:
 
         int getAvailableCores();
+        int getAvailableRam();
 
         unsigned int* allocateCores(int numCores);
+        bool allocateRam(double memory);
         int deallocateCores(int numCores, unsigned int* cpuCoreIndex);
+        double deallocateRam(double memory);
 
     private:
 
@@ -34,6 +37,9 @@ class HardwareManager : public cSimpleModule{
        unsigned int maxUsers;
 
        bool *freeCoresArrayPtr;
+
+      double memorySize;
+      double availableMemory;
 
 
 

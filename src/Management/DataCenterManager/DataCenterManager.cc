@@ -394,6 +394,7 @@ void DataCenterManager::handleUserAppRequest(SIMCAN_Message *sm)
         if (userApp.eState == appFinishedOK || userApp.eState == appFinishedError)
             continue;
 
+        std::string strInputDataSize, strOutputDataSize;
         int nInputDataSize, nOutputDataSize, nMIs, nIterations, nTotalTime;
         AppParameter* paramInputDataSize, *paramOutputDataSize, *paramMIs, *paramIterations;
 

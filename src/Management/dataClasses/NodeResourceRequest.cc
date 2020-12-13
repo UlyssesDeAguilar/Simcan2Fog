@@ -72,11 +72,11 @@ void NodeResourceRequest::setUserName(const std::string& userName) {
     this->userName = userName;
 }
 
-unsigned int NodeResourceRequest::getTotalMemory() const {
+double NodeResourceRequest::getTotalMemory() const {
     return nTotalMemory;
 }
 
-void NodeResourceRequest::setTotalMemory(unsigned int totalMemory) {
+void NodeResourceRequest::setTotalMemory(double totalMemory) {
     nTotalMemory = totalMemory;
 }
 

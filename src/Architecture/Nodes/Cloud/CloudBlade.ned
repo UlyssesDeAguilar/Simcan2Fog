@@ -30,6 +30,11 @@ module CloudBlade
         int maxUsers;												// Maximum number of users allowed to launch applications (For cloud environments, maxUsers=maxVMs)
         int maxVMs;													// Maximum number of VMs allocated in this blade (For non-cloud environments, use maxVMs=1)
         int numCpuCores;											// Number of CPU cores  
+		double memorySize @unit(GB);
+		double diskSize @unit(GB);
+		double diskReadBandwidth @unit(Mbps);
+		double diskWriteBandwidth @unit(Mbps);
+		
 
         string hardwareManagerType = default("HardwareManager");	// Hardware manager type
         string hypervisorType = default("Hypervisor");				// Hypervisor type
@@ -59,6 +64,8 @@ module CloudBlade
                 maxVMs = maxVMs;
                 maxUsers = maxUsers;
                 numCpuCores = numCpuCores;
+                memorySize = memorySize;
+                diskSize = diskSize;
                 @display("p=76,88;i=hardwareConfig");
         }
 

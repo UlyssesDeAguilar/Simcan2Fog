@@ -18,8 +18,8 @@ void LocalApplication::initialize(){
 		connections = vector <connector> ();
 
 		// App Module parameters
-		inputDataSize  = (int) par ("inputDataSize") * MB;
-		outputDataSize  = (int) par ("outputDataSize") * MB;
+		inputDataSize  = (int) par ("inputDataSize");
+		outputDataSize  = (int) par ("outputDataSize");
 		MIs  = par ("MIs");
 
 		iterations  = par ("iterations");
@@ -40,7 +40,8 @@ void LocalApplication::initialize(){
 		readOffset = writeOffset = 0;
 		
 		// Boolean variables
-		executeCPU = executeRead = executeWrite = false;
+		executeCPU = executeWrite = false;
+		executeRead = true;
 
 		pDataCenterManager = dynamic_cast<DataCenterManager *>(getModuleByPath("^.^.^.^.^.^.dcManager"));
 
@@ -81,13 +82,36 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 		EV_INFO << "Starting execution! Current iteration:" << currentIteration << endl;
 						
 		// Init...		
-		startServiceIO = simTime();
-		executeCPUrequest ();
+
+		executeIORequest ();
 
 	}
-	else if (!strcmp(msg->getName(), Timer_WaitToResume.c_str())){
+	else if (!strcmp(msg->getName(), IO_READ_OPERATION)){
+	    executeRead = false;
+	    executeCPU = true;
+	    endServiceIO = simTime();
+
+	    total_service_IO += (endServiceIO - startServiceIO);
+
 	    executeCPUrequest ();
 	}
+    else if (!strcmp(msg->getName(), IO_WRITE_OPERATION)){
+        executeWrite = false;
+        executeRead = true;
+        endServiceIO = simTime();
+
+        total_service_IO += (endServiceIO - startServiceIO);
+
+        // Is there is no error... continue app execution
+        if (currentIteration < iterations){
+            currentRemainingMIs = MIs;
+            currentIteration++;
+            executeIORequest ();
+        } else {
+            printResults();
+            sendEndResponse();
+        }
+    }
 	else
 		error ("Unknown self message [%s]", msg->getName());
 }
@@ -114,6 +138,9 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
 		    EV_DEBUG << "(processResponseMessage) CPU Message received" << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
 			
 		    if (sm_cpu->getIsCompleted()) {
+		        executeCPU = false;
+		        executeWrite = true;
+
                 // Get time!
                 endServiceCPU = simTime ();
 
@@ -121,15 +148,16 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
                 total_service_CPU = total_service_CPU.dbl() + (endServiceCPU.dbl() - startServiceCPU.dbl());
 
                 // Is there is no error... continue app execution
-                if (currentIteration < iterations){
-                    currentIteration++;
-                    currentRemainingMIs = MIs;
-                    executeCPUrequest ();
-                }
-                else{
-                    printResults();
-                    sendEndResponse();
-                }
+//                if (currentIteration < iterations){
+////                    currentIteration++;
+//                    currentRemainingMIs = MIs;
+////                    executeCPUrequest ();
+//                }
+//                else{
+//                    printResults();
+//                    sendEndResponse();
+//                }
+                executeIORequest ();
 		    } else {
 		        currentRemainingMIs = sm_cpu->getMisToExecute();
 		    }
@@ -143,6 +171,30 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
 		else{
 		}
 
+
+}
+
+void LocalApplication::executeIORequest(){
+    // Create a timer for delaying the execution of this application
+    startServiceIO = simTime();
+    cMessage *waitToExecuteMsg = new cMessage (IO_READ_OPERATION);
+    simtime_t operationTime = SimTime(0);
+
+    if (executeRead) {
+        EV_INFO << "Requesting read IO:" << inputDataSize << " MB" << endl;
+        double diskReadBandwidth = getModuleByPath("^.^.^")->par("diskReadBandwidth");
+        operationTime = SimTime(inputDataSize/diskReadBandwidth, SIMTIME_S);
+    } else if (executeWrite) {
+        EV_INFO << "Requesting write IO:" << outputDataSize << " MB" << endl;
+        waitToExecuteMsg = new cMessage (IO_WRITE_OPERATION);
+        double diskWriteBandwidth = getModuleByPath("^.^.^")->par("diskWriteBandwidth");
+        operationTime = SimTime(outputDataSize/diskWriteBandwidth);
+    }
+
+    scheduleAt (simTime() + operationTime, waitToExecuteMsg);
+    // Log (INFO)
+
+    // Execute the request!
 
 }
 

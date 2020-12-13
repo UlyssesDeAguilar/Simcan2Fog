@@ -10,6 +10,7 @@ void HardwareManager::initialize(){
         isVirtualHardware = par ("isVirtualHardware");
         maxVMs = par ("maxVMs");
         numAvailableCpuCores = numCpuCores = par ("numCpuCores");
+        availableMemory = memorySize = par ("memorySize");
         maxUsers = par ("maxUsers");
         freeCoresArrayPtr = new bool[numCpuCores];
 
@@ -71,12 +72,34 @@ void HardwareManager::handleMessage(cMessage *msg){
     // TODO - Generated method body
 }
 
+int HardwareManager::getAvailableRam() {
+    return availableMemory;
+}
+
 int HardwareManager::getAvailableCores() {
     return numAvailableCpuCores;
 }
 
+bool HardwareManager::allocateRam(double memory){
+    if (memory > getAvailableRam())
+        return false;
+
+    availableMemory -= memory;
+
+    return true;
+}
+
+double HardwareManager::deallocateRam(double memory){
+    availableMemory += memory;
+
+    if (availableMemory > memorySize)
+        availableMemory = memory;
+
+    return availableMemory;
+}
+
 unsigned int* HardwareManager::allocateCores(int numCores){
-    if (numCores > numAvailableCpuCores)
+    if (numCores > getAvailableCores())
         return nullptr;
 
     int numAllocatedCores = 0;

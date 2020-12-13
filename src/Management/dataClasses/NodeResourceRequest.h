@@ -24,7 +24,7 @@ class NodeResourceRequest{
         unsigned int totalCPUs;
 
         /** Total memory requested*/
-        unsigned int nTotalMemory;
+        double nTotalMemory;
 
         /** CPU speed requested*/
         unsigned int cpuSpeed;
@@ -87,8 +87,8 @@ class NodeResourceRequest{
         void setTotalCpUs(unsigned int totalCpUs);
         const std::string& getUserName() const;
         void setUserName(const std::string& userName);
-        unsigned int getTotalMemory() const;
-        void setTotalMemory(unsigned int totalMemory);
+        double getTotalMemory() const;
+        void setTotalMemory(double totalMemory);
         int getPrice() const {return nPrice;}
         void setPrice(int price) {nPrice = price;}
         int getStartTime() const {return nStartTime;}
