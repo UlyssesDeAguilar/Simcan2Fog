@@ -80,7 +80,8 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 
     // Start execution?
 	if (!strcmp(msg->getName(), Timer_WaitToExecute.c_str())){
-	
+        selfMessage=nullptr;
+        delete (msg);
 		// Delete msg!
 	//TODO: No inicializar estos tiempos cuando ya estaban inicializados. Hace falta guardar el estado.
 		// Starting time...
@@ -96,6 +97,8 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 
 	}
 	else if (!strcmp(msg->getName(), IO_READ_OPERATION)){
+        selfMessage=nullptr;
+        delete (msg);
 	    executeRead = false;
 	    executeCPU = true;
 	    endServiceIO = simTime();
@@ -105,6 +108,8 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 	    executeCPUrequest ();
 	}
     else if (!strcmp(msg->getName(), IO_WRITE_OPERATION)){
+        selfMessage=nullptr;
+        delete (msg);
         executeWrite = false;
         executeRead = true;
         endServiceIO = simTime();
@@ -127,8 +132,6 @@ void LocalApplication::processSelfMessage (cMessage *msg){
         error ("Unknown self message [%s]", msg->getName());
 
 	}
-	    selfMessage=nullptr;
-	    delete (msg);
 }
 
 void LocalApplication::processRequestMessage (SIMCAN_Message *sm){
