@@ -4,10 +4,7 @@
 Define_Module(LocalApplication);
 
 LocalApplication::~LocalApplication(){
-    if (selfMessage!=nullptr) {
-        cancelEvent(selfMessage);
-        selfMessage=nullptr;
-    }
+
 }
 
 void LocalApplication::initialize(){
@@ -65,8 +62,15 @@ void LocalApplication::initialize(){
 
 void LocalApplication::finish(){
 
+    if (selfMessage!=nullptr) {
+        cancelEvent(selfMessage);
+        selfMessage=nullptr;
+    }
+
+
 	// Finish the super-class
     UserAppBase::finish();
+
 
 
 //    sendAbortRequest();
