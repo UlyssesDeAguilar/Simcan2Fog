@@ -74,9 +74,6 @@ void LocalApplication::finish(){
 
 void LocalApplication::processSelfMessage (cMessage *msg){
 
-    selfMessage=nullptr;
-    delete (msg);
-
     // Start execution?
 	if (!strcmp(msg->getName(), Timer_WaitToExecute.c_str())){
 	
@@ -120,8 +117,14 @@ void LocalApplication::processSelfMessage (cMessage *msg){
             sendEndResponse();
         }
     }
-	else
-		error ("Unknown self message [%s]", msg->getName());
+	else {
+	    selfMessage=nullptr;
+	    delete (msg);
+        error ("Unknown self message [%s]", msg->getName());
+
+	}
+	    selfMessage=nullptr;
+	    delete (msg);
 }
 
 void LocalApplication::processRequestMessage (SIMCAN_Message *sm){
