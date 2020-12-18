@@ -87,6 +87,7 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 
 	}
 	else if (!strcmp(msg->getName(), IO_READ_OPERATION)){
+	    delete (msg);
 	    executeRead = false;
 	    executeCPU = true;
 	    endServiceIO = simTime();
@@ -96,6 +97,7 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 	    executeCPUrequest ();
 	}
     else if (!strcmp(msg->getName(), IO_WRITE_OPERATION)){
+        delete (msg);
         executeWrite = false;
         executeRead = true;
         endServiceIO = simTime();

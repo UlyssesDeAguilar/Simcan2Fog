@@ -17,7 +17,7 @@ void Hypervisor::initialize(){
 
 
 
-        getParentModule()->getParentModule()->getSubmodule("hardwareManager");
+        getModuleByPath("^.^.hardwareManager");
 
         if (pHardwareManager == nullptr)
             error ("HardwareManager not found!");

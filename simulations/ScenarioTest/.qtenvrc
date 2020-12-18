@@ -1,9 +1,9 @@
 [General]
-last-configname=test1
+last-configname=test_w1n128
 last-runnumber=0
 
 [RunModeProfiles]
-run-playback-speed=0.5623413251903491
+run-playback-speed=0.010000000000000002
 run-min-playback-speed=0.01
 run-max-playback-speed=100
 run-min-animation-speed=nan

@@ -48,14 +48,19 @@ module DataCenter_A
 
             @display("p=109,34");
         }
+        
+        rackCmp_Rack_A_1: CloudRack {
+
+            @display("p=109,34");
+        }
         // ---------------------------------------------------------------
         //   Definition of Network
         // ---------------------------------------------------------------
         dataCenterNetwork: DataCenterNetwork {
             @display("p=299,51");
             gates:
-                inComm[1];
-                outComm[1];
+                inComm[2];
+                outComm[2];
                 inStorage[0];
                 outStorage[0];
         }
@@ -72,7 +77,8 @@ module DataCenter_A
         // Connections between computing racks and the network
         rackCmp_Rack_A_0.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
         rackCmp_Rack_A_0.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
-
+        rackCmp_Rack_A_1.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
+        rackCmp_Rack_A_1.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
 }
 
 // ---------------------------------------------------------------
