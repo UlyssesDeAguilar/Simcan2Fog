@@ -130,7 +130,6 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 	    selfMessage=nullptr;
 	    delete (msg);
         error ("Unknown self message [%s]", msg->getName());
-
 	}
 }
 
