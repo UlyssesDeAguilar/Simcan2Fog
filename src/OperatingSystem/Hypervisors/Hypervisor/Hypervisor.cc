@@ -15,64 +15,60 @@ void Hypervisor::initialize(){
 	    // Init the super-class
 	    cSIMCAN_Core::initialize();
 
+        // Init module parameters
+        isVirtualHardware = par ("isVirtualHardware");
+        maxVMs = (unsigned int) par ("maxVMs");
+//            numAllocatedVms = 0;
 
+        // Get the number of gates for each vector
+        numAppGates = gateSize ("fromApps");
+        numCpuGates = gateSize ("fromCpuScheduler");
 
-	    pHardwareManager = getModuleByPath("^.^.hardwareManager");
+        // Init the size of the cGate vectors
+        fromAppsGates = new cGate* [numAppGates];
+        toAppsGates = new cGate* [numAppGates];
+
+        // Init the cGates vector for Applications
+        for (i=0; i<numAppGates; i++){
+            fromAppsGates [i] = gate ("fromApps", i);
+            toAppsGates [i] = gate ("toApps", i);
+
+            // Checking connections
+            if (!toAppsGates[i]->isConnected()){
+                EV_ERROR << "toAppsGates[" << i << "] is not connected";
+                error ("toAppsGates is not connected");
+            }
+        }
+
+        // Init the cGates vector for CPU scheduler
+        fromCPUGates = new cGate* [numCpuGates];
+        toCPUGates = new cGate* [numCpuGates];
+
+        for (i=0; i<numCpuGates; i++){
+            fromCPUGates [i] = gate ("fromCpuScheduler", i);
+            toCPUGates [i] = gate ("toCpuScheduler", i);
+        }
+
+        pAppsVectors = getParentModule()->getParentModule()->getSubmodule("appsVectors", 0);
+        pAppsVectorsArray = new cModule* [pAppsVectors->getVectorSize()];
+
+        for (int i=0; i<pAppsVectors->getVectorSize(); i++)
+            pAppsVectorsArray[i] = getParentModule()->getParentModule()->getSubmodule("appsVectors", i);
+
+        pCpuScheds = getModuleByPath("^.cpuSchedVector")->getSubmodule("cpuScheduler", 0);
+        pCpuSchedArray = new cModule* [pCpuScheds->getVectorSize()];
+        freeSchedArray = new bool [pCpuScheds->getVectorSize()];
+        for (int i=0; i<pCpuScheds->getVectorSize(); i++)
+        {
+            pCpuSchedArray[i] = getModuleByPath("^.cpuSchedVector")->getSubmodule("cpuScheduler", i);
+            freeSchedArray[i] = true;
+        }
+
+        pHardwareManagerModule = getModuleByPath("^.^.hardwareManager");;
+        pHardwareManager = check_and_cast<HardwareManager*>(pHardwareManagerModule);
 
         if (pHardwareManager == nullptr)
             error ("HardwareManager not found!");
-
-	        // Init module parameters
-            isVirtualHardware = par ("isVirtualHardware");
-            maxVMs = (unsigned int) par ("maxVMs");
-//            numAllocatedVms = 0;
-
-            // Get the number of gates for each vector
-            numAppGates = gateSize ("fromApps");
-            numCpuGates = gateSize ("fromCpuScheduler");
-
-            // Init the size of the cGate vectors
-            fromAppsGates = new cGate* [numAppGates];
-            toAppsGates = new cGate* [numAppGates];
-
-            // Init the cGates vector for Applications
-            for (i=0; i<numAppGates; i++){
-                fromAppsGates [i] = gate ("fromApps", i);
-                toAppsGates [i] = gate ("toApps", i);
-
-                // Checking connections
-                if (!toAppsGates[i]->isConnected()){
-                    EV_ERROR << "toAppsGates[" << i << "] is not connected";
-                    error ("toAppsGates is not connected");
-                }
-            }
-
-            // Init the cGates vector for CPU scheduler
-            fromCPUGates = new cGate* [numCpuGates];
-            toCPUGates = new cGate* [numCpuGates];
-
-            for (i=0; i<numCpuGates; i++){
-                fromCPUGates [i] = gate ("fromCpuScheduler", i);
-                toCPUGates [i] = gate ("toCpuScheduler", i);
-            }
-
-            pAppsVectors = getParentModule()->getParentModule()->getSubmodule("appsVectors", 0);
-            pAppsVectorsArray = new cModule* [pAppsVectors->getVectorSize()];
-
-            for (int i=0; i<pAppsVectors->getVectorSize(); i++)
-                pAppsVectorsArray[i] = getParentModule()->getParentModule()->getSubmodule("appsVectors", i);
-
-            pCpuScheds = getParentModule()->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0);
-            pCpuSchedArray = new cModule* [pCpuScheds->getVectorSize()];
-            freeSchedArray = new bool [pCpuScheds->getVectorSize()];
-            for (int i=0; i<pCpuScheds->getVectorSize(); i++)
-            {
-                pCpuSchedArray[i] = getParentModule()->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", i);
-                freeSchedArray[i] = true;
-            }
-
-            pHardwareManagerModule = getParentModule()->getParentModule()->getSubmodule("hardwareManager");
-            pHardwareManager = check_and_cast<HardwareManager*>(pHardwareManagerModule);
 }
 
 
