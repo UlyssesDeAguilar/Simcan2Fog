@@ -95,6 +95,8 @@ public:
 		bool executeWrite;
 		
 		DataCenterManager *pDataCenterManager;
+
+		cMessage *selfMessage;
 				
 								
 		

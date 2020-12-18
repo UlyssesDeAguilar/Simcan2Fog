@@ -4,6 +4,10 @@
 Define_Module(LocalApplication);
 
 LocalApplication::~LocalApplication(){
+    if (selfMessage!=nullptr) {
+        cancelEvent(selfMessage);
+        selfMessage=nullptr;
+    }
 }
 
 void LocalApplication::initialize(){
@@ -11,9 +15,10 @@ void LocalApplication::initialize(){
     bool initialized = par ("initialized");
 
 
-
 		// Init the super-class
 		UserAppBase::initialize();
+
+		selfMessage= nullptr;
 
 		connections = vector <connector> ();
 
@@ -52,6 +57,7 @@ void LocalApplication::initialize(){
 
 		// Create a timer for delaying the execution of this application
 		cMessage *waitToExecuteMsg = new cMessage (Timer_WaitToExecute.c_str());
+		selfMessage = waitToExecuteMsg;
 		scheduleAt (simTime().dbl()+startDelay, waitToExecuteMsg);
 
     par ("initialized") = true;
@@ -68,11 +74,13 @@ void LocalApplication::finish(){
 
 void LocalApplication::processSelfMessage (cMessage *msg){
 
+    selfMessage=nullptr;
+    delete (msg);
+
     // Start execution?
 	if (!strcmp(msg->getName(), Timer_WaitToExecute.c_str())){
 	
 		// Delete msg!
-		delete (msg);
 	//TODO: No inicializar estos tiempos cuando ya estaban inicializados. Hace falta guardar el estado.
 		// Starting time...
 		simStartTime = simTime();
@@ -87,7 +95,6 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 
 	}
 	else if (!strcmp(msg->getName(), IO_READ_OPERATION)){
-	    delete (msg);
 	    executeRead = false;
 	    executeCPU = true;
 	    endServiceIO = simTime();
@@ -97,7 +104,6 @@ void LocalApplication::processSelfMessage (cMessage *msg){
 	    executeCPUrequest ();
 	}
     else if (!strcmp(msg->getName(), IO_WRITE_OPERATION)){
-        delete (msg);
         executeWrite = false;
         executeRead = true;
         endServiceIO = simTime();
@@ -192,7 +198,7 @@ void LocalApplication::executeIORequest(){
         double diskWriteBandwidth = getModuleByPath("^.^.^")->par("diskWriteBandwidth");
         operationTime = SimTime(outputDataSize/diskWriteBandwidth);
     }
-
+    selfMessage=waitToExecuteMsg;
     scheduleAt (simTime() + operationTime, waitToExecuteMsg);
     // Log (INFO)
 
