@@ -1157,7 +1157,7 @@ void UserGenerator_simple::calculateStatistics() {
     //Print the experiments data
     EV_FATAL << "#___3d#" << dMeanSub << endl;
     EV_FATAL << "#___t#" << dMaxSub << " " << dMeanSub << " " << nTotalTimeouts
-                    << " " << dNoWaitUsers << " " << dWaitUsers << endl;
+                    << " " << dNoWaitUsers << " " << dWaitUsers << " " << nSize << endl;
 }
 
 SM_UserVM* UserGenerator_simple::createVmMessage() {
