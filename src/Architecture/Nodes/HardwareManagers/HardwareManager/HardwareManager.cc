@@ -141,3 +141,7 @@ int HardwareManager::deallocateCores(int numCores, unsigned int* cpuCoreIndex){
 
     return numAvailableCpuCores;
 }
+
+bool* HardwareManager::getFreeCoresArrayPtr() const {
+    return freeCoresArrayPtr;
+}

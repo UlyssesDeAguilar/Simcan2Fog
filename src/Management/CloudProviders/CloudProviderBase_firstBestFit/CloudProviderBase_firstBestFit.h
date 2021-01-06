@@ -36,9 +36,6 @@ protected:
     /** Queue of the users that are waiting to be handled*/
     std::vector<SM_UserVM*> subscribeQueue;
 
-    /** Flag that indicates if the process has been finished*/
-    bool bFinished;
-
     /** Destructor */
     ~CloudProviderBase_firstBestFit();
 

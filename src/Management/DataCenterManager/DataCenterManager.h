@@ -26,9 +26,13 @@ public:
         /** Show information of DataCenters */
         bool showDataCenterConfig;
 
+        int nCpuStatusInterval;
+
         int nTotalCores;
 
         int nTotalAvailableCores;
+
+        cMessage *cpuStatusMessage;
 
         std::map<std::string, Hypervisor*> acceptedVMsMap;
         std::map<std::string, SM_UserAPP*> handlingAppsRqMap;
@@ -49,6 +53,7 @@ public:
         std::map<std::string, cModule*> mapAppsVectorModulePerVm;
         std::map<std::string, unsigned int*> mapAppsModulePerId;
         std::map<std::string, bool*> mapAppsRunningInVectorModulePerVm;
+        std::map<std::string, std::tuple<unsigned int, simtime_t**, simtime_t*>> mapCpuUtilizationTimePerHypervisor;
 
 
         ~DataCenterManager();
@@ -123,6 +128,20 @@ public:
         void notifySubscription(SM_UserVM* userVM_Rq);
         void handleVmSubscription(SIMCAN_Message *sm);
         void storeAppFromModule(cModule *pVmAppModule);
+        void handleCpuStatus(cMessage *msg);
+
+        void updateCpuUtilizationTimeForHypervisor(Hypervisor *pHypervisor);
+        std::tuple<unsigned int, simtime_t**, simtime_t*> getTimersTupleByHypervisorPath(std::string strHypervisorFullPath);
+        simtime_t** getStartTimeByHypervisorPath(std::string strHypervisorFullPath);
+        simtime_t* getTimerArrayByHypervisorPath(std::string strHypervisorFullPath);
+        unsigned int getNumCoresByHypervisorPath(std::string strHypervisorFullPath);
+        double getCurrentCpuPercentageUsage();
+
+        /**
+         * Calculates the statistics of the experiment.
+         */
+        virtual void finish() override;
+        virtual void printFinal();
 };
 
 #endif

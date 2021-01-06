@@ -19,6 +19,7 @@ class HardwareManager : public cSimpleModule{
         bool allocateRam(double memory);
         int deallocateCores(int numCores, unsigned int* cpuCoreIndex);
         double deallocateRam(double memory);
+    bool* getFreeCoresArrayPtr() const;
 
     private:
 

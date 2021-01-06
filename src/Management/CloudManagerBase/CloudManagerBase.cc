@@ -15,6 +15,8 @@ void CloudManagerBase::initialize(){
     // Init super-class
     cSIMCAN_Core::initialize();
 
+    bFinished = false;
+
     parseConfig();
 
     initializeSelfHandlers();
@@ -141,13 +143,22 @@ void CloudManagerBase::processRequestMessage (SIMCAN_Message *sm)
 
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
 
-    it = requestHandlers.find(sm->getOperation());
+    userControl = dynamic_cast<SM_CloudProvider_Control *>(sm);
 
-    if (it != requestHandlers.end())
+    if(userControl != nullptr)
       {
-        it->second(sm);
-      }
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received end of party"  << endl;
+        //Stop the checking process.
+        bFinished = true;
+        cancelAndDelete(userControl);
+      } else {
+          it = requestHandlers.find(sm->getOperation());
 
+          if (it != requestHandlers.end())
+            {
+              it->second(sm);
+            }
+      }
 }
 
 void CloudManagerBase::processResponseMessage (SIMCAN_Message *sm){

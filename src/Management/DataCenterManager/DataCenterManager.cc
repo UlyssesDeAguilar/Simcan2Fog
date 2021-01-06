@@ -12,6 +12,7 @@ DataCenterManager::~DataCenterManager(){
     mapAppsVectorModulePerVm.clear();
     mapAppsModulePerId.clear();
     mapAppsRunningInVectorModulePerVm.clear();
+    mapCpuUtilizationTimePerHypervisor.clear();
 }
 
 void DataCenterManager::initialize(){
@@ -23,6 +24,7 @@ void DataCenterManager::initialize(){
 
         // Get parameters from module
         showDataCenterConfig = par ("showDataCenterConfig");
+        nCpuStatusInterval = par ("cpuStatusInterval");
 
         // Get gates
         inGate = gate ("in");
@@ -39,6 +41,9 @@ void DataCenterManager::initialize(){
         else if (showDataCenterConfig){
             EV_DEBUG << dataCenterToString ();
         }
+
+        cpuStatusMessage = new cMessage(CPU_STATUS);
+        scheduleAt(SimTime(), cpuStatusMessage);
 }
 
 int DataCenterManager::initDataCenterMetadata (){
@@ -88,10 +93,42 @@ int DataCenterManager::storeNodeMetadata(cModule *pNodeModule) {
 
     pHypervisor = check_and_cast<Hypervisor*>(pHypervisorModule);
 
+    simtime_t **startTimeArray = new simtime_t *[numCores];
+    simtime_t *timerArray = new simtime_t[numCores];
+    for (int i=0; i<numCores;i++) {
+        startTimeArray[i] = nullptr;
+        timerArray[i] = SimTime();
+    }
+
+
     //Store hypervisor pointers by number of cores
     mapHypervisorPerNodes[numCores].push_back(pHypervisor);
+    //Initialize cpu utilization timers
+    mapCpuUtilizationTimePerHypervisor[pHypervisorModule->getFullPath()] = std::make_tuple(numCores, startTimeArray, timerArray);
 
     return result;
+}
+
+double DataCenterManager::getCurrentCpuPercentageUsage() {
+    std::map<int, std::vector<Hypervisor*>>::iterator itMap;
+    std::vector<Hypervisor*>::iterator itVector;
+    int nTotalCores, nUsedCores, nNodeCores;
+    double dPercentage = 0.0;
+
+    nTotalCores = nUsedCores = 0;
+
+    for (itMap=mapHypervisorPerNodes.begin(); itMap != mapHypervisorPerNodes.end(); itMap++){
+        nNodeCores = itMap->first;
+        for (itVector=itMap->second.begin(); itVector != itMap->second.end(); itVector++) {
+            nTotalCores += nNodeCores;
+            nUsedCores += nNodeCores - (*itVector)->getAvailableCores();
+        }
+    }
+
+    if (nTotalCores > 0)
+        dPercentage = nUsedCores / (double)nTotalCores;
+
+    return dPercentage;
 }
 
 
@@ -156,6 +193,7 @@ void DataCenterManager::initializeSelfHandlers() {
 //    selfHandlers[EXEC_APP_END_SINGLE] = [this](cMessage *msg) -> void { return handleAppExecEndSingle(msg); };
 //    selfHandlers[USER_SUBSCRIPTION_TIMEOUT] = [this](cMessage *msg) -> void { return handleSubscriptionTimeout(msg); };
 //    selfHandlers[MANAGE_SUBSCRIBTIONS] = [this](cMessage *msg) -> void { return handleManageSubscriptions(msg); };
+    selfHandlers[CPU_STATUS] = [this](cMessage *msg) -> void { return handleCpuStatus(msg); };
 }
 
 /**
@@ -169,6 +207,17 @@ void DataCenterManager::initializeRequestHandlers() {
 
 void DataCenterManager::processResponseMessage (SIMCAN_Message *sm){
     error ("This module cannot process response messages:%s", sm->contentsToString(showMessageContents, showMessageTrace).c_str());
+}
+
+void DataCenterManager::handleCpuStatus(cMessage *msg ) {
+    const char *strName = getParentModule()->getName();
+    EV_FATAL << "#___cpuUsage#" << strName << " " << simTime().dbl() << " " << getCurrentCpuPercentageUsage() << endl;
+    cpuStatusMessage = nullptr;
+    if (!bFinished) {
+        cpuStatusMessage = new cMessage(CPU_STATUS);
+        scheduleAt(simTime() + SimTime(nCpuStatusInterval, SIMTIME_S), cpuStatusMessage);
+    }
+
 }
 
 Application* DataCenterManager::searchAppPerType(std::string strAppType)
@@ -248,6 +297,50 @@ cModule* DataCenterManager::getFreeAppModuleInVector(std::string strVmId) {
     return pVmAppModule;
 }
 
+
+std::tuple<unsigned int, simtime_t**, simtime_t*> DataCenterManager::getTimersTupleByHypervisorPath(std::string strHypervisorFullPath) {
+    std::tuple<unsigned int, simtime_t**, simtime_t*> timersTuple = std::make_tuple(0, nullptr, nullptr);
+    std::map<std::string, std::tuple<unsigned int, simtime_t**, simtime_t*>>::iterator it;
+
+    it = mapCpuUtilizationTimePerHypervisor.find(strHypervisorFullPath);
+    if (it != mapCpuUtilizationTimePerHypervisor.end()) {
+        timersTuple = it->second;
+    }
+    return timersTuple;
+}
+
+simtime_t** DataCenterManager::getStartTimeByHypervisorPath(std::string strHypervisorFullPath) {
+    std::tuple<unsigned int, simtime_t**, simtime_t*> timersTuple = getTimersTupleByHypervisorPath(strHypervisorFullPath);
+    unsigned int numCores = std::get<0>(timersTuple);
+    simtime_t **startTimesArray = nullptr;
+
+    if (numCores < 1)
+        error ("%s - Unable to update cpu utilization times. Wrong Hypervisor full path [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strHypervisorFullPath.c_str());
+
+    startTimesArray = std::get<1>(timersTuple);
+
+    return startTimesArray;
+}
+
+simtime_t* DataCenterManager::getTimerArrayByHypervisorPath(std::string strHypervisorFullPath) {
+    std::tuple<unsigned int, simtime_t**, simtime_t*> timersTuple = getTimersTupleByHypervisorPath(strHypervisorFullPath);
+    unsigned int numCores = std::get<0>(timersTuple);
+    simtime_t *timerArray = nullptr;
+
+    if (numCores < 1)
+        error ("%s - Unable to update cpu utilization times. Wrong Hypervisor full path [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strHypervisorFullPath.c_str());
+
+    timerArray = std::get<2>(timersTuple);
+
+    return timerArray;
+}
+
+unsigned int DataCenterManager::getNumCoresByHypervisorPath(std::string strHypervisorFullPath) {
+    std::tuple<unsigned int, simtime_t**, simtime_t*> timersTuple = getTimersTupleByHypervisorPath(strHypervisorFullPath);
+    unsigned int numCores = std::get<0>(timersTuple);
+
+    return numCores;
+}
 
 Hypervisor* DataCenterManager::getNodeHypervisorByVm(std::string strVmId) {
     Hypervisor* pHypervisor = nullptr;
@@ -877,6 +970,24 @@ void DataCenterManager::abortAllApps(std::string strVmId)
 
 }
 
+void DataCenterManager::updateCpuUtilizationTimeForHypervisor(Hypervisor *pHypervisor) {
+    unsigned int numCores = getNumCoresByHypervisorPath(pHypervisor->getFullPath());
+    simtime_t **startTimesArray = getStartTimeByHypervisorPath(pHypervisor->getFullPath());
+    simtime_t *timersArray = getTimerArrayByHypervisorPath(pHypervisor->getFullPath());
+    bool* freeCoresArrayPtr = pHypervisor->getFreeCoresArrayPtr();
+
+    for (int i=0; i<numCores; i++){
+        if (freeCoresArrayPtr[i] && startTimesArray[i] != nullptr) {
+            timersArray[i] += simTime() - *(startTimesArray[i]);
+            delete startTimesArray[i];
+            startTimesArray[i] = nullptr;
+        } else if (!freeCoresArrayPtr[i] && startTimesArray[i] == nullptr){
+            startTimesArray[i] = new SimTime(simTime());
+        }
+    }
+}
+
+
 void DataCenterManager::deallocateVmResources(std::string strVmId)
 {
     Hypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
@@ -885,6 +996,8 @@ void DataCenterManager::deallocateVmResources(std::string strVmId)
         error ("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
 
     pHypervisor->deallocateVmResources(strVmId);
+
+    updateCpuUtilizationTimeForHypervisor(pHypervisor);
 }
 
 //TODO: asignar la vm que hace el timout al mensaje de la app. Duplicarlo y enviarlo.
@@ -1051,11 +1164,7 @@ void DataCenterManager::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
         cancelAndDelete(vmRequest.pMsg);
         vmRequest.pMsg = nullptr;
 
-        pHypervisor = getNodeHypervisorByVm(vmRequest.strVmId);
-
-        if (pHypervisor!=nullptr)
-            pHypervisor->deallocateVmResources(vmRequest.strVmId);
-
+        deallocateVmResources(vmRequest.strVmId);
 
         //datacenterCollection->freeVmRequest(vmRequest.strVmId);
       }
@@ -1104,6 +1213,7 @@ Hypervisor* DataCenterManager::selectNode (string strUserName, const VM_Request&
                     // TODO: Finalmente debería devolver la IP del nodo y que el mensaje de la App llegue al nodo.
                     cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
                     if (pVmAppVectorModule!=nullptr) {
+                        updateCpuUtilizationTimeForHypervisor(pHypervisor);
                         mapAppsVectorModulePerVm[vmRequest.strVmId] = pVmAppVectorModule;
                         int numMaxApps = pVmAppVectorModule->par("numApps");
                         bool *runningAppsArr = new bool[numMaxApps]{false};
@@ -1191,6 +1301,31 @@ void  DataCenterManager::fillVmFeatures(std::string strVmType, NodeResourceReque
         pNode->setTotalMemory(pVmType->getMemoryGb());
     }
 
+}
+
+void DataCenterManager::finish() {
+    printFinal();
+}
+
+void DataCenterManager::printFinal(){
+    std::map<std::string, std::tuple<unsigned int, simtime_t**, simtime_t*>>::iterator it;
+    std::tuple<unsigned int, simtime_t**, simtime_t*> timersTuple;
+    unsigned int numCores;
+    simtime_t *timerArray = nullptr;
+    simtime_t finalSimulationTime = simTime();
+    const char* strName = getParentModule()->getName();
+    int nTotalIndex = 0;
+
+    for (it = mapCpuUtilizationTimePerHypervisor.begin(); it != mapCpuUtilizationTimePerHypervisor.end(); it++) {
+        timersTuple = it->second;
+        numCores = std::get<0>(timersTuple);
+        timerArray = std::get<2>(timersTuple);
+
+        for (int i=0; i<numCores; i++) {
+            EV_FATAL << "#___cpuTime#" << strName << " " << nTotalIndex << " " << timerArray[i].dbl() << " " << timerArray[i].dbl() / finalSimulationTime.dbl() << endl;
+            nTotalIndex++;
+        }
+    }
 }
 
 //SM_UserAPP_Finish* DataCenterManager::scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime)

@@ -71,13 +71,10 @@ void CloudProviderBase_firstBestFit::processRequestMessage (SIMCAN_Message *sm)
 
     if(userControl != nullptr)
       {
-        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received end of party"  << endl;
-        //Stop the checking process.
-        bFinished = true;
-        cancelAndDelete(userControl);
-      } else {
-          CloudProviderBase::processRequestMessage(sm);
+        sendRequestMessage (userControl->dup(), toDataCenterGates[0]);
       }
+      CloudProviderBase::processRequestMessage(sm);
+
 }
 
 

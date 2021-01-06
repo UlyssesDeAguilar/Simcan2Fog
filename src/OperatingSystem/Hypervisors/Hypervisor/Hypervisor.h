@@ -16,6 +16,7 @@ class Hypervisor :public cSIMCAN_Core{
         cModule* allocateNewResources(NodeResourceRequest* pResourceRequest);
         void deallocateVmResources(std::string strVmId);
 //        int executeApp(Application* appType);
+        bool* getFreeCoresArrayPtr() const;
 
 	protected:
 

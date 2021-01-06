@@ -20,6 +20,7 @@
 #define MANAGE_SUBSCRIBTIONS  "MANAGE_SUBSCRIBTIONS"
 #define USER_SUBSCRIPTION_TIMEOUT  "SUBSCRIPTION_TIMEOUT"
 #define SIMCAN_MESSAGE "SIMCAN_Message"
+#define CPU_STATUS "CPU_STATUS"
 
 /**
  * Base class for Cloud Managers.
@@ -37,6 +38,9 @@ class CloudManagerBase: public cSIMCAN_Core{
 
         /** Shows the parsed applications */
         bool showApps;
+
+        /** Flag that indicates if the process has been finished*/
+        bool bFinished;
 
         /** Vector that contains the set of application types used in the current simulation */
         std::vector<Application*> appTypes;

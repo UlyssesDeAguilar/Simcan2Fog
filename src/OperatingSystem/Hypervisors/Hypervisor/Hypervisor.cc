@@ -356,6 +356,11 @@ void Hypervisor::deallocateVmResources(std::string strVmId) {
     pVmScheduler->setIsRunning(false);
 }
 
+bool* Hypervisor::getFreeCoresArrayPtr() const {
+    return pHardwareManager->getFreeCoresArrayPtr();
+}
+
+
 //int Hypervisor::executeApp(Application* appType)
 //{
 //    int nInputDataSize, nOutputDataSize, nMIs, nIterations, nTotalTime;
