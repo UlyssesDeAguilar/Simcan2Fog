@@ -661,7 +661,7 @@ void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request"  << endl;
 
     if(userVM_Rq != nullptr)
-      {
+    {
         userVM_Rq->printUserVM();
         //Check if is a VmRequest or a subscribe
         if (checkVmUserFit(userVM_Rq)) {
@@ -669,9 +669,8 @@ void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
             acceptVmRequest(userVM_Rq);
         }else{
             rejectVmRequest(userVM_Rq);
-            EV_FATAL << "Fail" << endl;
         }
-        }
+    }
     else
       {
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
