@@ -1499,6 +1499,7 @@ void CloudProviderBase_firstBestFit::handleResponseReject(SIMCAN_Message *sm) {
 }
 
 void CloudProviderBase_firstBestFit::handleResponseAccept(SIMCAN_Message *sm) {
+
     sendResponseMessage(sm);
 }
 

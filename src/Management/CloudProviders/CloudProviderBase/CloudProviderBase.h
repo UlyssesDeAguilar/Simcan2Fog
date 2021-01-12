@@ -17,18 +17,6 @@ class CloudProviderBase : public CloudManagerBase{
         /** Shows information of Data-Centers */
         bool showDataCenters;
 
-//        /** Vector that contains a collection of configurations for computing nodes  */
-//        std::vector<NodeInfo*> computingNodeTypes;
-//
-//        /** Vector that contains a collection of configurations for storage nodes */
-//        std::vector<NodeInfo*> storageNodeTypes;
-//
-//        /** Vector that contains a collection of configurations for computing racks */
-//        std::vector<RackInfo*> computingRackTypes;
-//
-//        /** Vector that contains a collection of configurations for storage racks */
-//        std::vector<RackInfo*> storageRackTypes;
-
         /** Vector that contains a collection of structures for monitoring data-centers */
         std::vector<DataCenter*> dataCentersBase;
 
@@ -43,8 +31,6 @@ class CloudProviderBase : public CloudManagerBase{
 
         /** Output gate to UserGenerator module. */
         cGate* toUserGeneratorGate;
-
-
 
         /**
          * Destructor.
@@ -72,26 +58,6 @@ class CloudProviderBase : public CloudManagerBase{
          */
         std::string dataCentersToString();
 
-//        /**
-//         * Search for the configuration of the node <b>nodeName</b>.
-//         *
-//         * @param nodeName Name of the node.
-//         * @param isStorage If this parameter is set to <i>true</i>, then <b>nodeName</b> is searched in the vector containing storage nodes.
-//         * In other case, <b>nodeName</b> is searched in the vector containing computing nodes.
-//         * @return If the requested node is located in the corresponding vector, then a pointer to its object is returned. In other case, \a nullptr is returned.
-//         */
-//        NodeInfo* findNodeInfo (std::string nodeName, bool isStorage);
-//
-//        /**
-//         * Search for the configuration of the rack <b>rackName</b>.
-//         *
-//         * @param rackName Name of the rack.
-//         * @param isStorage If this parameter is set to <i>true</i>, then <b>rackName</b> is searched in the vector containing storage racks.
-//         * In other case, <b>rackName</b> is searched in the vector containing computing racks.
-//         * @return If the requested rack is located in the corresponding vector, then a pointer to its object is returned. In other case, \a nullptr is returned.
-//         */
-//        RackInfo* findRackInfo (std::string rackName, bool isStorage);
-
        /**
         * Gets the out Gate to the module that sent <b>msg</b>.
         *
@@ -99,28 +65,6 @@ class CloudProviderBase : public CloudManagerBase{
         * @return Gate (out) to module that sent <b>msg</b> or \a nullptr if gate not found.
         */
         virtual cGate* getOutGate (cMessage *msg) override;
-
-//       /**
-//        * Process a self message.
-//        *
-//        * @param msg Received (self) message.
-//        */
-//        virtual void processSelfMessage (cMessage *msg) = 0;
-//
-//        /**
-//        * Process a request message.
-//        *
-//        * @param sm Incoming message.
-//        */
-//        virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
-//
-//        /**
-//        * Process a response message from an external module.
-//        *
-//        * @param sm Incoming message.
-//        */
-//        virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
-
 };
 
 #endif

@@ -17,9 +17,13 @@ class HardwareManager : public cSimpleModule{
 
         unsigned int* allocateCores(int numCores);
         bool allocateRam(double memory);
+        bool allocateDisk(double disk);
         int deallocateCores(int numCores, unsigned int* cpuCoreIndex);
         double deallocateRam(double memory);
+        double deallocateDisk(double disk);
     bool* getFreeCoresArrayPtr() const;
+    double getAvailableDisk() const;
+    void setAvailableDisk(double availableDisk);
 
     private:
 
@@ -41,6 +45,8 @@ class HardwareManager : public cSimpleModule{
 
       double memorySize;
       double availableMemory;
+      double diskSize;
+      double availableDisk;
 
 
 

@@ -41,7 +41,7 @@ module CloudBlade
         string cpuSchedulerType = default("CpuSchedulerRR");		// CPU Scheduler type
         string cpuCoreType = default("CpuCore");					// Type of the CPU cores
 
-        @display("bgb=548,431,,black,3;bgi=circuit,t");
+        @display("bgb=548,431,,black,3;");
 
     gates:
         input in;

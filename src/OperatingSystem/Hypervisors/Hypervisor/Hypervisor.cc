@@ -280,14 +280,21 @@ int Hypervisor::getAvailableCores() {
 
 cModule* Hypervisor::allocateNewResources(NodeResourceRequest* pResourceRequest) {
     unsigned int* cpuCoreIndex;
-    cpuCoreIndex = pHardwareManager->allocateCores(pResourceRequest->getTotalCpUs());
+    cpuCoreIndex = pHardwareManager->allocateCores(pResourceRequest->getTotalCpus());
 
     if (cpuCoreIndex == nullptr)
         return nullptr;
 
     if (!pHardwareManager->allocateRam(pResourceRequest->getTotalMemory()))
     {
-        pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs(), cpuCoreIndex);
+        pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
+        return nullptr;
+    }
+
+    if (!pHardwareManager->allocateDisk(pResourceRequest->getTotalDiskGb()))
+    {
+        pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
+        pHardwareManager->deallocateRam(pResourceRequest->getTotalMemory());
         return nullptr;
     }
 
@@ -312,7 +319,7 @@ cModule* Hypervisor::allocateNewResources(NodeResourceRequest* pResourceRequest)
     mapVmScheduler[pResourceRequest->getVmId()] = nSchedulerIndex;
 
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR*> (pVmSchedulerModule);
-    int nManagedCpuCores = pResourceRequest->getTotalCpUs();
+    int nManagedCpuCores = pResourceRequest->getTotalCpus();
 
     bool* isCPU_Idle = new bool [nManagedCpuCores];
     for (int i=0; i<nManagedCpuCores; i++)
@@ -349,7 +356,7 @@ void Hypervisor::deallocateVmResources(std::string strVmId) {
 
     unsigned int* cpuCoreIndex;
     cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
-    pHardwareManager->deallocateCores(pResourceRequest->getTotalCpUs(), cpuCoreIndex);
+    pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
     freeSchedArray[nSchedulerIndex] = true;
     pHardwareManager->deallocateRam(pResourceRequest->getTotalMemory());
 

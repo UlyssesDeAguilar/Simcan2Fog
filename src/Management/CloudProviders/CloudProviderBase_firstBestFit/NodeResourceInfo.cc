@@ -21,10 +21,10 @@ bool NodeResourceInfo::hasFit(NodeResourceRequest* pUser)
     if(pUser != NULL)
     {
         bRet=true;
-        if(pUser->getTotalCpUs() > this->nAvailableCPUs)
+        if(pUser->getTotalCpus() > this->nAvailableCPUs)
         {
             bRet = false;
-            EV_TRACE << "Full cores list!!(max: "<<this->getNumCpUs() << "): " << pUser->getTotalCpUs() << " vs "<< this->nAvailableCPUs << endl;
+            EV_TRACE << "Full cores list!!(max: "<<this->getNumCpUs() << "): " << pUser->getTotalCpus() << " vs "<< this->nAvailableCPUs << endl;
 
         }
 
@@ -41,7 +41,7 @@ bool NodeResourceInfo::simpleInserUserRequest(NodeResourceRequest* pUser)
 {
     bool bRet = false;
 
-    nAvailableCPUs=nAvailableCPUs-pUser->getTotalCpUs();
+    nAvailableCPUs=nAvailableCPUs-pUser->getTotalCpus();
     nAvailableMemory=nAvailableMemory-pUser->getTotalMemory();
     userRqMap[pUser->getVmId()]=pUser;
 
@@ -58,7 +58,7 @@ bool NodeResourceInfo::insertUserRequest(NodeResourceRequest* pUser)
     if(hasFit(pUser))
     {
         strVmId = pUser->getVmId();
-        nCpus = pUser->getTotalCpUs();
+        nCpus = pUser->getTotalCpus();
         nMemory = pUser->getTotalMemory();
 
         //Trying to avoid duplicated requests
@@ -83,7 +83,7 @@ void NodeResourceInfo::freeResources(NodeResourceRequest* pUser)
 
     if(pUser != NULL)
     {
-        nCpus = pUser->getTotalCpUs();
+        nCpus = pUser->getTotalCpus();
         nMemory = pUser->getTotalMemory();
         EV_TRACE << "NodeResourceInfo::freeResources - freeing the resources of the user: " << pUser->getUserName() << " | CPUs: "<< nCpus << " | MEM: " << nMemory<<endl;
 
@@ -187,7 +187,7 @@ unsigned int NodeResourceInfo::getTotalCpusById(std::string strVmId)
        pUser = it->second;
        if(strVmId.compare(pUser->getVmId())>=0)
        {
-           nRet = pUser->getTotalCpUs();
+           nRet = pUser->getTotalCpus();
            bFound=true;
        }
     }

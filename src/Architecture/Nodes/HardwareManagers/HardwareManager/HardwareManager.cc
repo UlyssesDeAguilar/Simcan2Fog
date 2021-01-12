@@ -11,6 +11,7 @@ void HardwareManager::initialize(){
         maxVMs = par ("maxVMs");
         numAvailableCpuCores = numCpuCores = par ("numCpuCores");
         availableMemory = memorySize = par ("memorySize");
+        availableDisk = diskSize = par ("diskSize");
         maxUsers = par ("maxUsers");
         freeCoresArrayPtr = new bool[numCpuCores];
 
@@ -68,6 +69,14 @@ void HardwareManager::initialize(){
 
 }
 
+double HardwareManager::getAvailableDisk() const {
+    return availableDisk;
+}
+
+void HardwareManager::setAvailableDisk(double availableDisk) {
+    this->availableDisk = availableDisk;
+}
+
 void HardwareManager::handleMessage(cMessage *msg){
     // TODO - Generated method body
 }
@@ -89,13 +98,31 @@ bool HardwareManager::allocateRam(double memory){
     return true;
 }
 
+bool HardwareManager::allocateDisk(double disk){
+    if (disk > getAvailableDisk())
+        return false;
+
+    availableDisk -= disk;
+
+    return true;
+}
+
 double HardwareManager::deallocateRam(double memory){
     availableMemory += memory;
 
     if (availableMemory > memorySize)
-        availableMemory = memory;
+        availableMemory = memorySize;
 
     return availableMemory;
+}
+
+double HardwareManager::deallocateDisk(double disk){
+    availableDisk += disk;
+
+    if (availableDisk > diskSize)
+        availableDisk = diskSize;
+
+    return availableDisk;
 }
 
 unsigned int* HardwareManager::allocateCores(int numCores){

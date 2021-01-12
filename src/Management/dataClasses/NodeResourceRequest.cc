@@ -56,7 +56,7 @@ int NodeResourceRequest::getRentTimeT2() const {
 void NodeResourceRequest::setRentTimeT2(int rentTimeT2) {
     nRentTime_t2 = rentTimeT2;
 }
-unsigned int NodeResourceRequest::getTotalCpUs() const {
+unsigned int NodeResourceRequest::getTotalCpus() const {
     return totalCPUs;
 }
 
@@ -80,4 +80,10 @@ void NodeResourceRequest::setTotalMemory(double totalMemory) {
     nTotalMemory = totalMemory;
 }
 
+double NodeResourceRequest::getTotalDiskGb() const {
+    return totalDiskGB;
+}
 
+void NodeResourceRequest::setTotalDiskGb(double totalDiskGb) {
+    totalDiskGB = totalDiskGb;
+}

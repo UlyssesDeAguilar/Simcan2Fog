@@ -157,7 +157,7 @@ NodeResourceInfo* DataCenter_CpuType::allocNewResources(NodeResourceRequest* pVm
     nIndex = 0;
     bAlloc = false;
 
-    EV_DEBUG << "DataCenter_CpuType::allocNewResources - Init | RqCores: " << pVmRequest->getTotalCpUs() << " | NumNodes: " << pList->size() << " | TotalDCcores: " << nTotalAvailableCores << endl;
+    EV_DEBUG << "DataCenter_CpuType::allocNewResources - Init | RqCores: " << pVmRequest->getTotalCpus() << " | NumNodes: " << pList->size() << " | TotalDCcores: " << nTotalAvailableCores << endl;
 
     if(pList == nullptr)
         EV_DEBUG << "DataCenter_CpuType::allocNewResources - Bad choice :(" << endl;
@@ -173,7 +173,7 @@ NodeResourceInfo* DataCenter_CpuType::allocNewResources(NodeResourceRequest* pVm
                 pNode->insertUserRequest(pVmRequest);
 
                 //Update values
-                nTotalAvailableCores-=pVmRequest->getTotalCpUs();
+                nTotalAvailableCores-=pVmRequest->getTotalCpus();
                 bAlloc=true;
             }
             else
@@ -200,7 +200,7 @@ NodeResourceInfo* DataCenter_CpuType::handleVmRequest(NodeResourceRequest* pVmRe
     int nRequestedCores, nNodeCores;
     std::vector <NodeResourceInfo*>* pArrayNodeList;
 
-    nRequestedCores = pVmRequest->getTotalCpUs();
+    nRequestedCores = pVmRequest->getTotalCpus();
     nNodeCores = nRequestedCores;
     pNode=NULL;
 

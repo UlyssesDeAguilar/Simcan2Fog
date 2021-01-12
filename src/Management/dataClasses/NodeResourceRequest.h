@@ -83,7 +83,7 @@ class NodeResourceRequest{
         void setRentTimeT2(int rentTimeT2);
         bool isReserved() const;
         void setReserved(bool reserved);
-        unsigned int getTotalCpUs() const;
+        unsigned int getTotalCpus() const;
         void setTotalCpUs(unsigned int totalCpUs);
         const std::string& getUserName() const;
         void setUserName(const std::string& userName);
@@ -97,6 +97,9 @@ class NodeResourceRequest{
         void setNodeType(const std::string& nodeType) {this->nodeType = nodeType;}
         const std::string& getVmId() const {return strVmId;}
         void setVmId(const std::string& strVmId) {this->strVmId = strVmId;}
+
+    double getTotalDiskGb() const;
+    void setTotalDiskGb(double totalDiskGb);
 };
 
 #endif /* NODEUSER_H_ */
