@@ -665,7 +665,6 @@ void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
         userVM_Rq->printUserVM();
         //Check if is a VmRequest or a subscribe
         if (checkVmUserFit(userVM_Rq)) {
-            EV_FATAL << "Ok" << endl;
             acceptVmRequest(userVM_Rq);
         }else{
             rejectVmRequest(userVM_Rq);
