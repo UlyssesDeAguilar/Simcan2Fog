@@ -359,7 +359,7 @@ void Hypervisor::deallocateVmResources(std::string strVmId) {
     pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
     freeSchedArray[nSchedulerIndex] = true;
     pHardwareManager->deallocateRam(pResourceRequest->getTotalMemory());
-    pHardwareManager->deallocateDisk(pResourceRequest->getTotalDiskGb()):
+    pHardwareManager->deallocateDisk(pResourceRequest->getTotalDiskGb());
 
     pVmScheduler->setIsRunning(false);
 }

@@ -17,7 +17,7 @@ void CloudProviderBase_firstBestFit::initialize(){
     // Init data-center structures
     //Fill the meta-structures created to improve the performance of the cloudprovider
     initializeDataCenterCollection();
-    //loadNodes();
+    loadNodes();
 
     bFinished = false;
     scheduleAt(SimTime(), new cMessage(INITIAL_STAGE));

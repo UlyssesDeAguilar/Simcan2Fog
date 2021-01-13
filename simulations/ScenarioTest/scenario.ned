@@ -18,6 +18,8 @@ module DataCenter_A
         string vmList;
         string slaList;
         string userList;
+		int numCmpRacks = 2;
+		int numStoRacks = 0;
 
         @display("bgb=631,231");
     gates:
@@ -44,25 +46,28 @@ module DataCenter_A
         // ---------------------------------------------------------------
         //   Definition of Computing Racks
         // ---------------------------------------------------------------
-        rackCmp_Rack_A_0: CloudRack {
-
+        rackCmp_Rack_A[numCmpRacks]: CloudRack {
             @display("p=109,34");
         }
         
-        rackCmp_Rack_A_1: CloudRack {
-
+                // ---------------------------------------------------------------
+        //   Definition of Computing Racks
+        // ---------------------------------------------------------------
+        rackSto_Rack_B[numStoRacks]: CloudRack {
             @display("p=109,34");
         }
+        
+
         // ---------------------------------------------------------------
         //   Definition of Network
         // ---------------------------------------------------------------
         dataCenterNetwork: DataCenterNetwork {
             @display("p=299,51");
             gates:
-                inComm[2];
-                outComm[2];
-                inStorage[0];
-                outStorage[0];
+                inComm[numCmpRacks];
+                outComm[numCmpRacks];
+                inStorage[numStoRacks];
+                outStorage[numStoRacks];
         }
 
     // ---------------------------------------------------------------
@@ -75,10 +80,16 @@ module DataCenter_A
         dcManager.in <-- ned.IdealChannel <-- fromCloudProvider;
 
         // Connections between computing racks and the network
-        rackCmp_Rack_A_0.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
-        rackCmp_Rack_A_0.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
-        rackCmp_Rack_A_1.out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
-        rackCmp_Rack_A_1.in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
+        for i=0..numCmpRacks-1 {
+        	rackCmp_Rack_A[i].out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
+        	rackCmp_Rack_A[i].in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
+        }
+        
+        // Connections between storage racks and the network
+        for i=0..numStoRacks-1 {
+        	rackSto_Rack_B[i].out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
+        	rackSto_Rack_B[i].in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
+        }
 }
 
 // ---------------------------------------------------------------
@@ -92,6 +103,7 @@ network ScenarioTest
         string slaList;
         string userList;
         string dataCentersList;
+        int numDataCenters = 1;
 
         @display("bgb=610,278");
     // -------------------------------------------------------
@@ -102,7 +114,7 @@ network ScenarioTest
         // ---------------------------------------------------------------
         //   Definition of the data-centers
         // ---------------------------------------------------------------
-        dc_DataCenter_A_0: DataCenter_A {
+        dc_DataCenter_A[numDataCenters]: DataCenter_A {
             parameters:
                 appList = appList;
                 vmList = vmList;
@@ -124,8 +136,8 @@ network ScenarioTest
 
                 @display("p=240,76");
             gates:
-                fromDataCenter[1];
-                toDataCenter[1];
+                fromDataCenter[numDataCenters];
+                toDataCenter[numDataCenters];
         }
 
         // -------------------------------------------------------
@@ -146,8 +158,11 @@ network ScenarioTest
     connections allowunconnected:
 
         // Connections between the cloud provider and each data-center manager
-        cloudProvider.toDataCenter++ --> ned.IdealChannel --> dc_DataCenter_A_0.fromCloudProvider;
-        cloudProvider.fromDataCenter++ <-- ned.IdealChannel <-- dc_DataCenter_A_0.toCloudProvider;
+        for i=0..numDataCenters-1 {
+	        cloudProvider.toDataCenter++ --> ned.IdealChannel --> dc_DataCenter_A[i].fromCloudProvider;
+        	cloudProvider.fromDataCenter++ <-- ned.IdealChannel <-- dc_DataCenter_A[i].toCloudProvider;
+        }
+
 
         cloudProvider.toUserGenerator --> ned.IdealChannel --> userGenerator.fromCloudProvider;
         userGenerator.toCloudProvider --> ned.IdealChannel --> cloudProvider.fromUserGenerator;

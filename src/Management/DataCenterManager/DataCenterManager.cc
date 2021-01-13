@@ -55,8 +55,8 @@ int DataCenterManager::initDataCenterMetadata (){
     for (int nRackIndex=0; nRackIndex < pDataCenterBase->getNumRacks(false); nRackIndex++ ) {
         Rack* pRackBase = pDataCenterBase->getRack(nRackIndex,false);
         //Generate rack name in the data center
-        string strRackName = "rackCmp_" + pRackBase->getRackInfo()->getName() + "_" + std::to_string(nRackIndex);
-        pRackModule = getParentModule()->getSubmodule(strRackName.c_str());
+        string strRackName = "rackCmp_" + pRackBase->getRackInfo()->getName();
+        pRackModule = getParentModule()->getSubmodule(strRackName.c_str(), nRackIndex);
 
         numBoards =  pRackModule->par("numBoards");
 
@@ -901,7 +901,7 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
 
                 bRet &= bAccepted;
 
-                userVM_Rq->createResponse(i, bRet, simTime().dbl(), std::string(), 0);
+                userVM_Rq->createResponse(i, bRet, simTime().dbl(), hypervisor->getFullPath(), 0);
 
 
                 //We need to know the price of the Node.
