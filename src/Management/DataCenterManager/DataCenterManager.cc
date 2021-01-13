@@ -892,7 +892,7 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 if (hypervisor != nullptr) {
                     acceptedVMsMap[vmRequest.strVmId] = hypervisor;
 //                    userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
-
+                    nodeIp = hypervisor->getFullPath();
                     bAccepted = true;
                 } else {
                     bAccepted = false;
@@ -900,7 +900,7 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
 
                 bRet &= bAccepted;
 
-                userVM_Rq->createResponse(i, bRet, simTime().dbl(), hypervisor->getFullPath(), 0);
+                userVM_Rq->createResponse(i, bRet, simTime().dbl(), nodeIp, 0);
 
 
                 //We need to know the price of the Node.
