@@ -570,11 +570,9 @@ int CloudProviderBase_firstBestFit::searchUserInSubQueue(std::string strUsername
                   {
                     bFound = strcmp(pUserVM->getStrVmId(), "") == 0 || strVmId.compare(pUserVM->getStrVmId()) == 0;
                   }
-                else
-                  {
                     EV_TRACE << __func__ << " - [nIndex: " << nIndex << " " << strUsername << " vs " <<pUserVM->getUserID()<<" ]" << endl;
                     nIndex++;
-                  }
+
               }
             else
               {
