@@ -1035,7 +1035,6 @@ int CloudProviderBase_firstBestFit::TEMPORAL_calculateTotalTime(Application* app
 }
 void CloudProviderBase_firstBestFit::handleResponseRejectSubcription(SIMCAN_Message* sm)
 {
-
     SM_UserVM *userVM_Rq = dynamic_cast<SM_UserVM*>(sm);
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request"  << endl;
 
@@ -1057,11 +1056,9 @@ void CloudProviderBase_firstBestFit::notifySubscription(SM_UserVM* userVM_Rq)
 
     //Cancel the timeout event
     pMsgTimeout = userVM_Rq->getTimeoutSubscribeMsg();
-    if(pMsgTimeout != nullptr)
-    {
-        cancelAndDelete(pMsgTimeout);
-        userVM_Rq->setTimeoutSubscribeMsg(nullptr);
-    }
+    userVM_Rq->setTimeoutSubscribeMsg(nullptr);
+    cancelAndDelete(pMsgTimeout);
+
 
     //Send the values
     sendResponseMessage(userVM_Rq);
@@ -1073,11 +1070,7 @@ void CloudProviderBase_firstBestFit::timeoutSubscription(SM_UserVM* userVM_Rq)
     EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << endl;
     EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
 
-    pMsg = userVM_Rq->getTimeoutSubscribeMsg();
-    if (pMsg != nullptr) {
-        userVM_Rq->setTimeoutSubscribeMsg(nullptr);
-    }
-
+    userVM_Rq->setTimeoutSubscribeMsg(nullptr);
 
     //Fill the message
     userVM_Rq->setIsResponse(true);
@@ -1102,7 +1095,7 @@ void CloudProviderBase_firstBestFit::storeVmSubscribe(SM_UserVM* userVM_Rq)
         pMsg = userVM_Rq->getTimeoutSubscribeMsg();
         if (pMsg==nullptr)
         {
-            pMsg = scheduleRentingTimeout(USER_SUBSCRIPTION_TIMEOUT, userVM_Rq->getUserID(), "", dMaxSubscribeTime);
+            pMsg = scheduleRentingTimeout(USER_SUBSCRIPTION_TIMEOUT, userVM_Rq->getUserID(), userVM_Rq->getStrVmId(), dMaxSubscribeTime);
 
             //Store the VM subscription until there exist the Vms necessaries
             userVM_Rq->setDStartSubscriptionTime(simTime().dbl());
@@ -1505,7 +1498,6 @@ void CloudProviderBase_firstBestFit::handleResponseReject(SIMCAN_Message *sm) {
 }
 
 void CloudProviderBase_firstBestFit::handleResponseAccept(SIMCAN_Message *sm) {
-
     sendResponseMessage(sm);
 }
 
@@ -1558,10 +1550,8 @@ void CloudProviderBase_firstBestFit::handleResponseNotifySubcription(SIMCAN_Mess
 
 
     pMsg = userVM_Rq->getTimeoutSubscribeMsg();
-    if (pMsg != nullptr) {
-        userVM_Rq->setTimeoutSubscribeMsg(nullptr);
-        cancelAndDelete(pMsg);
-    }
+    userVM_Rq->setTimeoutSubscribeMsg(nullptr);
+    cancelAndDelete(pMsg);
 
     sendResponseMessage(sm);
 }
