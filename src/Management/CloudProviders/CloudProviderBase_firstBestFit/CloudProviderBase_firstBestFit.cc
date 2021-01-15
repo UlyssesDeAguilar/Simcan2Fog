@@ -504,7 +504,7 @@ void CloudProviderBase_firstBestFit::handleSubscriptionTimeout(cMessage *msg)
           {
             EV_TRACE << __func__ << " - User found at position:" << nIndex << endl;
             userVmSub = subscribeQueue.at(nIndex);
-
+            userVmSub->setTimeoutSubscribeMsg(nullptr);
 //            if (strcmp(userVmSub->getStrVmId(), "") == 0)
 //                freeUserVms(strUsername);
 
@@ -602,17 +602,20 @@ void CloudProviderBase_firstBestFit::updateSubsQueue()
         userVmSub->setOperation(SM_VM_Sub);
         userVmSub->setResult(0);
 
-        if(checkVmUserFit(userVmSub))
-        {
+        if (userVmSub->getOwner()==this) {
+            checkVmUserFit(userVmSub);
+
             EV_INFO << "Notifying subscription of user: "<< userVmSub->getUserID() << endl;
+        }
+
 //            notifySubscription(userVmSub);
 
             //Remove from queue
-            subscribeQueue.erase(subscribeQueue.begin()+i);
+          //  subscribeQueue.erase(subscribeQueue.begin()+i);
 //            if (strcmp(userVmSub->getStrVmId(), "") == 0)
 //                acceptedUsersRqMap[userVmSub->getUserID()] = userVmSub;
-            i--;
-        }
+         //   i--;
+        //}
     }
 }
 
@@ -746,12 +749,8 @@ void CloudProviderBase_firstBestFit::handleVmSubscription(SIMCAN_Message *sm)
 
     if(userVM_Rq != nullptr)
       {
-        if (checkVmUserFit(userVM_Rq))
-            EV_FATAL << "OK" << endl;
-//            notifySubscription(userVM_Rq);
-        else
-            EV_FATAL << "Fail" << endl;
-//            storeVmSubscribe(userVM_Rq); //Store the vmRequest
+        storeVmSubscribe(userVM_Rq);
+        checkVmUserFit(userVM_Rq);
       }
     else
       {
@@ -1043,7 +1042,7 @@ void CloudProviderBase_firstBestFit::handleResponseRejectSubcription(SIMCAN_Mess
     if(userVM_Rq == nullptr)
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
 
-    storeVmSubscribe(userVM_Rq);
+    //storeVmSubscribe(userVM_Rq);
 }
 void CloudProviderBase_firstBestFit::notifySubscription(SM_UserVM* userVM_Rq)
 {
@@ -1069,8 +1068,16 @@ void CloudProviderBase_firstBestFit::notifySubscription(SM_UserVM* userVM_Rq)
 }
 void CloudProviderBase_firstBestFit::timeoutSubscription(SM_UserVM* userVM_Rq)
 {
+    SM_UserVM_Finish *pMsg;
+
     EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << endl;
     EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
+
+    pMsg = userVM_Rq->getTimeoutSubscribeMsg();
+    if (pMsg != nullptr) {
+        userVM_Rq->setTimeoutSubscribeMsg(nullptr);
+    }
+
 
     //Fill the message
     userVM_Rq->setIsResponse(true);
@@ -1515,6 +1522,7 @@ void CloudProviderBase_firstBestFit::handleResponseNotifySubcription(SIMCAN_Mess
 
     SM_UserVM *userVM_Rq;
     SM_UserVM_Finish *pMsg;
+    int nIndex;
 
     userVM_Rq = dynamic_cast<SM_UserVM*>(sm);
 
@@ -1536,11 +1544,23 @@ void CloudProviderBase_firstBestFit::handleResponseNotifySubcription(SIMCAN_Mess
 //
 //
 //    }
+
+    nIndex = searchUserInSubQueue(userVM_Rq->getUserID(), userVM_Rq->getStrVmId());
+    if(nIndex != -1)
+      {
+        EV_TRACE << __func__ << " - User found at position:" << nIndex << endl;
+        subscribeQueue.erase(subscribeQueue.begin()+nIndex);
+      }
+    else
+      {
+        EV_TRACE << __func__ << " - User " << userVM_Rq->getUserID() << " not found in queue list" << endl;
+      }
+
+
     pMsg = userVM_Rq->getTimeoutSubscribeMsg();
     if (pMsg != nullptr) {
         userVM_Rq->setTimeoutSubscribeMsg(nullptr);
         cancelAndDelete(pMsg);
-
     }
 
     sendResponseMessage(sm);
