@@ -305,7 +305,8 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
 void UserGenerator_simple::execute(CloudUserInstance *pUserInstance, SM_UserVM *userVm)
 {
     emit(executeSignal[userVm->getStrVmId()], pUserInstance->getId());
-    pUserInstance->setInitExecTime(simTime());
+    if (strcmp(userVm->getStrVmId(), "") == 0)
+        pUserInstance->setInitExecTime(simTime());
     submitService(userVm);
 }
 
