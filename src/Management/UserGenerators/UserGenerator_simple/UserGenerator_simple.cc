@@ -629,6 +629,7 @@ void UserGenerator_simple::recoverVmAndsubscribe(SM_UserAPP *userApp, std::strin
       {
         pUserInstance->setSubscribe(true);
         userVM_Rq = sendSingleVMSubscriptionMessage(pUserInstance->getRequestVmMsg(), strVmId);
+        bSent = true;
       }
 
     if (bSent == false)
