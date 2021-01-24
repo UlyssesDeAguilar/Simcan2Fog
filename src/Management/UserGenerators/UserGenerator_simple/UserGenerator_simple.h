@@ -231,7 +231,7 @@ private:
      * Generates a Single VM SM_UserVM
      * @param userApp
      */
-    SM_UserVM* getSingleVMSubscriptionMessage(SM_UserVM *userVM_Orig, std::string vmId);
+    SM_UserVM* sendSingleVMSubscriptionMessage(SM_UserVM *userVM_Orig, std::string vmId);
 
     /**
      *  Prints the final parameters.

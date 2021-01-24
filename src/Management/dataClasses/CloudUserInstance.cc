@@ -51,7 +51,8 @@ CloudUserInstance::CloudUserInstance (CloudUser    *ptrUser,
     subscribeVmMsg = nullptr;
 
     bTimeout_t2 = bTimeout_t4 = bFinished = false;
-    dInitTime = dEndTime = 0.0;
+    dInitTime = dEndTime = dInitWaitTime = dWaitTime = 0.0;
+
 }
 
 
@@ -304,4 +305,20 @@ void CloudUserInstance::addFinishedVMs(int newFinished)
 int CloudUserInstance::getTotalVMs() const
 {
     return numTotalVMs;
+}
+
+const SimTime& CloudUserInstance::getWaitTime() const {
+    return dWaitTime;
+}
+
+void CloudUserInstance::setWaitTime(const SimTime &dWaitTime) {
+    this->dWaitTime = dWaitTime;
+}
+
+const SimTime& CloudUserInstance::getInitWaitTime() const {
+    return dInitWaitTime;
+}
+
+void CloudUserInstance::setInitWaitTime(const SimTime &dInitWaitTime) {
+    this->dInitWaitTime = dInitWaitTime;
 }

@@ -43,6 +43,8 @@ class CloudUserInstance: public UserInstance {
         SimTime dInitTime;
         SimTime dInitExec;
         SimTime dEndTime;
+        SimTime dInitWaitTime;
+        SimTime dWaitTime;
 
         bool bSubscribe;
         bool bTimeout_t2;
@@ -154,6 +156,10 @@ class CloudUserInstance: public UserInstance {
          * @param index Index of the required vm.
          */
         VmInstance* getNthVm(int index);
+    const SimTime& getWaitTime() const;
+    void setWaitTime(const SimTime &dWaitTime);
+    const SimTime& getInitWaitTime() const;
+    void setInitWaitTime(const SimTime &dInitWaitTime);
 
     protected:
 

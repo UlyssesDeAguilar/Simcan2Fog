@@ -518,6 +518,7 @@ CloudUserInstance* UserGenerator_simple::handleResponseAppTimeout(SIMCAN_Message
 CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_RAW) {
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
+    SimTime stWaitTime;
 
     if (userVm != nullptr) {
         EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
@@ -531,6 +532,9 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
         EV_INFO << "Subscription accepted ...  " << endl;
 
         if (pUserInstance != nullptr) {
+            stWaitTime = pUserInstance->getWaitTime();
+            pUserInstance->setWaitTime(stWaitTime + simTime() - pUserInstance->getInitWaitTime());
+
             emit(notifySignal[userVm->getStrVmId()], pUserInstance->getId());
             execute(pUserInstance, userVm);
         }
@@ -549,6 +553,7 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
 CloudUserInstance* UserGenerator_simple::handleSubTimeout(SIMCAN_Message *userVm_RAW) {
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
+    SimTime stWaitTime;
 
     if (userVm != nullptr) {
         EV_INFO << __func__ << " - Init" << endl;
@@ -565,7 +570,8 @@ CloudUserInstance* UserGenerator_simple::handleSubTimeout(SIMCAN_Message *userVm
 
         if (pUserInstance != nullptr)
           {
-            pUserInstance->setTimeoutMaxSubscribed();
+            stWaitTime = pUserInstance->getWaitTime();
+            pUserInstance->setWaitTime(stWaitTime + simTime() - pUserInstance->getInitWaitTime());            pUserInstance->setTimeoutMaxSubscribed();
             emit(timeoutSignal[userVm->getStrVmId()], pUserInstance->getId());
           }
 
@@ -622,13 +628,7 @@ void UserGenerator_simple::recoverVmAndsubscribe(SM_UserAPP *userApp, std::strin
     if (pUserInstance != nullptr)
       {
         pUserInstance->setSubscribe(true);
-        userVM_Rq = getSingleVMSubscriptionMessage(pUserInstance->getRequestVmMsg(), strVmId);
-
-        if (userVM_Rq != nullptr)
-          {
-            bSent = true;
-            sendRequestMessage(userVM_Rq, toCloudProviderGate);
-          }
+        userVM_Rq = sendSingleVMSubscriptionMessage(pUserInstance->getRequestVmMsg(), strVmId);
       }
 
     if (bSent == false)
@@ -663,9 +663,10 @@ void UserGenerator_simple::recoverVmAndsubscribe(SM_UserAPP *userApp)
                 if(userVM_Rq != nullptr)
                   {
                     bSent=true;
-                    userVM_Rq->setIsResponse(false);
-                    userVM_Rq->setOperation(SM_VM_Sub);
-                    sendRequestMessage (userVM_Rq, toCloudProviderGate);
+                    subscribe(userVM_Rq);
+//                    userVM_Rq->setIsResponse(false);
+//                    userVM_Rq->setOperation(SM_VM_Sub);
+//                    sendRequestMessage (userVM_Rq, toCloudProviderGate);
                   }
               }
           }
@@ -675,7 +676,7 @@ void UserGenerator_simple::recoverVmAndsubscribe(SM_UserAPP *userApp)
         error("Error sending the subscription message");
 }
 
-SM_UserVM* UserGenerator_simple::getSingleVMSubscriptionMessage(SM_UserVM *userVM_Orig, std::string vmId) {
+SM_UserVM* UserGenerator_simple::sendSingleVMSubscriptionMessage(SM_UserVM *userVM_Orig, std::string vmId) {
     SM_UserVM *userVM;
 
     userVM = userVM_Orig->dup(vmId);
@@ -684,8 +685,9 @@ SM_UserVM* UserGenerator_simple::getSingleVMSubscriptionMessage(SM_UserVM *userV
       {
         //TODO: Mirar si hace falta.
         userVM->setStrVmId(vmId.c_str());
-        userVM->setIsResponse(false);
-        userVM->setOperation(SM_VM_Sub);
+        subscribe(userVM);
+//        userVM->setIsResponse(false);
+//        userVM->setOperation(SM_VM_Sub);
       }
 
     return userVM;
@@ -750,14 +752,23 @@ void UserGenerator_simple::updateVmUserStatus(std::string strUserId, std::string
 
 void UserGenerator_simple::subscribe(SM_UserVM *userVM_Rq) {
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Sending Subscribe message" << endl;
-    if (userVM_Rq != nullptr) {
-        userVM_Rq->setIsResponse(false);
-        userVM_Rq->setOperation(SM_VM_Sub);
-        userVM_Rq->printUserVM();
-        sendRequestMessage(userVM_Rq, toCloudProviderGate);
-    } else {
-        EV_INFO << "Error sending Subscribe message" << endl;
+    CloudUserInstance *pUserInstance = nullptr;
 
+    pUserInstance = userHashMap.at(userVM_Rq->getUserID());
+
+    if (pUserInstance != nullptr) {
+
+        pUserInstance->setInitWaitTime(simTime());
+
+        if (userVM_Rq != nullptr) {
+            userVM_Rq->setIsResponse(false);
+            userVM_Rq->setOperation(SM_VM_Sub);
+            userVM_Rq->printUserVM();
+            sendRequestMessage(userVM_Rq, toCloudProviderGate);
+        } else {
+            EV_INFO << "Error sending Subscribe message" << endl;
+
+        }
     }
     EV_INFO << "UserGenerator::subscribe - End" << endl;
 }
@@ -1099,7 +1110,7 @@ void UserGenerator_simple::printFinal() {
 
 }
 void UserGenerator_simple::calculateStatistics() {
-    SimTime dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub, dMeanSub;
+    SimTime dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub, dMeanSub, dWaitTime;
     double dNoWaitUsers, dWaitUsers;
     int nIndex, nSize, nTotalTimeouts;
     CloudUserInstance *pUserInstance;
@@ -1108,7 +1119,7 @@ void UserGenerator_simple::calculateStatistics() {
     nIndex = 1;
     nTotalTimeouts = 0;
     dInitTime = dEndTime = dExecTime = dSubTime = dMaxSub = dTotalSub =
-            dMeanSub = 0;
+            dMeanSub = dWaitTime = 0;
     dNoWaitUsers = dWaitUsers = 0;
     nSize = userInstances.size();
 
@@ -1118,6 +1129,10 @@ void UserGenerator_simple::calculateStatistics() {
         dEndTime = pUserInstance->getEndTime();
         dMaxSub = pUserInstance->getT4();
         dExecTime = pUserInstance->getInitExecTime();
+        dWaitTime = pUserInstance->getInitWaitTime();
+
+        if (dWaitTime != 0)
+            dWaitTime = dWaitTime / 3600;
 
         if (dMaxSub != 0)
             dMaxSub = dMaxSub / 3600;
@@ -1137,11 +1152,11 @@ void UserGenerator_simple::calculateStatistics() {
             dSubTime = 0;
 
         if (pUserInstance->isTimeout()) {
-            EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << endl;
+            EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << " " << dWaitTime << endl;
             dSubTime += dMaxSub;
             nTotalTimeouts++;
         } else {
-            EV_FATAL << "#___#Success " << nIndex << " " << dSubTime << " -1 " << endl;
+            EV_FATAL << "#___#Success " << nIndex << " " << dSubTime <<  " -1 " << " " << dWaitTime << endl;
             dTotalSub += dSubTime;
         }
         if (pUserInstance->hasSubscribed())
