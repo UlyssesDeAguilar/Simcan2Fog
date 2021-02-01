@@ -571,7 +571,8 @@ CloudUserInstance* UserGenerator_simple::handleSubTimeout(SIMCAN_Message *userVm
         if (pUserInstance != nullptr)
           {
             stWaitTime = pUserInstance->getWaitTime();
-            pUserInstance->setWaitTime(stWaitTime + simTime() - pUserInstance->getInitWaitTime());            pUserInstance->setTimeoutMaxSubscribed();
+            pUserInstance->setWaitTime(stWaitTime + simTime() - pUserInstance->getInitWaitTime());
+            pUserInstance->setTimeoutMaxSubscribed();
             emit(timeoutSignal[userVm->getStrVmId()], pUserInstance->getId());
           }
 
@@ -1152,7 +1153,7 @@ void UserGenerator_simple::calculateStatistics() {
         else
             dSubTime = 0;
 
-        if (pUserInstance->isTimeout()) {
+        if (pUserInstance->isTimeoutSubscribed()) {
             EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << " " << dWaitTime << endl;
             dSubTime += dMaxSub;
             nTotalTimeouts++;
