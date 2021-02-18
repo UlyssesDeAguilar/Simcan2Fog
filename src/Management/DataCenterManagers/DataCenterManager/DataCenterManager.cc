@@ -7,6 +7,7 @@ Define_Module(DataCenterManager);
 
 DataCenterManager::~DataCenterManager(){
     acceptedVMsMap.clear();
+    acceptedUsersRqMap.clear();
     handlingAppsRqMap.clear();
     mapHypervisorPerNodes.clear();
     mapAppsVectorModulePerVm.clear();
@@ -887,7 +888,7 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
 //                //Send the request to the DC
 //                bAccepted = datacenterCollection->handleVmRequest(pNode);
 
-                hypervisor = selectNode(strUserName, vmRequest);
+                hypervisor = selectNode(userVM_Rq, vmRequest);
 
                 if (hypervisor != nullptr) {
                     acceptedVMsMap[vmRequest.strVmId] = hypervisor;
@@ -934,10 +935,12 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
             bRet = false;
           }
 
-        if(bRet)
+        if(bRet) {
+            acceptedUsersRqMap[strUserName] = userVM_Rq;
             EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << endl;
-        else
+        }else{
             EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << endl;
+        }
       }
     else
       {
@@ -1184,7 +1187,7 @@ SM_UserVM_Finish* DataCenterManager::scheduleRentingTimeout (std::string name, s
     return pMsg;
 }
 
-Hypervisor* DataCenterManager::selectNode (string strUserName, const VM_Request& vmRequest){
+Hypervisor* DataCenterManager::selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest){
     VirtualMachine *pVMBase;
     Hypervisor *pHypervisor = nullptr;
     NodeResourceRequest *pResourceRequest;
@@ -1193,6 +1196,11 @@ Hypervisor* DataCenterManager::selectNode (string strUserName, const VM_Request&
     std::vector<Hypervisor*> vectorHypervisor;
     std::vector<Hypervisor*>::iterator itVector;
     bool bHandled;
+    string strUserName;
+
+    if (userVM_Rq==nullptr) return nullptr;
+
+    strUserName = userVM_Rq->getUserID();
 
     pVMBase = findVirtualMachine(vmRequest.strVmType);
     numCoresRequested = pVMBase->getNumCores();

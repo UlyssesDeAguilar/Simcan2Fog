@@ -5,7 +5,6 @@ import simcan2.Management.CloudProviders.CloudProviderBase_firstBestFit.CloudPro
 // Implementation of a system manager for cloud environments
 //
 simple CloudProvider_firstBestFit extends CloudProviderBase_firstBestFit{
-    parameters:    
-        bool checkReservedFirst = default (false);
+
     @class(CloudProvider_firstBestFit);	
 }

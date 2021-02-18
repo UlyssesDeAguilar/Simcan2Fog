@@ -3,7 +3,7 @@ package simcan2.simulations.ScenarioTest;
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
 import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCenterManager.DataCenterManager;
+import simcan2.Management.DataCenterManagers.DataCenterManager.DataCenterManager;
 import simcan2.Management.CloudProviders.*.*;
 import simcan2.Architecture.Network.DataCenterNetwork.*;
 import simcan2.Management.UserGenerators.*.*;

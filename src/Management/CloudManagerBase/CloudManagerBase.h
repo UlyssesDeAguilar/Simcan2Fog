@@ -142,6 +142,7 @@ class CloudManagerBase: public cSIMCAN_Core{
         * @return If the requested type of user is located in the userTypes vector, then a pointer to its object is returned. In other case, \a nullptr is returned.
         */
         CloudUser* findUser (std::string userType);
+        CloudUser* findUserTypeById (std::string userId);
 
        /**
         * Get the out Gate to the module that sent <b>msg</b>.

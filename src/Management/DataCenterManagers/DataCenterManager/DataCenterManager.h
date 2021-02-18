@@ -35,6 +35,7 @@ public:
         cMessage *cpuStatusMessage;
 
         std::map<std::string, Hypervisor*> acceptedVMsMap;
+        std::map<std::string, SM_UserVM*> acceptedUsersRqMap;
         std::map<std::string, SM_UserAPP*> handlingAppsRqMap;
 
         /** Users */
@@ -59,7 +60,7 @@ public:
         ~DataCenterManager();
         virtual void initialize();
 
-        int initDataCenterMetadata();
+        virtual int initDataCenterMetadata();
 
 
         virtual void initializeSelfHandlers() override;
@@ -68,7 +69,7 @@ public:
        /**
         * Parsea el parametro con la lista de aplicaciones al vector de aplicaciones
         */
-        int parseDataCenterConfig();
+        virtual int parseDataCenterConfig();
 
        /**
         * String que contiene todas los data centers
@@ -91,7 +92,7 @@ public:
 
         bool checkVmUserFit(SM_UserVM*& userVM_Rq);
 
-        virtual Hypervisor* selectNode (string strUserName, const VM_Request& vmRequest);
+        virtual Hypervisor* selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest);
 
         //TODO: refactorizar. esta duplicado en provider.
         int calculateTotalCoresRequested(SM_UserVM* userVM_Rq);

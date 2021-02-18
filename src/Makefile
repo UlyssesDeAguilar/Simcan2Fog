@@ -46,7 +46,8 @@ OBJS = \
     $O/Management/CloudProviders/CloudProviderBase_firstBestFit/CloudProviderBase_firstBestFit.o \
     $O/Management/CloudProviders/CloudProviderBase_firstBestFit/NodeResourceInfo.o \
     $O/Management/CloudProviders/CloudProvider_firstBestFit/CloudProvider_firstBestFit.o \
-    $O/Management/DataCenterManager/DataCenterManager.o \
+    $O/Management/DataCenterManagers/DataCenterManager/DataCenterManager.o \
+    $O/Management/DataCenterManagers/DataCenterManagerCost/DataCenterManagerCost.o \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
     $O/Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \
@@ -81,6 +82,7 @@ OBJS = \
     $O/Management/parser/AppListParser.o \
     $O/Management/parser/DataCenterConfigParser.o \
     $O/Management/parser/DataCenterListParser.o \
+    $O/Management/parser/DataCenterReservationConfigParser.o \
     $O/Management/parser/DataCenterReservationListParser.o \
     $O/Management/parser/SlaListParser.o \
     $O/Management/parser/UserListParser.o \

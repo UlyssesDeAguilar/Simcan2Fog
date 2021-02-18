@@ -2,7 +2,8 @@
 #define __LOCAL_APPLICATION_H_
 
 #include <omnetpp.h>
-#include "Management/DataCenterManager/DataCenterManager.h"
+
+#include "../../../Management/DataCenterManagers/DataCenterManager/DataCenterManager.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
 
 #define IO_READ_OPERATION "IO_READ_OPERATION"

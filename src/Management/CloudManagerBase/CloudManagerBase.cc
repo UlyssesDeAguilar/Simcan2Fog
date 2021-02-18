@@ -320,3 +320,38 @@ CloudUser* CloudManagerBase::findUser (std::string userType){
 
     return result;
 }
+
+CloudUser* CloudManagerBase::findUserTypeById (std::string strUserId){
+
+    string strUserType;
+    size_t fromPos, toPos;
+    std::vector<CloudUser*>::iterator it;
+    CloudUser* result;
+    bool found;
+
+    fromPos = strUserId.find_first_of(')');
+    toPos = strUserId.find_first_of('[');
+
+    result = nullptr;
+
+    if (fromPos != string::npos && toPos != string::npos && fromPos < toPos) {
+
+        strUserType = strUserId.substr(fromPos+1, toPos-fromPos-1);
+
+        found = false;
+
+        it = userTypes.begin();
+
+        // Search...
+        while((!found) && (it != userTypes.end())){
+            if (strUserType.compare((*it)->getType()) == 0) {
+                found = true;
+                result = (*it);
+            }
+            else
+                it++;
+        }
+    }
+
+    return result;
+}

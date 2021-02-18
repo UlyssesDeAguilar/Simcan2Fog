@@ -18,8 +18,6 @@ class CloudProvider_firstBestFit : public CloudProviderBase_firstBestFit{
 
     protected:
 
-        bool checkReservedFirst;
-
         /** Vector that contains the types of slas generated in the current simulation */
         std::vector<Sla*> slaTypes;
 
@@ -74,7 +72,7 @@ class CloudProvider_firstBestFit : public CloudProviderBase_firstBestFit{
          * Check if the user request fits in the datacenter
          * @param userVM_Rq User request.
          */
-        virtual bool checkVmUserFit(SM_UserVM*& userVM_Rq) override;
+//        virtual bool checkVmUserFit(SM_UserVM*& userVM_Rq) override;
 
         virtual void handleExecVmRentTimeout(cMessage *msg) override;
 
@@ -82,7 +80,7 @@ class CloudProvider_firstBestFit : public CloudProviderBase_firstBestFit{
 
         virtual void handleEndVmAndAbortExecution(SIMCAN_Message *sm);
 
-        CloudUser* findUserTypeById (std::string userId);
+
 //
 //        virtual void abortAllApps(SM_UserAPP* userApp, std::string strVmId) override;
 //

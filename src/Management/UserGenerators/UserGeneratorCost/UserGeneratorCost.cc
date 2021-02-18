@@ -171,7 +171,6 @@ CloudUserInstance* UserGeneratorCost::handleResponseAppTimeout(SIMCAN_Message *m
                     endExecution(userApp);
                   }
               }
-
           }
 
 

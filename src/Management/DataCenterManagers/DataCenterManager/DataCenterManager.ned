@@ -1,4 +1,4 @@
-package simcan2.Management.DataCenterManager;
+package simcan2.Management.DataCenterManagers.DataCenterManager;
 import simcan2.Management.CloudManagerBase.CloudManagerBase;
 
 //

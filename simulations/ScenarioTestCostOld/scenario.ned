@@ -1,9 +1,9 @@
-package simcan2.simulations.ScenarioTestCost; 
+package simcan2.simulations.ScenarioTestCostOld; 
 
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
 import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCenterManager.DataCenterManager;
+import simcan2.Management.DataCenterManagers.DataCenterManagerCost.DataCenterManagerCost;
 import simcan2.Management.CloudProviders.*.*;
 import simcan2.Architecture.Network.DataCenterNetwork.*;
 import simcan2.Management.UserGenerators.*.*;
@@ -31,7 +31,7 @@ module DataCenter_A{
 		// ---------------------------------------------------------------
 		//   Definition of the data-center manager
 		// ---------------------------------------------------------------
-		dcManager:DataCenterManager{
+		dcManager:DataCenterManagerCost{
 			parameters:
 				appList=appList;
 				vmList=vmList;
