@@ -28,6 +28,7 @@ protected:
     double nRentTime_t2;
     double maxSubTime_t3;
     double maxSubscriptionTime_t4;
+    double offerAcceptanceRate;
 
     // Handlers hashMap
     std::map<std::string, std::function<void(cMessage*)>> selfMessageHandlers;

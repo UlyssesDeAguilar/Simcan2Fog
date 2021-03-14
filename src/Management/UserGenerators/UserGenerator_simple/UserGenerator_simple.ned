@@ -35,6 +35,7 @@ simple UserGenerator_simple extends UserGeneratorBase{
 		double nRentTime_t2 = default (5.0);
 		double maxSubTime_t3 = default (5.0);
 		double maxSubscriptionTime_t4;
+		double offerAcceptanceRate = default(1);
     
     @class(UserGenerator_simple);	
 }

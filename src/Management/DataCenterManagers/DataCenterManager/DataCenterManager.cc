@@ -853,6 +853,7 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 strVmId;
 
     Hypervisor *hypervisor;
+    int nRentTime;
 
     bAccepted = bRet = true;
     if(userVM_Rq != nullptr)
@@ -916,7 +917,12 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 else
                   {
                     //Getting VM and scheduling renting timeout
-                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.nRentTime_t2);
+                    if (userVM_Rq->getOperation()==SM_VM_Sub)
+                        nRentTime = 3600;
+                    else
+                        nRentTime = vmRequest.nRentTime_t2;
+
+                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, nRentTime);
 
                     //Update value
                     //nAvailableCores = datacenterCollection->getTotalAvailableCores();

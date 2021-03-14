@@ -26,6 +26,7 @@ void UserGenerator_simple::initialize() {
     nRentTime_t2 = par("nRentTime_t2");
     maxSubTime_t3 = par("maxSubTime_t3");
     maxSubscriptionTime_t4 = par("maxSubscriptionTime_t4");
+    offerAcceptanceRate = par("offerAcceptanceRate");
 
     EV_INFO << "UserGenerator::initialize - Base initialized" << endl;
 
@@ -591,7 +592,7 @@ bool UserGenerator_simple::hasToSubscribeVm(SM_UserAPP* userApp)
 
     dRandom = ((double) rand() / (RAND_MAX));
 
-    return dRandom<=1;
+    return dRandom<=offerAcceptanceRate;
 }
 
 void UserGenerator_simple::cancelAndDeleteMessages(CloudUserInstance *pUserInstance) {
@@ -1131,7 +1132,7 @@ void UserGenerator_simple::calculateStatistics() {
         dEndTime = pUserInstance->getEndTime();
         dMaxSub = pUserInstance->getT4();
         dExecTime = pUserInstance->getInitExecTime();
-        dWaitTime = pUserInstance->getInitWaitTime();
+        dWaitTime = pUserInstance->getWaitTime();
 
         if (dWaitTime != 0)
             dWaitTime = dWaitTime / 3600;
