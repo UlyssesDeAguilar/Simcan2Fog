@@ -177,6 +177,7 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
                 executeIORequest ();
 		    } else {
 		        currentRemainingMIs = sm_cpu->getMisToExecute();
+		        EV_DEBUG << "APP Status - App: " << this->appInstance << " - RemainingMIs: " << currentRemainingMIs << " - Iterarion: " << currentIteration <<  endl;
 		    }
 			
 			

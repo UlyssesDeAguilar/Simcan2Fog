@@ -917,7 +917,8 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 else
                   {
                     //Getting VM and scheduling renting timeout
-                    if (userVM_Rq->getOperation()==SM_VM_Sub)
+                    strVmId = userVM_Rq->getStrVmId();
+                    if (!strVmId.empty() && userVM_Rq->getOperation()==SM_VM_Sub)
                         nRentTime = 3600;
                     else
                         nRentTime = vmRequest.nRentTime_t2;
