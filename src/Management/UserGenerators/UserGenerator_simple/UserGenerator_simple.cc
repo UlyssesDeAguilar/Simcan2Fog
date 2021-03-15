@@ -156,7 +156,6 @@ void UserGenerator_simple::generateShuffledUsers()
 {
     int nRandom, nSize;
 
-    srand((int)33); //TODO: semilla. Comprobar si con las semillas del .ini se puede omitir esta. Así se controla mejor la aletoriedad solo desde el fichero .ini.
     EV_INFO << "UserGenerator::generateShuffledUsers - Init" << endl;
 
     nSize = userInstances.size();
@@ -204,6 +203,8 @@ void UserGenerator_simple::handleWaitToExecuteMessage(cMessage *msg)
     //TODO:
     m_dInitSim = simTime();
     lastTime = 0;
+
+    srand((int)33); //TODO: semilla. Comprobar si con las semillas del .ini se puede omitir esta. Así se controla mejor la aletoriedad solo desde el fichero .ini.
 
     if (shuffleUsers)
         generateShuffledUsers();
