@@ -1160,7 +1160,7 @@ void UserGenerator_simple::calculateStatistics() {
     bool bUserAcceptOffer;
 
     nIndex = 1;
-    nTotalTimeouts = nUsersAcceptOffer = 0;
+    nTotalTimeouts = nAcceptOffer = nUsersAcceptOffer = 0;
     dInitTime = dEndTime = dExecTime = dSubTime = dMaxSub = dTotalSub =
             dMeanSub = dWaitTime = 0;
     dNoWaitUsers = dWaitUsers = 0;
@@ -1168,6 +1168,7 @@ void UserGenerator_simple::calculateStatistics() {
 
     for (int i = 0; (i < nSize); i++) {
         pUserInstance = userInstances.at(i);
+        bUserAcceptOffer = false;
         dInitTime = pUserInstance->getArrival2Cloud();
         dEndTime = pUserInstance->getEndTime();
         dMaxSub = pUserInstance->getT4();
