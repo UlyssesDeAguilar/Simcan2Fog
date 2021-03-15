@@ -34,6 +34,7 @@ void UserGenerator_simple::initialize() {
 
     initializeSelfHandlers();
     initializeResponseHandlers();
+    initializeHashMaps();
 
     EV_INFO << "UserGenerator::initialize - End" << endl;
 }
@@ -117,6 +118,35 @@ void UserGenerator_simple::initializeResponseHandlers ()
     responseHandlers[SM_APP_Res_Timeout] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseAppTimeout(msg); };
     responseHandlers[SM_APP_Sub_Accept] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleSubNotify(msg); };
     responseHandlers[SM_APP_Sub_Timeout] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleSubTimeout(msg); };
+}
+
+void UserGenerator_simple::initializeHashMaps() {
+
+
+    for (int k=0; k<userInstances.size(); k++)
+    {
+        CloudUserInstance* pUserInstance = userInstances.at(k);
+            VmInstanceCollection* pVmCollection;
+            //VM_Request* pVmRqArr = &pUserRq->getVms(0);
+            int nVmCollections = pUserInstance->getNumberVmCollections();
+            std::map<std::string, int> vmExtendedTimes;
+            std::string strUserId = pUserInstance->getUserID();
+
+            for(int j=0; j<nVmCollections; j++)
+            {
+                VmInstance* pVmInstance;
+                pVmCollection = pUserInstance->getVmCollection(j);
+                int nVmInstances = pVmCollection->getNumInstances();
+
+                for(int i=0; i<nVmInstances; i++)
+                {
+                    pVmInstance = pVmCollection->getVmInstance(i);
+                    std::string strVmId = pVmInstance->getVmInstanceId();
+                    extensionTimeHashMap[strVmId] = 0;
+                }
+
+            }
+    }
 }
 
 /**
@@ -520,6 +550,7 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
     SimTime stWaitTime;
+    string strVmId;
 
     if (userVm != nullptr) {
         EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
@@ -527,7 +558,11 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
         userVm->printUserVM();
 
         //Update the status
-        updateVmUserStatus(userVm->getUserID(), userVm->getStrVmId(), vmAccepted);
+        strVmId = userVm->getStrVmId();
+        updateVmUserStatus(userVm->getUserID(), strVmId, vmAccepted);
+
+        if (!strVmId.empty())
+            extensionTimeHashMap.at(strVmId)++;
 
         pUserInstance = userHashMap.at(userVm->getUserID());
         EV_INFO << "Subscription accepted ...  " << endl;
@@ -1118,9 +1153,14 @@ void UserGenerator_simple::calculateStatistics() {
     int nIndex, nSize, nTotalTimeouts;
     CloudUserInstance *pUserInstance;
     std::vector<CloudUserInstance*> userVector;
+    int nCollectionNumber, nInstances, nExtendedTime, nAcceptOffer, nUsersAcceptOffer;
+    VmInstanceCollection* pVmCollection;
+    VmInstance* pVmInstance;
+    string strVmId;
+    bool bUserAcceptOffer;
 
     nIndex = 1;
-    nTotalTimeouts = 0;
+    nTotalTimeouts = nUsersAcceptOffer = 0;
     dInitTime = dEndTime = dExecTime = dSubTime = dMaxSub = dTotalSub =
             dMeanSub = dWaitTime = 0;
     dNoWaitUsers = dWaitUsers = 0;
@@ -1166,6 +1206,35 @@ void UserGenerator_simple::calculateStatistics() {
             dWaitUsers++;
         else
             dNoWaitUsers++;
+
+        nCollectionNumber = pUserInstance->getNumberVmCollections();
+        for(int i=0; i<nCollectionNumber;i++)
+        {
+            pVmCollection = pUserInstance->getVmCollection(i);
+            if(pVmCollection!=nullptr)
+            {
+                nInstances = pVmCollection->getNumInstances();
+
+                for(int j=0;j<nInstances;j++)
+                {
+                    pVmInstance = pVmCollection->getVmInstance(j);
+                    if(pVmInstance!=NULL)
+                    {
+                        strVmId =pVmInstance->getVmInstanceId();
+
+                        nExtendedTime = extensionTimeHashMap.at(strVmId);
+                        nAcceptOffer += nExtendedTime;
+                        if (nExtendedTime>0)
+                        {
+                            bUserAcceptOffer=true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if(bUserAcceptOffer) nUsersAcceptOffer++;
+
         nIndex++;
     }
 
@@ -1176,7 +1245,7 @@ void UserGenerator_simple::calculateStatistics() {
     //Print the experiments data
     EV_FATAL << "#___3d#" << dMeanSub << endl;
     EV_FATAL << "#___t#" << dMaxSub << " " << dMeanSub << " " << nTotalTimeouts
-                    << " " << dNoWaitUsers << " " << dWaitUsers << " " << nSize << endl;
+                    << " " << dNoWaitUsers << " " << dWaitUsers << " " << nSize << " " << nAcceptOffer << " " << nUsersAcceptOffer <<  endl;
 }
 
 SM_UserVM* UserGenerator_simple::createVmMessage() {

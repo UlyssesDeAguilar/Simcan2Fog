@@ -45,6 +45,8 @@ protected:
     std::map<std::string, simsignal_t> notifySignal;
     std::map<std::string, simsignal_t> timeoutSignal;
 
+    std::map<std::string, int> extensionTimeHashMap;
+
     /** Iterators */
     /**
      * Destructor
@@ -70,6 +72,8 @@ protected:
      * Initializes the response handlers.
      */
     virtual void initializeResponseHandlers() override;
+
+    void initializeHashMaps();
 
 
     virtual void execute(CloudUserInstance *pUserInstance, SM_UserVM *userVm);
