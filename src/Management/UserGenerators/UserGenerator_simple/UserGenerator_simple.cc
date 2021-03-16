@@ -1198,7 +1198,7 @@ void UserGenerator_simple::calculateStatistics() {
 
         if (pUserInstance->isTimeoutSubscribed()) {
             EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << " " << dWaitTime << endl;
-            dSubTime += dMaxSub;
+            dTotalSub += dMaxSub;
             nTotalTimeouts++;
         } else {
             EV_FATAL << "#___#Success " << nIndex << " " << dSubTime <<  " -1 " << " " << dWaitTime << endl;
