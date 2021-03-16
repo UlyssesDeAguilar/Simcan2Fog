@@ -1149,7 +1149,7 @@ void UserGenerator_simple::printFinal() {
 
 }
 void UserGenerator_simple::calculateStatistics() {
-    SimTime dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub, dMeanSub, dWaitTime;
+    double dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub, dMeanSub, dWaitTime;
     double dNoWaitUsers, dWaitUsers;
     int nIndex, nSize, nTotalTimeouts;
     CloudUserInstance *pUserInstance;
@@ -1170,11 +1170,11 @@ void UserGenerator_simple::calculateStatistics() {
     for (int i = 0; (i < nSize); i++) {
         pUserInstance = userInstances.at(i);
         bUserAcceptOffer = false;
-        dInitTime = pUserInstance->getArrival2Cloud();
-        dEndTime = pUserInstance->getEndTime();
+        dInitTime = pUserInstance->getArrival2Cloud().dbl();
+        dEndTime = pUserInstance->getEndTime().dbl();
         dMaxSub = pUserInstance->getT4();
-        dExecTime = pUserInstance->getInitExecTime();
-        dWaitTime = pUserInstance->getWaitTime();
+        dExecTime = pUserInstance->getInitExecTime().dbl();
+        dWaitTime = pUserInstance->getWaitTime().dbl();
 
         if (dWaitTime != 0)
             dWaitTime = dWaitTime / 3600;
