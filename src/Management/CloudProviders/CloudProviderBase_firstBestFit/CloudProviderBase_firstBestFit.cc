@@ -727,7 +727,9 @@ void CloudProviderBase_firstBestFit::handleVmRequestFits(SIMCAN_Message *sm)
       {
         userVM_Rq->printUserVM();
         //Check if is a VmRequest or a subscribe
-        if (checkVmUserFit(userVM_Rq))
+        if (subscribeQueue.size()>0)
+            rejectVmRequest(userVM_Rq);
+        else if (checkVmUserFit(userVM_Rq))
             //acceptVmRequest(userVM_Rq);
             EV_FATAL << "OK" << endl;
         else
@@ -750,7 +752,8 @@ void CloudProviderBase_firstBestFit::handleVmSubscription(SIMCAN_Message *sm)
     if(userVM_Rq != nullptr)
       {
         storeVmSubscribe(userVM_Rq);
-        checkVmUserFit(userVM_Rq);
+        updateSubsQueue();
+        //checkVmUserFit(userVM_Rq);
       }
     else
       {
