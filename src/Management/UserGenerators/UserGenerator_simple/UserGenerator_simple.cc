@@ -1027,7 +1027,7 @@ SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
                               }
                             else
                               {
-                                userApp->createNewAppRequest(strAppInstance, strAppType, strIp, strVmId,
+                                userApp->createNewAppRequest(strAppInstance+strVmId, strAppType, strIp, strVmId,
                                         nStartRentTime);
                               }
                           }
