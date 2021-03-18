@@ -976,69 +976,70 @@ SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
             //TODO: Hay que tomar una decision y enviar cada aplicacion a cada maquina?
             vmRq = userVm->getVms(i);
 
-            int pAppColSize = pUserInstance->getAppCollectionSize(i);
+            for (int k = 0; k < pUserInstance->getNumberVmCollections(); k++){
+                int pAppColSize = pUserInstance->getAppCollectionSize(k);
 
-            for (int j = 0; j < pAppColSize; j++)
-              {
-                pAppInstance = pUserInstance->getAppInstance(offset + j);
-                if (pAppInstance != nullptr)
+                for (int j = 0; j < pAppColSize; j++)
                   {
-                    strAppType = pAppInstance->getAppName();
-                    strAppInstance = pAppInstance->getAppInstanceId();
-                  }
+                    pAppInstance = pUserInstance->getAppInstance(j);
+                    if (pAppInstance != nullptr)
+                      {
+                        strAppType = pAppInstance->getAppName();
+                        strAppInstance = pAppInstance->getAppInstanceId();
+                      }
 
-                //In this first approach, we get the first element,
-                //in future cases, we can get the cheapest or the VM with a higher performance ratio
-                nIndexRes = 0;
+                    //In this first approach, we get the first element,
+                    //in future cases, we can get the cheapest or the VM with a higher performance ratio
+                    nIndexRes = 0;
 
-                if (userVm->hasResponse(i, nIndexRes)) {
-                    pRes = userVm->getResponse(i, nIndexRes);
+                    if (userVm->hasResponse(i, nIndexRes)) {
+                        pRes = userVm->getResponse(i, nIndexRes);
 
-                    if (pRes != nullptr) {
-                        nMaxStarTime = maxStartTime_t1;
+                        if (pRes != nullptr) {
+                            nMaxStarTime = maxStartTime_t1;
 
-                        //strIp = vmRes.strIp;
-                        //nStartRentTime = vmRes.startTime;
-                        //nPrice = vmRes.nPrice;
+                            //strIp = vmRes.strIp;
+                            //nStartRentTime = vmRes.startTime;
+                            //nPrice = vmRes.nPrice;
 
-                        strIp = pRes->strIp;
-                        nStartRentTime = pRes->startTime;
-                        nPrice = pRes->nPrice;
-                        //strVmId = vmRq.strVmId;
-                        strVmId = pAppInstance->getVmInstanceId();
+                            strIp = pRes->strIp;
+                            nStartRentTime = pRes->startTime;
+                            nPrice = pRes->nPrice;
+                            strVmId = vmRq.strVmId;
+                            //strVmId = pAppInstance->getVmInstanceId();
 
-                        //TODO: YA funciona esto, adaptar!!
-                        if (bMaxStartTime_t1_active) {
-                            //Check if T2 <T3
-                            if (nMaxStarTime >= nStartRentTime)
-                              {
-                                userApp->createNewAppRequest(strAppInstance, strAppType, strIp,
-                                        strVmId, nStartRentTime);
+                            //TODO: YA funciona esto, adaptar!!
+                            if (bMaxStartTime_t1_active) {
+                                //Check if T2 <T3
+                                if (nMaxStarTime >= nStartRentTime)
+                                  {
+                                    userApp->createNewAppRequest(strAppInstance+strVmId, strAppType, strIp,
+                                            strVmId, nStartRentTime);
+                                  }
+                                else
+                                  {
+                                    //The rent time proposed by the server is too high.
+                                    EV_INFO
+                                                   << "The maximum start rent time provided by the cloudprovider is greater than the maximum required by the user: "
+                                                   << nMaxStarTime << " < "
+                                                   << nStartRentTime << endl;
+                                  }
                               }
                             else
                               {
-                                //The rent time proposed by the server is too high.
-                                EV_INFO
-                                               << "The maximum start rent time provided by the cloudprovider is greater than the maximum required by the user: "
-                                               << nMaxStarTime << " < "
-                                               << nStartRentTime << endl;
+                                userApp->createNewAppRequest(strAppInstance, strAppType, strIp, strVmId,
+                                        nStartRentTime);
                               }
                           }
-                        else
-                          {
-                            userApp->createNewAppRequest(strAppInstance, strAppType, strIp, strVmId,
-                                    nStartRentTime);
-                          }
-                      }
 
-                  }
-                else
-                  {
-                    EV_INFO << "WARNING! Invalid response in user: "
-                                   << userVm->getName() << endl;
+                      }
+                    else
+                      {
+                        EV_INFO << "WARNING! Invalid response in user: "
+                                       << userVm->getName() << endl;
+                      }
                   }
               }
-            offset += pAppColSize;
           }
       }
 
