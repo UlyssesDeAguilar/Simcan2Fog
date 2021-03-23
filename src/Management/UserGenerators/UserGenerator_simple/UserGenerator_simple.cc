@@ -550,7 +550,7 @@ CloudUserInstance* UserGenerator_simple::handleResponseAppTimeout(SIMCAN_Message
 CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_RAW) {
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
-    SimTime stWaitTime;
+
     string strVmId;
 
     if (userVm != nullptr) {
@@ -569,8 +569,9 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
         EV_INFO << "Subscription accepted ...  " << endl;
 
         if (pUserInstance != nullptr) {
-            stWaitTime = pUserInstance->getWaitTime();
-            pUserInstance->setWaitTime(stWaitTime + simTime() - pUserInstance->getInitWaitTime());
+
+            // Subscription time monitoring
+            pUserInstance->endSubscription();
 
             emit(notifySignal[userVm->getStrVmId()], pUserInstance->getId());
             execute(pUserInstance, userVm);
@@ -590,8 +591,6 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
 CloudUserInstance* UserGenerator_simple::handleSubTimeout(SIMCAN_Message *userVm_RAW) {
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
-    SimTime stWaitTime;
-
     if (userVm != nullptr) {
         EV_INFO << __func__ << " - Init" << endl;
 
@@ -607,8 +606,7 @@ CloudUserInstance* UserGenerator_simple::handleSubTimeout(SIMCAN_Message *userVm
 
         if (pUserInstance != nullptr)
           {
-            stWaitTime = pUserInstance->getWaitTime();
-            pUserInstance->setWaitTime(stWaitTime + simTime() - pUserInstance->getInitWaitTime());
+            pUserInstance->endSubscription();
             pUserInstance->setTimeoutMaxSubscribed();
             emit(timeoutSignal[userVm->getStrVmId()], pUserInstance->getId());
           }
@@ -797,7 +795,8 @@ void UserGenerator_simple::subscribe(SM_UserVM *userVM_Rq) {
 
     if (pUserInstance != nullptr) {
 
-        pUserInstance->setInitWaitTime(simTime());
+        // Subscription time monitoring
+        pUserInstance->startSubscription();
 
         if (userVM_Rq != nullptr) {
             userVM_Rq->setIsResponse(false);

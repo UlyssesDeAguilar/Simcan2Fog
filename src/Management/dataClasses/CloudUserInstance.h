@@ -38,6 +38,7 @@ class CloudUserInstance: public UserInstance {
 
         int numFinishedVMs;
         int numTotalVMs;
+        int numActiveSubscriptions;
 
         SimTime dArrival2Cloud;
         SimTime dInitTime;
@@ -160,6 +161,10 @@ class CloudUserInstance: public UserInstance {
     void setWaitTime(const SimTime &dWaitTime);
     const SimTime& getInitWaitTime() const;
     void setInitWaitTime(const SimTime &dInitWaitTime);
+    int getNumActiveSubscriptions() const;
+    void setNumActiveSubscriptions(int numActiveSubscriptions);
+    void startSubscription();
+    void endSubscription();
 
     protected:
 

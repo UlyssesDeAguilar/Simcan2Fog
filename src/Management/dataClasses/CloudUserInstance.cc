@@ -15,6 +15,7 @@ CloudUserInstance::CloudUserInstance (CloudUser    *ptrUser,
     int currentVm;
     numFinishedVMs = 0;
     numTotalVMs = 0;
+    numActiveSubscriptions = 0;
 
     for (currentVm = 0; currentVm < ptrUser->getNumVirtualMachines(); currentVm++)
       {
@@ -319,6 +320,30 @@ const SimTime& CloudUserInstance::getInitWaitTime() const {
     return dInitWaitTime;
 }
 
+int CloudUserInstance::getNumActiveSubscriptions() const {
+    return numActiveSubscriptions;
+}
+
+void CloudUserInstance::setNumActiveSubscriptions(int numActiveSubscriptions) {
+    this->numActiveSubscriptions = numActiveSubscriptions;
+}
+
 void CloudUserInstance::setInitWaitTime(const SimTime &dInitWaitTime) {
     this->dInitWaitTime = dInitWaitTime;
+}
+
+void CloudUserInstance::startSubscription() {
+    if (numActiveSubscriptions<1) {
+        this->setInitWaitTime(simTime());
+    }
+    numActiveSubscriptions++;
+}
+
+void CloudUserInstance::endSubscription() {
+    SimTime stWaitTime;
+    numActiveSubscriptions--;
+    if (numActiveSubscriptions<1) {
+        stWaitTime = this->getWaitTime();
+        this->setWaitTime(stWaitTime + simTime() - this->getInitWaitTime());
+    }
 }
