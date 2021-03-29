@@ -8,6 +8,7 @@
 #include "Management/parser/AppListParser.h"
 #include "Management/utils/LogUtils.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
+#include "Messages/SM_UserVM.h"
 #include <algorithm>
 #include <functional>
 
@@ -143,6 +144,24 @@ class CloudManagerBase: public cSIMCAN_Core{
         */
         CloudUser* findUser (std::string userType);
         CloudUser* findUserTypeById (std::string userId);
+
+        /**
+         * Get the total cores of a virtual machine type.
+         * @param strVmType Type of the virtual machine.
+         * @return Number of cores.
+         */
+        int getTotalCoresByVmType(std::string strVmType);
+
+        /**
+         * Calculate the total cores requested by an specific user.
+         * This method is specially useful in order to check if there exist enough space in the datacenter to handle
+         * all the requests of the user.
+         * @param userVM_Rq User VM request.
+         * @return Total number of cores requested by the user.
+         */
+        int calculateTotalCoresRequested(SM_UserVM *userVM_Rq);
+
+        SM_UserVM_Finish* scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime);
 
        /**
         * Get the out Gate to the module that sent <b>msg</b>.

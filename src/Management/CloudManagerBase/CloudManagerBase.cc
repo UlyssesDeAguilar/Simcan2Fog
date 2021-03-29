@@ -355,3 +355,58 @@ CloudUser* CloudManagerBase::findUserTypeById (std::string strUserId){
 
     return result;
 }
+
+int CloudManagerBase::getTotalCoresByVmType(std::string strVmType)
+{
+    int nRet;
+    VirtualMachine* pVmType;
+
+    nRet=0;
+
+    pVmType = findVirtualMachine(strVmType);
+
+    if(pVmType != NULL)
+    {
+        nRet = pVmType->getNumCores();
+    }
+
+    return nRet;
+}
+
+int CloudManagerBase::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
+{
+    int nRet, nRequestedVms;
+    VM_Request vmRequest;
+
+    nRet=nRequestedVms=0;
+    if(userVM_Rq != NULL)
+    {
+        nRequestedVms = userVM_Rq->getTotalVmsRequests();
+
+        for(int i=0;i<nRequestedVms;i++)
+        {
+            vmRequest = userVM_Rq->getVms(i);
+
+            nRet+=getTotalCoresByVmType(vmRequest.strVmType);
+        }
+    }
+    EV_DEBUG << "User:" << userVM_Rq->getUserID() << " has requested: "<< nRet << " cores" << endl;
+
+    return nRet;
+}
+
+SM_UserVM_Finish* CloudManagerBase::scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime)
+{
+    SM_UserVM_Finish *pMsg = new SM_UserVM_Finish();
+
+    pMsg->setUserID(strUserName.c_str());
+    pMsg->setName(name.c_str());
+
+    if(!strVmId.empty())
+        pMsg ->setStrVmId(strVmId.c_str());
+
+    EV_INFO << "Scheduling Msg name " << pMsg << " at "<< simTime().dbl() + rentTime << endl;
+    scheduleAt(simTime() + SimTime(rentTime), pMsg);
+
+    return pMsg;
+}

@@ -119,8 +119,8 @@ double DataCenterManager::getCurrentCpuPercentageUsage() {
     nTotalCores = nUsedCores = 0;
 
     for (itMap=mapHypervisorPerNodes.begin(); itMap != mapHypervisorPerNodes.end(); itMap++){
-        nNodeCores = itMap->first;
         for (itVector=itMap->second.begin(); itVector != itMap->second.end(); itVector++) {
+            nNodeCores = (*itVector)->getNumCores();
             nTotalCores += nNodeCores;
             nUsedCores += nNodeCores - (*itVector)->getAvailableCores();
         }
@@ -596,63 +596,26 @@ void DataCenterManager::handleUserAppRequest(SIMCAN_Message *sm)
             uapp->update(userAPP_Rq);
             delete userAPP_Rq; //Delete ephemeral message after update global message.
           }
+    } else {
+        rejectAppRequest(userAPP_Rq);
     }
 
 }
 
-//void DataCenterManager::checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId) {
-//    std::string strUsername;
-//
-//    if (pUserApp != nullptr)
-//      {
-//        strUsername = pUserApp->getUserID();
-//        if (pUserApp->allAppsFinished(strVmId))
-//          {
-//            if (pUserApp->allAppsFinishedOK(strVmId))
-//              {
-//                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-//                << " - All the apps corresponding with the user "
-//                << strUsername
-//                << " have finished successfully" << endl;
-//
-//                pUserApp->printUserAPP();
-//
-//                //Notify the user the end of the execution
-//                acceptAppRequest(pUserApp, strVmId);
-//
-//              }
-//            else
-//              {
-//                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-//                << " - All the apps corresponding with the user "
-//                << strUsername
-//                << " have finished with some errors" << endl;
-//
-//                //Check the subscription queue
-//                //updateSubsQueue();
-//
-//                //if (!pUserApp->getFinished())
-//                timeoutAppRequest(pUserApp, strVmId);  //Notify the user the end of the execution
-//              }
-//
-//            //Delete the application on the hashmap
-//            //handlingAppsRqMap.erase(strUsername);
-//          }
-//        else
-//          {
-//            EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-//                    << " - Total apps finished: "
-//                    << pUserApp->getNFinishedApps() << " of "
-//                    << pUserApp->getAppArraySize() << endl;
-//          }
-//      }
-//    else
-//      {
-//        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-//        << " - WARNING! Null pointer parameter "
-//        << strUsername << endl;
-//      }
-//}
+void  DataCenterManager::rejectAppRequest(SM_UserAPP* userAPP_Rq)
+{
+    //Create a request_rsp message
+
+    EV_INFO << "Rejecting app request from user:" << userAPP_Rq->getUserID() << endl;
+
+    //Fill the message
+    userAPP_Rq->setIsResponse(true);
+    userAPP_Rq->setOperation(SM_APP_Req);
+    userAPP_Rq->setResult(SM_APP_Res_Reject);
+
+    //Send the values
+    sendResponseMessage(userAPP_Rq);
+}
 
 void DataCenterManager::handleVmRequestFits(SIMCAN_Message *sm)
 {
@@ -883,17 +846,10 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 //Get the VM request
                 VM_Request& vmRequest = userVM_Rq->getVms(i);
 
-//                //Create and fill the noderesource  with the VMrequest
-//                NodeResourceRequest *pNode = generateNode(strUserName, vmRequest);
-//
-//                //Send the request to the DC
-//                bAccepted = datacenterCollection->handleVmRequest(pNode);
-
                 hypervisor = selectNode(userVM_Rq, vmRequest);
 
                 if (hypervisor != nullptr) {
                     acceptedVMsMap[vmRequest.strVmId] = hypervisor;
-//                    userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
                     nodeIp = hypervisor->getFullPath();
                     bAccepted = true;
                 } else {
@@ -904,10 +860,6 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
 
                 userVM_Rq->createResponse(i, bRet, simTime().dbl(), nodeIp, 0);
 
-
-                //We need to know the price of the Node.
-                //userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
-                //bRet &= bAccepted;
 
                 if(!bRet)
                   {
@@ -923,16 +875,10 @@ bool DataCenterManager::checkVmUserFit(SM_UserVM*& userVM_Rq)
                     else
                         nRentTime = vmRequest.nRentTime_t2;
 
-                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, nRentTime);
+                    vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, nRentTime);
 
-                    //Update value
-                    //nAvailableCores = datacenterCollection->getTotalAvailableCores();
-                    //EV_DEBUG << "checkVmUserFit - The VM: " << i << " has been handled and stored sucessfully, available cores: "<< nAvailableCores << endl;
                   }
               }
-            //Update the data
-            //nAvailableCores = datacenterCollection->getTotalAvailableCores();
-            //nTotalCores = datacenterCollection->getTotalCores();
 
             EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: "<< nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
           }
@@ -1178,22 +1124,6 @@ void DataCenterManager::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
       }
 }
 
-SM_UserVM_Finish* DataCenterManager::scheduleRentingTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime)
-{
-    SM_UserVM_Finish *pMsg = new SM_UserVM_Finish();
-
-    pMsg->setUserID(strUserName.c_str());
-    pMsg->setName(name.c_str());
-
-    if(!strVmId.empty())
-        pMsg ->setStrVmId(strVmId.c_str());
-
-    EV_INFO << "Scheduling Msg name " << pMsg << " at "<< simTime().dbl() + rentTime << endl;
-    scheduleAt(simTime() + SimTime(rentTime), pMsg);
-
-    return pMsg;
-}
-
 Hypervisor* DataCenterManager::selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest){
     VirtualMachine *pVMBase;
     Hypervisor *pHypervisor = nullptr;
@@ -1222,19 +1152,8 @@ Hypervisor* DataCenterManager::selectNode (SM_UserVM*& userVM_Rq, const VM_Reque
                 numAvailableCores = pHypervisor->getAvailableCores();
                 if (numAvailableCores >= numCoresRequested) {
                     pResourceRequest = generateNode(strUserName, vmRequest);
-                    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignación al map y que sea el hypervisor el que controle a que VM va.
-                    // TODO: Finalmente debería devolver la IP del nodo y que el mensaje de la App llegue al nodo.
-                    cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
-                    if (pVmAppVectorModule!=nullptr) {
-                        updateCpuUtilizationTimeForHypervisor(pHypervisor);
-                        mapAppsVectorModulePerVm[vmRequest.strVmId] = pVmAppVectorModule;
-                        int numMaxApps = pVmAppVectorModule->par("numApps");
-                        bool *runningAppsArr = new bool[numMaxApps]{false};
-                        mapAppsRunningInVectorModulePerVm[vmRequest.strVmId] = runningAppsArr;
-                        bHandled = true;
-                        return pHypervisor;
-                    }
-
+                    bHandled = allocateVM(pResourceRequest, pHypervisor);
+                    if (bHandled) return pHypervisor;
                 }
             }
 
@@ -1244,45 +1163,19 @@ Hypervisor* DataCenterManager::selectNode (SM_UserVM*& userVM_Rq, const VM_Reque
     return nullptr;
 }
 
-
-
-int DataCenterManager::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
-{
-    int nRet, nRequestedVms;
-    VM_Request vmRequest;
-
-    nRet=nRequestedVms=0;
-    if(userVM_Rq != NULL)
-    {
-        nRequestedVms = userVM_Rq->getTotalVmsRequests();
-
-        for(int i=0;i<nRequestedVms;i++)
-        {
-            vmRequest = userVM_Rq->getVms(i);
-
-            nRet+=getTotalCoresByVmType(vmRequest.strVmType);
-        }
+bool DataCenterManager::allocateVM (NodeResourceRequest *pResourceRequest, Hypervisor *pHypervisor){
+    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignación al map y que sea el hypervisor el que controle a que VM va.
+    // TODO: Finalmente debería devolver la IP del nodo y que el mensaje de la App llegue al nodo.
+    cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
+    if (pVmAppVectorModule!=nullptr) {
+        updateCpuUtilizationTimeForHypervisor(pHypervisor);
+        mapAppsVectorModulePerVm[pResourceRequest->getVmId()] = pVmAppVectorModule;
+        int numMaxApps = pVmAppVectorModule->par("numApps");
+        bool *runningAppsArr = new bool[numMaxApps]{false};
+        mapAppsRunningInVectorModulePerVm[pResourceRequest->getVmId()] = runningAppsArr;
+        return true;
     }
-    EV_DEBUG << "User:" << userVM_Rq->getUserID() << " has requested: "<< nRet << " cores" << endl;
-
-    return nRet;
-}
-
-int DataCenterManager::getTotalCoresByVmType(std::string strVmType)
-{
-    int nRet;
-    VirtualMachine* pVmType;
-
-    nRet=0;
-
-    pVmType = findVirtualMachine(strVmType);
-
-    if(pVmType != NULL)
-    {
-        nRet = pVmType->getNumCores();
-    }
-
-    return nRet;
+    return false;
 }
 
 NodeResourceRequest* DataCenterManager::generateNode(std::string strUserName, VM_Request vmRequest)
@@ -1341,21 +1234,4 @@ void DataCenterManager::printFinal(){
     }
 }
 
-//SM_UserAPP_Finish* DataCenterManager::scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime)
-//{
-//    SM_UserAPP_Finish *pMsgFinish = new SM_UserAPP_Finish();
-//
-//    pMsgFinish->setUserID(strUserName.c_str());
-//    pMsgFinish->setStrApp(strAppName.c_str());
-//
-//    if(!strVmId.empty())
-//        pMsgFinish ->setStrVmId(strVmId.c_str());
-//
-//    pMsgFinish->setNTotalTime(totalTime);
-//    pMsgFinish->setName(name.c_str());
-//
-//    EV_INFO << "Scheduling time rental Msg, " << strAppName << " at " << simTime().dbl() + totalTime << "s" << endl;
-//    scheduleAt(simTime() + SimTime(totalTime), pMsgFinish);
-//
-//    return pMsgFinish;
-//}
+

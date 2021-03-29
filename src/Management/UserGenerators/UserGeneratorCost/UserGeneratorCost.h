@@ -41,9 +41,9 @@ class UserGeneratorCost : public UserGenerator_simple
 
     virtual void initializeHashMaps();
 
-    virtual CloudUserInstance* handleResponseAccept(SIMCAN_Message *userVm_RAW) override;
+    virtual CloudUserInstance* handleResponseVmAccept(SIMCAN_Message *userVm_RAW) override;
 
-    virtual CloudUserInstance* handleResponseReject(SIMCAN_Message *msg) override;
+    virtual CloudUserInstance* handleResponseVmReject(SIMCAN_Message *msg) override;
 
 
 //    virtual SM_UserVM* createVmRequest(CloudUserInstance *pUserInstance) override;

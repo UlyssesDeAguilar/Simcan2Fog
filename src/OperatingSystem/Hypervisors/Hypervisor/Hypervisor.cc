@@ -278,6 +278,10 @@ int Hypervisor::getAvailableCores() {
     return pHardwareManager->getAvailableCores();
 }
 
+int Hypervisor::getNumCores() {
+    return pHardwareManager->getNumCores();
+}
+
 cModule* Hypervisor::allocateNewResources(NodeResourceRequest* pResourceRequest) {
     unsigned int* cpuCoreIndex;
     cpuCoreIndex = pHardwareManager->allocateCores(pResourceRequest->getTotalCpus());

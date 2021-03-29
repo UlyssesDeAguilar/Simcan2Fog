@@ -74,7 +74,7 @@ class CloudProvider_firstBestFit : public CloudProviderBase_firstBestFit{
          */
 //        virtual bool checkVmUserFit(SM_UserVM*& userVM_Rq) override;
 
-        virtual void handleExecVmRentTimeout(cMessage *msg) override;
+        //virtual void handleExecVmRentTimeout(cMessage *msg) override;
 
         virtual void handleExtendVmAndResumeExecution(SIMCAN_Message *sm);
 

@@ -13,6 +13,7 @@ class HardwareManager : public cSimpleModule{
     public:
 
         int getAvailableCores();
+        int getNumCores();
         int getAvailableRam();
 
         unsigned int* allocateCores(int numCores);

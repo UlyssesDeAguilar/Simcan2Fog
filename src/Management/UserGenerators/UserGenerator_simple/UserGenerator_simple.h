@@ -21,7 +21,6 @@ protected:
 
     //TODO: Delete
     SimTime m_dInitSim;
-    int m_nUsersSent;
 
     // Timeouts
     double maxStartTime_t1;
@@ -151,26 +150,51 @@ protected:
     virtual SM_UserAPP* createAppRequest(SM_UserVM *userVm);
 
     /**
-     * Handles the VM response received from the CloudProvider
+     * Handles the VM accept response received from the CloudProvider
      * @param msg Incoming message
      * @return Pointer to the user instance related to the received message
      */
-    virtual CloudUserInstance* handleResponseAccept(SIMCAN_Message *msg);
-    virtual CloudUserInstance* handleResponseReject(SIMCAN_Message *msg);
+    virtual CloudUserInstance* handleResponseVmAccept(SIMCAN_Message *msg);
+
+    /**
+     * Handles the VM reject response received from the CloudProvider
+     * @param msg Incoming message
+     * @return Pointer to the user instance related to the received message
+     */
+    virtual CloudUserInstance* handleResponseVmReject(SIMCAN_Message *msg);
+
+    /**
+     * Handles the App accept response received from the CloudProvider
+     * @param msg Incoming message
+     * @return Pointer to the user instance related to the received message
+     */
     virtual CloudUserInstance* handleResponseAppAccept(SIMCAN_Message *msg);
+
+    /**
+     * Handles the App reject response received from the CloudProvider
+     * @param msg Incoming message
+     * @return Pointer to the user instance related to the received message
+     */
     virtual CloudUserInstance* handleResponseAppReject(SIMCAN_Message *msg);
+
+    /**
+     * Handles the App timeout response received from the CloudProvider
+     * @param msg Incoming message
+     * @return Pointer to the user instance related to the received message
+     */
     virtual CloudUserInstance* handleResponseAppTimeout(SIMCAN_Message *msg);
+
+
     virtual CloudUserInstance* handleSubNotify(SIMCAN_Message *msg);
+
+
     virtual CloudUserInstance* handleSubTimeout(SIMCAN_Message *msg);
 
     /**
      * Handles the App response sent from the CloudProvider
      * @param userApp incoming message
      */
-    //virtual void handleUserAppResponse(SIMCAN_Message *userApp_RAW);
-    //virtual void handleAppResAccept(SM_UserAPP *userApp);
-    //virtual void handleAppResReject(SM_UserAPP *userApp);
-    //virtual void handleAppResTimeout(SM_UserAPP *userApp);
+
 
     virtual bool hasToSubscribeVm(SM_UserAPP *userApp);
 
@@ -219,6 +243,12 @@ private:
     SM_UserVM* createFakeVmRequest();
 
     /**
+     * Send a VM request to the cloud provider
+     * @param pUserInstance A pointer to the cloud user instance
+     */
+    void sendRequest(CloudUserInstance *pUserInstance);
+
+    /**
      * Recovers a VM given a user name, and sends a subscribe message to the cloudmanager
      * @param userApp
      */
@@ -243,10 +273,6 @@ private:
      */
     void printFinal();
 
-    /**
-     * Print the results obtained during the first phase of the experiments.
-     */
-    void printExperiments_phase1();
 
     /**
      * Checks if all the users have finished.

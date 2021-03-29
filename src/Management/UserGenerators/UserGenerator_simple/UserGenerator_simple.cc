@@ -30,8 +30,6 @@ void UserGenerator_simple::initialize() {
 
     EV_INFO << "UserGenerator::initialize - Base initialized" << endl;
 
-    m_nUsersSent = 0;
-
     initializeSelfHandlers();
     initializeResponseHandlers();
     initializeHashMaps();
@@ -111,8 +109,8 @@ void UserGenerator_simple::initializeSelfHandlers ()
  */
 void UserGenerator_simple::initializeResponseHandlers ()
 {
-    responseHandlers[SM_VM_Res_Accept] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseAccept(msg); };
-    responseHandlers[SM_VM_Res_Reject] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseReject(msg); };
+    responseHandlers[SM_VM_Res_Accept] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseVmAccept(msg); };
+    responseHandlers[SM_VM_Res_Reject] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseVmReject(msg); };
     responseHandlers[SM_APP_Res_Accept] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseAppAccept(msg); };
     responseHandlers[SM_APP_Res_Reject] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseAppReject(msg); };
     responseHandlers[SM_APP_Res_Timeout] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleResponseAppTimeout(msg); };
@@ -120,32 +118,26 @@ void UserGenerator_simple::initializeResponseHandlers ()
     responseHandlers[SM_APP_Sub_Timeout] = [this](SIMCAN_Message *msg) -> CloudUserInstance* { return handleSubTimeout(msg); };
 }
 
-void UserGenerator_simple::initializeHashMaps() {
+void UserGenerator_simple::initializeHashMaps()
+{
+    for (int k = 0; k < userInstances.size(); k++) {
+        CloudUserInstance *pUserInstance = userInstances.at(k);
+        VmInstanceCollection *pVmCollection;
+        int nVmCollections = pUserInstance->getNumberVmCollections();
+        std::map<std::string, int> vmExtendedTimes;
 
+        for (int j = 0; j < nVmCollections; j++) {
+            VmInstance *pVmInstance;
+            pVmCollection = pUserInstance->getVmCollection(j);
+            int nVmInstances = pVmCollection->getNumInstances();
 
-    for (int k=0; k<userInstances.size(); k++)
-    {
-        CloudUserInstance* pUserInstance = userInstances.at(k);
-            VmInstanceCollection* pVmCollection;
-            //VM_Request* pVmRqArr = &pUserRq->getVms(0);
-            int nVmCollections = pUserInstance->getNumberVmCollections();
-            std::map<std::string, int> vmExtendedTimes;
-            std::string strUserId = pUserInstance->getUserID();
-
-            for(int j=0; j<nVmCollections; j++)
-            {
-                VmInstance* pVmInstance;
-                pVmCollection = pUserInstance->getVmCollection(j);
-                int nVmInstances = pVmCollection->getNumInstances();
-
-                for(int i=0; i<nVmInstances; i++)
-                {
-                    pVmInstance = pVmCollection->getVmInstance(i);
-                    std::string strVmId = pVmInstance->getVmInstanceId();
-                    extensionTimeHashMap[strVmId] = 0;
-                }
-
+            for (int i = 0; i < nVmInstances; i++) {
+                pVmInstance = pVmCollection->getVmInstance(i);
+                std::string strVmId = pVmInstance->getVmInstanceId();
+                extensionTimeHashMap[strVmId] = 0;
             }
+
+        }
     }
 }
 
@@ -204,7 +196,7 @@ void UserGenerator_simple::handleWaitToExecuteMessage(cMessage *msg)
     m_dInitSim = simTime();
     lastTime = 0;
 
-    srand((int)33); //TODO: semilla. Comprobar si con las semillas del .ini se puede omitir esta. Así se controla mejor la aletoriedad solo desde el fichero .ini.
+    srand((int)33);
 
     if (shuffleUsers)
         generateShuffledUsers();
@@ -230,8 +222,6 @@ void UserGenerator_simple::handleWaitToExecuteMessage(cMessage *msg)
         std::sort(userInstances.begin(), userInstances.end(), [](CloudUserInstance* cloudUser1, CloudUserInstance* cloudUser2){return *cloudUser1<*cloudUser2;});
     }
 
-    m_nUsersSent = 0;
-
     scheduleNextReqGenMessage();
 }
 
@@ -256,27 +246,36 @@ SimTime UserGenerator_simple::getNextTime(CloudUserInstance *pUserInstance, SimT
 
 void UserGenerator_simple::handleUserReqGenMessage(cMessage *msg)
 {
-    SM_UserVM *userVm;
+
     CloudUserInstance *pUserInstance;
 
     EV_INFO << "processSelfMessage - USER_REQ_GEN_MSG" << endl;
     // Get current user
-    pUserInstance = userInstances.at(m_nUsersSent);
-    userVm = pUserInstance->getRequestVmMsg();
+    pUserInstance = getNextUser();
 
-    if (userVm != nullptr)
-      {
-        // Send user to cloud provider
-        emit(requestSignal, pUserInstance->getId());
-        sendRequestMessage(userVm, toCloudProviderGate);
+    if (pUserInstance != nullptr) {
+        sendRequest(pUserInstance);
+        scheduleNextReqGenMessage();
+    }
+}
 
-        //TODO: ¿Dejamos este mensaje o lo quitamos?
-        EV_FATAL << "#___ini#" << m_nUsersSent << " "
-                        << (simTime() - m_dInitSim) / 3600 << endl;
-      }
-    m_nUsersSent++;
+void UserGenerator_simple::sendRequest(CloudUserInstance *pUserInstance)
+{
+    SM_UserVM* userVm;
 
-    scheduleNextReqGenMessage();
+    if (pUserInstance != nullptr) {
+        userVm = pUserInstance->getRequestVmMsg();
+
+        if (userVm != nullptr)
+          {
+            // Send user to cloud provider
+            emit(requestSignal, pUserInstance->getId());
+            sendRequestMessage(userVm, toCloudProviderGate);
+
+            EV_FATAL << "#___ini#" << nUserIndex << " "
+                            << (simTime() - m_dInitSim) / 3600 << endl;
+          }
+    }
 }
 
 void UserGenerator_simple::scheduleNextReqGenMessage()
@@ -285,9 +284,9 @@ void UserGenerator_simple::scheduleNextReqGenMessage()
     simtime_t nextArrivalTime;
 
     //Check if there are more users
-    if (m_nUsersSent < userInstances.size())
+    if (nUserIndex < userInstances.size())
       {
-        pUserInstance = userInstances.at(m_nUsersSent);
+        pUserInstance = userInstances.at(nUserIndex);
 
         //Check if next arrival time is in the future
         nextArrivalTime = SimTime(pUserInstance->getArrival2Cloud());
@@ -349,7 +348,7 @@ void UserGenerator_simple::finishUser(CloudUserInstance *pUserInstance)
     nUserInstancesFinished++;
 }
 
-CloudUserInstance* UserGenerator_simple::handleResponseAccept(SIMCAN_Message *userVm_RAW)
+CloudUserInstance* UserGenerator_simple::handleResponseVmAccept(SIMCAN_Message *userVm_RAW)
 {
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
@@ -383,7 +382,7 @@ CloudUserInstance* UserGenerator_simple::handleResponseAccept(SIMCAN_Message *us
     return pUserInstance;
 }
 
-CloudUserInstance* UserGenerator_simple::handleResponseReject(SIMCAN_Message *userVm_RAW) {
+CloudUserInstance* UserGenerator_simple::handleResponseVmReject(SIMCAN_Message *userVm_RAW) {
     CloudUserInstance *pUserInstance = nullptr;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
 
@@ -968,13 +967,11 @@ SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
         pUserInstance = userHashMap.at(strUserName);
         pUserInstance->setRequestApp(userApp);
 
-        //Include the Ips and startTime
         for (int i = 0; i < userVm->getTotalVmsRequests(); i++)
           {
-        //for (int i = 0; i < pUserInstance->getNumberApps(); i++) {
-            //TODO: Hay que tomar una decision y enviar cada aplicacion a cada maquina?
             vmRq = userVm->getVms(i);
 
+            //Send each app to each VM
             for (int k = 0; k < pUserInstance->getNumberVmCollections(); k++){
                 int pAppColSize = pUserInstance->getAppCollectionSize(k);
 
@@ -987,8 +984,6 @@ SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
                         strAppInstance = pAppInstance->getAppInstanceId();
                       }
 
-                    //In this first approach, we get the first element,
-                    //in future cases, we can get the cheapest or the VM with a higher performance ratio
                     nIndexRes = 0;
 
                     if (userVm->hasResponse(i, nIndexRes)) {
@@ -997,17 +992,11 @@ SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
                         if (pRes != nullptr) {
                             nMaxStarTime = maxStartTime_t1;
 
-                            //strIp = vmRes.strIp;
-                            //nStartRentTime = vmRes.startTime;
-                            //nPrice = vmRes.nPrice;
-
                             strIp = pRes->strIp;
                             nStartRentTime = pRes->startTime;
                             nPrice = pRes->nPrice;
                             strVmId = vmRq.strVmId;
-                            //strVmId = pAppInstance->getVmInstanceId();
 
-                            //TODO: YA funciona esto, adaptar!!
                             if (bMaxStartTime_t1_active) {
                                 //Check if T2 <T3
                                 if (nMaxStarTime >= nStartRentTime)
@@ -1065,88 +1054,8 @@ void UserGenerator_simple::finish() {
     printFinal();
 }
 
-//TODO: Las salidas se podrian hacer con omnet. Como hago lo de los emit, así se puede analizar facil con python y apliaciones van añadiendo no
-// tienen que implmentar todo el metodo de nuevo.
-void UserGenerator_simple::printExperiments_phase1() {
-    int nIndex, nSize;
-    std::map<std::string, CloudUserInstance*>::iterator it;
-    CloudUserInstance *pUserInstance;
-    std::vector<CloudUserInstance*> userVector;
-
-    nIndex = 1;
-
-    nSize = userInstances.size();
-
-    SimTime dInitTime, dEndTime, dExecTime, dSubTime;
-    double dMaxSub;
-    nIndex = 1;
-    for (int i = 0; (i < nSize); i++) {
-        pUserInstance = userInstances.at(i);
-        dInitTime = pUserInstance->getArrival2Cloud();
-        dEndTime = pUserInstance->getEndTime();
-        dMaxSub = pUserInstance->getT4();
-        dExecTime = pUserInstance->getInitExecTime();
-
-        if (dMaxSub != 0)
-            dMaxSub = dMaxSub / 1000;
-
-        if (dInitTime != 0)
-            dInitTime = dInitTime / 1000;
-
-        if (dEndTime != 0)
-            dEndTime = dEndTime / 1000;
-
-        if (dExecTime != 0)
-            dExecTime = dExecTime / 1000;
-
-        if (dExecTime > dInitTime)
-            dSubTime = dExecTime - dInitTime;
-        else
-            dSubTime = 0;
-
-        if (pUserInstance->isTimeout())
-            EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << endl;
-        else
-            EV_FATAL << "#___#Success " << nIndex << " " << dSubTime << " -1 " << endl;
-
-        nIndex++;
-    }
-    EV_INFO << "]" << endl;
-}
 void UserGenerator_simple::printFinal() {
-    /*int nIndex, nSize;
-     std::map<std::string, CloudUserInstance*>::iterator it;
-     CloudUserInstance* pUserInstance;
-     std::vector <CloudUserInstance*> userVector;
-
-     nIndex=1;
-
-     nSize = userInstances.size();
-
-     double dInitTime, dEndTime;
-     nIndex=1;
-     for(int i=0;(i<nSize);i++)
-     {
-     pUserInstance = userInstances.at(i);
-     dInitTime = pUserInstance->getInitTime();
-     dEndTime = pUserInstance->getEndTime();
-
-     if(dInitTime!=0)
-     dInitTime = dInitTime/1000;
-
-     if(dEndTime!=0)
-     dEndTime = dEndTime/1000;
-
-     if(pUserInstance->isTimeout())
-     EV_FATAL << "#___#" << pUserInstance->getType() << " " << nIndex << " " << dInitTime <<  " 0 -1 " << dEndTime <<"   \n" << endl;
-     else
-     EV_FATAL << "#___#" << pUserInstance->getType() << " " << nIndex << " " << dInitTime <<  " " << dEndTime << " "<< dEndTime-dInitTime << " -1   \n" << endl;
-
-     nIndex++;
-     }
-     EV_INFO << "]" << endl;*/
     calculateStatistics();
-
 }
 void UserGenerator_simple::calculateStatistics() {
     double dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub, dMeanSub, dWaitTime;

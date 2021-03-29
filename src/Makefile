@@ -47,6 +47,7 @@ OBJS = \
     $O/Management/CloudProviders/CloudProviderBase_firstBestFit/NodeResourceInfo.o \
     $O/Management/CloudProviders/CloudProvider_firstBestFit/CloudProvider_firstBestFit.o \
     $O/Management/DataCenterManagers/DataCenterManager/DataCenterManager.o \
+    $O/Management/DataCenterManagers/DataCenterManagerBestFit/DataCenterManagerBestFit.o \
     $O/Management/DataCenterManagers/DataCenterManagerCost/DataCenterManagerCost.o \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \

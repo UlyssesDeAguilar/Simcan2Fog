@@ -5,7 +5,6 @@
 #include "Management/dataClasses/DataCenterInfoCollection.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "NodeResourceInfo.h"
-#include "Messages/SM_UserVM.h"
 #include "Messages/SM_UserAPP.h"
 #include "Messages/SM_UserAPP_Finish_m.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
@@ -26,9 +25,6 @@ protected:
 
     /** Map of the accepted users*/
     std::map<std::string, SM_UserVM*> acceptedUsersRqMap;
-
-    /** Map of the accepted applications*/
-    std::map<std::string, SM_UserAPP*> handlingAppsRqMap;
 
     /** Map of finished VMs*/
     std::map<std::string, bool> vmFinished;
@@ -51,6 +47,10 @@ protected:
      * Initializes the request handlers.
      */
     virtual void initializeRequestHandlers();
+
+    /**
+     * Initializes the response handlers.
+     */
     virtual void initializeResponseHandlers();
 
     /**
@@ -66,24 +66,42 @@ protected:
      * @param userAPP_Rq User APP request.
      */
     virtual void handleUserAppRequest(SIMCAN_Message *sm);
+
+    /**
+     * Handle an accept response of a user APP request from the data center.
+     * @param sm Response of user APP request.
+     */
     virtual void handleResponseAccept(SIMCAN_Message *sm);
+
+    /**
+     * Handle a reject response of a user APP request from the data center.
+     * @param sm Response of user APP request.
+     */
     virtual void handleResponseReject(SIMCAN_Message *sm);
-//    virtual void handleResponseVmTimeout(SIMCAN_Message *sm);
+
+    /**
+     * Handle an accept response of a user APP request from the data center.
+     * @param sm Response of user APP request.
+     */
     virtual void handleResponseAppAccept(SIMCAN_Message *sm);
+
+    /**
+     * Handle a timeout response of a user APP request from the data center.
+     * @param sm Response of user APP request.
+     */
     virtual void handleResponseAppTimeout(SIMCAN_Message *sm);
-//    virtual void handleResponseAppEndSingle(SIMCAN_Message *sm);
 
     /**
      * Check if the user request fits in the datacenter
      * @param userVM_Rq User request.
      */
     virtual bool checkVmUserFit(SM_UserVM *&userVM_Rq);
-    NodeResourceRequest* generateNode(std::string strUserName, VM_Request vmRequest);
-    SM_UserVM_Finish* scheduleRentingTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime);
+
+
     SM_UserAPP_Finish* scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime);
     void clearVMReq (SM_UserVM*& userVM_Rq, int lastId);
     void cancelAndDeleteAppFinishMsgs(SM_UserAPP* userApp, std::string strVmId);
-    void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);
+    //void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);
 
     /**
      * Update the subscription queue. Analyse the queue in order to find timeouts, and accepting the enqueued VM requests.
@@ -132,13 +150,13 @@ protected:
      * Handles the finalisation of a single application execution.
      * @param pUserAppFinish Finished application message.
      */
-    virtual void handleAppExecEndSingle(cMessage *msg);
+    //virtual void handleAppExecEndSingle(cMessage *msg);
 
     /**
      * Handles the timeout execution of a VM rent.
      * @param pUserVmFinish Finished VM message.
      */
-    virtual void handleExecVmRentTimeout(cMessage *msg);
+    //virtual void handleExecVmRentTimeout(cMessage *msg);
 
     /**
      * Handles if a VM request fits in the datacenter.
@@ -193,37 +211,14 @@ protected:
     void insertRack(int nDataCenter, int nRack, RackInfo *pRackInfo);
 
     //Auxiliar
-    /**
-     * Get the total cores of a virtual machine type.
-     * @param strVmType Type of the virtual machine.
-     * @return Number of cores.
-     */
-    int getTotalCoresByVmType(std::string strVmType);
 
-    /**
-     * Calculate the total cores requested by an specific user.
-     * This method is specially useful in order to check if there exist enough space in the datacenter to handle
-     * all the requests of the user.
-     * @param userVM_Rq User VM request.
-     * @return Total number of cores requested by the user.
-     */
-    int calculateTotalCoresRequested(SM_UserVM *userVM_Rq);
-
-    /**
-     * This method is used to calculate the execution time of the applications.
-     * Let us remark that it is used in the first stages of the simulation platform, but it will be replaced
-     * by a more realistic environment.
-     * @param appType
-     * @return
-     */
-    int TEMPORAL_calculateTotalTime(Application *appType);
 
     //Notifications
     /**
      * Accept the user request.
      * @param userVM_Rq VMs User request.
      */
-    void acceptVmRequest(SM_UserVM *userVM_Rq);
+    //void acceptVmRequest(SM_UserVM *userVM_Rq);
 
     /**
      * Accepts the app request.
@@ -236,7 +231,7 @@ protected:
      * @param userAPP_Rq apps User submission.
      * @param strVmId The VM that has finished.
      */
-    void acceptAppRequest(SM_UserAPP *userAPP_Rq, std::string strVmId);
+    //void acceptAppRequest(SM_UserAPP *userAPP_Rq, std::string strVmId);
 
     /**
      * Sends a timeout to the app request.
@@ -262,12 +257,6 @@ protected:
      * @param userVM_Rq User request.
      */
     void rejectVmRequest(SM_UserVM *userVM_Rq);
-
-    /**
-     * Rejects the user application request.
-     * @param userAPP_Rq User app submission.
-     */
-    void rejectAppRequest(SM_UserAPP *userAPP_Rq);
 
     /**
      * Sends to a subscribed user a notification message.

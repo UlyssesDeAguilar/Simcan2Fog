@@ -65,6 +65,7 @@ class CloudProviderBase : public CloudManagerBase{
         * @return Gate (out) to module that sent <b>msg</b> or \a nullptr if gate not found.
         */
         virtual cGate* getOutGate (cMessage *msg) override;
+
 };
 
 #endif

@@ -60,7 +60,7 @@ void UserGeneratorCost::initializeHashMaps() {
     }
 }
 
-CloudUserInstance* UserGeneratorCost::handleResponseAccept(SIMCAN_Message *userVm_RAW)
+CloudUserInstance* UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *userVm_RAW)
 {
     CloudUserPriority* pCloudUser;
     CloudUserInstance* pUserInstance = nullptr;
@@ -83,12 +83,12 @@ CloudUserInstance* UserGeneratorCost::handleResponseAccept(SIMCAN_Message *userV
    if (pCloudUser->getPriorityType() == Priority && userVm->getBPriorized())
        priorizedHashMap[userVm->getUserID()] = true;
 
-    UserGenerator_simple::handleResponseAccept(userVm_RAW);
+    UserGenerator_simple::handleResponseVmAccept(userVm_RAW);
     
     return pUserInstance;
 }
 
-CloudUserInstance* UserGeneratorCost::handleResponseReject(SIMCAN_Message *userVm_RAW) {
+CloudUserInstance* UserGeneratorCost::handleResponseVmReject(SIMCAN_Message *userVm_RAW) {
     CloudUserPriority* pCloudUser;
     CloudUserInstance* pUserInstance = nullptr;
     SM_UserVM_Cost *userVm = dynamic_cast<SM_UserVM_Cost*>(userVm_RAW);
@@ -125,7 +125,7 @@ CloudUserInstance* UserGeneratorCost::handleResponseReject(SIMCAN_Message *userV
                 pUserInstance->setTimeoutMaxSubscribed();
             }
         } else {
-            UserGenerator_simple::handleResponseReject(userVm_RAW);
+            UserGenerator_simple::handleResponseVmReject(userVm_RAW);
         }
     }
     else {

@@ -34,8 +34,13 @@ public:
 
         cMessage *cpuStatusMessage;
 
+        /** Map of the accepted VMs*/
         std::map<std::string, Hypervisor*> acceptedVMsMap;
+
+        /** Map of the accepted users*/
         std::map<std::string, SM_UserVM*> acceptedUsersRqMap;
+
+        /** Map of the accepted applications*/
         std::map<std::string, SM_UserAPP*> handlingAppsRqMap;
 
         /** Users */
@@ -95,18 +100,46 @@ public:
         virtual Hypervisor* selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest);
 
         //TODO: refactorizar. esta duplicado en provider.
-        int calculateTotalCoresRequested(SM_UserVM* userVM_Rq);
-        int getTotalCoresByVmType(std::string strVmType);
         NodeResourceRequest* generateNode(std::string strUserName, VM_Request vmRequest);
         void  fillVmFeatures(std::string strVmType, NodeResourceRequest*& pNode);
 
 
         Application* searchAppPerType(std::string strAppType);
         void handleUserAppRequest(SIMCAN_Message *sm);
+
+        /**
+         * Accept the user request.
+         * @param userVM_Rq VMs User request.
+         */
         void  acceptVmRequest(SM_UserVM* userVM_Rq);
+
+        /**
+         * Rejects the user request.
+         * @param userVM_Rq User request.
+         */
         void  rejectVmRequest(SM_UserVM* userVM_Rq);
 
-        SM_UserVM_Finish* scheduleRentingTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime);
+        /**
+         * Accepts the app request.
+         * @param userAPP_Rq apps User submission.
+         * @param strVmId The VM that has finished.
+         */
+        void  acceptAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
+
+        /**
+         * Rejects the user application request.
+         * @param userAPP_Rq User app submission.
+         */
+        void rejectAppRequest(SM_UserAPP *userAPP_Rq);
+
+        /**
+         * Allocate resources in a machine
+         * @param pResourceRequest Resources requested
+         * @param pHypervisor Pointer to the machine hypervisor
+         * @return True if VM is allocated. Else otherwise.
+         */
+        bool allocateVM (NodeResourceRequest *pResourceRequest, Hypervisor *pHypervisor);
+
         void clearVMReq (SM_UserVM*& userVM_Rq, int lastId);
 
         //Helpers
@@ -119,9 +152,14 @@ public:
         void createDummyAppInAppModule(cModule *pVmAppModule);
         void cleanAppVectorModule(cModule *pVmAppVectorModule);
         void abortAllApps(std::string strVmId);
-        void deallocateVmResources(std::string strVmId);
+        virtual void deallocateVmResources(std::string strVmId);
         SM_UserAPP* getUserAppRequestPerUser(std::string strUserId);
-        void  acceptAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
+
+
+        /**
+         * Sends a timeout of all VM renting
+         * @param userAPP_Rq apps User submission.
+         */
         void  timeoutAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
         void  endSingleAppResponse(SM_UserAPP* userAPP_Rq, std::string strVmId, std::string strAppName);
         void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);

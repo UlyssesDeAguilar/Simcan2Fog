@@ -364,7 +364,7 @@ void DataCenterManagerCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
 
                         if (strVmId.compare(vmRequest.strVmId) == 0) {
                             bFound = true;
-                            vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, strVmId, 3600);
+                            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, strVmId, 3600);
                             handleUserAppRequest(sm);
                         }
 

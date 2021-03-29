@@ -89,6 +89,10 @@ int HardwareManager::getAvailableCores() {
     return numAvailableCpuCores;
 }
 
+int HardwareManager::getNumCores() {
+    return numCpuCores;
+}
+
 bool HardwareManager::allocateRam(double memory){
     if (memory > getAvailableRam())
         return false;
