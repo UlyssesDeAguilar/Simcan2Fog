@@ -3,7 +3,7 @@
 
 #include <omnetpp.h>
 
-#include "../../../Management/DataCenterManagers/DataCenterManager/DataCenterManager.h"
+#include "../../../Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
 
 #define IO_READ_OPERATION "IO_READ_OPERATION"
@@ -95,7 +95,7 @@ public:
 		/** Execute write operation */
 		bool executeWrite;
 		
-		DataCenterManager *pDataCenterManager;
+		DataCentreManagerBase *pDataCentreManager;
 
 		cMessage *selfMessage;
 				

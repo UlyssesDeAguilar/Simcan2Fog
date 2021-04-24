@@ -1,7 +1,7 @@
 package simcan2.Architecture.Nodes.Cloud;
 
 import simcan2.Architecture.Network.Switch.Switch;
-import simcan2.Architecture.Network.DataCenterNetwork.*;
+import simcan2.Architecture.Network.DataCentreNetwork.*;
 
 //
 // Rack that contains "numBoards" Boards and one switch.
@@ -41,8 +41,8 @@ module CloudRack{
  	    
         // Connections between the boards and the switch          
     	for i=0..numBoards-1 {
-		   board[i].in <-- <channelType> like IDataCenterChannel  <-- switch.out++;
-		   board[i].out --> <channelType> like IDataCenterChannel  --> switch.in++;
+		   board[i].in <-- <channelType> like IDataCentreChannel  <-- switch.out++;
+		   board[i].out --> <channelType> like IDataCentreChannel  --> switch.in++;
 		}
 		
 		// Connections between the rack and the switch

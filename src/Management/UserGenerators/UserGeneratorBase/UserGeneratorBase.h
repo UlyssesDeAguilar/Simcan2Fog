@@ -29,10 +29,10 @@ class UserGeneratorBase: public CloudManagerBase{
         /**Hasmap to accelerate the management of the users*/
         std::map<std::string, CloudUserInstance*> userHashMap;
 
-        /** Input gate from DataCenter. */
+        /** Input gate from DataCentre. */
         cGate* fromCloudProviderGate;
 
-        /** Output gates to DataCenter. */
+        /** Output gates to DataCentre. */
         cGate* toCloudProviderGate;
 
         /** Show parsed user instances */

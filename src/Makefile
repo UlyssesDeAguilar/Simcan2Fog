@@ -35,20 +35,21 @@ OBJS = \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
-    $O/Architecture/Network/DataCenterNetwork/CommNetwork/CommNetwork.o \
-    $O/Architecture/Network/DataCenterNetwork/StorageNetwork/StorageNetwork.o \
+    $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
+    $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
     $O/Architecture/Network/Switch/Switch.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \
     $O/Core/cSIMCAN_Core.o \
     $O/Core/CheckingHubModule/CheckingHubModule.o \
     $O/Management/CloudManagerBase/CloudManagerBase.o \
     $O/Management/CloudProviders/CloudProviderBase/CloudProviderBase.o \
-    $O/Management/CloudProviders/CloudProviderBase_firstBestFit/CloudProviderBase_firstBestFit.o \
-    $O/Management/CloudProviders/CloudProviderBase_firstBestFit/NodeResourceInfo.o \
-    $O/Management/CloudProviders/CloudProvider_firstBestFit/CloudProvider_firstBestFit.o \
-    $O/Management/DataCenterManagers/DataCenterManager/DataCenterManager.o \
-    $O/Management/DataCenterManagers/DataCenterManagerBestFit/DataCenterManagerBestFit.o \
-    $O/Management/DataCenterManagers/DataCenterManagerCost/DataCenterManagerCost.o \
+    $O/Management/CloudProviders/CloudProviderCost/CloudProviderCost.o \
+    $O/Management/CloudProviders/CloudProviderFirstFit/CloudProviderFirstFit.o \
+    $O/Management/CloudProviders/CloudProviderFirstFit/NodeResourceInfo.o \
+    $O/Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.o \
+    $O/Management/DataCentreManagers/DataCentreManagerBestFit/DataCentreManagerBestFit.o \
+    $O/Management/DataCentreManagers/DataCentreManagerCost/DataCentreManagerCost.o \
+    $O/Management/DataCentreManagers/DataCentreManagerFirstFit/DataCentreManagerFirstFit.o \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
     $O/Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \
@@ -60,11 +61,11 @@ OBJS = \
     $O/Management/dataClasses/CloudUserInstance.o \
     $O/Management/dataClasses/CloudUserInstancePriority.o \
     $O/Management/dataClasses/CloudUserPriority.o \
-    $O/Management/dataClasses/DataCenter.o \
-    $O/Management/dataClasses/DataCenter_CpuType.o \
-    $O/Management/dataClasses/DataCenterInfoCollection.o \
-    $O/Management/dataClasses/DataCenterInfoCollectionReservation.o \
-    $O/Management/dataClasses/DataCenterReservation.o \
+    $O/Management/dataClasses/DataCentre.o \
+    $O/Management/dataClasses/DataCentre_CpuType.o \
+    $O/Management/dataClasses/DataCentreInfoCollection.o \
+    $O/Management/dataClasses/DataCentreInfoCollectionReservation.o \
+    $O/Management/dataClasses/DataCentreReservation.o \
     $O/Management/dataClasses/Node.o \
     $O/Management/dataClasses/NodeInfo.o \
     $O/Management/dataClasses/NodeResourceRequest.o \
@@ -81,10 +82,10 @@ OBJS = \
     $O/Management/dataClasses/VmInstance.o \
     $O/Management/dataClasses/VmInstanceCollection.o \
     $O/Management/parser/AppListParser.o \
-    $O/Management/parser/DataCenterConfigParser.o \
-    $O/Management/parser/DataCenterListParser.o \
-    $O/Management/parser/DataCenterReservationConfigParser.o \
-    $O/Management/parser/DataCenterReservationListParser.o \
+    $O/Management/parser/DataCentreConfigParser.o \
+    $O/Management/parser/DataCentreListParser.o \
+    $O/Management/parser/DataCentreReservationConfigParser.o \
+    $O/Management/parser/DataCentreReservationListParser.o \
     $O/Management/parser/SlaListParser.o \
     $O/Management/parser/UserListParser.o \
     $O/Management/parser/UserPriorityListParser.o \

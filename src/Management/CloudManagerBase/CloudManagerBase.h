@@ -154,7 +154,7 @@ class CloudManagerBase: public cSIMCAN_Core{
 
         /**
          * Calculate the total cores requested by an specific user.
-         * This method is specially useful in order to check if there exist enough space in the datacenter to handle
+         * This method is specially useful in order to check if there exist enough space in the datacentre to handle
          * all the requests of the user.
          * @param userVM_Rq User VM request.
          * @return Total number of cores requested by the user.

@@ -382,7 +382,7 @@ bool* Hypervisor::getFreeCoresArrayPtr() const {
 //    nTotalTime = nInputDataSize = nOutputDataSize = nMIs = nIterations = nTotalTime = 0;
 //
 //    //TODO: Cuidado con esto a ver si no peta.
-//    //Esto es un apaño temporal para no ejecutarlo en los datacenters reales
+//    //Esto es un apaño temporal para no ejecutarlo en los datacentres reales
 //    if(appType!=NULL && appType->getAppName().compare("AppDataIntensive")==0)
 //    {
 //        //DatasetInput

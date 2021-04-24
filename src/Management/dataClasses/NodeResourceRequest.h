@@ -54,8 +54,8 @@ class NodeResourceRequest{
         /** Message that contains the application request*/
         cMessage *appRequestMsg;
 
-        //Data provided by the DataCenter
-        /** The execution start time, provided by the datacenter*/
+        //Data provided by the DataCentre
+        /** The execution start time, provided by the datacentre*/
         int nStartTime;
 
         /** Price of the execution*/

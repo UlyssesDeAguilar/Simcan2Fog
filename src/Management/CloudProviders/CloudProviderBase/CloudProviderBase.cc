@@ -6,7 +6,7 @@ CloudProviderBase::~CloudProviderBase(){
 //    storageNodeTypes.clear();
 //    computingRackTypes.clear();
 //    storageRackTypes.clear();
-    dataCentersBase.clear();
+    dataCentresBase.clear();
 }
 
 
@@ -19,25 +19,25 @@ void CloudProviderBase::initialize(){
         CloudManagerBase::initialize();
 
             // Get parameters from module
-            showDataCenters = par ("showDataCenters");
+            showDataCentres = par ("showDataCentres");
 
             // Number of gates
-            numGates = gateSize ("fromDataCenter");
+            numGates = gateSize ("fromDataCentre");
 
             // Init the size of the cGate vectors
-            fromDataCenterGates = new cGate* [numGates];
-            toDataCenterGates = new cGate* [numGates];
+            fromDataCentreGates = new cGate* [numGates];
+            toDataCentreGates = new cGate* [numGates];
 
             // Init the cGates vector
             for (i=0; i<numGates; i++){
 
                // Get cGate object
-               fromDataCenterGates [i] = gate ("fromDataCenter", i);
-               toDataCenterGates [i] = gate ("toDataCenter", i);
+               fromDataCentreGates [i] = gate ("fromDataCentre", i);
+               toDataCentreGates [i] = gate ("toDataCentre", i);
 
                // Checking connections
-               if (!toDataCenterGates[i]->isConnected()){
-                   error ("toDataCenterGates %d is not connected", i);
+               if (!toDataCentreGates[i]->isConnected()){
+                   error ("toDataCentreGates %d is not connected", i);
                }
             }
 
@@ -45,15 +45,15 @@ void CloudProviderBase::initialize(){
             fromUserGeneratorGate = gate ("fromUserGenerator");
             toUserGeneratorGate = gate ("toUserGenerator");
 
-            // Parse data-center list
-            result = parseDataCentersList();
+            // Parse data-centre list
+            result = parseDataCentresList();
 
             // Something goes wrong...
             if (result == SC_ERROR){
-                error ("Error while parsing data-centers list");
+                error ("Error while parsing data-centres list");
             }
-            else if (showDataCenters){
-                EV_DEBUG << dataCentersToString ();
+            else if (showDataCentres){
+                EV_DEBUG << dataCentresToString ();
             }
 }
 
@@ -65,9 +65,9 @@ cGate* CloudProviderBase::getOutGate (cMessage *msg){
        // Init...
        outGate = nullptr;
 
-        // If msg arrives from DataCenter
-        if (msg->arrivedOn("fromDataCenterGates")){
-           outGate = gate ("toDataCenterGates", msg->getArrivalGate()->getIndex());
+        // If msg arrives from DataCentre
+        if (msg->arrivedOn("fromDataCentreGates")){
+           outGate = gate ("toDataCentreGates", msg->getArrivalGate()->getIndex());
         }
 
         // If msg arrives from user generator
@@ -83,53 +83,53 @@ cGate* CloudProviderBase::getOutGate (cMessage *msg){
 }
 
 
-int CloudProviderBase::parseDataCentersList (){
+int CloudProviderBase::parseDataCentresList (){
     int result;
-    const char *dataCentersListChr;
+    const char *dataCentresListChr;
 
-    dataCentersListChr= par ("dataCentersList");
-    DataCenterListParser dataCenterParser(dataCentersListChr);
-    result = dataCenterParser.parse();
+    dataCentresListChr= par ("dataCentresList");
+    DataCentreListParser dataCentreParser(dataCentresListChr);
+    result = dataCentreParser.parse();
     if (result == SC_OK) {
-        dataCentersBase = dataCenterParser.getResult();
+        dataCentresBase = dataCentreParser.getResult();
     }
     return result;
 }
 
 
-std::string CloudProviderBase::dataCentersToString (){
+std::string CloudProviderBase::dataCentresToString (){
 
     std::ostringstream info;
     int i, currentRack;
 
         // Main text for the applications of this manager
-        info << std::endl << dataCentersBase.size() << " Data-Centers parsed from CloudProviderBase in " << getFullPath() << endl << endl;
+        info << std::endl << dataCentresBase.size() << " Data-Centres parsed from CloudProviderBase in " << getFullPath() << endl << endl;
 
-        for (i=0; i<dataCentersBase.size(); i++){
+        for (i=0; i<dataCentresBase.size(); i++){
 
-            // Name of the data-center
-            info << "\tData-Center[" << i << "]  --> " << dataCentersBase.at(i)->getName() << "  -  ";
+            // Name of the data-centre
+            info << "\tData-Centre[" << i << "]  --> " << dataCentresBase.at(i)->getName() << "  -  ";
 
             // Number of racks
-            info << dataCentersBase.at(i)->getNumRacks(false) << " computing racks  -  ";
-            info << dataCentersBase.at(i)->getNumRacks(true) << " storage racks" << endl;
+            info << dataCentresBase.at(i)->getNumRacks(false) << " computing racks  -  ";
+            info << dataCentresBase.at(i)->getNumRacks(true) << " storage racks" << endl;
 
             // Features of each rack
-            for (currentRack=0; currentRack < dataCentersBase.at(i)->getNumRacks(false); currentRack++){
-                info << "\t  + Rack[" << currentRack << "]:" << dataCentersBase.at(i)->getRack(currentRack, false)->getRackInfo()->toString() << endl;
-                info << "\t\t - Node config: " << dataCentersBase.at(i)->getRack(currentRack, false)->getRackInfo()->getNodeInfo()->toString() << endl;
+            for (currentRack=0; currentRack < dataCentresBase.at(i)->getNumRacks(false); currentRack++){
+                info << "\t  + Rack[" << currentRack << "]:" << dataCentresBase.at(i)->getRack(currentRack, false)->getRackInfo()->toString() << endl;
+                info << "\t\t - Node config: " << dataCentresBase.at(i)->getRack(currentRack, false)->getRackInfo()->getNodeInfo()->toString() << endl;
             }
 
             // Features of each rack
-            for (currentRack=0; currentRack < dataCentersBase.at(i)->getNumRacks(true); currentRack++){
-                info << "\t  + Rack[" << currentRack + dataCentersBase.at(i)->getNumRacks(false) << "]:" << dataCentersBase.at(i)->getRack(currentRack, true)->getRackInfo()->toString() << endl;
-                info << "\t\t - Node config: " << dataCentersBase.at(i)->getRack(currentRack, true)->getRackInfo()->getNodeInfo()->toString() << endl;
+            for (currentRack=0; currentRack < dataCentresBase.at(i)->getNumRacks(true); currentRack++){
+                info << "\t  + Rack[" << currentRack + dataCentresBase.at(i)->getNumRacks(false) << "]:" << dataCentresBase.at(i)->getRack(currentRack, true)->getRackInfo()->toString() << endl;
+                info << "\t\t - Node config: " << dataCentresBase.at(i)->getRack(currentRack, true)->getRackInfo()->getNodeInfo()->toString() << endl;
             }
 
             info << endl;
         }
 
-        info << "---------------- End of parsed Data-Centers in " << getFullPath() << " ----------------" << endl;
+        info << "---------------- End of parsed Data-Centres in " << getFullPath() << " ----------------" << endl;
 
     return info.str();
 }

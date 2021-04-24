@@ -3,15 +3,15 @@ package simcan2.simulations.ScenarioTestCost;
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
 import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCenterManagers.DataCenterManagerCost.DataCenterManagerCost;
+import simcan2.Management.DataCentreManagers.DataCentreManagerCost.DataCentreManagerCost;
 import simcan2.Management.CloudProviders.*.*;
-import simcan2.Architecture.Network.DataCenterNetwork.*;
+import simcan2.Architecture.Network.DataCentreNetwork.*;
 import simcan2.Management.UserGenerators.*.*;
 
 // ---------------------------------------------------------------
-//   Definition of the data-center DataCenter_A
+//   Definition of the data-centre DataCentre_A
 // ---------------------------------------------------------------
-module DataCenter_A
+module DataCentre_A
 {
     parameters:
         string appList;
@@ -33,9 +33,9 @@ module DataCenter_A
     submodules:
 
         // ---------------------------------------------------------------
-        //   Definition of the data-center manager
+        //   Definition of the data-centre manager
         // ---------------------------------------------------------------
-        dcManager: DataCenterManagerCost {
+        dcManager: DataCentreManagerCost {
             parameters:
                 appList = appList;
                 vmList = vmList;
@@ -63,7 +63,7 @@ module DataCenter_A
         // ---------------------------------------------------------------
         //   Definition of Network
         // ---------------------------------------------------------------
-        dataCenterNetwork: DataCenterNetwork {
+        dataCentreNetwork: DataCentreNetwork {
             @display("p=299,51");
             gates:
                 inComm[numCmpRacks];
@@ -77,20 +77,20 @@ module DataCenter_A
     // ---------------------------------------------------------------
     connections allowunconnected:
 
-        // Connections between Data-Center manager and Data-center outside
+        // Connections between Data-Centre manager and Data-centre outside
         dcManager.out --> ned.IdealChannel --> toCloudProvider;
         dcManager.in <-- ned.IdealChannel <-- fromCloudProvider;
 
         // Connections between computing racks and the network
         for i=0..numCmpRacks-1 {
-        	rackCmp_Rack_A[i].out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
-        	rackCmp_Rack_A[i].in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
+        	rackCmp_Rack_A[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
+        	rackCmp_Rack_A[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
         }
         
         // Connections between storage racks and the network
         for i=0..numStoRacks-1 {
-        	rackSto_Rack_B[i].out --> DataCenterEth40G_channel --> dataCenterNetwork.inComm++;
-        	rackSto_Rack_B[i].in <-- DataCenterEth40G_channel <-- dataCenterNetwork.outComm++;
+        	rackSto_Rack_B[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
+        	rackSto_Rack_B[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
         }
 }
 
@@ -104,8 +104,8 @@ network ScenarioTest
         string vmList;
         string slaList;
         string userList;
-        string dataCentersList;
-        int numDataCenters = 1;
+        string dataCentresList;
+        int numDataCentres = 1;
 
         @display("bgb=610,278");
     // -------------------------------------------------------
@@ -114,9 +114,9 @@ network ScenarioTest
     submodules:
 
         // ---------------------------------------------------------------
-        //   Definition of the data-centers
+        //   Definition of the data-centres
         // ---------------------------------------------------------------
-        dc_DataCenter_A[numDataCenters]: DataCenter_A {
+        dc_DataCentre_A[numDataCentres]: DataCentre_A {
             parameters:
                 appList = appList;
                 vmList = vmList;
@@ -128,17 +128,17 @@ network ScenarioTest
         // -------------------------------------------------------
         //   Definition of the cloud provider
         // -------------------------------------------------------
-        cloudProvider: CloudProvider_firstBestFit {
+        cloudProvider: CloudProviderCost {
             parameters:
                 appList = appList;
                 vmList = vmList;
                 slaList = slaList;
                 userList = userList;
-                dataCentersList = dataCentersList;
+                dataCentresList = dataCentresList;
                 @display("p=240,76");
             gates:
-                fromDataCenter[numDataCenters];
-                toDataCenter[numDataCenters];
+                fromDataCentre[numDataCentres];
+                toDataCentre[numDataCentres];
         }
 
         // -------------------------------------------------------
@@ -158,10 +158,10 @@ network ScenarioTest
     // ---------------------------------------------------------------
     connections allowunconnected:
 
-        // Connections between the cloud provider and each data-center manager
-        for i=0..numDataCenters-1 {
-	        cloudProvider.toDataCenter++ --> ned.IdealChannel --> dc_DataCenter_A[i].fromCloudProvider;
-        	cloudProvider.fromDataCenter++ <-- ned.IdealChannel <-- dc_DataCenter_A[i].toCloudProvider;
+        // Connections between the cloud provider and each data-centre manager
+        for i=0..numDataCentres-1 {
+	        cloudProvider.toDataCentre++ --> ned.IdealChannel --> dc_DataCentre_A[i].fromCloudProvider;
+        	cloudProvider.fromDataCentre++ <-- ned.IdealChannel <-- dc_DataCentre_A[i].toCloudProvider;
         }
 
 

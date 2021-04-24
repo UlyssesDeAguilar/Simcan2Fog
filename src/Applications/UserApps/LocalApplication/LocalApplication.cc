@@ -45,7 +45,7 @@ void LocalApplication::initialize(){
 		executeCPU = executeWrite = false;
 		executeRead = true;
 
-		pDataCenterManager = dynamic_cast<DataCenterManager *>(getModuleByPath("^.^.^.^.^.^.dcManager"));
+		pDataCentreManager = dynamic_cast<DataCentreManagerBase *>(getModuleByPath("^.^.^.^.^.^.dcManager"));
 
 		if (!initialized) {
 		    currentRemainingMIs = MIs;
@@ -242,7 +242,7 @@ void LocalApplication::sendEndResponse(){
     // Log (INFO)
     EV_INFO << "App execution ended" << endl;
 
-    pDataCenterManager->handleAppExecEndSingle(userInstance, vmInstance, appInstance, getIndex());
+    pDataCentreManager->handleAppExecEndSingle(userInstance, vmInstance, appInstance, getIndex());
 }
 
 void LocalApplication::printResults (){
