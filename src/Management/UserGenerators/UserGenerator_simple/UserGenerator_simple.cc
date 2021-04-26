@@ -238,7 +238,25 @@ SimTime UserGenerator_simple::getNextTime(CloudUserInstance *pUserInstance, SimT
       }
     else
       {
-        next = SimTime(distribution->doubleValue()) + m_dInitSim;
+        int cycle = 0;
+        next = SimTime(distribution->doubleValue());
+
+        if (numberOfCycles > 1) {
+            do {
+                cycle = cycleDistribution->intValue();
+            } while (cycle < 1 || cycle > numberOfCycles);
+            cycle--;
+        }
+
+        SimTime offset = cycle * durationOfCycle;
+
+        while (((isolateCycle || cycle == 0) && next < 0) ||
+               ((isolateCycle || cycle == numberOfCycles - 1) && next > durationOfCycle) ||
+               next + offset < 0 || next + offset > durationOfCycle * numberOfCycles) {
+            next = SimTime(distribution->doubleValue());
+        }
+
+        next = m_dInitSim + next + offset;
       }
 
     return next;
@@ -259,6 +277,27 @@ void UserGenerator_simple::handleUserReqGenMessage(cMessage *msg)
     }
 }
 
+CloudUserInstance* UserGenerator_simple::getNextUser() {
+    CloudUserInstance *pUserInstance;
+
+    pUserInstance = nullptr;
+
+    if (nUserIndex < userInstances.size()) {
+        pUserInstance = userInstances.at(nUserIndex);
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                << " - The next user to be processed is "
+                << pUserInstance->getUserID() << " [" << nUserIndex
+                << " of " << userInstances.size() << "]" << endl;
+        //nUserIndex++; updated at sending to ensure all request are sent
+    } else {
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                << "r - The requested user index is greater than the collection size. ["
+                << nUserIndex << " of " << userInstances.size() << "]"
+                << endl;
+    }
+    return pUserInstance;
+}
+
 void UserGenerator_simple::sendRequest(CloudUserInstance *pUserInstance)
 {
     SM_UserVM* userVm;
@@ -275,6 +314,7 @@ void UserGenerator_simple::sendRequest(CloudUserInstance *pUserInstance)
             EV_FATAL << "#___ini#" << nUserIndex << " "
                             << (simTime() - m_dInitSim) / 3600 << endl;
           }
+        nUserIndex++;
     }
 }
 
@@ -847,26 +887,7 @@ void UserGenerator_simple::submitService(SM_UserVM *userVm) {
       }
 }
 
-CloudUserInstance* UserGenerator_simple::getNextUser() {
-    CloudUserInstance *pUserInstance;
 
-    pUserInstance = nullptr;
-
-    if (nUserIndex < userInstances.size()) {
-        pUserInstance = userInstances.at(nUserIndex);
-        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                << " - The next user to be processed is "
-                << pUserInstance->getUserID() << " [" << nUserIndex
-                << " of " << userInstances.size() << "]" << endl;
-        nUserIndex++;
-    } else {
-        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                << "r - The requested user index is greater than the collection size. ["
-                << nUserIndex << " of " << userInstances.size() << "]"
-                << endl;
-    }
-    return pUserInstance;
-}
 
 SM_UserVM* UserGenerator_simple::createVmRequest(
         CloudUserInstance *pUserInstance) {

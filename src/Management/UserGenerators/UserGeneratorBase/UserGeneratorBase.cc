@@ -18,6 +18,11 @@ void UserGeneratorBase::initialize(){
     shuffleUsers = par ("shuffleUsers");
     showUserInstances = par ("showUserInstances");
 
+    numberOfCycles = par ("numberOfCycles");
+    durationOfCycle = par ("durationOfCycle");
+    isolateCycle = par ("isolateCycle");
+    cycleDistribution = &par ("cycleDistribution");
+
     // Gates
     fromCloudProviderGate = gate ("fromCloudProvider");
     toCloudProviderGate = gate ("toCloudProvider");

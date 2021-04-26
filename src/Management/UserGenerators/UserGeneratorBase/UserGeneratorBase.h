@@ -49,6 +49,14 @@ class UserGeneratorBase: public CloudManagerBase{
         /** Interval gap between users arrivals */
         cPar *distribution;
 
+        int numberOfCycles;
+
+        double durationOfCycle;
+
+        bool isolateCycle;
+
+        cPar *cycleDistribution;
+
         /**
          * Destructor
          */
