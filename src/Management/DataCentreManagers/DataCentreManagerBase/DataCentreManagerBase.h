@@ -28,10 +28,23 @@ public:
 
         int nCpuStatusInterval;
 
+        int nActiveMachinesThreshold;
+
+        int nMinActiveMachines;
+
+        int nLastMachinesInUseForecasting;
+
+        bool forecastActiveMachines;
+
         int nTotalCores;
 
         int nTotalAvailableCores;
 
+        int nTotalMachines;
+
+        int nTotalActiveMachines;
+
+        cMessage *cpuManageMachinesMessage;
         cMessage *cpuStatusMessage;
 
         /** Map of the accepted VMs*/
@@ -88,6 +101,7 @@ public:
         */
         virtual cGate* getOutGate (cMessage *msg);
 
+        virtual int storeRackMetadata(cModule *pRackModule);
         virtual int storeNodeMetadata(cModule *pNodeModule);
 
         virtual void parseConfig() override;
@@ -160,14 +174,16 @@ public:
          * Sends a timeout of all VM renting
          * @param userAPP_Rq apps User submission.
          */
-        void  timeoutAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
-        void  endSingleAppResponse(SM_UserAPP* userAPP_Rq, std::string strVmId, std::string strAppName);
+        void timeoutAppRequest(SM_UserAPP* userAPP_Rq, std::string strVmId);
+        void endSingleAppResponse(SM_UserAPP* userAPP_Rq, std::string strVmId, std::string strAppName);
         void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);
         void rejectVmSubscribe(SM_UserVM* userVM_Rq);
         void notifySubscription(SM_UserVM* userVM_Rq);
         void handleVmSubscription(SIMCAN_Message *sm);
         void storeAppFromModule(cModule *pVmAppModule);
         void handleCpuStatus(cMessage *msg);
+        void handleManageMachines(cMessage *msg);
+        void manageActiveMachines();
 
         void updateCpuUtilizationTimeForHypervisor(Hypervisor *pHypervisor);
         std::tuple<unsigned int, simtime_t**, simtime_t*> getTimersTupleByHypervisorPath(std::string strHypervisorFullPath);
@@ -175,6 +191,10 @@ public:
         simtime_t* getTimerArrayByHypervisorPath(std::string strHypervisorFullPath);
         unsigned int getNumCoresByHypervisorPath(std::string strHypervisorFullPath);
         double getCurrentCpuPercentageUsage();
+        int getMachinesInUse();
+        int getActiveOrInUseMachines();
+        int getActiveMachines();
+        void setActiveMachines(int nNewActiveMachines);
 
         /**
          * Calculates the statistics of the experiment.

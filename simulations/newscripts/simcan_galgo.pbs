@@ -1,0 +1,46 @@
+#!/bin/bash
+### Nombre de trabajo
+#PBS -N simcan
+### Tiempo máximo de ejecución del trabajo
+##PBS -l walltime=02:00:00
+### Seleccion de cola de trabajos
+#PBS -q workq
+### Separación de salida y error en dos archivos
+#PBS -o out/
+#PBS -j oe
+### Requerimientos, 1 nodos, 1 cores por nodos para
+### 32 procesos mpi
+#PBS -l select=1:ncpus=1
+### Esportar variables de entorno
+#PBS -V
+### Ejecutable con sus parametros
+
+current_sim=${PBS_ARRAY_INDEX}      #Defines the current simulation that is executing so that later scripts can use this information 
+
+cd ${scriptspath}
+
+OUT_FOLDER=out/${timestamp}/${PBS_ARRAY_ID}  #Defines the folder where all logs will be saved
+if [ -z "${PBS_ARRAY_ID}" ]
+then
+      OUT_FOLDER=out/${timestamp} 
+fi
+mkdir -p ${OUT_FOLDER}  
+
+echo "jobname.jobid: ${PBS_JOBNAME}.${PBS_JOBID}.${PBS_ARRAY_ID}.${PBS_ARRAY_INDEX}" >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1 #Saves the job that will be executed in the log file
+
+
+
+IFS='·' read -r -a job_variables <<< "$job_vars" #Reads the job_vars list and creates an array. The separator used in the submit process was a middle dot ·
+
+
+for name in ${job_variables[@]}    
+do
+ var=$var"$name"="${!name} "        #Creates a string that contains all job variables
+done
+var=$var"current_sim=$current_sim"  #Adds the number of the current simulation to the string
+
+
+echo "python3.8 -u ${script}.py "$var >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1
+
+python3.8 -u ${script}.py $var >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1     #Executes the corresponding script with the job variables defined in the previous for loop
+echo "Done!" >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1

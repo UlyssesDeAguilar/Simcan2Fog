@@ -27,6 +27,7 @@ void CloudProviderBase::initialize(){
             // Init the size of the cGate vectors
             fromDataCentreGates = new cGate* [numGates];
             toDataCentreGates = new cGate* [numGates];
+            dataCentreManagers = new DataCentreManagerBase* [numGates];
 
             // Init the cGates vector
             for (i=0; i<numGates; i++){
@@ -39,6 +40,8 @@ void CloudProviderBase::initialize(){
                if (!toDataCentreGates[i]->isConnected()){
                    error ("toDataCentreGates %d is not connected", i);
                }
+
+               dataCentreManagers [i] = dynamic_cast<DataCentreManagerBase*>(getParentModule()->getSubmodule("dc_DataCentre", i)->getSubmodule("dcManager"));
             }
 
             // Gates to connect the user generator
@@ -46,6 +49,8 @@ void CloudProviderBase::initialize(){
             toUserGeneratorGate = gate ("toUserGenerator");
 
             // Parse data-centre list
+
+            //TODO: Meta-data only
             result = parseDataCentresList();
 
             // Something goes wrong...

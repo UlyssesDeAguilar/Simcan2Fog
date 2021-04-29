@@ -18,7 +18,8 @@ module DataCentre_A
         string vmList;
         string slaList;
         string userList;
-		int numCmpRacks = 2;
+		int numCmpRacksA;
+		int numCmpRacksB;
 		int numStoRacks = 0;
 
         @display("bgb=631,231");
@@ -46,8 +47,11 @@ module DataCentre_A
         // ---------------------------------------------------------------
         //   Definition of Computing Racks
         // ---------------------------------------------------------------
-        rackCmp_Rack_A[numCmpRacks]: CloudRack {
+        rackCmp_Rack_A[numCmpRacksA]: CloudRack {
             @display("p=109,34");
+        }
+        
+        rackCmp_Rack_B[numCmpRacksB]: CloudRack {
         }
         
                 // ---------------------------------------------------------------
@@ -64,8 +68,8 @@ module DataCentre_A
         dataCentreNetwork: DataCentreNetwork {
             @display("p=299,51");
             gates:
-                inComm[numCmpRacks];
-                outComm[numCmpRacks];
+                inComm[numCmpRacksA+numCmpRacksB];
+                outComm[numCmpRacksA+numCmpRacksB];
                 inStorage[numStoRacks];
                 outStorage[numStoRacks];
         }
@@ -80,15 +84,20 @@ module DataCentre_A
         dcManager.in <-- ned.IdealChannel <-- fromCloudProvider;
 
         // Connections between computing racks and the network
-        for i=0..numCmpRacks-1 {
+        for i=0..numCmpRacksA-1 {
         	rackCmp_Rack_A[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
         	rackCmp_Rack_A[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
         }
         
+        for i=0..numCmpRacksB-1 {
+        	rackCmp_Rack_B[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
+        	rackCmp_Rack_B[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
+        }
+        
         // Connections between storage racks and the network
         for i=0..numStoRacks-1 {
-        	rackSto_Rack_B[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
-        	rackSto_Rack_B[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
+        	rackSto_Rack_B[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inStorage++;
+        	rackSto_Rack_B[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outStorage++;
         }
 }
 
@@ -114,7 +123,7 @@ network ScenarioTest
         // ---------------------------------------------------------------
         //   Definition of the data-centres
         // ---------------------------------------------------------------
-        dc_DataCentre_A[numDataCentres]: DataCentre_A {
+        dc_DataCentre[numDataCentres]: DataCentre_A {
             parameters:
                 appList = appList;
                 vmList = vmList;
@@ -159,8 +168,8 @@ network ScenarioTest
 
         // Connections between the cloud provider and each data-centre manager
         for i=0..numDataCentres-1 {
-	        cloudProvider.toDataCentre++ --> ned.IdealChannel --> dc_DataCentre_A[i].fromCloudProvider;
-        	cloudProvider.fromDataCentre++ <-- ned.IdealChannel <-- dc_DataCentre_A[i].toCloudProvider;
+	        cloudProvider.toDataCentre++ --> ned.IdealChannel --> dc_DataCentre[i].fromCloudProvider;
+        	cloudProvider.fromDataCentre++ <-- ned.IdealChannel <-- dc_DataCentre[i].toCloudProvider;
         }
 
 

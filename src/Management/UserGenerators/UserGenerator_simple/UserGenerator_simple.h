@@ -19,14 +19,7 @@ protected:
     //Timeouts active
     bool bMaxStartTime_t1_active;
 
-    //TODO: Delete
-    SimTime m_dInitSim;
 
-    // Timeouts
-    double maxStartTime_t1;
-    double nRentTime_t2;
-    double maxSubTime_t3;
-    double maxSubscriptionTime_t4;
     double offerAcceptanceRate;
 
     // Handlers hashMap
@@ -86,13 +79,6 @@ protected:
      */
     virtual void processSelfMessage(cMessage *msg) override;
 
-    /**
-     * Returns the time the next user will arrive to the cloud
-     *
-     * @param pUserInstance Pointer to the user instance.
-     * @param last Last user arrival time.
-     */
-    virtual SimTime getNextTime(CloudUserInstance *pUserInstance, SimTime last);
 
     /**
      * Processes a self message of type WaitToExecute.
@@ -134,15 +120,6 @@ protected:
      */
     virtual CloudUserInstance* getNextUser();
 
-    /**
-     * Shuffles the arrival time of the generated users
-     */
-    virtual void generateShuffledUsers();
-
-    /**
-     * Builds the VM request which corresponds with the provided user instance.
-     */
-    virtual SM_UserVM* createVmRequest(CloudUserInstance *pUserInstance);
 
     /**
      * Builds an App request given a user
@@ -225,7 +202,7 @@ protected:
      */
     void updateUserApp(SM_UserAPP *userApp);
 
-    virtual SM_UserVM* createVmMessage();
+
 
     inline static bool compareArrivalTime(CloudUserInstance *a, CloudUserInstance *b) {
         return a->getArrival2Cloud() < b->getArrival2Cloud();
@@ -242,11 +219,11 @@ private:
      */
     SM_UserVM* createFakeVmRequest();
 
-    /**
-     * Send a VM request to the cloud provider
-     * @param pUserInstance A pointer to the cloud user instance
-     */
-    void sendRequest(CloudUserInstance *pUserInstance);
+//    /**
+//     * Send a VM request to the cloud provider
+//     * @param pUserInstance A pointer to the cloud user instance
+//     */
+//    void sendRequest(CloudUserInstance *pUserInstance);
 
     /**
      * Recovers a VM given a user name, and sends a subscribe message to the cloudmanager

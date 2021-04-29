@@ -1,0 +1,39 @@
+#!/bin/bash
+# Slurm job options (name, compute nodes, job time)
+
+#SBATCH --job-name=simcan
+#SBATCH --time=50:00:00
+#SBATCH --nodes=1
+#SBATCH --tasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --output=out/slurm-%A_%a.out
+
+# Replace [budget code] below with your budget code (e.g. t01)
+#SBATCH --account=dc010-abb
+# We use the "standard" partition as we are running on CPU nodes
+#SBATCH --partition=standard
+# We use the "standard" QoS as our runtime is less than 4 days
+#SBATCH --qos=standard
+
+module load singularity
+
+export TMPDIR=/lustre/home/dc010/abbc/tmp
+export SINGULARITY_TMPDIR=/lustre/home/dc010/abbc/tmp
+
+currentSim=${SLURM_ARRAY_TASK_ID}
+
+cd ${scriptspath}
+
+OUT_FOLDER=out/${timestamp}/${SLURM_JOBID}[${SLURM_ARRAY_TASK_ID}]
+if [ -z "${PBS_ARRAY_ID}" ]
+then
+      OUT_FOLDER=out/${timestamp}
+fi
+mkdir -p ${OUT_FOLDER}
+
+echo "jobname.jobid: ${PBS_JOBNAME}.${SLURM_JOBID}.${SLURM_ARRAY_TASK_ID}" >>${OUT_FOLDER}/${SLURM_JOBID}.OU 2>&1
+
+echo "/lustre/home/dc010/abbc/Python-3.8.9/python ${script}.py ${cluster} ${action} ${currentSim} ${name} ${numvars} ${maxcoords} ${fileLabels} ${minkey} ${maxkey} ${simulationspath}" >>${OUT_FOLDER}/${SLURM_JOBID}.OU 2>&1
+/lustre/home/dc010/abbc/Python-3.8.9/python ${script}.py ${cluster} ${action} ${currentSim} ${name} ${numvars} ${maxcoords} ${fileLabels} ${minkey} ${maxkey} ${simulationspath} >>${OUT_FOLDER}/${SLURM_JOBID}.OU 2>&1
+
+echo "Done!" >>${OUT_FOLDER}/${SLURM_JOBID}.OU 2>&1

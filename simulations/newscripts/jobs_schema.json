@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft/2019-09/schema",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "simulate",
+          "process",
+          "plot",
+          "omit"
+        ]
+      },
+      "max_coords": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "labels": {
+        "type": "string"
+      },
+      "config_name": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "string"
+        }
+      },
+      "cluster" : {
+        "type": "string"
+      },
+      "simulations_path":{
+        "type": "string"
+      },
+      "graphs":{
+        "type": "string"
+      },
+      "simulation_type":{
+        "type" : "string" 
+      },
+
+      "graphs_plot":{
+        "type" : "string" 
+      }
+      
+    },
+    
+    "required": [ 
+      "action",
+      "max_coords",
+      "config_name",
+      "cluster",
+      "simulations_path"
+    ]
+  }
+}

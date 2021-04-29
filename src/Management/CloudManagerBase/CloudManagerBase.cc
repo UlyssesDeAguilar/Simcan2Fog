@@ -395,7 +395,7 @@ int CloudManagerBase::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
     return nRet;
 }
 
-SM_UserVM_Finish* CloudManagerBase::scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime)
+SM_UserVM_Finish* CloudManagerBase::scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, std::string strVmType, double rentTime)
 {
     SM_UserVM_Finish *pMsg = new SM_UserVM_Finish();
 
@@ -404,6 +404,9 @@ SM_UserVM_Finish* CloudManagerBase::scheduleVmMsgTimeout (std::string name, std:
 
     if(!strVmId.empty())
         pMsg ->setStrVmId(strVmId.c_str());
+
+    if(!strVmType.empty())
+            pMsg ->setStrVmType(strVmType.c_str());
 
     EV_INFO << "Scheduling Msg name " << pMsg << " at "<< simTime().dbl() + rentTime << endl;
     scheduleAt(simTime() + SimTime(rentTime), pMsg);

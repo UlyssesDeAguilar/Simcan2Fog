@@ -147,7 +147,6 @@ CloudUserInstance* UserGeneratorCost::handleResponseAppTimeout(SIMCAN_Message *m
         strVmId = userApp->getVmId();
         userApp->printUserAPP();
 
-
         pUserInstance = userHashMap.at(userApp->getUserID());
         if (pUserInstance != nullptr)
           {
@@ -221,6 +220,7 @@ void UserGeneratorCost::parseConfig() {
 
         // Init module parameters
         showSlas = par ("showSlas");
+        strUserTraceSla = par ("userTraceSla").stringValue();
 
         // Parse sla list
         result = parseSlasList();
@@ -313,6 +313,10 @@ SM_UserVM* UserGeneratorCost::createVmMessage() {
 
 CloudUserInstance* UserGeneratorCost::createCloudUserInstance(CloudUser *ptrUser, unsigned int  totalUserInstance, unsigned int  userNumber, int currentInstanceIndex, int totalUserInstances) {
     return new CloudUserInstancePriority (ptrUser, totalUserInstance, userNumber, currentInstanceIndex, totalUserInstances);
+}
+
+CloudUser* UserGeneratorCost::createUserTraceType(){
+    return new CloudUserPriority("UserTrace", 0, Regular, findSla(strUserTraceSla));
 }
 
 //
@@ -928,9 +932,9 @@ Sla* UserGeneratorCost::findSla (std::string slaType){
 
 
 void UserGeneratorCost::calculateStatistics() {
-    double dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub,  dMeanSub, dNoWaitUsers, dWaitUsers;
+    double dInitTime, dEndTime, dExecTime, dSubTime, dMaxSub, dTotalSub,  dMeanSub, dNoWaitUsers, dWaitUsers, dWaitTime;
     double dUserCost, dTotalCost, dMeanCost, dBaseCost, dRentingBaseCost, dOfferCost, dTotalOfferCost;
-    int nIndex, nSize, nTotalUnprovided, nTotalRentTimeout, nRentTime, nAcceptOffer, nUsersAcceptOffer;
+    int nIndex, nSize, nTotalUnprovided, nTotalRentTimeout, nRentTime, nAcceptOffer, nUsersAcceptOffer, nTotalTimeouts;
     CloudUserInstance* pUserInstance;
     CloudUserPriority* pCloudUser;
     Sla* pSla;
@@ -947,8 +951,8 @@ void UserGeneratorCost::calculateStatistics() {
     //UserGenerator_simple::calculateStatistics();
 
     nIndex=1;
-    nRentTime = nTotalUnprovided=nRUnprovided=nPUnprovided=nTotalRentTimeout=nAcceptOffer=nUsersAcceptOffer=nPProvided=nPRProvided=nRProvided=0;
-    dInitTime = dEndTime = dExecTime = dSubTime = dMaxSub = dTotalSub =  dMeanSub = dOfferCost = dTotalOfferCost = 0;
+    nRentTime = nTotalUnprovided=nRUnprovided=nPUnprovided=nTotalRentTimeout=nAcceptOffer=nUsersAcceptOffer=nPProvided=nPRProvided=nRProvided=nTotalTimeouts=0;
+    dInitTime = dEndTime = dExecTime = dSubTime = dMaxSub = dTotalSub =  dMeanSub = dOfferCost = dTotalOfferCost = dWaitTime = 0;
     dTotalCost = 0;
     dNoWaitUsers= dWaitUsers =0;
     nRequestedVms = 0;
@@ -962,6 +966,7 @@ void UserGeneratorCost::calculateStatistics() {
         dEndTime = pUserInstance->getEndTime().dbl();
         dMaxSub = pUserInstance->getT4();
         dExecTime = pUserInstance->getInitExecTime().dbl();
+        dWaitTime = pUserInstance->getWaitTime().dbl();
         bSubscribed = pUserInstance->hasSubscribed();
         strUserType = pUserInstance->getType();
         strUserId = pUserInstance->getUserID();
@@ -981,6 +986,8 @@ void UserGeneratorCost::calculateStatistics() {
 
 //        nRequestedVms = pUserVM_Rq->getTotalVmsRequests();
 
+        if (dWaitTime != 0)
+            dWaitTime = dWaitTime / 3600;
 
         if(dMaxSub!=0)
             dMaxSub = dMaxSub/3600;
@@ -1096,7 +1103,7 @@ void UserGeneratorCost::calculateStatistics() {
 
         if(pUserInstance->isTimeoutSubscribed())
         {
-            EV_FATAL << "#___#Unprovided " << nIndex << strPriorityType << dSubTime <<"   \n" << endl;
+            EV_FATAL << "#___#Unprovided " << nIndex << strPriorityType << dSubTime << " " << dWaitTime << "   \n" << endl;
             EV_FATAL << "#___#Compensation " << nIndex << strPriorityType << dUserCost <<"   \n" << endl;
             if (bPriorized)
                 nPUnprovided++;
@@ -1127,14 +1134,14 @@ void UserGeneratorCost::calculateStatistics() {
 
             if (pUserInstance->isTimeoutMaxRent())
             {
-                EV_FATAL << "#___#RentTimeout " << nIndex << " " << dSubTime << strPriorityType <<"   \n" << endl;
-                EV_FATAL << "#___#RentTimeoutCost " << nIndex << " "  << dUserCost << strPriorityType <<"   \n" << endl;
+                EV_FATAL << "#___#RentTimeout " << nIndex << " " << strPriorityType << dSubTime << " " << dWaitTime << "   \n" << endl;
+                EV_FATAL << "#___#RentTimeoutCost " << nIndex << " " << strPriorityType << dUserCost  <<"   \n" << endl;
                 nTotalRentTimeout++;
             }
             else
             {
-                EV_FATAL << "#___#Success " << nIndex << " "<< dSubTime << strPriorityType <<"   \n" << endl;
-                EV_FATAL << "#___#Cost " << nIndex << " "<< dUserCost << strPriorityType <<"   \n" << endl;
+                EV_FATAL << "#___#Success " << nIndex << " "<< strPriorityType << dSubTime  << " " << dWaitTime << "   \n" << endl;
+                EV_FATAL << "#___#Cost " << nIndex << " " << strPriorityType << dUserCost  <<"   \n" << endl;
             }
         }
         nIndex++;

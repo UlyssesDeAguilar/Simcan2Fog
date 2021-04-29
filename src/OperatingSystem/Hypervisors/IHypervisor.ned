@@ -12,6 +12,7 @@ package simcan2.OperatingSystem.Hypervisors;
 moduleinterface IHypervisor{
     
 	parameters:
+	    bool active;
 	    bool isVirtualHardware;		// True if this computer allows virtualization and False in another case
 		int maxVMs;					// Maximum number of VMs allocated in this computer 
     

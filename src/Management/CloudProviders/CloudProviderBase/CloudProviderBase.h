@@ -3,6 +3,7 @@
 
 #include "../../parser/DataCentreListParser.h"
 #include "Management/CloudManagerBase/CloudManagerBase.h"
+#include "Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
 
 /**
  * Base class for Cloud Providers.
@@ -31,6 +32,9 @@ class CloudProviderBase : public CloudManagerBase{
 
         /** Output gate to UserGenerator module. */
         cGate* toUserGeneratorGate;
+
+        /** Vector that contains references to data center managers **/
+       DataCentreManagerBase** dataCentreManagers;
 
         /**
          * Destructor.

@@ -47,6 +47,7 @@ Hypervisor* DataCentreManagerBestFit::selectNode (SM_UserVM*& userVM_Rq, const V
                         // Move to right vector by avaible cores
                         vectorHypervisor.erase(itVector);
                         mapHypervisorPerNodes[pHypervisor->getAvailableCores()].push_back(pHypervisor);
+                        manageActiveMachines();
 
                         return pHypervisor;
                     }
@@ -75,6 +76,7 @@ void DataCentreManagerBestFit::deallocateVmResources(std::string strVmId)
     storeNodeInMap(pHypervisor);
 
     updateCpuUtilizationTimeForHypervisor(pHypervisor);
+    manageActiveMachines();
 }
 
 void DataCentreManagerBestFit::storeNodeInMap (Hypervisor* pHypervisor){

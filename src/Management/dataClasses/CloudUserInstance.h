@@ -23,11 +23,7 @@ class CloudUserInstance: public UserInstance {
          * Vector of Virtual Machines configured for this user.
          */
         std::vector<VmInstanceCollection*> virtualMachines;
-        std::vector<AppInstance*> appInstances;
 
-        SM_UserVM* requestVmMsg;
-        SM_UserAPP* requestAppMsg;
-        SM_UserVM* subscribeVmMsg;
 
         //Request times.
         int maxStartTime_t1;
@@ -37,7 +33,6 @@ class CloudUserInstance: public UserInstance {
         int nId;
 
         int numFinishedVMs;
-        int numTotalVMs;
         int numActiveSubscriptions;
 
         SimTime dArrival2Cloud;
@@ -48,9 +43,9 @@ class CloudUserInstance: public UserInstance {
         SimTime dWaitTime;
 
         bool bSubscribe;
-        bool bTimeout_t2;
-        bool bTimeout_t4;
         bool bFinished;
+    protected:
+        int numTotalVMs;
 
     public:
 
@@ -70,6 +65,14 @@ class CloudUserInstance: public UserInstance {
          * Destructor.
          */
         virtual ~CloudUserInstance();
+
+        std::vector<AppInstance*> appInstances;
+        SM_UserVM* requestVmMsg;
+        SM_UserAPP* requestAppMsg;
+        SM_UserVM* subscribeVmMsg;
+        bool bTimeout_t2;
+        bool bTimeout_t4;
+
 
         bool operator<(const CloudUserInstance &other) const;
 

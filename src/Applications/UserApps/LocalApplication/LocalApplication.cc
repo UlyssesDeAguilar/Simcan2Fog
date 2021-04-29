@@ -63,7 +63,7 @@ void LocalApplication::initialize(){
 void LocalApplication::finish(){
 
     if (selfMessage!=nullptr) {
-        cancelEvent(selfMessage);
+        delete cancelEvent(selfMessage);
         selfMessage=nullptr;
     }
 
@@ -187,6 +187,7 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
 
 		// Wrong response message!
 		else{
+		    delete (sm);
 		}
 
 
@@ -195,11 +196,12 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
 void LocalApplication::executeIORequest(){
     // Create a timer for delaying the execution of this application
     startServiceIO = simTime();
-    cMessage *waitToExecuteMsg = new cMessage (IO_READ_OPERATION);
+    cMessage *waitToExecuteMsg;
     simtime_t operationTime = SimTime(0);
 
     if (executeRead) {
         EV_INFO << "Requesting read IO:" << inputDataSize << " MB" << endl;
+        waitToExecuteMsg = new cMessage (IO_READ_OPERATION);
         double diskReadBandwidth = getModuleByPath("^.^.^")->par("diskReadBandwidth");
         operationTime = SimTime(inputDataSize/diskReadBandwidth, SIMTIME_S);
     } else if (executeWrite) {

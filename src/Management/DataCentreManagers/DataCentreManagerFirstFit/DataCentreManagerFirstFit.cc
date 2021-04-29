@@ -43,7 +43,10 @@ Hypervisor* DataCentreManagerFirstFit::selectNode (SM_UserVM*& userVM_Rq, const 
                 if (numAvailableCores >= numCoresRequested) {
                     pResourceRequest = generateNode(strUserName, vmRequest);
                     bHandled = allocateVM(pResourceRequest, pHypervisor);
-                    if (bHandled) return pHypervisor;
+                    if (bHandled) {
+                        manageActiveMachines();
+                        return pHypervisor;
+                    }
                 }
             }
 

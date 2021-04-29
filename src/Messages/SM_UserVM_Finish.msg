@@ -14,4 +14,5 @@ message SM_UserVM_Finish extends SIMCAN_Message{
            
     string userID;		// ID of the user instance
     string strVmId;	    // Id of the VM that allocs the APP    
+    string strVmType;
 }

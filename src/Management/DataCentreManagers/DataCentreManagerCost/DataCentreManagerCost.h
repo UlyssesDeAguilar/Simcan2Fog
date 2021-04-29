@@ -58,6 +58,8 @@ class DataCentreManagerCost: public DataCentreManagerFirstFit{
         virtual void handleExtendVmAndResumeExecution(SIMCAN_Message *sm);
 
         virtual void handleEndVmAndAbortExecution(SIMCAN_Message *sm);
+
+        Sla* findSla (std::string slaType);
 };
 
 #endif

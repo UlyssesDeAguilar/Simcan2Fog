@@ -75,6 +75,7 @@ class CloudProviderCost : public CloudProviderFirstFit{
 //        virtual bool checkVmUserFit(SM_UserVM*& userVM_Rq) override;
 
         //virtual void handleExecVmRentTimeout(cMessage *msg) override;
+        void handleVmRequestFits(SIMCAN_Message *sm);
 
         virtual void handleExtendVmAndResumeExecution(SIMCAN_Message *sm);
 

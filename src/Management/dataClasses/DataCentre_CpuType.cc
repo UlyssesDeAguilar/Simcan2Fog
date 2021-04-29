@@ -6,6 +6,8 @@ DataCentre_CpuType::DataCentre_CpuType(std::string name){
     nTotalCores=0;
 }
 DataCentre_CpuType::~DataCentre_CpuType(){
+    mapNodes.clear();
+    mapFreeNodes.clear();
 }
 const std::string& DataCentre_CpuType::getName() const {
     return name;
@@ -17,135 +19,41 @@ void DataCentre_CpuType::insertNode (NodeResourceInfo* newNode, int numCpus){
     nTotalCores+=numCpus;
 
     EV_TRACE << "DataCentre_CpuType::insertNode - Inserting new node, size: " << numCpus << endl;
-    switch (numCpus){
 
-        // Single-core
-        case 1:
-            nodes_1core.push_back(newNode);
-            free_nodes_1core.push_back(newNode);
-            break;
+    mapNodes[numCpus].push_back(newNode);
+    mapFreeNodes[numCpus].push_back(newNode);
 
-        // Dual-core
-        case 2:
-            nodes_2cores.push_back(newNode);
-            free_nodes_2cores.push_back(newNode);
-            break;
-
-        // Quad-core
-        case 4:
-            nodes_4cores.push_back(newNode);
-            free_nodes_4cores.push_back(newNode);
-            break;
-
-        // Octa-core
-        case 8:
-            nodes_8cores.push_back(newNode);
-            free_nodes_8cores.push_back(newNode);
-            break;
-
-        // 16-core
-        case 16:
-            nodes_16cores.push_back(newNode);
-            free_nodes_16cores.push_back(newNode);
-            break;
-
-        // 32-core
-        case 32:
-            nodes_32cores.push_back(newNode);
-            free_nodes_32cores.push_back(newNode);
-            break;
-
-        default:
-            throw omnetpp::cRuntimeError("[DataCentre_CpuType] Wrong list. There is no Node with %d CPU cores!", numCpus);
-    }
 }
 std::vector <NodeResourceInfo*>* DataCentre_CpuType::getNodeListByCores(int numCores)
 {
-    std::vector <NodeResourceInfo*>* pRetList;
-    switch (numCores){
+    std::vector <NodeResourceInfo*>* pRetList = nullptr;
 
-         // Single-core
-         case 1:
-             pRetList = &nodes_1core;
-             break;
+    std::map<int, std::vector<NodeResourceInfo*>>::iterator itMap;
 
-         // Dual-core
-         case 2:
-             pRetList = &nodes_2cores;
-             break;
+    itMap = mapNodes.find(numCores);
 
-         // Quad-core
-         case 4:
-             pRetList = &nodes_4cores;
-             break;
+    if (itMap != mapNodes.end()) {
+        pRetList = &itMap->second;
+    } else {
+        throw omnetpp::cRuntimeError("[DataCentre_CpuType] Wrong list. There is no Node with %d CPU cores!", numCores);
+    }
 
-         // Octa-core
-         case 8:
-             pRetList = &nodes_8cores;
-             break;
-
-         // 16-core
-         case 16:
-             pRetList = &nodes_16cores;
-             break;
-
-         // 32-core
-         case 32:
-             pRetList = &nodes_32cores;
-             break;
-
-         default:
-             throw omnetpp::cRuntimeError("[DataCentre_CpuType] Wrong list. There is no Node with %d CPU cores!", numCores);
-     }
     return pRetList;
 }
 std::vector <NodeResourceInfo*>* DataCentre_CpuType::getFreeNodeListByCores(int numCores)
 {
-    std::vector <NodeResourceInfo*>* pRetList;
+    std::vector <NodeResourceInfo*>* pRetList = nullptr;
 
-    EV_TRACE << "DataCentre_CpuType::getFreeNodeListByCores - Init" << endl;
-    switch (numCores){
+    std::map<int, std::vector<NodeResourceInfo*>>::iterator itMap;
 
-         // Single-core
-         case 1:
-             EV_DEBUG << "DataCentre_CpuType::getFreeNodeListByCores - using 1 core list" << endl;
-             pRetList = &free_nodes_1core;
-             break;
+    itMap = mapFreeNodes.find(numCores);
 
-         // Dual-core
-         case 2:
-             EV_DEBUG << "DataCentre_CpuType::getFreeNodeListByCores - using 2 core list" << endl;
-             pRetList = &free_nodes_2cores;
-             break;
+    if (itMap != mapFreeNodes.end()) {
+        pRetList = &itMap->second;
+    } else {
+        throw omnetpp::cRuntimeError("[DataCentre_CpuType] Wrong list. There is no Node with %d CPU cores!", numCores);
+    }
 
-         // Quad-core
-         case 4:
-             EV_DEBUG << "DataCentre_CpuType::getFreeNodeListByCores - using 4 core list" << endl;
-             pRetList = &free_nodes_4cores;
-             break;
-
-         // Octa-core
-         case 8:
-             EV_DEBUG << "DataCentre_CpuType::getFreeNodeListByCores - using 8 core list" << endl;
-             pRetList = &free_nodes_8cores;
-             break;
-
-         // 16-core
-         case 16:
-             EV_DEBUG << "DataCentre_CpuType::getFreeNodeListByCores - using 16 core list" << endl;
-             pRetList = &free_nodes_16cores;
-             break;
-
-         // 32-core
-         case 32:
-             EV_DEBUG << "DataCentre_CpuType::getFreeNodeListByCores - using 32 core list" << endl;
-             pRetList = &free_nodes_32cores;
-             break;
-
-         default:
-             throw omnetpp::cRuntimeError("[DataCentre_CpuType] Wrong list. There is no Node with %d CPU cores!", numCores);
-     }
-    EV_TRACE << "DataCentre_CpuType::getFreeNodeListByCores - End" << endl;
     return pRetList;
 }
 NodeResourceInfo* DataCentre_CpuType::allocNewResources(NodeResourceRequest* pVmRequest, std::vector <NodeResourceInfo*>*& pList)
@@ -302,12 +210,6 @@ std::string DataCentre_CpuType::getAvailableResources()
     std::ostringstream info;
 
     info << "datacentre["<<name<<"] Available cores: " << nTotalAvailableCores << " [";
-    info << "1:" << free_nodes_1core.size() << ", ";
-    info << "2:" << free_nodes_2cores.size() << ", ";
-    info << "4:" << free_nodes_4cores.size() << ", ";
-    info << "8:" << free_nodes_8cores.size() << ", ";
-    info << "16:" << free_nodes_16cores.size() << ", ";
-    info << "32:" << free_nodes_32cores.size() << "]" << endl;
 
     return info.str();
 }

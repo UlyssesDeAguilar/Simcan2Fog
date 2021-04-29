@@ -19,6 +19,16 @@ class Hypervisor :public cSIMCAN_Core{
 //        int executeApp(Application* appType);
         bool* getFreeCoresArrayPtr() const;
 
+        /**
+         * Check if there are VMs running in the machine.
+         * @return True if a VM is running in the machine. False otherwise.
+         */
+        bool isInUse();
+
+    bool isActive() const;
+    void powerOn(bool active);
+
+
 	protected:
 
         /** Indicates if this module is able to virtualize hardware */
@@ -27,6 +37,8 @@ class Hypervisor :public cSIMCAN_Core{
         /** Maximum number of VMs allocated in this computer */
         unsigned int maxVMs;
 //        unsigned int numAllocatedVms;
+
+        int nPowerOnTime;
 
         /** Input gate from Apps. */
         cGate** fromAppsGates;
@@ -47,6 +59,8 @@ class Hypervisor :public cSIMCAN_Core{
         cModule *pAppsVectors;
         cModule **pCpuSchedArray;
         cModule *pCpuScheds;
+
+        cMessage *powerMessage;
 
         bool *freeSchedArray;
 
@@ -88,6 +102,10 @@ class Hypervisor :public cSIMCAN_Core{
 	 	* Module ending.
 	 	*/ 
 	    void finish();
+
+	    void setActive(bool active);
+
+
 
 
 	private:

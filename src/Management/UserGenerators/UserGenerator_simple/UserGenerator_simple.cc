@@ -22,10 +22,6 @@ void UserGenerator_simple::initialize() {
 
     bMaxStartTime_t1_active = false;
 
-    maxStartTime_t1 = par("maxStartTime_t1");
-    nRentTime_t2 = par("nRentTime_t2");
-    maxSubTime_t3 = par("maxSubTime_t3");
-    maxSubscriptionTime_t4 = par("maxSubscriptionTime_t4");
     offerAcceptanceRate = par("offerAcceptanceRate");
 
     EV_INFO << "UserGenerator::initialize - Base initialized" << endl;
@@ -142,30 +138,6 @@ void UserGenerator_simple::initializeHashMaps()
 }
 
 /**
- * Shuffle the list of users in order to reproduce the behaviour of the users in a real cloud environment.
- */
-void UserGenerator_simple::generateShuffledUsers()
-{
-    int nRandom, nSize;
-
-    EV_INFO << "UserGenerator::generateShuffledUsers - Init" << endl;
-
-    nSize = userInstances.size();
-
-    EV_INFO << "UserGenerator::generateShuffledUsers - instances size: "
-                   << userInstances.size() << endl;
-    //
-    for (int i = 0; i < nSize; i++)
-      {
-        nRandom = rand() % nSize;
-        std::iter_swap(userInstances.begin() + i,
-                userInstances.begin() + nRandom);
-      }
-
-    EV_INFO << "UserGenerator::generateShuffledUsers - End" << endl;
-}
-
-/**
  * This method processes the self messages
  * @param msg
  */
@@ -185,96 +157,46 @@ void UserGenerator_simple::processSelfMessage(cMessage *msg)
 
 void UserGenerator_simple::handleWaitToExecuteMessage(cMessage *msg)
 {
-    SM_UserVM *userVm;
-    CloudUserInstance *pUserInstance;
-    SimTime lastTime;
-
     // Log (INFO)
     EV_INFO << "Starting execution!!!" << endl;
 
-    //TODO:
-    m_dInitSim = simTime();
-    lastTime = 0;
-
-    srand((int)33);
-
-    if (shuffleUsers)
-        generateShuffledUsers();
-
-    for (int i = 0; i < userInstances.size(); i++)
-      {
-        // Get current user
-        pUserInstance = userInstances.at(i);
-
-        lastTime = getNextTime(pUserInstance, lastTime);
-        userVm = createVmRequest(pUserInstance);
-
-        if (userVm != nullptr)
-          {
-            pUserInstance->setRequestVmMsg(userVm);
-            // Set init and arrival time!
-            pUserInstance->setInitTime(lastTime);
-            pUserInstance->setArrival2Cloud(lastTime);
-          }
-      }
-
-    if (!intervalBetweenUsers) {
-        std::sort(userInstances.begin(), userInstances.end(), [](CloudUserInstance* cloudUser1, CloudUserInstance* cloudUser2){return *cloudUser1<*cloudUser2;});
-    }
+    //if (!intervalBetweenUsers) {
+    std::sort(userInstances.begin(), userInstances.end(), [](CloudUserInstance* cloudUser1, CloudUserInstance* cloudUser2){return *cloudUser1<*cloudUser2;});
+    //}
 
     scheduleNextReqGenMessage();
 }
 
-SimTime UserGenerator_simple::getNextTime(CloudUserInstance *pUserInstance, SimTime last)
-{
-    SimTime next;
-
-    if (intervalBetweenUsers)
-      {
-        if (last > 0)
-            next = SimTime(distribution->doubleValue()) + last;
-        else
-            next = m_dInitSim;
-      }
-    else
-      {
-        int cycle = 0;
-        next = SimTime(distribution->doubleValue());
-
-        if (numberOfCycles > 1) {
-            do {
-                cycle = cycleDistribution->intValue();
-            } while (cycle < 1 || cycle > numberOfCycles);
-            cycle--;
-        }
-
-        SimTime offset = cycle * durationOfCycle;
-
-        while (((isolateCycle || cycle == 0) && next < 0) ||
-               ((isolateCycle || cycle == numberOfCycles - 1) && next > durationOfCycle) ||
-               next + offset < 0 || next + offset > durationOfCycle * numberOfCycles) {
-            next = SimTime(distribution->doubleValue());
-        }
-
-        next = m_dInitSim + next + offset;
-      }
-
-    return next;
-}
 
 void UserGenerator_simple::handleUserReqGenMessage(cMessage *msg)
 {
 
+    SM_UserVM *userVm;
     CloudUserInstance *pUserInstance;
+    SimTime initTime;
+    double dInitHour;
 
     EV_INFO << "processSelfMessage - USER_REQ_GEN_MSG" << endl;
     // Get current user
-    pUserInstance = getNextUser();
+    pUserInstance = userInstances.at(nUserIndex);
+    userVm = pUserInstance->getRequestVmMsg();
 
-    if (pUserInstance != nullptr) {
-        sendRequest(pUserInstance);
-        scheduleNextReqGenMessage();
-    }
+    if (userVm != nullptr)
+      {
+        // Send user to cloud provider
+        //emit(requestSignal, pUserInstance->getId());
+        sendRequestMessage(userVm, toCloudProviderGate);
+
+        initTime = simTime() - m_dInitSim;
+        dInitHour = initTime.dbl() / 3600;
+
+        //TODO: ¿Dejamos este mensaje o lo quitamos?
+        EV_FATAL << "#___ini#" << nUserIndex << " "
+                        << dInitHour << endl;
+      }
+    nUserIndex++;
+
+    scheduleNextReqGenMessage();
 }
 
 CloudUserInstance* UserGenerator_simple::getNextUser() {
@@ -298,25 +220,7 @@ CloudUserInstance* UserGenerator_simple::getNextUser() {
     return pUserInstance;
 }
 
-void UserGenerator_simple::sendRequest(CloudUserInstance *pUserInstance)
-{
-    SM_UserVM* userVm;
 
-    if (pUserInstance != nullptr) {
-        userVm = pUserInstance->getRequestVmMsg();
-
-        if (userVm != nullptr)
-          {
-            // Send user to cloud provider
-            emit(requestSignal, pUserInstance->getId());
-            sendRequestMessage(userVm, toCloudProviderGate);
-
-            EV_FATAL << "#___ini#" << nUserIndex << " "
-                            << (simTime() - m_dInitSim) / 3600 << endl;
-          }
-        nUserIndex++;
-    }
-}
 
 void UserGenerator_simple::scheduleNextReqGenMessage()
 {
@@ -543,7 +447,6 @@ CloudUserInstance* UserGenerator_simple::handleResponseAppTimeout(SIMCAN_Message
         strVmId = userApp->getVmId();
         userApp->printUserAPP();
 
-
         pUserInstance = userHashMap.at(userApp->getUserID());
         if (pUserInstance != nullptr)
           {
@@ -630,6 +533,7 @@ CloudUserInstance* UserGenerator_simple::handleSubNotify(SIMCAN_Message *userVm_
 CloudUserInstance* UserGenerator_simple::handleSubTimeout(SIMCAN_Message *userVm_RAW) {
     CloudUserInstance *pUserInstance;
     SM_UserVM *userVm = dynamic_cast<SM_UserVM*>(userVm_RAW);
+
     if (userVm != nullptr) {
         EV_INFO << __func__ << " - Init" << endl;
 
@@ -889,83 +793,6 @@ void UserGenerator_simple::submitService(SM_UserVM *userVm) {
 
 
 
-SM_UserVM* UserGenerator_simple::createVmRequest(
-        CloudUserInstance *pUserInstance) {
-    int nVmIndex, nCollectionNumber, nInstances;
-    double dRentTime;
-    std::string userId, vmType, instanceId;
-    SM_UserVM *pUserRet;
-    VmInstance *pVmInstance;
-    VmInstanceCollection *pVmCollection;
-
-    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
-
-    pUserRet = nullptr;
-
-    nVmIndex = 0;
-
-    if (pUserInstance != nullptr) {
-        pUserInstance->setRentTimes(maxStartTime_t1, nRentTime_t2,
-                maxSubTime_t3, maxSubscriptionTime_t4);
-        nCollectionNumber = pUserInstance->getNumberVmCollections();
-        userId = pUserInstance->getUserID();
-
-        EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - UserId: " << userId
-                        << " | maxStartTime_t1: " << maxStartTime_t1
-                        << " | rentTime_t2: " << nRentTime_t2
-                        << " | maxSubTime: " << maxSubTime_t3
-                        << " | MaxSubscriptionTime_T4:"
-                        << maxSubscriptionTime_t4 << endl;
-
-        if (nCollectionNumber > 0 && userId.size() > 0) {
-            //Creation of the message
-            pUserRet = createVmMessage();
-            pUserRet->setUserID(userId.c_str());
-            pUserRet->setIsResponse(false);
-            pUserRet->setOperation(SM_VM_Req);
-
-            //Get all the collections and all the instances!
-            for (int i = 0; i < nCollectionNumber; i++) {
-                pVmCollection = pUserInstance->getVmCollection(i);
-                if (pVmCollection) {
-                    nInstances = pVmCollection->getNumInstances();
-                    dRentTime = pVmCollection->getRentTime() * 3600;
-                    //Create a loop to insert all the instances.
-                    vmType = pVmCollection->getVmType();
-                    for (int j = 0; j < nInstances; j++) {
-                        pVmInstance = pVmCollection->getVmInstance(j);
-                        if (pVmInstance != NULL) {
-                            instanceId = pVmInstance->getVmInstanceId();
-                            pUserRet->createNewVmRequest(vmType, instanceId,
-                                    maxStartTime_t1, dRentTime, maxSubTime_t3,
-                                    maxSubscriptionTime_t4);
-                        }
-                    }
-                } else {
-                    EV_TRACE
-                                    << "WARNING! [UserGenerator] The VM collection is empty"
-                                    << endl;
-                    throw omnetpp::cRuntimeError(
-                            "[UserGenerator] The VM collection is empty!");
-                }
-            }
-        } else {
-            EV_TRACE
-                            << "WARNING! [UserGenerator] Collection or User-ID malformed"
-                            << endl;
-            throw omnetpp::cRuntimeError(
-                    "[UserGenerator] Collection or User-ID malformed!");
-        }
-    } else {
-        EV_INFO
-                       << "UserGenerator::createNextVmRequest - The user instance is null"
-                       << endl;
-    }
-
-    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End" << endl;
-
-    return pUserRet;
-}
 
 SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
     VM_Response *pRes;
@@ -1180,9 +1007,7 @@ void UserGenerator_simple::calculateStatistics() {
                     << " " << dNoWaitUsers << " " << dWaitUsers << " " << nSize << " " << nAcceptOffer << " " << nUsersAcceptOffer <<  endl;
 }
 
-SM_UserVM* UserGenerator_simple::createVmMessage() {
-    return new SM_UserVM();
-}
+
 
 SM_UserVM* UserGenerator_simple::createFakeVmRequest()
 {

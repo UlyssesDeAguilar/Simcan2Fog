@@ -60,9 +60,11 @@ SM_UserVM* SM_UserVM::dup(std::string strVmId) const
 {
     SM_UserVM* pRet;
     bool found;
+    int nVms;
 
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Starting partial dup" << endl;
     found = false;
+    nVms=0;
     pRet = new SM_UserVM();
 
     pRet->setDEndSubscriptionTime(getDEndSubscriptionTime());
@@ -80,9 +82,9 @@ SM_UserVM* SM_UserVM::dup(std::string strVmId) const
             for(int j = 0; j < vmReq.responseList.size(); j++)
               {
                 VM_Response vmRes = vmReq.responseList.at(j);
-                pRet->createResponse(i,vmRes.nOperationResult==1,vmRes.startTime, vmRes.strIp,vmRes.nPrice);
+                pRet->createResponse(nVms,vmRes.nOperationResult==1,vmRes.startTime, vmRes.strIp,vmRes.nPrice);
               }
-
+            nVms++;
             break;
           }
       }
@@ -193,7 +195,7 @@ void SM_UserVM::createResponse(int nIndex, bool bResOk, int nTime, std::string s
       }
     else
       {
-        EV_FATAL << "    ~+RSP(" << nIndex << ") out of bounds! Max: " << getVmsArraySize() << endl;
+        EV_FATAL << "    ~+RSP(" << nIndex << ") createResponse out of bounds! Max: " << getVmsArraySize() << endl;
       }
 }
 std::string SM_UserVM::getVmRequestType(int nIndex)
@@ -208,7 +210,7 @@ std::string SM_UserVM::getVmRequestType(int nIndex)
 
     }else
     {
-        EV_FATAL << "    ~+RSP(" << nIndex << ") out of bounds! Max: " << getTotalVmsRequests() << endl;
+        EV_FATAL << "    ~+RSP(" << nIndex << ") getVMRequestType out of bounds! Max: " << getTotalVmsRequests() << endl;
     }
     return strRet;
 }

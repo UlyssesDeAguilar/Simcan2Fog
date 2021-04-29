@@ -22,6 +22,7 @@
 #include "Management/dataClasses/CloudUserPriority.h"
 #include "Management/dataClasses/CloudUserInstancePriority.h"
 
+
 using namespace omnetpp;
 
 class UserGeneratorCost : public UserGenerator_simple
@@ -35,6 +36,7 @@ class UserGeneratorCost : public UserGenerator_simple
 
         /** Vector that contains the types of slas generated in the current simulation */
         std::vector<Sla*> slaTypes;
+        std::string strUserTraceSla;
 
 
     virtual void initialize() override;
@@ -97,6 +99,7 @@ class UserGeneratorCost : public UserGenerator_simple
 
     virtual CloudUserInstance* createCloudUserInstance(CloudUser *ptrUser, unsigned int  totalUserInstance, unsigned int  userNumber, int currentInstanceIndex, int totalUserInstances) override;
 
+    virtual CloudUser* createUserTraceType() override;
 //
 //  public:
 //    /**

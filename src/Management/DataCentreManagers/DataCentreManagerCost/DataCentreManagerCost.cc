@@ -78,6 +78,8 @@ void DataCentreManagerCost::parseConfig() {
         else if (showUsersVms){
            EV_DEBUG << usersToString ();
         }
+
+        parseDataCentreConfig ();
 }
 
 int DataCentreManagerCost::parseDataCentreConfig (){
@@ -116,6 +118,8 @@ int DataCentreManagerCost::parseUsersList (){
     if (result == SC_OK) {
         userTypes = userParser.getResult();
     }
+    //TODO: Cambiar
+    userTypes.push_back(new CloudUserPriority("UserTrace", 0, Regular, findSla("Slai0d0c0")));
     return result;
 }
 
@@ -154,7 +158,7 @@ int DataCentreManagerCost::initDataCentreMetadata (){
         for (int nBoardIndex=0; nBoardIndex < numBoards; nBoardIndex++) {
             pBoardModule = pRackModule->getSubmodule("board", nBoardIndex);
             numNodes = pBoardModule->par("numBlades");
-            numTotalCores+=numNodes;
+
 
             for (int nNodeIndex=0; nNodeIndex < numNodes; nNodeIndex++) {
                 pNodeModule = pBoardModule->getSubmodule("blade", nNodeIndex);
@@ -162,9 +166,12 @@ int DataCentreManagerCost::initDataCentreMetadata (){
                 if (numReserverNodes>0) {
                     storeReservedNodeMetadata(pNodeModule);
                     numReserverNodes--;
+                    numCores=0;
                 } else {
-                    storeNodeMetadata(pNodeModule);
+                    numCores=storeNodeMetadata(pNodeModule);
                 }
+
+                numTotalCores+=numCores;
 
             }
         }
@@ -176,7 +183,6 @@ int DataCentreManagerCost::initDataCentreMetadata (){
 }
 
 int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule) {
-    int result = SC_OK;
     cModule *pHypervisorModule;
     Hypervisor *pHypervisor;
     int numCores;
@@ -200,7 +206,7 @@ int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule) {
     //Initialize cpu utilization timers
     mapCpuUtilizationTimePerHypervisor[pHypervisorModule->getFullPath()] = std::make_tuple(numCores, startTimeArray, timerArray);
 
-    return result;
+    return numCores;
 }
 
 Hypervisor* DataCentreManagerCost::selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest){
@@ -208,7 +214,9 @@ Hypervisor* DataCentreManagerCost::selectNode (SM_UserVM*& userVM_Rq, const VM_R
     Hypervisor *pHypervisor = nullptr;
     SM_UserVM_Cost *userVM_Rq_Cost = dynamic_cast<SM_UserVM_Cost*>(userVM_Rq);
 
-    if (pCloudUser == nullptr) return nullptr;
+    if(pCloudUser == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong pCloudUser. Null pointer or wrong cloud user class!").c_str());
+
 
     if (!checkReservedFirst) {
         pHypervisor = DataCentreManagerFirstFit::selectNode (userVM_Rq, vmRequest);
@@ -281,6 +289,7 @@ void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg) {
     Hypervisor *pHypervisor;
 
     std::string strUsername,
+                strVmType,
                 strVmId,
                 strAppName,
                 strIp;
@@ -307,9 +316,9 @@ void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg) {
 
     pUserApp = getUserAppRequestPerUser(strUsername);
 
-    if (pUserApp == nullptr)
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app request message from the User!!").c_str());
-
+    if (pUserApp == nullptr) {
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app request message from the User!").c_str());
+    }
 //    acceptAppRequest(pUserApp, strVmId);
 
         //Check the Application status
@@ -328,6 +337,8 @@ void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg) {
             pUserApp->abortAllApps(strVmId);
           } else {
               deallocateVmResources(strVmId);
+              strVmType = pUserVmFinish->getStrVmType();
+              nTotalAvailableCores += getTotalCoresByVmType(strVmType);
           }
         // Check the result and send it
         checkAllAppsFinished(pUserApp, strVmId);
@@ -364,7 +375,7 @@ void DataCentreManagerCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
 
                         if (strVmId.compare(vmRequest.strVmId) == 0) {
                             bFound = true;
-                            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, strVmId, 3600);
+                            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, strVmId, vmRequest.strVmType, 3600);
                             handleUserAppRequest(sm);
                         }
 
@@ -404,3 +415,29 @@ void DataCentreManagerCost::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
       error ("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
     }
 }
+
+Sla* DataCentreManagerCost::findSla (std::string slaType){
+
+    std::vector<Sla*>::iterator it;
+    Sla* result;
+    bool found;
+
+        // Init
+        found = false;
+        result = nullptr;
+        it = slaTypes.begin();
+
+        // Search...
+        while((!found) && (it != slaTypes.end())){
+
+            if ((*it)->getType() == slaType){
+                found = true;
+                result = (*it);
+            }
+            else
+                it++;
+        }
+
+    return result;
+}
+

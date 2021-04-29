@@ -16,7 +16,9 @@ void CloudProviderFirstFit::initialize(){
     // Init data-centre structures
     //Fill the meta-structures created to improve the performance of the cloudprovider
     initializeDataCentreCollection();
-    loadNodes();
+
+    //TODO: Meta-data only
+    //loadNodes();
 
     bFinished = false;
     scheduleAt(SimTime(), new cMessage(INITIAL_STAGE));
@@ -351,10 +353,10 @@ void CloudProviderFirstFit::updateSubsQueue()
         userVmSub = subscribeQueue.at(i);
 
         userVmSub->setOperation(SM_VM_Sub);
-        userVmSub->setResult(0);
+        //userVmSub->setResult(0);
 
         // If the message is not in the datacentre yet
-        if (userVmSub->getOwner()==this) {
+        if (userVmSub->getOwner()==this && userVmSub->getResult()!=SM_APP_Sub_Accept) {
             checkVmUserFit(userVmSub);
 
             EV_INFO << "Notifying subscription of user: "<< userVmSub->getUserID() << endl;
@@ -472,12 +474,13 @@ void CloudProviderFirstFit::handleVmRequestFits(SIMCAN_Message *sm)
         //Check if is a VmRequest or a subscribe
         if (subscribeQueue.size()>0)
             rejectVmRequest(userVM_Rq);
-        else if (checkVmUserFit(userVM_Rq))
+        else if (checkVmUserFit(userVM_Rq)) {
             //acceptVmRequest(userVM_Rq);
             EV_FATAL << "OK" << endl;
-        else
+        } else {
             EV_FATAL << "Fail" << endl;
-            //rejectVmRequest(userVM_Rq);
+            rejectVmRequest(userVM_Rq);
+        }
       }
     else
       {
@@ -562,6 +565,7 @@ void CloudProviderFirstFit::handleResponseRejectSubcription(SIMCAN_Message* sm)
 void CloudProviderFirstFit::notifySubscription(SM_UserVM* userVM_Rq)
 {
     SM_UserVM_Finish* pMsgTimeout;
+
     EV_INFO << "Notifying request from user: " << userVM_Rq->getUserID() << endl;
     EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
 
@@ -609,7 +613,7 @@ void CloudProviderFirstFit::storeVmSubscribe(SM_UserVM* userVM_Rq)
         pMsg = userVM_Rq->getTimeoutSubscribeMsg();
         if (pMsg==nullptr)
         {
-            pMsg = scheduleVmMsgTimeout(USER_SUBSCRIPTION_TIMEOUT, userVM_Rq->getUserID(), userVM_Rq->getStrVmId(), dMaxSubscribeTime);
+            pMsg = scheduleVmMsgTimeout(USER_SUBSCRIPTION_TIMEOUT, userVM_Rq->getUserID(), userVM_Rq->getStrVmId(), "", dMaxSubscribeTime);
 
             //Store the VM subscription until there exist the Vms necessaries
             userVM_Rq->setDStartSubscriptionTime(simTime().dbl());
@@ -655,22 +659,120 @@ void CloudProviderFirstFit::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
 bool CloudProviderFirstFit::checkVmUserFit(SM_UserVM*& userVM_Rq)
 {
     bool bRet;
+    int nTotalAvailableCores, nTotalCoresRequested;
 
     std::string nodeIp,
-                strUserName,
                 strVmId;
 
-    bRet = true;
+    bRet = false;
 
-    userVM_Rq->setIsResponse(false);
 
-    //TODO: Select datacentre
-    sendRequestMessage (userVM_Rq, toDataCentreGates[0]);
+    nTotalAvailableCores = dataCentreManagers[0]->getNTotalAvailableCores();
+    nTotalCoresRequested = calculateTotalCoresRequested(userVM_Rq);
+
+    if (nTotalAvailableCores >= nTotalCoresRequested) {
+        userVM_Rq->setIsResponse(false);
+
+        //TODO: Select datacentre
+        sendRequestMessage (userVM_Rq, toDataCentreGates[0]);
+        bRet = true;
+    }
 
     EV_DEBUG << "checkVmUserFit- End" << endl;
 
     return bRet;
 }
+//
+//cGate* CloudProviderFirstFit::selectDataCentre(SM_UserVM*& userVM_Rq) {
+//    cGate* toDataCenterGate = nullptr;
+//
+//    int nTotalRequestedCores,
+//        nRequestedVms,
+//        nAvailableCores,
+//        nTotalCores;
+//
+//    std::string nodeIp,
+//                strUserName,
+//                strVmId;
+//
+//    bAccepted = bRet = true;
+//    if(userVM_Rq != nullptr)
+//      {
+//        nRequestedVms = userVM_Rq->getTotalVmsRequests();
+//
+//        EV_DEBUG << "checkVmUserFit- Init" << endl;
+//        EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << userVM_Rq->getUserID() << endl;
+//
+//        //Before starting the process, it is neccesary to check if the
+//        nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
+//        nAvailableCores = datacentreCollection->getTotalAvailableCores();
+//
+//        if(nTotalRequestedCores<=nAvailableCores)
+//          {
+//            nTotalCores = datacenterCollection->getTotalCores();
+//            EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores<< " vs Available ["<< nAvailableCores << "/" <<nTotalCores << "]"<<endl;
+//
+//            strUserName = userVM_Rq->getUserID();
+//            //Process all the VMs
+//            for(int i=0;i<nRequestedVms && bRet;i++)
+//              {
+//                EV_DEBUG << endl <<"checkVmUserFit - Trying to handle the VM: " << i << endl;
+//
+//                //Get the VM request
+//                VM_Request& vmRequest = userVM_Rq->getVms(i);
+//
+//                //Create and fill the noderesource  with the VMrequest
+//                NodeResourceRequest *pNode = generateNode(strUserName, vmRequest);
+//
+//                //Send the request to the DC
+//                bAccepted = datacentreCollection->handleVmRequest(pNode);
+//
+//                //We need to know the price of the Node.
+//                userVM_Rq->createResponse(i, bAccepted, pNode->getStartTime(), pNode->getIp(), pNode->getPrice());
+//                bRet &= bAccepted;
+//
+//                if(!bRet)
+//                  {
+//                    clearVMReq (userVM_Rq, i);
+//                    EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << endl;
+//                  }
+//                else
+//                  {
+//                    //Getting VM and scheduling renting timeout
+//                    vmRequest.pMsg = scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.nRentTime_t2);
+//
+//                    //Update value
+//                    nAvailableCores = datacenterCollection->getTotalAvailableCores();
+//                    EV_DEBUG << "checkVmUserFit - The VM: " << i << " has been handled and stored sucessfully, available cores: "<< nAvailableCores << endl;
+//                  }
+//              }
+//            //Update the data
+//            nAvailableCores = datacenterCollection->getTotalAvailableCores();
+//            nTotalCores = datacenterCollection->getTotalCores();
+//
+//            EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: "<< nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
+//          }
+//        else
+//          {
+//            EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
+//            bRet = false;
+//          }
+//
+//        if(bRet)
+//            EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << endl;
+//        else
+//            EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << endl;
+//      }
+//    else
+//      {
+//        EV_ERROR << "checkVmUserFit - WARNING!! nullpointer detected" <<endl;
+//        bRet = false;
+//      }
+//
+//    EV_DEBUG << "checkVmUserFit- End" << endl;
+//
+//    return bRet;
+//}
 
 int CloudProviderFirstFit::getPriceByVmType(std::string strPrice)
 {

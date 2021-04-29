@@ -108,6 +108,8 @@ int CloudProviderCost::parseUsersList (){
     if (result == SC_OK) {
         userTypes = userParser.getResult();
     }
+    //TODO: Cambiar
+    userTypes.push_back(new CloudUserPriority("UserTrace", 0, Regular, findSla("Slai0d0c0")));
     return result;
 }
 
@@ -149,6 +151,37 @@ void CloudProviderCost::loadNodes(){
 
     CloudProviderFirstFit::loadNodes();
 }
+
+void CloudProviderCost::handleVmRequestFits(SIMCAN_Message *sm)
+{
+    SM_UserVM *userVM_Rq;
+    bool bPriorityUser = false;
+
+    userVM_Rq = dynamic_cast<SM_UserVM*>(sm);
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request"  << endl;
+
+    if(userVM_Rq == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
+
+    CloudUserPriority *pCloudUser = dynamic_cast<CloudUserPriority*>(findUserTypeById(userVM_Rq->getUserID()));
+
+    if(pCloudUser == nullptr)
+        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong pCloudUser. Null pointer or wrong cloud user class!").c_str());
+
+    userVM_Rq->printUserVM();
+    //Check if is a VmRequest or a subscribe
+    if (subscribeQueue.size()>0 && pCloudUser->getPriorityType() != Priority)
+        rejectVmRequest(userVM_Rq);
+    else if (checkVmUserFit(userVM_Rq)) {
+        //acceptVmRequest(userVM_Rq);
+        EV_FATAL << "OK" << endl;
+    } else {
+        EV_FATAL << "Fail" << endl;
+        rejectVmRequest(userVM_Rq);
+    }
+
+}
+
 
 void CloudProviderCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
 {

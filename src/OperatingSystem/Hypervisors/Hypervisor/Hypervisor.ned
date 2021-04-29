@@ -11,8 +11,10 @@ import simcan2.Core.cSIMCAN_Core;
 simple Hypervisor extends cSIMCAN_Core like IHypervisor{
     
 	parameters:
+	    bool active = default(true);// True if the is working and allocating VMs.
 	    bool isVirtualHardware;		// True if this computer allows virtualization and False in another case.
 		int maxVMs;					// Maximum number of VMs allocated in this computer.
+		int powerOnTime @unit(s) = default(60s);
     	@class (Hypervisor);
     	
   	gates:  	    

@@ -24,6 +24,7 @@ simple UserGeneratorCost extends UserGenerator_simple
     parameters:
         double offerAcceptanceDistribution = default(uniform(0.0,1.0));
         double offerCostIncrease = default(0.5);
+        string userTraceSla; 								// Sla of the user from the trace
         
     @class(UserGeneratorCost);
 }

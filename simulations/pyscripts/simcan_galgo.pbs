@@ -1,0 +1,34 @@
+#!/bin/bash
+### Nombre de trabajo
+#PBS -N simcan
+### Tiempo máximo de ejecución del trabajo
+##PBS -l walltime=02:00:00
+### Seleccion de cola de trabajos
+#PBS -q workq
+### Separación de salida y error en dos archivos
+#PBS -o out/
+#PBS -j oe
+### Requerimientos, 1 nodos, 1 cores por nodos para
+### 32 procesos mpi
+#PBS -l select=1:ncpus=1
+### Esportar variables de entorno
+#PBS -V
+### Ejecutable con sus parametros
+
+currentSim=${PBS_ARRAY_INDEX}
+
+cd ${scriptspath}
+
+OUT_FOLDER=out/${timestamp}/${PBS_ARRAY_ID}
+if [ -z "${PBS_ARRAY_ID}" ]
+then
+      OUT_FOLDER=out/${timestamp}
+fi
+mkdir -p ${OUT_FOLDER}
+
+echo "jobname.jobid: ${PBS_JOBNAME}.${PBS_JOBID}.${PBS_ARRAY_ID}.${PBS_ARRAY_INDEX}" >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1
+
+echo "python3.8 -u ${script}.py ${cluster} ${action} ${currentSim} ${name} ${numvars} ${maxcoords} ${fileLabels} ${minkey} ${maxkey} ${simulationspath}" >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1
+python3.8 ${script}.py ${cluster} ${action} ${currentSim} ${name} ${numvars} ${maxcoords} ${fileLabels} ${minkey} ${maxkey} ${simulationspath} >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1
+
+echo "Done!" >>${OUT_FOLDER}/${PBS_JOBID}.OU 2>&1

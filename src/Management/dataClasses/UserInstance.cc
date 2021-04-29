@@ -7,22 +7,29 @@ UserInstance::UserInstance(User *ptrUser, unsigned int userNumber, int currentIn
     int currentApp;
 
     // Init main attributes
-    this->type = ptrUser->getType();
-    this->userNumber = userNumber;
-    this->instanceNumber = currentInstanceIndex;
+    if(ptrUser != nullptr)
+    {
+        this->type = ptrUser->getType();
+        this->userNumber = userNumber;
+        this->instanceNumber = currentInstanceIndex;
 
-    // Generate userID
-    osStream << "(" << userNumber << ")" << this->type << "[" << (currentInstanceIndex+1) << "/" << totalUserInstances << "]";
-    userID = osStream.str();
+        // Generate userID
+        osStream << "(" << userNumber << ")" << this->type << "[" << (currentInstanceIndex+1) << "/" << totalUserInstances << "]";
+        userID = osStream.str();
 
-    // Include app instances
-    for (currentApp = 0; currentApp < ptrUser->getNumApplications(); currentApp++){
+        // Include app instances
+        for (currentApp = 0; currentApp < ptrUser->getNumApplications(); currentApp++){
 
-        // Get current application
-        appReference = ptrUser->getApplication(currentApp);
+            // Get current application
+            appReference = ptrUser->getApplication(currentApp);
 
-        // Insert a new collection of application instances
-        insertNewApplicationInstances (appReference->getAppBase(), appReference->getNumInstances());
+            // Insert a new collection of application instances
+            insertNewApplicationInstances (appReference->getAppBase(), appReference->getNumInstances());
+        }
+    }
+    else
+    {
+        //Warning! it is only used on traced files
     }
 }
 

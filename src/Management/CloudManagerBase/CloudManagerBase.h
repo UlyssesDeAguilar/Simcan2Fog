@@ -9,6 +9,7 @@
 #include "Management/utils/LogUtils.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
 #include "Messages/SM_UserVM.h"
+#include "Management/algorithms/ExponentialSmoothing.h"
 #include <algorithm>
 #include <functional>
 
@@ -22,6 +23,8 @@
 #define USER_SUBSCRIPTION_TIMEOUT  "SUBSCRIPTION_TIMEOUT"
 #define SIMCAN_MESSAGE "SIMCAN_Message"
 #define CPU_STATUS "CPU_STATUS"
+#define MANAGE_MACHINES "MANAGE_MACHINES"
+#define FORECASTING_DIMENSION 1
 
 /**
  * Base class for Cloud Managers.
@@ -56,6 +59,11 @@ class CloudManagerBase: public cSIMCAN_Core{
         std::map<std::string, std::function<void(cMessage*)>> selfHandlers;
         std::map<int, std::function<void(SIMCAN_Message*)>> requestHandlers;
         std::map<int, std::function<void(SIMCAN_Message*)>> responseHandlers;
+
+        /** Time Series Forecasting object **/
+        single_exponential_smoothing<double, FORECASTING_DIMENSION> timeSeriesForecasting;
+        es_vec<double, FORECASTING_DIMENSION> currForecastingQuery;
+        es_vec<double, FORECASTING_DIMENSION> smthForecastingResult;
 
         /**
          * Destructor
@@ -161,7 +169,7 @@ class CloudManagerBase: public cSIMCAN_Core{
          */
         int calculateTotalCoresRequested(SM_UserVM *userVM_Rq);
 
-        SM_UserVM_Finish* scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, double rentTime);
+        SM_UserVM_Finish* scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, std::string strVmType, double rentTime);
 
        /**
         * Get the out Gate to the module that sent <b>msg</b>.

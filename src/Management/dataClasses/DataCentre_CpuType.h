@@ -25,29 +25,9 @@ class DataCentre_CpuType{
         /** Total number of core of the CPU*/
         int nTotalCores;
 
-        /** List of nodes with 1 CPU core */
-        std::vector <NodeResourceInfo*> nodes_1core;
-        std::vector <NodeResourceInfo*> free_nodes_1core;
-
-        /** List of nodes with 2 CPU cores */
-        std::vector <NodeResourceInfo*> nodes_2cores;
-        std::vector <NodeResourceInfo*> free_nodes_2cores;
-
-        /** List of nodes with 4 CPU cores */
-        std::vector <NodeResourceInfo*> nodes_4cores;
-        std::vector <NodeResourceInfo*> free_nodes_4cores;
-
-        /** List of nodes with 8 CPU cores */
-        std::vector <NodeResourceInfo*> nodes_8cores;
-        std::vector <NodeResourceInfo*> free_nodes_8cores;
-
-        /** List of nodes with 16 CPU cores */
-        std::vector <NodeResourceInfo*> nodes_16cores;
-        std::vector <NodeResourceInfo*> free_nodes_16cores;
-
-        /** List of nodes with 32 CPU cores */
-        std::vector <NodeResourceInfo*> nodes_32cores;
-        std::vector <NodeResourceInfo*> free_nodes_32cores;
+        /** Map of nodes per num of CPU cores **/
+        std::map<int, std::vector <NodeResourceInfo*>> mapNodes;
+        std::map<int, std::vector <NodeResourceInfo*>> mapFreeNodes;
 
         /**
          * Get a node list taking into account an specific number of cores.

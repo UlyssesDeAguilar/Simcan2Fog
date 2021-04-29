@@ -51,7 +51,7 @@ module DataCentre_A
         rackCmp_Rack_A[numCmpRacks]: CloudRack {
             @display("p=109,34");
         }
-        
+
                 // ---------------------------------------------------------------
         //   Definition of Computing Racks
         // ---------------------------------------------------------------

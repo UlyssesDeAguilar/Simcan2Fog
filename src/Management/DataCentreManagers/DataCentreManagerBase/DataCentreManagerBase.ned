@@ -10,7 +10,10 @@ simple DataCentreManagerBase extends CloudManagerBase {
     parameters:    
         bool showDataCentreConfig = default (true);			// Show the list of racks and nodes in the initilize stage                	
         string dataCentreConfig = default("");				// Configuration of this Data-Centre
-		int cpuStatusInterval @unit(s)  = default(600s);
+		int cpuStatusInterval @unit(s)  = default(3600s);   //
+        int activeMachinesThreshold = default(0);           //
+        bool forecastActiveMachines = default(false);       //
+        int minActiveMachines = default(20);				//
         
     //@class(DataCentreManagerBase); 
                  

@@ -1,0 +1,17 @@
+[
+  {
+    "action": "simulate",
+    "max_coords": [1,1],
+    "labels": "[['40000MIPS', '50000MIPS', '60000MIPS', '70000MIPS'],[128, 256, 512, 1024]]",
+    "config_name": [ "test_w1s10h_cyclic_10_45_testf"],
+    "cluster": "cirrus",
+    "simulations_path": "../ScenarioTest",
+    "simulation_type": "{'#___t#':['base']}",
+    "graphs": "[ { 'name':'cpuUsage2d', 'extensions':['png'] } , { 'name':'cpuTime2d', 'extensions':['png'] } ]"
+    
+  }
+]
+
+
+
+

@@ -18,7 +18,9 @@ void Hypervisor::initialize(){
         // Init module parameters
         isVirtualHardware = par ("isVirtualHardware");
         maxVMs = (unsigned int) par ("maxVMs");
-//            numAllocatedVms = 0;
+        nPowerOnTime = par ("powerOnTime");
+        powerMessage = nullptr;
+        //            numAllocatedVms = 0;
 
         // Get the number of gates for each vector
         numAppGates = gateSize ("fromApps");
@@ -105,7 +107,14 @@ cGate* Hypervisor::getOutGate (cMessage *msg){
 
 
 void Hypervisor::processSelfMessage (cMessage *msg){
-    error ("This module cannot process self messages:%s", msg->getName());
+    if (!strcmp (msg->getName(),  "POWERON_MACHINE")){
+        setActive(true);
+        powerMessage = nullptr;
+    }
+
+    delete msg;
+
+    //error ("This module cannot process self messages:%s", msg->getName());
 }
 
 
@@ -264,6 +273,33 @@ void Hypervisor::processRequestMessage (SIMCAN_Message *sm){
 
 }
 
+bool Hypervisor::isInUse() {
+    for (int i=0; i<maxVMs; i++) {
+        if (!freeSchedArray[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Hypervisor::isActive() const {
+    return par("active").boolValue();
+}
+
+void Hypervisor::setActive(bool active) {
+    par("active").setBoolValue(active);
+}
+
+void Hypervisor::powerOn(bool active) {
+    Enter_Method_Silent();
+    if (active) {
+        powerMessage = new cMessage("POWERON_MACHINE");
+        scheduleAt(simTime() + SimTime(nPowerOnTime, SIMTIME_S), powerMessage);
+    } else {
+        setActive(active);
+    }
+
+}
 
 void Hypervisor::processResponseMessage (SIMCAN_Message *sm){
 
@@ -275,6 +311,7 @@ void Hypervisor::processResponseMessage (SIMCAN_Message *sm){
 }
 
 int Hypervisor::getAvailableCores() {
+    if (!isActive()) return 0;
     return pHardwareManager->getAvailableCores();
 }
 

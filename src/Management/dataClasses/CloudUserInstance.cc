@@ -17,33 +17,36 @@ CloudUserInstance::CloudUserInstance (CloudUser    *ptrUser,
     numTotalVMs = 0;
     numActiveSubscriptions = 0;
 
-    for (currentVm = 0; currentVm < ptrUser->getNumVirtualMachines(); currentVm++)
-      {
-        std::string strType = ptrUser->getVirtualMachine(currentVm)->getVmBase()->getType();
-        if (offsetMap.find(strType) == offsetMap.end())
+    if(ptrUser != nullptr)
+    {
+        for (currentVm = 0; currentVm < ptrUser->getNumVirtualMachines(); currentVm++)
           {
-            offsetMap[strType] = 0;
-            totalVmMap[strType] = getNumVms(strType, ptrUser);
-            numTotalVMs += totalVmMap[strType];
+            std::string strType = ptrUser->getVirtualMachine(currentVm)->getVmBase()->getType();
+            if (offsetMap.find(strType) == offsetMap.end())
+              {
+                offsetMap[strType] = 0;
+                totalVmMap[strType] = getNumVms(strType, ptrUser);
+                numTotalVMs += totalVmMap[strType];
+              }
           }
-      }
 
-    // Include VM instances
-    for (currentVm = 0; currentVm < ptrUser->getNumVirtualMachines(); currentVm++)
-      {
-        // Get current application
-        vmReference = ptrUser->getVirtualMachine(currentVm);
-        std::string strType = vmReference->getVmBase()->getType();
-        int offset = offsetMap.at(strType),
-            totalVm = totalVmMap.at(strType);
+        // Include VM instances
+        for (currentVm = 0; currentVm < ptrUser->getNumVirtualMachines(); currentVm++)
+          {
+            // Get current application
+            vmReference = ptrUser->getVirtualMachine(currentVm);
+            std::string strType = vmReference->getVmBase()->getType();
+            int offset = offsetMap.at(strType),
+                totalVm = totalVmMap.at(strType);
 
-        // Insert a new collection of application instances
-        insertNewVirtualMachineInstances (vmReference->getVmBase(), vmReference->getNumInstances(), vmReference->getRentTime(), totalVm, offset);
+            // Insert a new collection of application instances
+            insertNewVirtualMachineInstances (vmReference->getVmBase(), vmReference->getNumInstances(), vmReference->getRentTime(), totalVm, offset);
 
-        offsetMap[strType] = offset + vmReference->getNumInstances();
-      }
+            offsetMap[strType] = offset + vmReference->getNumInstances();
+          }
 
-    processApplicationCollection();
+        processApplicationCollection();
+    }
 
     nId = totalUserInstance;
 

@@ -1,0 +1,12 @@
+[
+  {
+    "cluster": "galgo",
+    "action": "simulate",
+    "maxCoords": [4, 4],
+    "labelsFile": "labelcpu",
+    "configName": [
+      "test_wtrace1s10hcpu40000cpu60000e",
+      "test_wtrace1s10hcpu40000cpu60000e"
+    ]
+  }
+]

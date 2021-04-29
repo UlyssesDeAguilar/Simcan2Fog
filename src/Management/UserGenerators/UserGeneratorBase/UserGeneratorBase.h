@@ -3,7 +3,10 @@
 
 #include "Management/CloudManagerBase/CloudManagerBase.h"
 #include "Management/dataClasses/CloudUserInstance.h"
+#include "Management/dataClasses/CloudUserInstanceTrace.h"
 #include "Messages/SM_UserVM_m.h"
+
+#include <fstream>
 
 /**
  * Base class for User generators.
@@ -43,12 +46,21 @@ class UserGeneratorBase: public CloudManagerBase{
 
         bool shuffleUsers;
 
+        string strUserTraceFilePath;
+
+        int userTraceMaxVms;
+
         /**< Starting time delay */
         double startDelay;
 
         /** Interval gap between users arrivals */
         cPar *distribution;
 
+<<<<<<< HEAD
+        bool activeCycles;
+
+=======
+>>>>>>> 2fe7a32... Added cycles for user generation
         int numberOfCycles;
 
         double durationOfCycle;
@@ -57,6 +69,22 @@ class UserGeneratorBase: public CloudManagerBase{
 
         cPar *cycleDistribution;
 
+<<<<<<< HEAD
+        int traceStartTime;
+
+        int traceEndTime;
+
+        //TODO: Delete
+        SimTime m_dInitSim;
+
+        // Timeouts
+        double maxStartTime_t1;
+        double nRentTime_t2;
+        double maxSubTime_t3;
+        double maxSubscriptionTime;
+
+=======
+>>>>>>> 2fe7a32... Added cycles for user generation
         /**
          * Destructor
          */
@@ -85,6 +113,13 @@ class UserGeneratorBase: public CloudManagerBase{
         virtual void generateUsersBeforeSimulationStarts ();
 
         /**
+         * Shuffles the arrival time of the generated users
+         */
+        virtual void generateShuffledUsers();
+
+        virtual void generateUserArrivalTimes();
+
+        /**
          * Parses the current content of the users vector into a string.
          *
          * @return String containing the current status of the users vector.
@@ -92,6 +127,27 @@ class UserGeneratorBase: public CloudManagerBase{
         virtual string usersIstancesToString ();
 
         virtual CloudUserInstance* createCloudUserInstance(CloudUser *ptrUser, unsigned int  totalUserInstance, unsigned int  userNumber, int currentInstanceIndex, int totalUserInstances);
+
+        void parseTraceFile();
+
+        /**
+         * Builds the VM request which corresponds with the provided user instance.
+         */
+        virtual SM_UserVM* createVmRequest(CloudUserInstance *pUserInstance);
+
+        /**
+         * Returns the time the next user will arrive to the cloud
+         *
+         * @param pUserInstance Pointer to the user instance.
+         * @param last Last user arrival time.
+         */
+        virtual SimTime getNextTime(CloudUserInstance *pUserInstance, SimTime last);
+
+        virtual SM_UserVM* createVmMessage();
+
+        virtual CloudUserInstance* createNewUserFromTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances);
+
+        virtual CloudUser* createUserTraceType();
 
 //       /**
 //        * Process a self message.
