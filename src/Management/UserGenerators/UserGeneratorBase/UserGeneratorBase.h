@@ -56,11 +56,7 @@ class UserGeneratorBase: public CloudManagerBase{
         /** Interval gap between users arrivals */
         cPar *distribution;
 
-<<<<<<< HEAD
         bool activeCycles;
-
-=======
->>>>>>> 2fe7a32... Added cycles for user generation
         int numberOfCycles;
 
         double durationOfCycle;
@@ -69,7 +65,6 @@ class UserGeneratorBase: public CloudManagerBase{
 
         cPar *cycleDistribution;
 
-<<<<<<< HEAD
         int traceStartTime;
 
         int traceEndTime;
@@ -83,8 +78,6 @@ class UserGeneratorBase: public CloudManagerBase{
         double maxSubTime_t3;
         double maxSubscriptionTime;
 
-=======
->>>>>>> 2fe7a32... Added cycles for user generation
         /**
          * Destructor
          */
