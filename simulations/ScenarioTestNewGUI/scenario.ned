@@ -3,10 +3,11 @@ package simcan2.simulations.ScenarioTestNewGUI;
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
 import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCenterManagers.*.*;
+import simcan2.Management.DataCenterManager.DataCenterManager;
 import simcan2.Management.CloudProviders.*.*;
 import simcan2.Architecture.Network.DataCenterNetwork.*;
-import simcan2.Management.UserGenerators.*.*;
+import simcan2.Management.UserGenerators.UserGenerator.*;
+import simcan2.Management.UserGenerators.UserGeneratorBase.*;
 
 // ---------------------------------------------------------------
 //   Definition of the data-center DataCenter_A
@@ -17,7 +18,6 @@ module DataCenter_A{
 		string appList;
 		string vmList;
 		string userList;
-		string slaList;
 
 	gates:
 		input fromCloudProvider;
@@ -36,7 +36,6 @@ module DataCenter_A{
 				appList=appList;
 				vmList=vmList;
 				userList=userList;
-				slaList=slaList;
 		}
 
 		// ---------------------------------------------------------------
@@ -263,7 +262,6 @@ network ScenarioTestNewGUI{
 		string vmList;
 		string userList;
 		string dataCentersList;
-		string slaList;
 
 	// -------------------------------------------------------
 	//   Definition of main modules
@@ -278,7 +276,6 @@ network ScenarioTestNewGUI{
 				appList=appList;
 				vmList=vmList;
 				userList=userList;
-				slaList=slaList;
 		}
 
 		// -------------------------------------------------------
@@ -290,7 +287,7 @@ network ScenarioTestNewGUI{
 				vmList=vmList;
 				userList=userList;
 				dataCentersList=dataCentersList;
-				slaList=slaList;
+
 			gates:
 				fromDataCenter[1];
 				toDataCenter[1];
@@ -299,12 +296,11 @@ network ScenarioTestNewGUI{
 		// -------------------------------------------------------
 		//   Definition of the user generator
 		// -------------------------------------------------------
-		userGenerator:UserGenerator_simple{
+		userGenerator:UserGenerator{
 			parameters:
 				appList=appList;
 				vmList=vmList;
 				userList=userList;
-				slaList=slaList;
 		}
 
 	// ---------------------------------------------------------------
