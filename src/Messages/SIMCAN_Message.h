@@ -32,6 +32,9 @@ const std::string Timer_Latency = "Timer: Latency";
 /** Message to wait for the execution step*/
 const std::string Timer_Deadline = "Timer: Deadline";
 
+// -------------------- Fog Operations -------------------- //
+static const int SM_Fog_Write = 600;
+static const int SM_Fog_Read = 601;
 
 // -------------------- User Generator -------------------- //
 
