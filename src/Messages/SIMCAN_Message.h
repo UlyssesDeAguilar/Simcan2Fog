@@ -36,6 +36,9 @@ const std::string Timer_Deadline = "Timer: Deadline";
 static const int SM_Fog_Write = 600;
 static const int SM_Fog_Read = 601;
 
+// -------------------- Edge Operations -------------------- //
+static const int SM_Edge_Ping = 700;
+
 // -------------------- User Generator -------------------- //
 
 /** VM request */

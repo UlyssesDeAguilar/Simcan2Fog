@@ -17,6 +17,7 @@ private:
     cMessage * event;
     SM_UserVM* vmsRequest;
     SM_UserAPP* appsRequest;
+    unsigned short numIORequests;
     SM_UserVM* createVmTestRequest();                            // FIXME Will be deleted
     SM_UserAPP* createAppTestRequest(SM_UserVM *vm_request);     // FIXME Will be deleted
 protected:

@@ -38,7 +38,10 @@ OBJS = \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
     $O/Architecture/Network/Switch/Switch.o \
+    $O/Architecture/Nodes/Fog/FogNode.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \
+    $O/Architecture/Nodes/Iot/IotController.o \
+    $O/Architecture/Nodes/Iot/IotSensor.o \
     $O/Core/cSIMCAN_Core.o \
     $O/Core/CheckingHubModule/CheckingHubModule.o \
     $O/Management/CloudManagerBase/CloudManagerBase.o \
@@ -60,6 +63,7 @@ OBJS = \
     $O/Management/dataClasses/CloudUser.o \
     $O/Management/dataClasses/CloudUserInstance.o \
     $O/Management/dataClasses/CloudUserInstancePriority.o \
+    $O/Management/dataClasses/CloudUserInstanceTrace.o \
     $O/Management/dataClasses/CloudUserPriority.o \
     $O/Management/dataClasses/DataCentre.o \
     $O/Management/dataClasses/DataCentre_CpuType.o \
@@ -93,6 +97,7 @@ OBJS = \
     $O/Management/utils/LogUtils.o \
     $O/Messages/SIMCAN_Message.o \
     $O/Messages/SM_CPU_Message.o \
+    $O/Messages/SM_FogIO.o \
     $O/Messages/SM_UserAPP.o \
     $O/Messages/SM_UserVM.o \
     $O/OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.o \
@@ -100,6 +105,7 @@ OBJS = \
     $O/Messages/SIMCAN_Message_m.o \
     $O/Messages/SM_CloudProvider_Control_m.o \
     $O/Messages/SM_CPU_Message_m.o \
+    $O/Messages/SM_FogIO_m.o \
     $O/Messages/SM_UserAPP_m.o \
     $O/Messages/SM_UserAPP_Finish_m.o \
     $O/Messages/SM_UserVM_m.o \
@@ -111,6 +117,7 @@ MSGFILES = \
     Messages/SIMCAN_Message.msg \
     Messages/SM_CloudProvider_Control.msg \
     Messages/SM_CPU_Message.msg \
+    Messages/SM_FogIO.msg \
     Messages/SM_UserAPP.msg \
     Messages/SM_UserAPP_Finish.msg \
     Messages/SM_UserVM.msg \
@@ -174,7 +181,7 @@ endif
 $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
 	@$(MKPATH) $O
 	@echo Creating executable: $@
-	$(Q)echo >.tmp$$$$ $(OBJS) $(EXTRA_OBJS) && $(AR) .tmplib$$$$ @.tmp$$$$ && $(CXX) -o $O/$(TARGET) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) .tmplib$$$$ $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS) $(LDFLAGS) && rm .tmp$$$$ && rm .tmplib$$$$
+	$(Q)$(CXX) $(LDFLAGS) -o $O/$(TARGET) $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS)
 
 .PHONY: all clean cleanall depend msgheaders smheaders
 

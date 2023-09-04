@@ -1,5 +1,6 @@
 package simcan2.simulations.ScenarioTestFog;
 
+import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.Architecture.Nodes.Fog.FogNode;
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
@@ -142,6 +143,27 @@ network ScenarioTest
     connections allowunconnected:
 
         // Connections between the cloud provider and each data-centre manager
-        fog_node.out --> ned.IdealChannel --> dc_DataCentre[0].fromCloudProvider;
-        fog_node.in <-- ned.IdealChannel <-- dc_DataCentre[0].toCloudProvider;
+        fog_node.toDataCentre --> ned.IdealChannel --> dc_DataCentre[0].fromCloudProvider;
+        fog_node.fromDataCentre <-- ned.IdealChannel <-- dc_DataCentre[0].toCloudProvider;
+}
+
+network ScenarioTestEdgeFog
+{
+    parameters:
+        @display("bgb=610,278");
+
+    submodules:
+
+        fog_node: FogNode;
+
+        controller: IotController;
+
+        sensor: IotSensor;
+
+    connections allowunconnected:
+        fog_node.toEdge++ --> {  datarate = 200Mbps; } --> controller.fromFog;
+        fog_node.fromEdge++ <-- {  datarate = 200Mbps; } <-- controller.toFog;
+
+        controller.toIot++ --> sensor.in;
+        controller.fromIot++ <-- sensor.out;
 }

@@ -2,9 +2,8 @@
 
 Define_Module(FogNode);
 
-#define SEND_VM_REQ 1
-#define SEND_APP_REQ 2
-#define SEND_DELAYED_RESPONSE 3
+#define SEND_REQUEST_DC 1
+#define SEND_RESPONSE 2
 
 void FogNode::initialize()
 {
@@ -13,37 +12,42 @@ void FogNode::initialize()
 
     // For the time being it's does everything in the first stage
     EV << "Hello there!" << endl;
-    // Create an example Vm Request
-    vmsRequest = createVmTestRequest();
 
-    event = new cMessage("SELF", SEND_VM_REQ);
-    scheduleAt(0.0, event);
+    // Init the counter and the auto self message
+    numIORequests = 0;
+    event = new cMessage("event");
+    vmsRequest = nullptr;
+    appsRequest = nullptr;
+
+    cSIMCAN_Core::initialize();
+
     EV << "Start ready" << endl;
 }
 
 void FogNode::finish()
 {
     cSIMCAN_Core::finish();
-    delete vmsRequest;
-    delete appsRequest;
-    delete event;
+
+    if (vmsRequest != nullptr)
+        delete vmsRequest;
+    if (appsRequest != nullptr)
+        delete appsRequest;
+    cancelAndDelete(event);
 }
 
 void FogNode::processSelfMessage(cMessage *msg)
 {
     switch (msg->getKind())
     {
-    case SEND_DELAYED_RESPONSE:
+    case SEND_RESPONSE:
         sendResponseMessage(dynamic_cast<SIMCAN_Message *>(msg));
         break;
 
-    case SEND_VM_REQ:
-        sendRequestMessage(vmsRequest, gate("out"));
+    case SEND_REQUEST_DC:{
+        SIMCAN_Message *m = dynamic_cast<SIMCAN_Message *>(msg->getControlInfo());
+        sendRequestMessage(m, gate("toDataCentre"));
         break;
-
-    case SEND_APP_REQ:
-        sendRequestMessage(appsRequest, gate("out"));
-        break;
+    }
     default:
         // If nothing is matched
         error("Error in self message (event) : Message kind unkown");
@@ -56,7 +60,7 @@ cGate *FogNode::getOutGate(cMessage *msg)
     if (dynamic_cast<SM_FogIO *>(msg) != nullptr)
         return gate("toEdge", msg->getArrivalGate()->getIndex());
 
-    // In other case (temporalily) select the DataCentre gate
+    // In other case (temporally) select the DataCentre gate
     return gate("toDataCentre");
 }
 
@@ -69,6 +73,9 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
         if (request == nullptr)
             error("Wrong message type for an IO Fog operation");
 
+        // Increment the counter
+        numIORequests++;
+
         // Retrieve the storage bandwidth
         double storageBandwidth = par("storageBandwidth");
 
@@ -78,7 +85,7 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
         // Set response flag, the result and the kind for the scheduled event
         request->setIsResponse(true);
         request->setResult(0);
-        request->setKind(SEND_DELAYED_RESPONSE);
+        request->setKind(SEND_RESPONSE);
 
         // FIXME If it's still modeled like it is, the class SM_FogIO
         // should change it's size for the modeling of the transmission
@@ -87,6 +94,17 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
 
         // Prepare to send response by scheduling it
         scheduleAt(simTime() + delay, sm);
+
+        if (numIORequests > 10)
+        {
+            // Reset and launch an request to the datacentre
+            numIORequests = 0;
+            vmsRequest = createVmTestRequest();
+            event->setKind(SEND_REQUEST_DC);
+            EV << "Request for the DC would be scheduled" << endl;
+            //scheduleAt(simTime() + 1.0, event);
+            //vmsRequest = nullptr;
+        }
     }
     else
     {
@@ -111,8 +129,15 @@ void FogNode::processResponseMessage(SIMCAN_Message *sm)
             EV << "Request for the vm was succesfull" << vm->strIp << endl;
             appsRequest = createAppTestRequest(response);
 
-            event->setKind(SEND_APP_REQ);
-            scheduleAt(simTime() + 5.0, event);
+            // Prepare both the action and the message
+            event->setKind(SEND_REQUEST_DC);
+            event->setControlInfo(appsRequest);
+
+            scheduleAt(simTime() + 1.0, event);
+
+            // Regen the vm's request for further use
+            response->setIsResponse(false);
+            vmsRequest = response;
         }
     }
     else
