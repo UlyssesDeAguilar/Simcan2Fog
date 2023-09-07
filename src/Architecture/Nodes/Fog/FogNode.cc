@@ -2,8 +2,7 @@
 
 Define_Module(FogNode);
 
-#define SEND_REQUEST_DC 1
-#define SEND_RESPONSE 2
+#define SEND_RESPONSE 1
 
 void FogNode::initialize()
 {
@@ -16,8 +15,7 @@ void FogNode::initialize()
     // Init the counter and the auto self message
     numIORequests = 0;
     event = new cMessage("event");
-    vmsRequest = nullptr;
-    appsRequest = nullptr;
+    vmsRequest = createVmTestRequest();
 
     cSIMCAN_Core::initialize();
 
@@ -27,28 +25,18 @@ void FogNode::initialize()
 void FogNode::finish()
 {
     cSIMCAN_Core::finish();
-
-    if (vmsRequest != nullptr)
-        delete vmsRequest;
-    if (appsRequest != nullptr)
-        delete appsRequest;
+    delete vmsRequest;
     cancelAndDelete(event);
 }
 
 void FogNode::processSelfMessage(cMessage *msg)
 {
-    switch (msg->getKind())
+    if (msg->getKind() == SEND_RESPONSE)
     {
-    case SEND_RESPONSE:
         sendResponseMessage(dynamic_cast<SIMCAN_Message *>(msg));
-        break;
-
-    case SEND_REQUEST_DC:{
-        SIMCAN_Message *m = dynamic_cast<SIMCAN_Message *>(msg->getControlInfo());
-        sendRequestMessage(m, gate("toDataCentre"));
-        break;
     }
-    default:
+    else
+    {
         // If nothing is matched
         error("Error in self message (event) : Message kind unkown");
     }
@@ -99,11 +87,13 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
         {
             // Reset and launch an request to the datacentre
             numIORequests = 0;
-            vmsRequest = createVmTestRequest();
-            event->setKind(SEND_REQUEST_DC);
-            EV << "Request for the DC would be scheduled" << endl;
-            //scheduleAt(simTime() + 1.0, event);
-            //vmsRequest = nullptr;
+
+            // Send the message (duplicate of the original)
+            SM_UserVM *duplicate = vmsRequest->dup();
+            duplicate->setIsResponse(false);            // FIXME It's a bug on the side of the SM_UserVM
+            duplicate->setOperation(SM_VM_Req);
+
+            sendRequestMessage(duplicate, gate("toDataCentre"));
         }
     }
     else
@@ -127,23 +117,20 @@ void FogNode::processResponseMessage(SIMCAN_Message *sm)
             response->printUserVM();
 
             EV << "Request for the vm was succesfull" << vm->strIp << endl;
-            appsRequest = createAppTestRequest(response);
+            SM_UserAPP *request = createAppTestRequest(response);
 
-            // Prepare both the action and the message
-            event->setKind(SEND_REQUEST_DC);
-            event->setControlInfo(appsRequest);
-
-            scheduleAt(simTime() + 1.0, event);
-
-            // Regen the vm's request for further use
-            response->setIsResponse(false);
-            vmsRequest = response;
+            // Send the app request
+            sendRequestMessage(request, gate("toDataCentre"));
         }
     }
     else
     {
+        // It's usually the app termination message
         EV << "Message of kind" << sm->getClassName() << " recieved" << endl;
     }
+
+    // Delete either way the response
+    delete response;
 }
 
 /* TEMPORARY SECTION */

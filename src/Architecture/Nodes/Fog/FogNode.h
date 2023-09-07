@@ -15,8 +15,7 @@
 class FogNode: public cSIMCAN_Core {
 private:
     cMessage * event;
-    SM_UserVM* vmsRequest;
-    SM_UserAPP* appsRequest;
+    SM_UserVM* vmsRequest;                                       // It's used for dup() and saving time
     unsigned short numIORequests;
     SM_UserVM* createVmTestRequest();                            // FIXME Will be deleted
     SM_UserAPP* createAppTestRequest(SM_UserVM *vm_request);     // FIXME Will be deleted
