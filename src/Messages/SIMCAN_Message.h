@@ -2,6 +2,8 @@
 #define _SIMCAN_MESSAGE_H_
 
 #include "SIMCAN_Message_m.h"
+#include "inet/networklayer/common/L3Address.h"
+#include <stack>
 #include <sstream>
 #include <vector>
 #include <string>
@@ -291,6 +293,7 @@ class SIMCAN_Message: public SIMCAN_Message_Base{
 		/** Message trace */
 		std::vector <std::pair <std::string, std::vector<TraceComponent> > > trace;
 
+		typedef std::stack<inet::L3Address> IpStack;
 
 	public:
 
@@ -326,6 +329,13 @@ class SIMCAN_Message: public SIMCAN_Message_Base{
 		* Method that makes a copy of a SIMCAN_Message
 		*/
 		virtual SIMCAN_Message *dup() const;
+
+
+		void addNewIp(inet::L3Address addr);
+		
+		void popIp();
+		
+		inet::L3Address getNextIp();
 
 	   /**
 		* Reserve space for the trace
