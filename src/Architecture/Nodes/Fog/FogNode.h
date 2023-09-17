@@ -5,6 +5,7 @@
 #include "Core/cSIMCAN_Core.h"          // Core of the SIMCAN simulator
 #include "Messages/SIMCAN_Message.h"    // Base for the SIMCAN messages
 #include "Messages/SM_FogIO.h"          // Message that models IO requests
+#include "inet/networklayer/common/L3Address.h"
 
 /*
  * For stubbing the request of an User app deployed in this FogNode
@@ -17,6 +18,7 @@ private:
     cMessage * event;
     SM_UserVM* vmsRequest;                                       // It's used for dup() and saving time
     unsigned short numIORequests;
+    inet::L3Address dataCentreIp;                                      // FIXME will be deleted
     SM_UserVM* createVmTestRequest();                            // FIXME Will be deleted
     SM_UserAPP* createAppTestRequest(SM_UserVM *vm_request);     // FIXME Will be deleted
 protected:

@@ -16,6 +16,7 @@ void FogNode::initialize()
     numIORequests = 0;
     event = new cMessage("event");
     vmsRequest = createVmTestRequest();
+    dataCentreIp = inet::L3Address("10.0.0.100");
 
     cSIMCAN_Core::initialize();
 
@@ -92,6 +93,7 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
             SM_UserVM *duplicate = vmsRequest->dup();
             duplicate->setIsResponse(false);            // FIXME It's a bug on the side of the SM_UserVM
             duplicate->setOperation(SM_VM_Req);
+            duplicate->addNewIp(dataCentreIp);
 
             sendRequestMessage(duplicate, gate("toDataCentre"));
         }
@@ -118,6 +120,7 @@ void FogNode::processResponseMessage(SIMCAN_Message *sm)
 
             EV << "Request for the vm was succesfull" << vm->strIp << endl;
             SM_UserAPP *request = createAppTestRequest(response);
+            request->addNewIp(dataCentreIp);
 
             // Send the app request
             sendRequestMessage(request, gate("toDataCentre"));
@@ -130,7 +133,7 @@ void FogNode::processResponseMessage(SIMCAN_Message *sm)
     }
 
     // Delete either way the response
-    delete response;
+    delete sm;
 }
 
 /* TEMPORARY SECTION */

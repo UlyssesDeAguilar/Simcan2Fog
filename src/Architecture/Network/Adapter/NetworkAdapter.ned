@@ -15,19 +15,12 @@ import inet.node.inet.StandardHost;
 // @date 2023-09-10
 module NetworkAdapter extends StandardHost
 {
-gates:
-    input moduleIn;
-    output moduleOut;
 parameters:
     @display("");     // We have to make an icon (default is a PC)
     numApps = 1;      // Static assignment
-
-submodules:
-    ma: MessageAdapter;
-    
     // Will this work ? Remember implementing the IApp interface!
-    app[0] = ma;
-connections:
-    ma.moduleIn <-- moduleIn;
-    ma.moduleOut --> moduleOut;
+    app[0].typename = "MessageAdapter";
+gates:
+    input moduleIn;
+    output moduleOut;
 }

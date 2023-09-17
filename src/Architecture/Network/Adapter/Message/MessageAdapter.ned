@@ -10,9 +10,12 @@ simple MessageAdapter like IApp {
     parameters:
     	@class(MessageAdapter);
     gates:
-        input moduleIn;
-        output moduleOut;
-
-        input socketIn;     // Is it inherited from the interface ?
-        output socketOut;
+        // Must be connected dynamically because of the definition 
+        // of the IApp interface and the module composition of NetworkAdapter
+        input moduleIn @loose;
+        output moduleOut @loose;
+		
+		// These labels help the visualizer
+        input socketIn @labels(ITransportPacket/up);
+        output socketOut @labels(ITransportPacket/down);
 }

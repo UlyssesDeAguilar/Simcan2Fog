@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for Simcan2Cloud
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -I.
+#  opp_makemake -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lINET$$\(D\)
 #
 
 # Name of target to be created (-o option)
@@ -16,13 +16,13 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I.
+INCLUDE_PATH = -I. -I$(INET4_PROJ)/src
 
 # Additional object and library files to link with
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS =
+LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src  -lINET$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -35,6 +35,10 @@ OBJS = \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
+    $O/Architecture/Network/Adapter/Message/MessageAdapter.o \
+    $O/Architecture/Network/Adapter/Message/Managers/BaseManager.o \
+    $O/Architecture/Network/Adapter/Message/Managers/RequestManager.o \
+    $O/Architecture/Network/Adapter/Message/Managers/ResponseManager.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
     $O/Architecture/Network/Switch/Switch.o \
@@ -95,6 +99,7 @@ OBJS = \
     $O/Management/parser/UserPriorityListParser.o \
     $O/Management/parser/VmListParser.o \
     $O/Management/utils/LogUtils.o \
+    $O/Messages/INET_AppMessage.o \
     $O/Messages/SIMCAN_Message.o \
     $O/Messages/SM_CPU_Message.o \
     $O/Messages/SM_FogIO.o \
@@ -102,6 +107,7 @@ OBJS = \
     $O/Messages/SM_UserVM.o \
     $O/OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
+    $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \
     $O/Messages/SM_CloudProvider_Control_m.o \
     $O/Messages/SM_CPU_Message_m.o \
@@ -114,6 +120,7 @@ OBJS = \
 
 # Message files
 MSGFILES = \
+    Messages/INET_AppMessage.msg \
     Messages/SIMCAN_Message.msg \
     Messages/SM_CloudProvider_Control.msg \
     Messages/SM_CPU_Message.msg \
@@ -126,6 +133,9 @@ MSGFILES = \
 
 # SM files
 SMFILES =
+
+# Other makefile variables (-K)
+INET4_PROJ=../../inet4
 
 #------------------------------------------------------------------------------
 
@@ -149,8 +159,11 @@ include $(CONFIGFILE)
 
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = $(OPPMAIN_LIB) $(USERIF_LIBS) $(KERNEL_LIBS) $(SYS_LIBS)
+ifneq ($(TOOLCHAIN_NAME),clangc2)
+LIBS += -Wl,-rpath,$(abspath $(INET4_PROJ)/src)
+endif
 
-COPTS = $(CFLAGS) $(IMPORT_DEFINES)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
+COPTS = $(CFLAGS) $(IMPORT_DEFINES) -DINET_IMPORT $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
 SMCOPTS =
 

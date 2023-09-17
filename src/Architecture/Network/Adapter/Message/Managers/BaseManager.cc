@@ -2,6 +2,9 @@
 
 int BaseManager::searchOpenConnection(SIMCAN_Message *sm)
 {
+    if (sm == nullptr)
+        adapter->error("Null message");
+
     auto sendAddr = sm->getNextIp();
 
     // Search if there's an active socket
@@ -14,26 +17,21 @@ int BaseManager::searchOpenConnection(SIMCAN_Message *sm)
     return selectedSocket;
 }
 
-
-void BaseManager::processMessage(SIMCAN_Message *sm)
-{
-    convertAndSend(searchOpenConnection(sm), sm);
-}
-
 void BaseManager::socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent)
 {
-    auto data = packet->peekData();
-    auto chunk = dynamic_cast<const cPacketChunk *>(data.get());
+    auto chunk = dynamic_cast<const INET_AppMessage*>(packet->peekData().get());
+
     if (chunk == nullptr)
         adapter->error("Erroneous kind of chunk inside recieved packet");
-    
-    // Extract the packet inside the chunk
-    auto packet = chunk->getPacket();
-    auto sm = dynamic_cast<SIMCAN_Message *>(packet);
+
+    auto sm = dynamic_cast<SIMCAN_Message *>(chunk->getAppMessage());
     if (sm == nullptr)
         adapter->error("Received message is not a SIMCAN Message");
     
+    // Add the sender IP to the stack !!
+    sm->addNewIp(socket->getRemoteAddress());
     adapter->sendToModule(sm);
+    delete packet;
 }
 
 void BaseManager::socketClosed(TcpSocket *socket)
@@ -44,4 +42,10 @@ void BaseManager::socketClosed(TcpSocket *socket)
 
     // Release the memory
     delete socket;
+}
+
+void BaseManager::finish()
+{
+    // Clear the map
+    activeConnMap.clear();
 }

@@ -4,14 +4,56 @@ Define_Module(MessageAdapter);
 
 void MessageAdapter::initialize(int stage)
 {
-    // FIXME Change to handleStartOperation !
-    if (stage == INITSTAGE_LOCAL)
+    if (stage == INITSTAGE_APPLICATION_LAYER)
     {
+        // Retrieve the local address from the network layer
+        cModule *host = getParentModule();
+        localAddress = L3AddressResolver().addressOf(host);
+
+        host->gate("moduleIn")->connectTo(gate("moduleIn"));
+        gate("moduleOut")->connectTo(host->gate("moduleOut"));
+
+        if (!gate("moduleIn")->isConnected() || !gate("moduleOut")->isConnected())
+            error("Gates are not fully connected !");
+
+        // Init the module
         moduleInId = gate("moduleIn")->getId();
-        reqManager = new RequestManager(this,&socketMap);
-        resManager = new ResponseManager(this,&socketMap);
+        reqManager = new RequestManager(this, &socketMap);
+        resManager = new ResponseManager(this, &socketMap);
     }
     ApplicationBase::initialize(stage);
+}
+
+void MessageAdapter::handleStartOperation(LifecycleOperation *operation)
+{
+    // Configure the server socket
+    serverSocket.setOutputGate(gate("socketOut"));
+    serverSocket.setCallback(this);
+    serverSocket.bind(localAddress, 443);
+    serverSocket.listen();
+}
+
+void MessageAdapter::handleStopOperation(LifecycleOperation *operation)
+{
+    error("MessageAdapter: Stopping not supported");
+}
+
+void MessageAdapter::handleCrashOperation(LifecycleOperation *operation)
+{
+    error("MessageAdapter: Crashing not supported");
+}
+
+void MessageAdapter::finish()
+{
+    // Close the server socket
+    serverSocket.close();
+
+    // Clear the connections
+    reqManager->finish();
+    resManager->finish();
+
+    // Release the sockets
+    socketMap.deleteSockets();
 }
 
 /*
@@ -55,4 +97,20 @@ void MessageAdapter::handleMessageWhenUp(cMessage *msg)
             delete msg;
         }
     }
+}
+
+void MessageAdapter::socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo)
+{
+    TcpSocket *newSocket = new TcpSocket(availableInfo);
+
+    EV_INFO << "Opening new connection with incoming ip: " << availableInfo->getRemoteAddr()
+            << " port: " << availableInfo->getRemotePort() << endl;
+
+    resManager->addNewConnectionSocket(newSocket);
+    socketMap.addSocket(newSocket);
+    newSocket->setOutputGate(gate("socketOut"));
+
+    EV_INFO << "New socket: (" << newSocket->getLocalAddress() << " , " << newSocket->getLocalPort() << endl;
+
+    socket->accept(availableInfo->getNewSocketId());
 }

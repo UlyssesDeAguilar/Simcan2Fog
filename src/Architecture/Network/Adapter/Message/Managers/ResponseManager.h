@@ -8,8 +8,10 @@ class ResponseManager : public BaseManager
 {
 protected:
     virtual void convertAndSend(int selectedSocket, SIMCAN_Message * sm) override;
+    virtual void socketEstablished(TcpSocket *socket) override {};
 public:
     ResponseManager(MessageAdapter *adapter, SocketMap *socketMap) : BaseManager(adapter,socketMap) {};
+    void addNewConnectionSocket(TcpSocket* socket);
 };
 
 #endif

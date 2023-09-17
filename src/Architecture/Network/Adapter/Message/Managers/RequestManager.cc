@@ -3,7 +3,7 @@
 void RequestManager::convertAndSend(int selectedSocket, SIMCAN_Message *sm)
 {
     // Encapsulate the message
-    auto chunk = makeShared<cPacketChunk>(sm);
+    auto chunk = makeShared<INET_AppMessage>(sm);
     auto packet = new Packet("Adapter Packet", chunk);
 
     if (selectedSocket != -1)
@@ -14,9 +14,8 @@ void RequestManager::convertAndSend(int selectedSocket, SIMCAN_Message *sm)
             socket->send(packet);
         else if (socket->CONNECTING == socket->getState())
         {
-            // FIXME probably there is a small edge case for incoming connections
             auto pendingVector = pendingMap.at(selectedSocket);
-            pendingVector.push_back(packet);
+            pendingVector->push_back(packet);
         }
         else
             adapter->error("Selected socket in unexpected state %s", socket->getState());
@@ -46,4 +45,52 @@ void RequestManager::convertAndSend(int selectedSocket, SIMCAN_Message *sm)
         // FIXME We're assuming port 443 which is HTTPS
         newSocket->connect(destAddr, 443);
     }
+}
+
+void RequestManager::socketEstablished(TcpSocket *socket) 
+{
+    EV_INFO << "Connection established! Sending pending packets..." << endl;
+
+    // Get the pending to send queue
+    auto packetVector = pendingMap.at(socket->getSocketId());
+
+    // Send each pending message
+    for(int i = 0; i < packetVector->size(); i++){
+        socket->send(packetVector->at(i));
+    }
+    // Clear the queue
+    packetVector->clear();
+}
+
+void RequestManager::deletePendingPackages(int socketId)
+{
+    auto packageVector = pendingMap.at(socketId);
+
+    // Release packages
+    for (auto it = packageVector->begin(); it != packageVector->end(); it++)
+        delete *it;
+    
+    // Release the vector
+    delete packageVector;
+
+    // Clear the entry
+    pendingMap.erase(socketId);
+}
+
+void RequestManager::socketClosed(TcpSocket *socket)
+{
+    // FIXME Probably should notify the sending module that the packages were undelivered !
+    // Release the pending queue
+    deletePendingPackages(socket->getSocketId());
+    BaseManager::socketClosed(socket);
+}
+
+
+void RequestManager::finish()
+{
+    // Release the pending messages
+    for (auto it = activeConnMap.begin(); it != activeConnMap.end(); it++)
+        deletePendingPackages(it->second);
+    
+    BaseManager::finish();
 }
