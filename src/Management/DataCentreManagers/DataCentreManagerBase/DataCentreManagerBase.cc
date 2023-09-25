@@ -652,7 +652,7 @@ void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
 
     strUsername = userAPP_Rq->getUserID();
 
-    if(userAPP_Rq->getArrayAppsSize() < 1)
+    if(userAPP_Rq->getAppArraySize() < 1)
       {
         EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has the application list empty!"<< endl;
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] The list of applications of a the user is empty!!").c_str());
@@ -1350,8 +1350,8 @@ void DataCentreManagerBase::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
 //}
 
 bool DataCentreManagerBase::allocateVM (NodeResourceRequest *pResourceRequest, Hypervisor *pHypervisor){
-    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignación al map y que sea el hypervisor el que controle a que VM va.
-    // TODO: Finalmente debería devolver la IP del nodo y que el mensaje de la App llegue al nodo.
+    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaciï¿½n al map y que sea el hypervisor el que controle a que VM va.
+    // TODO: Finalmente deberï¿½a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
     cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
     if (pVmAppVectorModule!=nullptr) {
         updateCpuUtilizationTimeForHypervisor(pHypervisor);

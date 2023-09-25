@@ -30,7 +30,7 @@ message SM_UserAPP extends SIMCAN_Message{
     string appId;    
     string vmId;    
     string userID;		// ID of the user instance
-    APP_Request app[];  // List of applications
+    abstract APP_Request app[];  // List of applications
     int nFinishedApps;	// Number of finished applications.  
     bool finished; 	// If the cloudprovide has already notified the user
 }

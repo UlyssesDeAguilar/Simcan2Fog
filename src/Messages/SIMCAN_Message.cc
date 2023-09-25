@@ -22,17 +22,12 @@ TraceComponent::TraceComponent(int newModule, int newGate, reqNum_t newReq) : mo
 
 SIMCAN_Message::~SIMCAN_Message()
 {
-
-	int node, module;
-
 	// For each node...
-	for (node = 0; node < trace.size(); node++)
+	for (int node = 0; node < trace.size(); node++)
 	{
-
 		// For each module
-		for (module = 0; module < trace[node].second.size(); module++)
+		for (int module = 0; module < trace[node].second.size(); module++)
 		{
-
 			// Removes all lists belonging to current module
 			trace[node].second[module].reqSequence.clear();
 		}
@@ -43,124 +38,86 @@ SIMCAN_Message::~SIMCAN_Message()
 
 	// Removes completely the trace!
 	trace.clear();
+
+	// Delete if it has an IpStack
+	if (ipStack != nullptr)
+		delete ipStack;
 }
 
 SIMCAN_Message::SIMCAN_Message(const char *name, int kind) : SIMCAN_Message_Base(name, kind)
 {
-
 	setByteLength(SM_BaseLength);
 	setName("SIMCAN_Message");
-	parentRequest = NULL;
+	parentRequest = nullptr;
+	ipStack = nullptr;
 }
 
-SIMCAN_Message::SIMCAN_Message(const SIMCAN_Message &other) : SIMCAN_Message_Base(other.getName())
+SIMCAN_Message::SIMCAN_Message(const SIMCAN_Message &other) : SIMCAN_Message_Base(other)
 {
-
-	operator=(other);
-	setByteLength(SM_BaseLength);
-	setName("SIMCAN_Message");
-	parentRequest = NULL;
+	copy(other);
 }
 
 SIMCAN_Message &SIMCAN_Message::operator=(const SIMCAN_Message &other)
 {
-
-	SIMCAN_Message_Base::operator=(other);
+	if (this==&other) return *this;
+    SIMCAN_Message_Base::operator=(other);
+	copy(other);
 	return *this;
 }
 
-SIMCAN_Message *SIMCAN_Message::dup() const
+void SIMCAN_Message::copy(const SIMCAN_Message &other)
 {
+	// Copy the message trace
+	setTraceArraySize(other.getTraceArraySize());
 
-	// vector <pair <string, vector<TraceComponent> > >::iterator trace_it;
-	SIMCAN_Message *newMessage;
-	// TODO: TCPCommand *controlNew;
-	// TODO: TCPCommand *controlOld;
-	int i;
+	for (int i = 0; i < other.trace.size(); i++)
+		this->addNodeTrace(other.trace[i].first, other.trace[i].second);
 
-	// Create a new message!
-	newMessage = new SIMCAN_Message();
+	// Copy the parent request
+	parentRequest = other.parentRequest;
 
-	// Base parameters...
-	newMessage->setOperation(getOperation());
-	newMessage->setIsResponse(getIsResponse());
-	newMessage->setRemoteOperation(getRemoteOperation());
-	newMessage->setConnectionId(getConnectionId());
-	newMessage->setCommId(getCommId());
-	newMessage->setSourceId(getSourceId());
-	newMessage->setNextModuleIndex(getNextModuleIndex());
-	newMessage->setResult(getResult());
+	// Copy the ipStack (if present)
+	if (other.ipStack != nullptr)
+	    ipStack = new IpStack(*other.ipStack);
+	else
+	    ipStack = nullptr;
 
-	newMessage->setByteLength(getByteLength());
-	newMessage->setParentRequest(getParentRequest());
+	/* FIXME Old code... should we keep this ?
 
 	// Copy the control info, if exists!
 	if (getControlInfo() != NULL)
 	{
-		//			controlOld = check_and_cast<TCPCommand *>(getControlInfo());
-		//			controlNew = new TCPCommand();
-		//			controlNew = controlOld->dup();
-		//			newMessage->setControlInfo (controlNew);
+		controlOld = check_and_cast<TCPCommand *>(getControlInfo());
+		controlNew = new TCPCommand();
+		controlNew = controlOld->dup();
+		newMessage->setControlInfo (controlNew);
 	}
-
-	// Reserve memory to trace!
-	newMessage->setTraceArraySize(getTraceArraySize());
-
-	// Copy trace!
-	for (i = 0; i < trace.size(); i++)
-	{
-		newMessage->addNodeTrace(trace[i].first, trace[i].second);
-	}
-
-	return (newMessage);
+	*/
 }
-
-/*
-// Extract sending stack
-	auto ipStack = reinterpret_cast<std::stack<L3Address> *>(sm->getContextPointer());
-	if (ipStack == nullptr || ipStack->empty())
-		error("IP sending stack is not present or empty !");
-
-	// Retrieve the response or request address
-	auto sendAddr = ipStack->top();
-*/
 
 void SIMCAN_Message::addNewIp(inet::L3Address addr)
 {
 	// Defer allocation to when really needed
-	IpStack *stack = reinterpret_cast<IpStack *>(getContextPointer());
-	if (stack == nullptr)
-	{
-		stack = new IpStack();
-		setContextPointer(stack);
-	}
+	if (ipStack == nullptr)
+		ipStack = new IpStack();
 
-	stack->push(addr);
+	ipStack->push(addr);
 }
 
 void SIMCAN_Message::popIp()
 {
-	IpStack *stack = reinterpret_cast<IpStack *>(getContextPointer());
-	if (stack == nullptr || stack->empty())
-	{
-		std::ostringstream error;
-		error << "IpStack null or empty in message of type : " << getClassName() << endl;
-		throw cRuntimeError(error.str().c_str());
-	}
-	stack->pop();
+	if (ipStack == nullptr || ipStack->empty())
+		throw cRuntimeError("IpStack null or empty in message of type %s \n", getClassName());
+	
+	ipStack->pop();
 }
 
 inet::L3Address SIMCAN_Message::getNextIp()
 {
-	IpStack *stack = reinterpret_cast<IpStack *>(getContextPointer());
-	if (stack == nullptr || stack->empty())
-	{
-		std::ostringstream error;
-		error << "IpStack null or empty in message of type : " << getClassName() << endl;
-		throw cRuntimeError(error.str().c_str());
-	}
+	if (ipStack == nullptr || ipStack->empty())
+		throw cRuntimeError("IpStack null or empty in message of type %s \n", getClassName());
 	
-	return stack->top();
+	return ipStack->top();
 }
 
 void SIMCAN_Message::setTraceArraySize(unsigned int size)
