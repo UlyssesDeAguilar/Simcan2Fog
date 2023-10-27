@@ -39,6 +39,8 @@ OBJS = \
     $O/Architecture/Network/Adapter/Message/Managers/BaseManager.o \
     $O/Architecture/Network/Adapter/Message/Managers/RequestManager.o \
     $O/Architecture/Network/Adapter/Message/Managers/ResponseManager.o \
+    $O/Architecture/Network/Adapter/Resolver/DnsResolver.o \
+    $O/Architecture/Network/DNS/Service/DNS_Service.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
     $O/Architecture/Network/Switch/Switch.o \
@@ -107,6 +109,7 @@ OBJS = \
     $O/Messages/SM_UserVM.o \
     $O/OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
+    $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \
     $O/Messages/SM_CloudProvider_Control_m.o \
@@ -120,6 +123,7 @@ OBJS = \
 
 # Message files
 MSGFILES = \
+    Messages/DNS_Request.msg \
     Messages/INET_AppMessage.msg \
     Messages/SIMCAN_Message.msg \
     Messages/SM_CloudProvider_Control.msg \
@@ -178,6 +182,9 @@ endif
 #------------------------------------------------------------------------------
 # User-supplied makefile fragment(s)
 # >>>
+# inserted from file 'makefrag':
+MSGC:=$(MSGC) --msg6
+
 # <<<
 #------------------------------------------------------------------------------
 

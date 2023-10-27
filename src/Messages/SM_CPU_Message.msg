@@ -1,8 +1,4 @@
-cplusplus {{
-	#include "SIMCAN_Message.h"
-}}
-
-class SIMCAN_Message;
+import Messages.SIMCAN_Message;
 
 
 ///

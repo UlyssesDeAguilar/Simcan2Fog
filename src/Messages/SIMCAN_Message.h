@@ -298,22 +298,22 @@ public:
 	/**
 	 * Reserve space for the trace
 	 */
-	virtual void setTraceArraySize(unsigned int size);
+	virtual void setTraceArraySize(size_t size);
 
 	/**
 	 * Gets the trace size
 	 */
-	virtual unsigned int getTraceArraySize() const;
+	virtual size_t getTraceArraySize() const;
 
 	/**
 	 * Empty method
 	 */
-	virtual TraceComponent &getTrace(unsigned int k);
+	virtual const TraceComponent &getTrace(size_t k) const;
 
 	/**
 	 * Empty method
 	 */
-	virtual void setTrace(unsigned int k, const TraceComponent &trace_var){};
+	virtual void setTrace(size_t k, const TraceComponent &trace_var){};
 
 	/**
 	 * Add a module to message trace
@@ -446,6 +446,10 @@ public:
 	 * @return kth node trace
 	 */
 	std::vector<TraceComponent> getNodeTrace(int k);
+	
+	virtual void insertTrace(const TraceComponent& trace) {};
+	virtual void insertTrace(size_t k, const TraceComponent& trace) {};
+    virtual void eraseTrace(size_t k) {};
 };
 
 #endif

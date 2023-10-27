@@ -154,7 +154,7 @@ void LocalApplication::processResponseMessage (SIMCAN_Message *sm){
 		    // Log (DEBUG)
 		    EV_DEBUG << "(processResponseMessage) CPU Message received" << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
 			
-		    if (sm_cpu->getIsCompleted()) {
+		    if (sm_cpu->isCompleted()) {
 		        executeCPU = false;
 		        executeWrite = true;
 

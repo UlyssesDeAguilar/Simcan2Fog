@@ -4,7 +4,7 @@
 #define NAME_LEN 20
 
 INET_AppMessage::INET_AppMessage(SIMCAN_Message *sm) {
-    chunkLength = b(sm->getBitLength());
+    chunkLength = inet::b(sm->getBitLength());
     appMessage = sm;
 }
 

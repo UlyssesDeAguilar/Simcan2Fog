@@ -13,10 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-cplusplus {{
-#include "SM_UserVM.h"
-}}
-message SM_UserVM;
+import Messages.SM_UserVM;
 
 //
 // TODO generated message class

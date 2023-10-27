@@ -4,7 +4,6 @@ cplusplus {{
 #include <string>
 #include "Core/include/SIMCAN_types.h"
 	
-	
    /**
 	* Structure that represents a trace piece.
 	*/
@@ -36,7 +35,7 @@ cplusplus {{
 	};
 }}
 
-struct TraceComponent;
+struct TraceComponent { @existingClass; }
 
 
 
@@ -61,3 +60,6 @@ message SIMCAN_Message extends cPacket{
     abstract TraceComponent trace[];					// Message trace			
 }
 
+cplusplus{{
+	#include "Messages/SIMCAN_Message.h"
+}}

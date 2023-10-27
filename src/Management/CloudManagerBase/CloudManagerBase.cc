@@ -376,7 +376,6 @@ int CloudManagerBase::getTotalCoresByVmType(std::string strVmType)
 int CloudManagerBase::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
 {
     int nRet, nRequestedVms;
-    VM_Request vmRequest;
 
     nRet=nRequestedVms=0;
     if(userVM_Rq != NULL)
@@ -385,7 +384,7 @@ int CloudManagerBase::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
 
         for(int i=0;i<nRequestedVms;i++)
         {
-            vmRequest = userVM_Rq->getVms(i);
+            const VM_Request& vmRequest = userVM_Rq->getVms(i);
 
             nRet+=getTotalCoresByVmType(vmRequest.strVmType);
         }

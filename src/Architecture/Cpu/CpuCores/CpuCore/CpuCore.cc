@@ -77,7 +77,7 @@ void CpuCore::processSelfMessage (cMessage *msg){
 			EV_DEBUG << "(processSelfMessage) Tick finished."<< endl << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
 
 			// Check if this request is completed OR it has completed its quantum
-			if ((sm_cpu->getIsCompleted()) || (sm_cpu->getQuantum()==0)){
+			if ((sm_cpu->isCompleted()) || (sm_cpu->getQuantum()==0)){
 
 			    EV_INFO << "CPU request done! Sending it back to CPU scheduler" << endl;
 

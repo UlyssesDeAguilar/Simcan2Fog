@@ -796,7 +796,6 @@ void UserGenerator_simple::submitService(SM_UserVM *userVm) {
 
 SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
     VM_Response *pRes;
-    VM_Request vmRq;
     SM_UserAPP *userApp;
     CloudUserInstance *pUserInstance;
     AppInstance *pAppInstance;
@@ -817,7 +816,7 @@ SM_UserAPP* UserGenerator_simple::createAppRequest(SM_UserVM *userVm) {
 
         for (int i = 0; i < userVm->getTotalVmsRequests(); i++)
           {
-            vmRq = userVm->getVms(i);
+            auto vmRq = userVm->getVms(i);
 
             //Send each app to each VM
             for (int k = 0; k < pUserInstance->getNumberVmCollections(); k++){

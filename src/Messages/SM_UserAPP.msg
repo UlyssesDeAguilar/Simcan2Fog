@@ -1,3 +1,4 @@
+import Messages.SIMCAN_Message;
 
 cplusplus {{
 	#include "SIMCAN_Message.h"
@@ -17,8 +18,7 @@ cplusplus {{
 	};
 }}
 
-class SIMCAN_Message;
-struct APP_Request;
+struct APP_Request { @existingClass; }
 
 ///
 /// SIMCAN Message for User requests

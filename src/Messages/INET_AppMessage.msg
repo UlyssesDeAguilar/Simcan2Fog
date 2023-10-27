@@ -1,14 +1,16 @@
+import inet.common.INETDefs;
+import inet.common.packet.chunk.Chunk;
+import Messages.SIMCAN_Message;
+
 cplusplus {{
-	#include "inet/common/packet/chunk/FieldsChunk.h"
-	#include "SIMCAN_Message.h"
 	using namespace inet;
-	typedef SIMCAN_Message *MessagePtr;
+	typedef SIMCAN_Message AppMessage;
 }}
 
-class noncobject MessagePtr;
-class FieldsChunk;
+class FieldsChunk { @existingClass;@descriptor(false); }
+class AppMessage {@existingClass;@descriptor(false);}
 
 class INET_AppMessage extends FieldsChunk{
     @customize(true);       // Enable customization of the class
-	MessagePtr appMessage;
+	AppMessage *appMessage;
 }

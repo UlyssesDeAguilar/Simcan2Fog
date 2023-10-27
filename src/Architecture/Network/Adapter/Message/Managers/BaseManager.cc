@@ -24,11 +24,8 @@ void BaseManager::socketDataArrived(TcpSocket *socket, Packet *packet, bool urge
     if (chunk == nullptr)
         adapter->error("Erroneous kind of chunk inside recieved packet");
 
-    auto sm = dynamic_cast<SIMCAN_Message *>(chunk->getAppMessage());
-    if (sm == nullptr)
-        adapter->error("Received message is not a SIMCAN Message");
-    
     // Add the sender IP to the stack !!
+    auto sm = const_cast<SIMCAN_Message *>(chunk->getAppMessage());
     sm->addNewIp(socket->getRemoteAddress());
     adapter->sendToModule(sm);
     delete packet;

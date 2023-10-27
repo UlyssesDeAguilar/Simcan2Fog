@@ -1024,7 +1024,7 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM*& userVM_Rq)
                 EV_DEBUG << endl <<"checkVmUserFit - Trying to handle the VM: " << i << endl;
 
                 //Get the VM request
-                VM_Request& vmRequest = userVM_Rq->getVms(i);
+                auto vmRequest = userVM_Rq->getVms(i);
 
                 hypervisor = selectNode(userVM_Rq, vmRequest);
 
@@ -1300,7 +1300,7 @@ void DataCentreManagerBase::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
     Hypervisor *pHypervisor;
     for(int i = 0; i < lastId ; i++)
       {
-        VM_Request& vmRequest = userVM_Rq->getVms(i);
+        auto vmRequest = userVM_Rq->getVms(i);
         cancelAndDelete(vmRequest.pMsg);
         vmRequest.pMsg = nullptr;
 

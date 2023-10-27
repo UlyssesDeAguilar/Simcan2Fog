@@ -78,7 +78,7 @@ void MessageAdapter::handleMessageWhenUp(cMessage *msg)
             error("Non SIMCAN type message or subclass recieved !");
 
         // Search for an active connection and send the message
-        if (sm->getIsResponse())
+        if (sm->isResponse())
             resManager->processMessage(sm);
         else
             reqManager->processMessage(sm);

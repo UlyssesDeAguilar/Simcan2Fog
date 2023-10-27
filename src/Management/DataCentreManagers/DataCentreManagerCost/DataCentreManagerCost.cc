@@ -261,8 +261,8 @@ Hypervisor* DataCentreManagerCost::selectNodeReserved (SM_UserVM_Cost*& userVM_R
                 numAvailableCores = pHypervisor->getAvailableCores();
                 if (numAvailableCores >= numCoresRequested) {
                     pResourceRequest = generateNode(strUserName, vmRequest);
-                    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignación al map y que sea el hypervisor el que controle a que VM va.
-                    // TODO: Finalmente debería devolver la IP del nodo y que el mensaje de la App llegue al nodo.
+                    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaciï¿½n al map y que sea el hypervisor el que controle a que VM va.
+                    // TODO: Finalmente deberï¿½a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
                     cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
                     if (pVmAppVectorModule!=nullptr) {
                         updateCpuUtilizationTimeForHypervisor(pHypervisor);
@@ -370,7 +370,7 @@ void DataCentreManagerCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
                     for(int j = 0; j < pUserVmRequest->getVmsArraySize() && !bFound; j++)
                       {
                         //Getting VM and scheduling renting timeout
-                        VM_Request& vmRequest = pUserVmRequest->getVms(j);
+                        auto vmRequest = pUserVmRequest->getVms(j);
                         //scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
 
                         if (strVmId.compare(vmRequest.strVmId) == 0) {

@@ -120,12 +120,12 @@ inet::L3Address SIMCAN_Message::getNextIp()
 	return ipStack->top();
 }
 
-void SIMCAN_Message::setTraceArraySize(unsigned int size)
+void SIMCAN_Message::setTraceArraySize(size_t size)
 {
 	trace.reserve(size);
 }
 
-unsigned int SIMCAN_Message::getTraceArraySize() const
+size_t SIMCAN_Message::getTraceArraySize() const
 {
 	return trace.size();
 }
@@ -316,7 +316,7 @@ std::string SIMCAN_Message::contentsToString(bool showContents, bool includeTrac
 
 		osStream << "Message contents:" << endl;
 		osStream << " + Name:" << getName() << " - Operation:" << operationToString(getOperation()) << " - Length:" << getByteLength() << " bytes" << endl;
-		osStream << " + isResponse:" << std::boolalpha << getIsResponse() << " - RemoteOperation:" << std::boolalpha << getRemoteOperation() << " - NextModuleIndex:" << getNextModuleIndex() << endl;
+		osStream << " + isResponse:" << std::boolalpha << isResponse() << " - RemoteOperation:" << std::boolalpha << getRemoteOperation() << " - NextModuleIndex:" << getNextModuleIndex() << endl;
 		osStream << " + ConnectionId:" << getConnectionId() << " - CommunicationId:" << getCommId() << " - SourceProcess ID:" << getSourceId() << " - Result:" << getResult() << endl;
 
 		//		if (ind != NULL)
@@ -568,7 +568,7 @@ std::vector<TraceComponent> SIMCAN_Message::getNodeTrace(int k)
 	return trace[k].second;
 }
 
-TraceComponent &SIMCAN_Message::getTrace(unsigned int k)
+TraceComponent const &SIMCAN_Message::getTrace(size_t k) const
 {
 	return trace[k].second.back();
 }

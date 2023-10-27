@@ -42,7 +42,7 @@ SM_CPU_Message *SM_CPU_Message::dup() const{
 
 		// Base parameters...
 		newMessage->setOperation (getOperation());
-		newMessage->setIsResponse (getIsResponse());
+		newMessage->setIsResponse (isResponse());
 		newMessage->setRemoteOperation (getRemoteOperation());
 		newMessage->setConnectionId (getConnectionId());
 		newMessage->setCommId (getCommId());
@@ -60,7 +60,7 @@ SM_CPU_Message *SM_CPU_Message::dup() const{
 		newMessage->setMisToExecute(getMisToExecute());
 		newMessage->setCpuPriority (getCpuPriority());
 		newMessage->setQuantum (getQuantum());
-		newMessage->setIsCompleted (getIsCompleted());
+		newMessage->setIsCompleted (isCompleted());
 
 		// TODO: Add control info when inet is included!
 //		// Copy the control info, if exists!
@@ -140,7 +140,7 @@ std::string SM_CPU_Message::contentsToString (bool showContents, bool includeTra
             osStream << SIMCAN_Message::contentsToString(showContents, includeTrace);
             osStream << " + useTime:" << std::boolalpha << getUseTime() << " - cpuTime:" << getCpuTime() << endl;
             osStream << " + useMIs:" << std::boolalpha << getUseMis() << " - MIsToExecute:" << getMisToExecute() << endl;
-            osStream << " + CPU priority:" << getCpuPriority() << " - quantum:" << getQuantum() << " - isCompleted:" << std::boolalpha << getIsCompleted() << endl;
+            osStream << " + CPU priority:" << getCpuPriority() << " - quantum:" << getQuantum() << " - isCompleted:" << std::boolalpha << isCompleted() << endl;
         }
 
 	return osStream.str();

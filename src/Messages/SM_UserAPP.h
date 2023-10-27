@@ -37,7 +37,7 @@ protected:
      * For adding new app requests one should use the createNewApp* or addAppRequest methods
      * @param size new size
      */
-    virtual void setAppArraySize(unsigned int size);
+    virtual void setAppArraySize(size_t size);
 
     /**
      * @brief Set the App object in the specified position
@@ -45,7 +45,7 @@ protected:
      * @param k Position (AppId !)
      * @param app App request
      */
-    virtual void setApp(unsigned int k, const APP_Request &app);
+    virtual void setApp(size_t k, const APP_Request &app);
 
 public:
     SM_UserAPP();
@@ -63,9 +63,9 @@ public:
     void increaseFinishedApps() { nFinishedApps++; };
     void decreaseFinishedApps() { nFinishedApps--; };
 
-    unsigned int getAppArraySize() const { return idCounter; }
-    APP_Request &getApp(unsigned int k);
-    APP_Request &getApp(unsigned int k) const { return const_cast<SM_UserAPP *>(this)->getApp(k); };
+    size_t getAppArraySize() const { return idCounter; }
+    APP_Request &getApp(size_t k);
+    const APP_Request &getApp(size_t k) const { return const_cast<SM_UserAPP *>(this)->getApp(k); };
 
     void changeStateByIndex(int nIndex, std::string strService, tApplicationState eNewState);
     void changeState(std::string strService, std::string strIp, tApplicationState eNewState);
@@ -88,6 +88,11 @@ public:
     virtual SM_UserAPP *dup(std::string strVmId) const;
 
     virtual void update(SM_UserAPP *newData);
+
+    /* Extra methods, could be reused for the future*/
+    virtual void insertApp(const APP_Request& app) {};
+    virtual void insertApp(size_t k, const APP_Request& app) {};
+    virtual void eraseApp(size_t k) {};
 };
 
 #endif /* SM_USERAPP_H_ */

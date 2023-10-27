@@ -35,7 +35,7 @@ SM_FogIO *SM_FogIO::dup() const
 
     // Base parameters...
     newMessage->setOperation(getOperation());
-    newMessage->setIsResponse(getIsResponse());
+    newMessage->setIsResponse(isResponse());
     newMessage->setRemoteOperation(getRemoteOperation());
     newMessage->setConnectionId(getConnectionId());
     newMessage->setCommId(getCommId());

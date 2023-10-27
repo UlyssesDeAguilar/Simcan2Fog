@@ -18,7 +18,8 @@ module NetworkAdapter extends StandardHost
 parameters:
     @display("");     // We have to make an icon (default is a PC)
     numApps = 1;      // Static assignment
-    // Will this work ? Remember implementing the IApp interface!
+
+    // Instantiate the core applications
     app[0].typename = "MessageAdapter";
 gates:
     input moduleIn;

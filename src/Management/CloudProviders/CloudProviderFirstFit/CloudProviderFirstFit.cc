@@ -369,7 +369,6 @@ void CloudProviderFirstFit::freeUserVms(std::string strUsername)
     std::string strVmId;
     SM_UserVM* pVmRequest;
     std::map<std::string, SM_UserVM*>::iterator it;
-    VM_Request vmRequest;
 
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
 
@@ -381,7 +380,7 @@ void CloudProviderFirstFit::freeUserVms(std::string strUsername)
 
         for(int i=0;i<pVmRequest->getVmsArraySize();i++)
           {
-            vmRequest = pVmRequest->getVms(i);
+            auto vmRequest = pVmRequest->getVms(i);
             strVmId = vmRequest.strVmId;
             freeVm(strVmId);
           }
@@ -649,7 +648,7 @@ void CloudProviderFirstFit::clearVMReq (SM_UserVM*& userVM_Rq, int lastId)
 {
     for(int i = 0; i < lastId ; i++)
       {
-        VM_Request& vmRequest = userVM_Rq->getVms(i);
+        auto vmRequest = userVM_Rq->getVms(i);
         cancelAndDelete(vmRequest.pMsg);
         vmRequest.pMsg = nullptr;
         datacentreCollection->freeVmRequest(vmRequest.strVmId);

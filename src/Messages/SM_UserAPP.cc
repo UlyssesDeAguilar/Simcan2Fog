@@ -14,7 +14,7 @@ SM_UserAPP::SM_UserAPP()
     appArraySize = 0;
 }
 
-void SM_UserAPP::setAppArraySize(unsigned int size)
+void SM_UserAPP::setAppArraySize(size_t size)
 {
     // Check the new size is actually bigger
     // If not, don't waste cpu cycles copying around
@@ -35,7 +35,7 @@ void SM_UserAPP::setAppArraySize(unsigned int size)
     appArraySize = size;
 }
 
-APP_Request &SM_UserAPP::getApp(unsigned int k)
+APP_Request &SM_UserAPP::getApp(size_t k)
 {
     if (k > idCounter)
         throw cRuntimeError(
@@ -44,7 +44,7 @@ APP_Request &SM_UserAPP::getApp(unsigned int k)
     return app[k];
 }
 
-void SM_UserAPP::setApp(unsigned int k, const APP_Request &app)
+void SM_UserAPP::setApp(size_t k, const APP_Request &app)
 {
     if (k > idCounter)
         throw cRuntimeError(

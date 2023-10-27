@@ -41,7 +41,7 @@ void cSIMCAN_Core::handleMessage(cMessage *msg){
 			if ((sm = dynamic_cast<SIMCAN_Message *>(msg)) != nullptr){
 
 				// Request message, upload message trace and send to destination module!
-				if (!sm->getIsResponse()){
+				if (!sm->isResponse()){
 
 				    // Debug (Trace)
 				    if (debugSimcanCore)
