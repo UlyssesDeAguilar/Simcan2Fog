@@ -10,7 +10,6 @@ void DNS_Service::initialize(int stage)
     if (stage == INITSTAGE_LAST && isMain)
     {
         // Retrieve and open the dump file from Ipv4Configurator
-        const char *config_file = par("IpDump");
         auto *root = getEnvir()->getXMLDocument(config_file);
 
         if (root == nullptr)
@@ -24,10 +23,16 @@ void DNS_Service::initialize(int stage)
         {
             processXMLInterface(elem);
         }
+
+        // Dump (if requested) the detected topology
+        if (debug)
+            printRecords();
     }
     else if (stage == INITSTAGE_LOCAL)
     {
         isMain = getParentModule()->par("isMain");
+        debug = getParentModule()->par("debug");
+        config_file = getParentModule()->par("ipDump");
     }
 }
 
@@ -42,6 +47,7 @@ void DNS_Service::processXMLInterface(cXMLElement *elem)
     std::stringstream stream(module_path);
     std::string token;
     std::string hostName;
+    std::string componentName("networkAdapter");
 
     // Start to tokenize the string up to depth 3
     for (int l = 0; std::getline(stream, token, '.') && l < 3; l++)
@@ -52,7 +58,7 @@ void DNS_Service::processXMLInterface(cXMLElement *elem)
         */
         if (l == 1)
             hostName = token;
-        else if (l == 2 && token.compare(0, sizeof("networkAdapter"), "networkAdapter") && filterHostByName(hostName))
+        else if (l == 2 && token == componentName && filterHostByName(hostName))
             records[hostName] = L3Address(elem->getAttribute("address"));
     }
 }
@@ -73,6 +79,7 @@ bool DNS_Service::filterHostByName(std::string hostName)
         return true;
 
     // It did not match anything
+    EV << false << endl;
     return false;
 }
 
@@ -89,13 +96,23 @@ void DNS_Service::handleStartOperation(LifecycleOperation *operation)
     socket.bind(53);
 }
 
-void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet) 
+void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     auto request = dynamic_cast<INET_AppMessage *>(packet);
 
     if (request == nullptr)
         error("Recieved unkown packet");
-    
+
     request->getAppMessage(); // !! PROBLEMS
 }
 void DNS_Service::socketErrorArrived(UdpSocket *socket, Indication *indication) {}
+
+
+void DNS_Service::printRecords()
+{
+    EV << "Detected topology: " << endl;
+
+    // Print all the records (const & avoids copying the elements)
+    for (auto const &elem : records)
+        EV << elem.first << " : " << elem.second << endl;
+}

@@ -23,13 +23,18 @@ private:
     static std::set<std::string> prefixSet; //= {"dc", "fg", "ed", "cloudProvider", "userGenerator"};
 
     NameIpMap records;
+    const char *config_file;
     bool isMain; // Indicates wheter it is the root DNS or not !
+    bool debug;  // Wheter to print or not the obtained debug information
 
     void processXMLInterface(cXMLElement *elem);
     bool filterHostByName(std::string hostName);
 
 protected:
     UdpSocket socket;
+
+    // Debug utility
+    void printRecords();
 
     // Kernel lifecycle
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -47,7 +52,7 @@ protected:
     // Socket callbacks
     virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;
     virtual void socketErrorArrived(UdpSocket *socket, Indication *indication) override;
-    virtual void socketClosed(UdpSocket *socket) override {}    // Ignored, as it doesn't require any action
+    virtual void socketClosed(UdpSocket *socket) override {} // Ignored, as it doesn't require any action
 };
 
 #endif

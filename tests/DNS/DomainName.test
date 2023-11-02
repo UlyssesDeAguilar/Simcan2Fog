@@ -1,0 +1,64 @@
+%description:
+
+Tests the functionality of the utility struct DomainName
+
+It should fail and return the expected TLD and complete domain names
+
+%includes:
+#include "Architecture/Network/DNS/common.h"
+
+%activity:
+// Case 1 -- Nothing at all in the name
+try{
+    dns::DomainName *dn = new dns::DomainName("");
+}catch(const std::invalid_argument &e){
+    std::cerr << e.what() << std::endl;
+}
+
+// Case 2 -- There isn't a structure in the name (aka dots)
+try{
+    dns::DomainName *dn = new dns::DomainName("hellothere");
+}catch(const std::invalid_argument &e){
+    std::cerr << e.what() << std::endl;
+}
+
+// Case 3 -- Too much structure (aka dots)
+try{
+    dns::DomainName *dn = new dns::DomainName("a.b.c.d");
+}catch(const std::invalid_argument &e){
+    std::cerr << e.what() << std::endl;
+}
+
+// Case 4 -- Name server
+std::string str;
+dns::DomainName *dn = new dns::DomainName(".fg");
+EV << dn->getFullName() << endl;
+dn->getTopLevelDomainName(str);
+EV << str << endl;
+delete dn;
+
+// Case 5 -- Full domain name
+dn = new dns::DomainName("service.user.fg");
+EV << dn->getFullName() << endl;
+dn->getTopLevelDomainName(str);
+EV << str << endl;
+delete dn;
+
+// Case 6 -- Full domain name
+dn = new dns::DomainName("user.fg");
+EV << dn->getFullName() << endl;
+dn->getTopLevelDomainName(str);
+EV << str << endl;
+delete dn;
+
+%contains: stderr
+domainName: There isn't a structure (missing dots ?)
+domainName: There isn't a structure (missing dots ?)
+domainName: There are too many subdomains (maximum 1)
+%contains: stdout
+.fg
+.fg
+service.user.fg
+.fg
+user.fg
+.fg

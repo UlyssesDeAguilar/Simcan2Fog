@@ -1,0 +1,82 @@
+%description:
+
+Tests the ability of the DNSService to recognize and detect nodes:
+    - CloudProvider
+    - DataCentre
+    - FogNode
+
+It should dump the expected values present in the config file of the Ipv4 configurator.
+
+%file: TestDNSService.ned
+
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.node.inet.StandardHost;
+import simcan2.Architecture.Network.DNS.DNS_Server;
+import simcan2.Architecture.Network.Adapter.NetworkAdapter;
+import inet.node.inet.Router;
+import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.Eth10M;
+
+module TestStub 
+{
+    gates:
+        inout comm;
+    submodules:
+        networkAdapter: NetworkAdapter;
+    connections allowunconnected:
+        comm <--> networkAdapter.ethg++;
+}
+
+network TestDNSService
+{
+    submodules:
+        configurator: Ipv4NetworkConfigurator;
+        cloudProvider: TestStub;
+        dc_DataCentre: TestStub;
+        dc_DataCentre2: TestStub;
+        fg_FogNode: TestStub;
+        dns_service: DNS_Server
+        {
+            isMain = true;
+            debug = true;
+        }
+        bc_router: Router;
+        switch: EtherSwitch;
+    connections:
+        switch.ethg++ <--> Eth10M <--> cloudProvider.comm;
+        switch.ethg++ <--> Eth10M <--> dc_DataCentre.comm;
+        switch.ethg++ <--> Eth10M <--> dc_DataCentre2.comm;
+        switch.ethg++ <--> Eth10M <--> fg_FogNode.comm;
+        switch.ethg++ <--> Eth10M <--> dns_service.ethg++;
+
+        switch.ethg++ <--> Eth10M <--> bc_router.ethg++;
+}
+
+%inifile: omnetpp.ini
+
+[General]
+network = TestDNSService
+sim-time-limit = 80us
+record-eventlog = true
+*.configurator.dumpConfig = "ips.xml"
+*.configurator.config = xml("<config> \
+                                <interface hosts='*.cloudProvider.networkAdapter' address='10.0.0.1'/> \
+                                <interface hosts='**.dc_DataCentre.networkAdapter'  address='10.0.0.2' /> \
+                                <interface hosts='**.dc_DataCentre2.networkAdapter'  address='10.0.0.3'/> \
+                                <interface hosts='**.fg_FogNode.networkAdapter'  address='10.0.0.4'/> \
+                                <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
+                             </config>")
+
+# Añadir la config del Ipv4NetworkConfigurator
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
+%contains: stdout
+Detected topology:
+cloudProvider : 10.0.0.1
+dc_DataCentre : 10.0.0.2
+dc_DataCentre2 : 10.0.0.3
+fg_FogNode : 10.0.0.4
