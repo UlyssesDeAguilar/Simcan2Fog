@@ -5,9 +5,9 @@ import inet.applications.contract.IApp;
 // 
 // @author Ulysses de Aguilar Gudmundsson
 // @date 2023-10-6
-simple DnsResolver like IApp {
+simple DNS_Resolver like IApp {
     parameters:
-    	@class(DnsResolver);
+    	@class(DNS_Resolver);
     gates:
         // Must be connected dynamically because of the definition 
         // of the IApp interface and the module composition of NetworkAdapter

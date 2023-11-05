@@ -1,9 +1,11 @@
 %description:
 
-Tests the ability of the DNSService to recognize and detect nodes:
+Tests the ability of the DNS_Service to recognize and detect nodes:
     - CloudProvider
     - DataCentre
     - FogNode
+    - EdgeNode
+    - userGenerator 
 
 It should dump the expected values present in the config file of the Ipv4 configurator.
 
@@ -35,6 +37,8 @@ network TestDNSService
         dc_DataCentre: TestStub;
         dc_DataCentre2: TestStub;
         fg_FogNode: TestStub;
+        ed_EdgeDevice: TestStub;
+        userGenerator: TestStub;
         dns_service: DNS_Server
         {
             isMain = true;
@@ -48,6 +52,8 @@ network TestDNSService
         switch.ethg++ <--> Eth10M <--> dc_DataCentre2.comm;
         switch.ethg++ <--> Eth10M <--> fg_FogNode.comm;
         switch.ethg++ <--> Eth10M <--> dns_service.ethg++;
+        switch.ethg++ <--> Eth10M <--> ed_EdgeDevice.comm;
+        switch.ethg++ <--> Eth10M <--> userGenerator.comm;
 
         switch.ethg++ <--> Eth10M <--> bc_router.ethg++;
 }
@@ -64,6 +70,8 @@ record-eventlog = true
                                 <interface hosts='**.dc_DataCentre.networkAdapter'  address='10.0.0.2' /> \
                                 <interface hosts='**.dc_DataCentre2.networkAdapter'  address='10.0.0.3'/> \
                                 <interface hosts='**.fg_FogNode.networkAdapter'  address='10.0.0.4'/> \
+                                <interface hosts='**.ed_EdgeDevice.networkAdapter'  address='10.0.0.5'/> \
+                                <interface hosts='**.userGenerator.networkAdapter'  address='10.0.0.6'/> \
                                 <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
                              </config>")
 
@@ -75,8 +83,10 @@ undisposed object:
 %not-contains: stdout
 -- check module destructor
 %contains: stdout
-Detected topology:
-cloudProvider : 10.0.0.1
-dc_DataCentre : 10.0.0.2
-dc_DataCentre2 : 10.0.0.3
-fg_FogNode : 10.0.0.4
+Record table:
+.cloudProvider : 10.0.0.1, NS
+.dc_DataCentre : 10.0.0.2, NS
+.dc_DataCentre2 : 10.0.0.3, NS
+.ed_EdgeDevice : 10.0.0.5, NS
+.fg_FogNode : 10.0.0.4, NS
+.userGenerator : 10.0.0.6, NS

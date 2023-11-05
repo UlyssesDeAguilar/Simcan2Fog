@@ -7,7 +7,7 @@ std::set<std::string> DNS_Service::prefixSet = {"dc", "fg", "ed", "cloudProvider
 void DNS_Service::initialize(int stage)
 {
     // This layer could be initialized earlier, maybe in INITSTAGE_TRANSPORT_LAYER
-    if (stage == INITSTAGE_LAST && isMain)
+    if (stage == (INITSTAGE_LAST+1) && isMain)
     {
         // Retrieve and open the dump file from Ipv4Configurator
         auto *root = getEnvir()->getXMLDocument(config_file);
@@ -34,6 +34,7 @@ void DNS_Service::initialize(int stage)
         debug = getParentModule()->par("debug");
         config_file = getParentModule()->par("ipDump");
     }
+    ApplicationBase::initialize(stage);
 }
 
 void DNS_Service::processXMLInterface(cXMLElement *elem)
@@ -48,18 +49,43 @@ void DNS_Service::processXMLInterface(cXMLElement *elem)
     std::string token;
     std::string hostName;
     std::string componentName("networkAdapter");
+    int tokenCount = 0;
+    bool validPath = false;
 
-    // Start to tokenize the string up to depth 3
-    for (int l = 0; std::getline(stream, token, '.') && l < 3; l++)
+    // Start to tokenize the string up to depth 4
+    while (std::getline(stream, token, '.') && tokenCount <= 4)
     {
         /*
             We're looking for x in the path like: NetworkName.x.NetworkAdapter(...)
             with the correct prefix or name
         */
-        if (l == 1)
+        switch (tokenCount)
+        {
+        case 1:
             hostName = token;
-        else if (l == 2 && token == componentName && filterHostByName(hostName))
-            records[hostName] = L3Address(elem->getAttribute("address"));
+            break;
+        case 2:
+            if (token == componentName && filterHostByName(hostName))
+                validPath = true;
+            break;
+        case 4:
+            validPath = false;
+            break;
+        default:
+            break;
+        }
+        tokenCount++;
+    }
+
+    // If the path has only 3 elements and it's valid (it has an NetworkAdapter +  good prefix)
+    // then store the .domain (the dot is crucial) with the detected IP address
+    if (validPath)
+    {
+        ResourceRecord r;
+        r.ip = L3Address(elem->getAttribute("address"));
+        r.url = "." + hostName;
+        r.type = RR_Type::NS;
+        records[r.url] = r;
     }
 }
 
@@ -78,8 +104,6 @@ bool DNS_Service::filterHostByName(std::string hostName)
     if (DNS_Service::prefixSet.find(hostName) != DNS_Service::prefixSet.end())
         return true;
 
-    // It did not match anything
-    EV << false << endl;
     return false;
 }
 
@@ -93,26 +117,168 @@ void DNS_Service::handleStartOperation(LifecycleOperation *operation)
     // Prepare the socket for incoming data
     socket.setOutputGate(gate("socketOut"));
     socket.setCallback(this);
-    socket.bind(53);
+    socket.bind(DNS_PORT);
 }
 
 void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
-    auto request = dynamic_cast<INET_AppMessage *>(packet);
+    // See if it is a DNS request
+    auto request = dynamic_cast<const DNS_Request *>(packet->peekData().get());
 
     if (request == nullptr)
         error("Recieved unkown packet");
 
-    request->getAppMessage(); // !! PROBLEMS
+    // Retrieve IP:Port from sender
+    L3Address remoteAddress = packet->getTag<L3AddressInd>()->getSrcAddress();
+    int remotePort = packet->getTag<L4PortInd>()->getSrcPort();
+
+    // Process and package response
+    auto response = Ptr<DNS_Request>(selectAndExecHandler(request));
+    auto packet2 = new Packet("DNS_Request", response);
+
+    // Send to the requester
+    socket->sendTo(packet2, remoteAddress, remotePort);
 }
+
 void DNS_Service::socketErrorArrived(UdpSocket *socket, Indication *indication) {}
 
+DNS_Request *DNS_Service::selectAndExecHandler(const DNS_Request *request)
+{
+    Handler_t handler;
+
+    switch (request->getOperationCode())
+    {
+    case OP_Code::QUERY:
+        handler = &DNS_Service::handleQuery;
+        break;
+    case OP_Code::UPDATE_R:
+        handler = &DNS_Service::handleInsert;
+        break;
+    case OP_Code::UPDATE_D:
+        handler = &DNS_Service::handleDelete;
+        break;
+    default:
+        handler = &DNS_Service::handleNotImplemented;
+        break;
+    }
+
+    return (this->*handler)(request);
+}
+
+DNS_Request *DNS_Service::handleQuery(const DNS_Request *request)
+{
+    auto response = new DNS_Request;
+    // Copy the request parameters
+    (*response) = (*request);
+
+    auto questionCount = request->getQuestionArraySize();
+
+    // If there are no questions --> Error
+    if (questionCount == 0)
+    {
+        response->setReturnCode(ReturnCode::FORMERR);
+        return response;
+    }
+
+    for (int i = 0; i < questionCount; i++)
+    {
+        try
+        {
+            // Attempt to retrieve the record
+            auto domain = request->getQuestion(i);
+            auto record = records.at(domain);
+
+            // Insert it into the response
+            response->insertRecord(record);
+        }
+        catch (const std::out_of_range &e)
+        {
+            // Ignore the exception
+        };
+    }
+
+    // Indicate everything went OK
+    response->setReturnCode(ReturnCode::NOERROR);
+
+    return response;
+}
+
+DNS_Request *DNS_Service::handleInsert(const DNS_Request *request)
+{
+    auto response = new DNS_Request;
+    // Copy the request parameters
+    (*response) = (*request);
+
+    auto recordCount = request->getRecordArraySize();
+
+    // If there are no records --> Error
+    if (recordCount == 0)
+    {
+        response->setReturnCode(ReturnCode::FORMERR);
+        return response;
+    }
+
+    // FIXME : Check overrides?
+    for (int i = 0; i < recordCount; i++)
+    {
+        auto newRecord = request->getRecord(i);
+        records[newRecord.url] = newRecord;
+    }
+
+    // Indicate everything went OK
+    response->setReturnCode(ReturnCode::NOERROR);
+
+    return response;
+}
+
+DNS_Request *DNS_Service::handleDelete(const DNS_Request *request)
+{
+    auto response = new DNS_Request;
+    // Copy the request parameters
+    (*response) = (*request);
+
+    auto recordCount = request->getRecordArraySize();
+
+    // If there are no records --> Error
+    if (recordCount == 0)
+    {
+        response->setReturnCode(ReturnCode::FORMERR);
+        return response;
+    }
+
+    for (int i = 0; i < recordCount; i++)
+    {
+        auto newRecord = request->getRecord(i);
+        auto pos = records.find(newRecord.url);
+
+        // Warn about not deleted entries
+        if (pos == records.end())
+            EV_WARN << "Specified record for deletion (" << newRecord.url << ", " << newRecord.type << ") does not exist" << endl;
+        else
+            records.erase(pos);
+    }
+
+    // Indicate everything went OK
+    response->setReturnCode(ReturnCode::NOERROR);
+
+    return response;
+}
+
+DNS_Request *DNS_Service::handleNotImplemented(const DNS_Request *request)
+{
+    auto response = new DNS_Request;
+    // Copy the request parameters
+    (*response) = (*request);
+    // Select the not implemented response
+    response->setReturnCode(ReturnCode::NOTIMP);
+    return response;
+}
 
 void DNS_Service::printRecords()
 {
-    EV << "Detected topology: " << endl;
+    EV << "Record table: " << endl;
 
     // Print all the records (const & avoids copying the elements)
     for (auto const &elem : records)
-        EV << elem.first << " : " << elem.second << endl;
+        EV << elem.first << " : " << elem.second.ip << ", " << elem.second.typeToStr() << endl;
 }

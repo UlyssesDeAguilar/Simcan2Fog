@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for Simcan2Cloud
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -L../out/$$\(CONFIGNAME\)/lib -lINET$$\(D\)
+#  opp_makemake -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lINET$$\(D\)
 #
 
 # Name of target to be created (-o option)
@@ -22,7 +22,7 @@ INCLUDE_PATH = -I. -I$(INET4_PROJ)/src
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src $(LDFLAG_LIBPATH)../out/$(CONFIGNAME)/lib  -lINET$(D)
+LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src  -lINET$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -39,7 +39,8 @@ OBJS = \
     $O/Architecture/Network/Adapter/Message/Managers/BaseManager.o \
     $O/Architecture/Network/Adapter/Message/Managers/RequestManager.o \
     $O/Architecture/Network/Adapter/Message/Managers/ResponseManager.o \
-    $O/Architecture/Network/Adapter/Resolver/DnsResolver.o \
+    $O/Architecture/Network/Adapter/Multiplexer/RequestMultiplexer.o \
+    $O/Architecture/Network/Adapter/Resolver/DNS_Resolver.o \
     $O/Architecture/Network/DNS/Service/DNS_Service.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
@@ -115,6 +116,7 @@ OBJS = \
     $O/Messages/SM_CloudProvider_Control_m.o \
     $O/Messages/SM_CPU_Message_m.o \
     $O/Messages/SM_FogIO_m.o \
+    $O/Messages/SM_ResolverRequest_m.o \
     $O/Messages/SM_UserAPP_m.o \
     $O/Messages/SM_UserAPP_Finish_m.o \
     $O/Messages/SM_UserVM_m.o \
@@ -129,6 +131,7 @@ MSGFILES = \
     Messages/SM_CloudProvider_Control.msg \
     Messages/SM_CPU_Message.msg \
     Messages/SM_FogIO.msg \
+    Messages/SM_ResolverRequest.msg \
     Messages/SM_UserAPP.msg \
     Messages/SM_UserAPP_Finish.msg \
     Messages/SM_UserVM.msg \
@@ -164,7 +167,7 @@ include $(CONFIGFILE)
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = $(OPPMAIN_LIB) $(USERIF_LIBS) $(KERNEL_LIBS) $(SYS_LIBS)
 ifneq ($(TOOLCHAIN_NAME),clangc2)
-LIBS += -Wl,-rpath,$(abspath $(INET4_PROJ)/src) -Wl,-rpath,$(abspath ../out/$(CONFIGNAME)/lib)
+LIBS += -Wl,-rpath,$(abspath $(INET4_PROJ)/src)
 endif
 
 COPTS = $(CFLAGS) $(IMPORT_DEFINES) -DINET_IMPORT $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)

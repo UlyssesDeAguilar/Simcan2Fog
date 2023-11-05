@@ -1,6 +1,8 @@
 package simcan2.Architecture.Network.Adapter;
 
-import simcan2.Architecture.Network.Adapter.Message.*;
+import simcan2.Architecture.Network.Adapter.Message.MessageAdapter;
+import simcan2.Architecture.Network.Adapter.Resolver.DNS_Resolver;
+import simcan2.Architecture.Network.Adapter.Multiplexer.RequestMultiplexer;
 import inet.node.inet.StandardHost;
 
 // Module for communicating between INET framework and SIMCAN modules.
@@ -16,12 +18,18 @@ import inet.node.inet.StandardHost;
 module NetworkAdapter extends StandardHost
 {
 parameters:
-    @display("");     // We have to make an icon (default is a PC)
-    numApps = 1;      // Static assignment
+    @display("i=device/card");     // We have to make an icon (default is a PC)
+    numApps = 2;      // Static assignment
 
     // Instantiate the core applications
     app[0].typename = "MessageAdapter";
+    app[1].typename = "DNS_Resolver";
 gates:
     input moduleIn;
     output moduleOut;
+submodules:
+    rm: RequestMultiplexer;
+connections allowunconnected:
+    moduleIn --> rm.gInput;
+    moduleOut <-- rm.gOutput;
 }

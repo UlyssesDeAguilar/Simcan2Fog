@@ -22,6 +22,28 @@ cplusplus {{
 const B HEADER_BYTES = B(12);
 
 typedef enum{
+	QUERY,		// Standard query
+	IQUERY,		// Used for inverse querys 				(obsolete)
+	STATUS,		// Request for status					(currently not used)
+	NOTIFY,		// Notify for Zone Transfer				(currently not used)
+	UPDATE_R,	// Update the Resource Records (Add new ones)
+	UPDATE_D	// Update the Resource Records (Delete selected ones)
+} OP_Code;
+
+typedef enum{
+	NOERROR, 	// DNS Query completed successfully
+	FORMERR, 	// DNS Query Format Error
+	SERVFAIL, 	// Server failed to complete the DNS request
+	NXDOMAIN, 	// Domain name does not exist
+	NOTIMP, 	// Function not implemented
+	REFUSED, 	// The server refused to answer for the query (currently not used)
+	YXDOMAIN, 	// Name that should not exist, does exist	  (currently not used)
+	XRRSET, 	// RRset that should not exist, does exist	  (currently not used)
+	NOTAUTH, 	// Server not authoritative for the zone	  (currently not used)
+	NOTZONE 	// Name not in zone							  (currently not used)
+} ReturnCode;
+
+typedef enum{
 	A,			// Address
 	NS,			// Name Server
 	CNAME,		// Canonical Name
@@ -31,16 +53,21 @@ typedef enum{
 	TXT			// Text string (arbitrary text)
 } RR_Type;
 
-struct ReturnRecord {
+struct ResourceRecord {
 	RR_Type type;
 	inet::L3Address ip;
 	std::string url;
+
+	const char *typeToStr() const{
+		const char* RR_TypeToStr[] = {"A","NS","CNAME","SOA","PTR","MX","TXT"} ;
+		return RR_TypeToStr[type];
+	}
 };
 }}
 
 
 // Will generate a descriptor for the struct (also reflexion for parallel simulation)
-struct ReturnRecord{ @existingClass; }
+struct ResourceRecord{ @existingClass; }
 
 
 //namespace dns;
@@ -50,6 +77,6 @@ class DNS_Request extends FieldsChunk{
 	uint8_t returnCode;
 	//uint16_t questionCount;
 	//uint16_t answerCount;
-	string questions[];
-	ReturnRecord responses[];
+	string question[];
+	ResourceRecord record[];
 }

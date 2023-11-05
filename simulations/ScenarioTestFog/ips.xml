@@ -1,0 +1,48 @@
+<config>
+   <interface hosts="INETComm.netAdapter1" names="eth0" address="10.0.0.1" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router0" names="eth0" address="10.0.0.2" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router0" names="eth1" address="10.0.0.5" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router_bb" names="eth0" address="10.0.0.6" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router1" names="eth0" address="10.0.0.9" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router_bb" names="eth1" address="10.0.0.10" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router2" names="eth0" address="10.0.0.101" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.dc_DataCentre[0].networkAdapter" names="eth0" address="10.0.0.100" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router2" names="eth1" address="10.0.0.13" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router_bb" names="eth2" address="10.0.0.14" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.router_bb" names="eth3" address="10.0.0.17" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="INETComm.dns_server" names="eth0" address="10.0.0.18" netmask="255.255.255.252" metric="200"/>
+   <multicast-group hosts="INETComm.netAdapter1" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="INETComm.router0" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router0" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router_bb" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router1" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router_bb" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router2" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.dc_DataCentre[0].networkAdapter" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="INETComm.router2" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router_bb" interfaces="eth2" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.router_bb" interfaces="eth3" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="INETComm.dns_server" interfaces="eth0" address="224.0.0.1"/>
+   <route hosts="INETComm.netAdapter1" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.netAdapter1" destination="*" netmask="*" gateway="10.0.0.2" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router0" destination="10.0.0.6" netmask="255.255.255.255" gateway="*" interface="eth1" metric="0"/>
+   <route hosts="INETComm.router0" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router0" destination="10.0.0.0" netmask="255.255.255.128" gateway="10.0.0.6" interface="eth1" metric="0"/>
+   <route hosts="INETComm.router1" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router1" destination="*" netmask="*" gateway="10.0.0.10" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router2" destination="10.0.0.14" netmask="255.255.255.255" gateway="*" interface="eth1" metric="0"/>
+   <route hosts="INETComm.router2" destination="10.0.0.100" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router2" destination="10.0.0.0" netmask="255.255.255.224" gateway="10.0.0.14" interface="eth1" metric="0"/>
+   <route hosts="INETComm.router_bb" destination="10.0.0.5" netmask="255.255.255.255" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router_bb" destination="10.0.0.13" netmask="255.255.255.255" gateway="*" interface="eth2" metric="0"/>
+   <route hosts="INETComm.router_bb" destination="10.0.0.0" netmask="255.255.255.252" gateway="10.0.0.5" interface="eth0" metric="0"/>
+   <route hosts="INETComm.router_bb" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth1" metric="0"/>
+   <route hosts="INETComm.router_bb" destination="10.0.0.16" netmask="255.255.255.252" gateway="*" interface="eth3" metric="0"/>
+   <route hosts="INETComm.router_bb" destination="10.0.0.100" netmask="255.255.255.252" gateway="10.0.0.13" interface="eth2" metric="0"/>
+   <route hosts="INETComm.dns_server" destination="10.0.0.16" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.dns_server" destination="*" netmask="*" gateway="10.0.0.17" interface="eth0" metric="0"/>
+   <route hosts="INETComm.dc_DataCentre[0].networkAdapter" destination="10.0.0.100" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="INETComm.dc_DataCentre[0].networkAdapter" destination="10.0.0.100" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="INETComm.dc_DataCentre[0].networkAdapter" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="INETComm.dc_DataCentre[0].networkAdapter" destination="*" netmask="*" gateway="10.0.0.101" interface="eth0" metric="0"/>
+</config>

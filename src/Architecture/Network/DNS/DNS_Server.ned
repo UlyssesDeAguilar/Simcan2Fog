@@ -5,7 +5,7 @@ import simcan2.Architecture.Network.DNS.Service.DNS_Service;
 module DNS_Server extends StandardHost
 {
 parameters:
-    @display("");
+    @display("i=dns");
     string ipDump = default("ips.xml"); // Name of the ips dump file            
     bool isMain = default(false);       // Flag for determining if it is a TLD DNS (maybe fix name?)
     bool debug = default(false);        // Flag for printing debug information (topology detected, current registries, etc ...)

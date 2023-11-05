@@ -1,7 +1,7 @@
 /**
  * @file common.h
  * @author Ulysses de Aguilar Gudmundsson
- * @brief Defines and accumulates common concepts of the DNS protocol
+ * @brief Defines and concentrates common concepts of the DNS protocol
  * @version 0.1
  * @date 2023-11-01
  * 
@@ -13,8 +13,16 @@
 #include "Messages/DNS_Request_m.h"
 #include <memory>
 
+#define DNS_PORT 53
+
 namespace dns
 {
+    // Defines the common association between URL and Resource Record
+    typedef std::map<std::string, ResourceRecord> NameIpMap;
+
+    // Root DNS server IP (in reality is the I root server - ICANN)
+    const L3Address ROOT_DNS_IP = L3Address("199.7.83.42");
+
     /**
      * @brief Commodity struct for extracting information from a DNS domain name
      * @author Ulysses de Aguilar Gudmundsson

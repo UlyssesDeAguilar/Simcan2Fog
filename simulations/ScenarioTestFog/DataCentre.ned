@@ -18,6 +18,7 @@ package simcan2.simulations.ScenarioTestFog;
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
 import simcan2.Architecture.Nodes.Cloud.CloudRack;
+import simcan2.Architecture.Network.Adapter.NetworkAdapter;
 import simcan2.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
 import simcan2.Management.CloudProviders.*.*;
 import simcan2.Architecture.Network.DataCentreNetwork.*;
@@ -36,14 +37,10 @@ module DataCentre_A
         int numCmpRacksB;
         int numStoRacks = 0;
 
-        @display("bgb=631,231");
+        @display("i=data-center");
     gates:
-        input fromCloudProvider;
-        output toCloudProvider;
-
-    // -------------------------------------------------------
-    //   Definition of main modules
-    // -------------------------------------------------------
+        inout comm[];
+    
     submodules:
 
         // ---------------------------------------------------------------
@@ -58,9 +55,8 @@ module DataCentre_A
                 @display("p=193,148");
         }
 
-        // ---------------------------------------------------------------
-        //   Definition of Computing Racks
-        // ---------------------------------------------------------------
+        networkAdapter: NetworkAdapter;
+
         rackCmp_Rack_A[numCmpRacksA]: CloudRack {
             @display("p=154,51");
         }
@@ -69,9 +65,6 @@ module DataCentre_A
             @display("p=502,99");
         }
 
-                // ---------------------------------------------------------------
-        //   Definition of Computing Racks
-        // ---------------------------------------------------------------
         rackSto_Rack_B[numStoRacks]: CloudRack {
             @display("p=400,30");
         }
@@ -95,8 +88,14 @@ module DataCentre_A
     connections allowunconnected:
 
         // Connections between Data-Centre manager and Data-centre outside
-        dcManager.out --> ned.IdealChannel --> toCloudProvider;
-        dcManager.in <-- ned.IdealChannel <-- fromCloudProvider;
+        dcManager.out --> ned.IdealChannel --> networkAdapter.moduleIn;
+        dcManager.in <-- ned.IdealChannel <-- networkAdapter.moduleOut;
+
+        // Jump the ethernet wiring to the networkAdapter
+        // WARING: Do not put any delay inbetween
+        for i=0..sizeof(comm)-1{
+            networkAdapter.ethg++ <--> comm[i];
+        }
 
         // Connections between computing racks and the network
         for i=0..numCmpRacksA-1 {

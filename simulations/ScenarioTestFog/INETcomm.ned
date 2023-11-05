@@ -18,9 +18,9 @@ package simcan2.simulations.ScenarioTestFog;
 import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.Architecture.Nodes.Fog.FogNode;
 import simcan2.Architecture.Network.Adapter.NetworkAdapter;
+import simcan2.Architecture.Network.DNS.DNS_Server;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
-import inet.visualizer.integrated.IntegratedCanvasVisualizer;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
 
@@ -56,10 +56,7 @@ network INETComm
         netAdapter1: NetworkAdapter {
             @display("p=450,119");
         }
-        netAdapter2: NetworkAdapter {
 
-            @display("p=607,62");
-        }
         router0: Router {
             @display("p=521,186");
         }
@@ -67,17 +64,22 @@ network INETComm
             @display("p=607,228");
         }
         router2: Router {
-
             @display("p=607,144");
         }
+
+        router_bb: Router{
+            @display("i=abstract/router2");
+        }
+        dns_server: DNS_Server {
+            isMain = true;
+            debug = true;
+            @display("p=556,97");
+        }
+
         controller[numControllers]: IotController;
         sensor[numSensors*numControllers]: IotSensor;
         configurator: Ipv4NetworkConfigurator {
             @display("p=48,35");
-        }
-        visualizer: IntegratedCanvasVisualizer {
-
-            @display("p=48,105");
         }
     // ---------------------------------------------------------------
     //   Connections section
@@ -88,8 +90,8 @@ network INETComm
         fog_node.toDataCentre --> netAdapter1.moduleIn;
         fog_node.fromDataCentre <-- netAdapter1.moduleOut;
 
-        dc_DataCentre[0].toCloudProvider --> netAdapter2.moduleIn;
-        dc_DataCentre[0].fromCloudProvider <-- netAdapter2.moduleOut;
+        // dc_DataCentre[0].toCloudProvider --> netAdapter2.moduleIn;
+        // dc_DataCentre[0].fromCloudProvider <-- netAdapter2.moduleOut;
 
 		// Simpler connections (will be parametrized later with NetworkAdapter)
         for i=0..numControllers-1 {
@@ -104,10 +106,12 @@ network INETComm
 
         // "Real" network composition
         netAdapter1.ethg++ <--> Eth10M <--> router0.ethg++;
-        netAdapter2.ethg++ <--> Eth10M <--> router2.ethg++;
+        dc_DataCentre[0].comm++ <--> Eth10M <--> router2.ethg++;
 
         // Triangular router config
-        router0.ethg++ <--> Eth10M <--> router1.ethg++;
-        router0.ethg++ <--> Eth10M <--> router2.ethg++;
-        router1.ethg++ <--> Eth10M <--> router2.ethg++;
+        router0.ethg++ <--> Eth10M <--> router_bb.ethg++;
+        router1.ethg++ <--> Eth10M <--> router_bb.ethg++;
+        router2.ethg++ <--> Eth10M <--> router_bb.ethg++;
+        router_bb.ethg++ <--> Eth10M <--> dns_server.ethg++;
+
 }

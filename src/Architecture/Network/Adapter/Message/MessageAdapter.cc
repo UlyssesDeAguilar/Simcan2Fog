@@ -10,11 +10,14 @@ void MessageAdapter::initialize(int stage)
         cModule *host = getParentModule();
         localAddress = L3AddressResolver().addressOf(host);
 
+        /* It's the responsibility of the Multiplexer now !
+        
         host->gate("moduleIn")->connectTo(gate("moduleIn"));
         gate("moduleOut")->connectTo(host->gate("moduleOut"));
 
         if (!gate("moduleIn")->isConnected() || !gate("moduleOut")->isConnected())
             error("Gates are not fully connected !");
+        */
 
         // Init the module
         moduleInId = gate("moduleIn")->getId();

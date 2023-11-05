@@ -4,11 +4,14 @@
 #include <omnetpp.h>
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 #include "inet/applications/base/ApplicationBase.h"
+#include "inet/networklayer/common/L3AddressTag_m.h"
+#include "inet/transportlayer/common/L4PortTag_m.h"
 #include "inet/networklayer/common/L3Address.h"
-#include "Messages/INET_AppMessage.h"
+#include "Architecture/Network/DNS/common.h"
 
 using namespace omnetpp;
 using namespace inet;
+using namespace dns;
 
 /**
  * @brief Class that provides the DNS service
@@ -16,8 +19,8 @@ using namespace inet;
  */
 class DNS_Service : public ApplicationBase, UdpSocket::ICallback
 {
+
 private:
-    typedef std::map<std::string, L3Address> NameIpMap;
     // typedef std::map<L3Address, std::string&> IpNameMap; Could be used to do reverse resolutions
 
     static std::set<std::string> prefixSet; //= {"dc", "fg", "ed", "cloudProvider", "userGenerator"};
@@ -31,13 +34,14 @@ private:
     bool filterHostByName(std::string hostName);
 
 protected:
+    typedef DNS_Request *(DNS_Service::*Handler_t)(const DNS_Request *);
     UdpSocket socket;
 
     // Debug utility
     void printRecords();
 
     // Kernel lifecycle
-    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+    virtual int numInitStages() const override { return NUM_INIT_STAGES + 1; }
     virtual void initialize(int stage) override;
     virtual void finish() override;
 
@@ -48,6 +52,11 @@ protected:
 
     // Logic
     virtual void handleMessageWhenUp(cMessage *msg) override { socket.processMessage(msg); }
+    DNS_Request *selectAndExecHandler(const DNS_Request *request);
+    DNS_Request *handleInsert(const DNS_Request *request);
+    DNS_Request *handleQuery(const DNS_Request *request);
+    DNS_Request *handleDelete(const DNS_Request *request);
+    DNS_Request *handleNotImplemented(const DNS_Request *request);
 
     // Socket callbacks
     virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;
