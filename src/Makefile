@@ -102,6 +102,7 @@ OBJS = \
     $O/Management/parser/UserPriorityListParser.o \
     $O/Management/parser/VmListParser.o \
     $O/Management/utils/LogUtils.o \
+    $O/Messages/DNS_Request.o \
     $O/Messages/INET_AppMessage.o \
     $O/Messages/SIMCAN_Message.o \
     $O/Messages/SM_CPU_Message.o \

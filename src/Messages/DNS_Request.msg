@@ -72,11 +72,10 @@ struct ResourceRecord{ @existingClass; }
 
 //namespace dns;
 class DNS_Request extends FieldsChunk{
+	@customize(true);
 	uint16_t requestId;		// Used by the client to correlate request <-> response
 	uint8_t operationCode;
 	uint8_t returnCode;
-	//uint16_t questionCount;
-	//uint16_t answerCount;
 	string question[];
 	ResourceRecord record[];
 }

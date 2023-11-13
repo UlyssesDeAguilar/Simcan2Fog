@@ -19,6 +19,7 @@ module NetworkAdapter extends StandardHost
 {
 parameters:
     @display("i=device/card");     // We have to make an icon (default is a PC)
+    bool debug = default(false);
     numApps = 2;      // Static assignment
 
     // Instantiate the core applications

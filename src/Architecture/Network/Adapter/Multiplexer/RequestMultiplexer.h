@@ -10,6 +10,7 @@ class RequestMultiplexer : public cSimpleModule
 {
 private:
     cGate * outGate;
+    bool debug;
     int gInputId;
 protected:
     virtual void initialize() override;

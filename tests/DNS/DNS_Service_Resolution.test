@@ -1,0 +1,81 @@
+%description:
+Test the ability of the DNS_Service to register and resolve domains.
+
+%includes:
+#include "modules/Endpoint.h"
+
+%file: TestDNSService.ned
+
+import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.node.inet.StandardHost;
+import simcan2.Architecture.Network.DNS.DNS_Server;
+import simcan2.Architecture.Network.Adapter.NetworkAdapter;
+import simcan2.tests.modules.Endpoint;
+import inet.node.inet.Router;
+import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.Eth10M;
+
+module TestStub 
+{
+    gates:
+        inout comm;
+    submodules:
+        networkAdapter: NetworkAdapter;
+    connections allowunconnected:
+        comm <--> networkAdapter.ethg++;
+}
+
+module EndpointModule extends TestStub
+{
+    submodules:
+        end: Endpoint;
+    connections:
+        networkAdapter.moduleIn  <-- end.endpointOut;
+        networkAdapter.moduleOut --> end.endpointIn;
+}
+
+network DNSNet2
+{
+    submodules:
+        configurator: Ipv4NetworkConfigurator;
+        endpoint: EndpointModule;
+        dc_DataCentre: TestStub;
+        dns_service: DNS_Server
+        {
+            isMain = true;
+            debug = true;
+        }
+
+        bc_router: Router;
+        switch: EtherSwitch;
+    connections:
+        switch.ethg++ <--> Eth10M <--> endpoint.comm;
+        switch.ethg++ <--> Eth10M <--> dc_DataCentre.comm;
+        bc_router.ethg++ <--> Eth10M <--> dns_service.ethg++;
+        switch.ethg++ <--> Eth10M <--> bc_router.ethg++;
+}
+
+%inifile: omnetpp.ini
+
+[General]
+network = DNSNet2
+sim-time-limit = 20s
+record-eventlog = true
+**.cmdenv-log-level = debug
+
+*.endpoint.end.nameToResolve = ".dc_DataCentre"
+*.endpoint.networkAdapter.debug = true
+*.configurator.dumpConfig = "ips.xml"
+*.configurator.config = xml("<config> \
+                                <interface hosts='*.dns_service'  address='199.7.83.42' /> \
+                                <interface hosts='**.dc_DataCentre.networkAdapter' address='10.0.0.11' /> \
+                                <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
+                             </config>")
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
+%contains: stdout
+Resolved IP: 10.0.0.11

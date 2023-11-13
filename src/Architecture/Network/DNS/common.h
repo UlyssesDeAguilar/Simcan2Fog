@@ -4,13 +4,13 @@
  * @brief Defines and concentrates common concepts of the DNS protocol
  * @version 0.1
  * @date 2023-11-01
- * 
+ *
  */
 
 #ifndef SIMCAN_EX_DNS_COMMON
 #define SIMCAN_EX_DNS_COMMON
 
-#include "Messages/DNS_Request_m.h"
+#include "Messages/DNS_Request.h"
 #include <memory>
 
 #define DNS_PORT 53
@@ -41,15 +41,14 @@ namespace dns
             int i;
 
             // Iterate and fill the plausible fields
-            for (i = 0; std::getline(stream,buffer,'.'); i++)
+            for (i = 0; std::getline(stream, buffer, '.'); i++)
             {
-                    if (i < 3)
-                        token[i] = buffer;
-                    else
-                        throw std::invalid_argument("domainName: There are too many subdomains (maximum 1)");
+                if (i < 3)
+                    token[i] = buffer;
+                else
+                    throw std::invalid_argument("domainName: There are too many subdomains (maximum 1)");
             }
 
-            
             /*for (int j = 0; j < i; j++)
                 std::cout << "Token:" << j << " " << token[j] << token[j].length() <<  std::endl;*/
 
@@ -66,22 +65,22 @@ namespace dns
                 topLevelIdx += token[j].length();
 
             // Add the amount of dots
-            topLevelIdx += i-1;
+            topLevelIdx += i - 1;
         };
-        
+
         /**
          * @brief Returns the complete domain name
-         * 
+         *
          * @return std::string const& Constant reference to the string containing the full domain name
          */
-        std::string const& getFullName()
+        std::string const &getFullName()
         {
             return *(domainName.get());
         }
 
         /**
          * @brief Get the Top Level Domain Name object
-         * 
+         *
          * @param str Reference to the string where the TLD name will be written
          */
         void getTopLevelDomainName(std::string &str)
@@ -91,6 +90,8 @@ namespace dns
             else
                 str = *domainName.get();
         }
+
+        bool isNameServer() { return topLevelIdx == 0; }
     };
 }
 #endif

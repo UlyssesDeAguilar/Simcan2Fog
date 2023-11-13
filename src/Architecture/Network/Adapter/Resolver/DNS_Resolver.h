@@ -40,6 +40,7 @@ protected:
 
     uint16_t lastId;            // Last reserved id (gives linearity and better likelyhood of finding a free one)
     UdpSocket mainSocket;       // Socket for establishing communication with the DNS Servers
+    UdpSocket responseSocket;   // Socket for receiving responses
     NameIpMap recordCache;      // Cache that keeps the resource records previously obtained
     RequestMap pendingRequests; // Map that keeps pending requests
     simtime_t timeOut;          // Timeout for pending requests

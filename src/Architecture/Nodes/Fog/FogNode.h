@@ -11,6 +11,7 @@
  * For stubbing the request of an User app deployed in this FogNode
  * In the future it will point to an actual simulated user !
  */
+#include "Messages/SM_ResolverRequest_m.h"
 #include "Messages/SM_UserVM.h"                         // Message for requesting a VM or VMs
 #include "Messages/SM_UserAPP.h"                        // Message for requesting the execution of an app or apps
 class FogNode: public cSIMCAN_Core {

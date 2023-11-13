@@ -16,7 +16,7 @@ void FogNode::initialize()
     numIORequests = 0;
     event = new cMessage("event");
     vmsRequest = createVmTestRequest();
-    dataCentreIp = inet::L3Address("10.0.0.100");
+    dataCentreIp = inet::L3Address("0.0.0.0");
 
     cSIMCAN_Core::initialize();
 
@@ -88,14 +88,23 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
         {
             // Reset and launch an request to the datacentre
             numIORequests = 0;
+            if (dataCentreIp == L3Address("0.0.0.0"))
+            {
+                auto dns_lookup = new SM_ResolverRequest();
+                dns_lookup->setDomainName(".dc_DataCentre[0]");
+                send(dns_lookup,gate("toDataCentre"));
+            }
+            else
+            {
 
-            // Send the message (duplicate of the original)
-            SM_UserVM *duplicate = vmsRequest->dup();
-            duplicate->setIsResponse(false);            // FIXME It's a bug on the side of the SM_UserVM
-            duplicate->setOperation(SM_VM_Req);
-            duplicate->addNewIp(dataCentreIp);
+                // Send the message (duplicate of the original)
+                SM_UserVM *duplicate = vmsRequest->dup();
+                duplicate->setIsResponse(false); // FIXME It's a bug on the side of the SM_UserVM
+                duplicate->setOperation(SM_VM_Req);
+                duplicate->addNewIp(dataCentreIp);
 
-            sendRequestMessage(duplicate, gate("toDataCentre"));
+                sendRequestMessage(duplicate, gate("toDataCentre"));
+            }
         }
     }
     else
@@ -106,6 +115,34 @@ void FogNode::processRequestMessage(SIMCAN_Message *sm)
 
 void FogNode::processResponseMessage(SIMCAN_Message *sm)
 {
+    auto dns_lookup = dynamic_cast<SM_ResolverRequest *>(sm);
+    if (dns_lookup != nullptr)
+    {
+        if (dns_lookup->getResult() == SC_OK)
+        {
+            // Address resolved, prepare VM sending
+            dataCentreIp = dns_lookup->getResolvedIp();
+
+            // Reset and launch an request to the datacentre
+            numIORequests = 0;
+
+            // Send the message (duplicate of the original)
+            SM_UserVM *duplicate = vmsRequest->dup();
+            duplicate->setIsResponse(false); // FIXME It's a bug on the side of the SM_UserVM
+            duplicate->setOperation(SM_VM_Req);
+            duplicate->addNewIp(dataCentreIp);
+
+            sendRequestMessage(duplicate, gate("toDataCentre"));
+        }
+        else
+        {
+            EV << "Unable to find the datacentre" << endl;
+        }
+
+        delete dns_lookup;
+        return;
+    }
+
     // FIXME Handle or notify the fact that an app request was completed or not !
     // Print the response
     SM_UserVM *response = dynamic_cast<SM_UserVM *>(sm);

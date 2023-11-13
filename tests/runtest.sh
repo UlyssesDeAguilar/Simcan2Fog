@@ -2,7 +2,8 @@ MAKE="make -j4 MODE=debug"
 if [ ! -d work ];  then mkdir work; fi
 if [ ! -d work/linet ]; then ln -s ../../../inet4/src work/linet; fi
 if [ ! -d work/src ]; then ln -s ../../src/ work/src; fi
-NEDPATH=../../../src:.:../../../../inet4/src/
+if [ ! -d work/modules ]; then ln -s ../modules work/modules; fi
+NEDPATH=../../../src:.:../../../../inet4/src/:../modules
 EXTRA_INCLUDES="-I../../../src"
 INET_PROJ=./linet/
 
@@ -14,4 +15,4 @@ opp_test gen -v DNS/*.test
 echo
 
 # Then run the tests
-opp_test run -v DNS/*.test -p testing_dbg -a "--check-signals=false -n $NEDPATH" || exit 1
+opp_test run -v DNS/*.test -p testing_dbg -a "-n $NEDPATH" || exit 1

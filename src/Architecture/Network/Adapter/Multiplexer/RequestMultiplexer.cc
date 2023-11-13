@@ -3,6 +3,9 @@ Define_Module(RequestMultiplexer);
 
 void RequestMultiplexer::initialize()
 {
+    // Get if debug information should be printed
+    debug = getParentModule()->par("debug");
+
     // Get gate info
     outGate = gate("gOutput");
     gInputId = gate("gInput")->getId();
@@ -24,11 +27,18 @@ void RequestMultiplexer::handleMessage(cMessage *msg)
 
     // Distinguish between request - response
     if (arrivalId != gInputId)
+    {
+        if (debug)
+            EV << "Recieved response, sending back to module" << endl;
         send(msg, outGate);
+    }
     else
     {
         auto resolverRequest = dynamic_cast<SM_ResolverRequest *>(msg);
 
+        if (debug)
+            EV << "Recieved request: " << msg->getClassName() << " starting to process ..." << endl;
+        
         // Mutliplex address resolution and general message sending
         if (resolverRequest != nullptr)
             send(msg, gate("ResolverIn"));

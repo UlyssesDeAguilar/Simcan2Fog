@@ -130,14 +130,18 @@ void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet)
 
     // Retrieve IP:Port from sender
     L3Address remoteAddress = packet->getTag<L3AddressInd>()->getSrcAddress();
-    int remotePort = packet->getTag<L4PortInd>()->getSrcPort();
-
+    //int remotePort = packet->getTag<L4PortInd>()->getSrcPort();
+    int remotePort = DNS_PORT;
+    
     // Process and package response
-    auto response = Ptr<DNS_Request>(selectAndExecHandler(request));
-    auto packet2 = new Packet("DNS_Request", response);
+    auto response = selectAndExecHandler(request);
+    auto responsePacket = new Packet("DNS_Request", Ptr<DNS_Request>(response));
 
     // Send to the requester
-    socket->sendTo(packet2, remoteAddress, remotePort);
+    socket->sendTo(responsePacket, remoteAddress, remotePort);
+
+    // Release the memory
+    delete packet;
 }
 
 void DNS_Service::socketErrorArrived(UdpSocket *socket, Indication *indication) {}
@@ -167,15 +171,13 @@ DNS_Request *DNS_Service::selectAndExecHandler(const DNS_Request *request)
 
 DNS_Request *DNS_Service::handleQuery(const DNS_Request *request)
 {
-    auto response = new DNS_Request;
-    // Copy the request parameters
-    (*response) = (*request);
-
+    auto response = new DNS_Request(*request);
     auto questionCount = request->getQuestionArraySize();
 
     // If there are no questions --> Error
     if (questionCount == 0)
     {
+        EV_INFO << "Query with 0 questions" << endl;
         response->setReturnCode(ReturnCode::FORMERR);
         return response;
     }
@@ -205,10 +207,7 @@ DNS_Request *DNS_Service::handleQuery(const DNS_Request *request)
 
 DNS_Request *DNS_Service::handleInsert(const DNS_Request *request)
 {
-    auto response = new DNS_Request;
-    // Copy the request parameters
-    (*response) = (*request);
-
+    auto response = new DNS_Request(*request);
     auto recordCount = request->getRecordArraySize();
 
     // If there are no records --> Error
@@ -233,10 +232,7 @@ DNS_Request *DNS_Service::handleInsert(const DNS_Request *request)
 
 DNS_Request *DNS_Service::handleDelete(const DNS_Request *request)
 {
-    auto response = new DNS_Request;
-    // Copy the request parameters
-    (*response) = (*request);
-
+    auto response = new DNS_Request(*request);
     auto recordCount = request->getRecordArraySize();
 
     // If there are no records --> Error
@@ -266,9 +262,7 @@ DNS_Request *DNS_Service::handleDelete(const DNS_Request *request)
 
 DNS_Request *DNS_Service::handleNotImplemented(const DNS_Request *request)
 {
-    auto response = new DNS_Request;
-    // Copy the request parameters
-    (*response) = (*request);
+    auto response = new DNS_Request(*request);
     // Select the not implemented response
     response->setReturnCode(ReturnCode::NOTIMP);
     return response;
