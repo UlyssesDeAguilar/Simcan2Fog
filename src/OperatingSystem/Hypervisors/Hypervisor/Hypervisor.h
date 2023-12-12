@@ -7,133 +7,119 @@
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/dataClasses/Application.h"
 
+class Hypervisor : public cSIMCAN_Core
+{
 
-class Hypervisor :public cSIMCAN_Core{
+public:
+   int getAvailableCores();
+   int getNumCores();
+   cModule *allocateNewResources(NodeResourceRequest *pResourceRequest);
+   void deallocateVmResources(std::string strVmId);
+   //        int executeApp(Application* appType);
+   bool *getFreeCoresArrayPtr() const;
 
-    public:
+   /**
+    * Check if there are VMs running in the machine.
+    * @return True if a VM is running in the machine. False otherwise.
+    */
+   bool isInUse();
 
-        int getAvailableCores();
-        int getNumCores();
-        cModule* allocateNewResources(NodeResourceRequest* pResourceRequest);
-        void deallocateVmResources(std::string strVmId);
-//        int executeApp(Application* appType);
-        bool* getFreeCoresArrayPtr() const;
+   bool isActive() const;
+   void powerOn(bool active);
 
-        /**
-         * Check if there are VMs running in the machine.
-         * @return True if a VM is running in the machine. False otherwise.
-         */
-        bool isInUse();
+protected:
+   /** Indicates if this module is able to virtualize hardware */
+   bool isVirtualHardware;
 
-    bool isActive() const;
-    void powerOn(bool active);
+   /** Maximum number of VMs allocated in this computer */
+   unsigned int maxVMs;
+   //        unsigned int numAllocatedVms;
 
+   int nPowerOnTime;
 
-	protected:
+   /** Input gate from Apps. */
+   cGate **fromAppsGates;
 
-        /** Indicates if this module is able to virtualize hardware */
-        bool isVirtualHardware;
+   /** Output gate to Apps. */
+   cGate **toAppsGates;
 
-        /** Maximum number of VMs allocated in this computer */
-        unsigned int maxVMs;
-//        unsigned int numAllocatedVms;
+   /** Input gate from CPU. */
+   cGate **fromCPUGates;
 
-        int nPowerOnTime;
+   /** Output gate to CPU. */
+   cGate **toCPUGates;
 
-        /** Input gate from Apps. */
-        cGate** fromAppsGates;
+   HardwareManager *pHardwareManager;
 
-        /** Output gate to Apps. */
-        cGate** toAppsGates;
+   cModule *pHardwareManagerModule;
+   cModule **pAppsVectorsArray;
+   cModule *pAppsVectors;
+   cModule **pCpuSchedArray;
+   cModule *pCpuScheds;
 
-        /** Input gate from CPU. */
-        cGate** fromCPUGates;
+   cMessage *powerMessage;
 
-        /** Output gate to CPU. */
-        cGate** toCPUGates;
+   bool *freeSchedArray;
 
-        HardwareManager* pHardwareManager;
+   std::map<string, int> mapVmScheduler;
+   std::map<std::string, NodeResourceRequest *> mapResourceRequestPerVm;
 
-        cModule *pHardwareManagerModule;
-        cModule **pAppsVectorsArray;
-        cModule *pAppsVectors;
-        cModule **pCpuSchedArray;
-        cModule *pCpuScheds;
+   //
+   //
+   //                                    /** Input gate from Memory. */
+   //                                    cGate* fromMemoryGate;
+   //
+   //                                    /** Input gate from Net. */
+   //                                    cGate* fromNetGate;
 
-        cMessage *powerMessage;
+   //                                    /** Input gate to Memory. */
+   //                                    cGate* toMemoryGate;
+   //
+   //                                    /** Input gate to Net. */
+   //                                    cGate* toNetGate;
 
-        bool *freeSchedArray;
+   /**
+    * Destructor.
+    */
+   ~Hypervisor();
 
-        std::map<string, int> mapVmScheduler;
-        std::map<std::string, NodeResourceRequest*> mapResourceRequestPerVm;
+   /**
+    *  Module initialization.
+    */
+   void initialize();
 
+   /**
+    * Module ending.
+    */
+   void finish();
 
+   void setActive(bool active);
 
+private:
+   /**
+    * Get the outGate ID to the module that sent <b>msg</b>
+    * @param msg Arrived message.
+    * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
+    */
+   cGate *getOutGate(cMessage *msg);
 
+   /**
+    * Process a self message.
+    * @param msg Self message.
+    */
+   void processSelfMessage(cMessage *msg);
 
-//
-//
-//                                    /** Input gate from Memory. */
-//                                    cGate* fromMemoryGate;
-//
-//                                    /** Input gate from Net. */
-//                                    cGate* fromNetGate;
+   /**
+    * Process a request message.
+    * @param sm Request message.
+    */
+   void processRequestMessage(SIMCAN_Message *sm);
 
-//                                    /** Input gate to Memory. */
-//                                    cGate* toMemoryGate;
-//
-//                                    /** Input gate to Net. */
-//                                    cGate* toNetGate;
-		
-
-	        	
-	        	
-	   /**
-	    * Destructor.
-	    */    		
-	    ~Hypervisor();
-	  	        			  	    	    
-	   /**
-	 	*  Module initialization.
-	 	*/
-	    void initialize();
-	    
-	   /**
-	 	* Module ending.
-	 	*/ 
-	    void finish();
-
-	    void setActive(bool active);
-
-
-
-
-	private:
-	
-	   /**
-		* Get the outGate ID to the module that sent <b>msg</b>
-		* @param msg Arrived message.
-		* @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
-		*/ 
-		cGate* getOutGate (cMessage *msg);
-
-	   /**
-		* Process a self message.
-		* @param msg Self message.
-		*/
-		void processSelfMessage (cMessage *msg);
-
-	   /**
-		* Process a request message.
-		* @param sm Request message.
-		*/
-		void processRequestMessage (SIMCAN_Message *sm);
-
-	   /**
-		* Process a response message.
-		* @param sm Request message.
-		*/
-		void processResponseMessage (SIMCAN_Message *sm);  
+   /**
+    * Process a response message.
+    * @param sm Request message.
+    */
+   void processResponseMessage(SIMCAN_Message *sm);
 };
 
 #endif
