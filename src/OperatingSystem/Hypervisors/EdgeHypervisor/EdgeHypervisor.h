@@ -41,10 +41,10 @@ namespace hypervisor
 
         void processSyscall(SM_Syscall *syscall);
         void launchApps(SM_UserAPP *request);
-        void handleAppTermination(uint32_t pid, bool force);
-        void handleIOAppRequest(uint32_t pid, bool completed);
-        void handleSendRequest(uint32_t pid, bool completed);
-        void handleBindAndListen(uint32_t pid);
+        void handleAppTermination(AppControlBlock &app, bool force);
+        void handleIOFinish(AppControlBlock &app);
+        void handleSendRequest(AppControlBlock &app, bool completed);
+        void handleBindAndListen(AppControlBlock &app);
 
         /**
          * Get the outGate ID to the module that sent <b>msg</b>

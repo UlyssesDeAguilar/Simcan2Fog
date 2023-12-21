@@ -13,6 +13,10 @@
 #include "Messages/SM_UserAPP.h"
 #include "Messages/INET_AppMessage.h"
 #include "Messages/SM_CPU_Message.h"
+#include "OperatingSystem/AppIdLabel/AppIdLabel_m.h"
+
+// Forward declaration
+class SM_Syscall;
 
 namespace hypervisor
 {
@@ -30,7 +34,6 @@ namespace hypervisor
         RUNNING
     } ExitStatus;
 
-
     typedef enum
     {
         READ,            // Read from the disk
@@ -40,27 +43,29 @@ namespace hypervisor
         BIND_AND_LISTEN, // Bind and listen to incoming requests (maybe it's the entrypoint for service registration ?)
         EXIT,            // Finish the process
     } Syscall;
-    
+
     // TODO: Consider if making the pointers smart pointers!
-    typedef struct{
+    struct CallContext
+    {
         Syscall opCode;
-        union CallContext
+        union Context
         {
-            double bufferSize;            // Either for read or write
-            SM_CPU_Message  *cpuRequest;  // For CPU requests
-            INET_AppMessage *packet;      // For network I/O
-        };
-    } CallContext;
+            double bufferSize;          // Either for read or write
+            SM_CPU_Message *cpuRequest; // For CPU requests
+            INET_AppMessage *packet;    // For network I/O
+        } data;
+    };
 
     /**
      * @brief Keeps all the necessary control information for the app
      */
-    typedef struct{
+    struct AppControlBlock
+    {
         uint32_t pid;                // Process Id
         uint32_t vmId;               // Group Id -- Will help to identify the VM
         int32_t exitStatus;          // The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
         APP_Request *request;        // The request that instantiated the app
-        SM_Syscall *lastRequest; // Last SYSCALL by the app
+        SM_Syscall  *lastRequest;    // Last SYSCALL by the app
 
         void initialize(uint32_t pid, uint32_t vmId)
         {
@@ -72,10 +77,10 @@ namespace hypervisor
         }
 
         bool isRunning() { return exitStatus == ExitStatus::RUNNING; }
-    } AppControlBlock;
+    };
 
     // TODO: Consider moving all of this functionality to the HardwareManager
-    typedef struct
+    struct SystemSpecs
     {
         double totalCores;  // All cores of the CPU
         double totalMemory; // Total RAM  (In GB)
@@ -85,6 +90,10 @@ namespace hypervisor
             double readBandwidth;  // In Mbit/s
             double writeBandwidth; // In Mbit/s
         } disk;
-    } SystemSpecs;
+    };
 }
+
+// Include the Syscall message after to avoid import loop
+#include "Messages/SM_Syscall_m.h"
+
 #endif

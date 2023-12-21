@@ -46,15 +46,15 @@ cGate *EdgeHypervisor::getOutGate(cMessage *msg) {}
 
 void EdgeHypervisor::processSelfMessage(cMessage *msg)
 {
-    auto appEntry = (AppControlBlock *)msg->getContextPointer();
+    auto appEntry = *(AppControlBlock *)msg->getContextPointer();
 
     switch (msg->getKind())
     {
     case AutoEvent::IO_DELAY:
-        handleIOAppRequest(appEntry->pid, true);
+        handleIOFinish(appEntry);
         break;
     case AutoEvent::APP_TIMEOUT:
-        handleAppTermination(appEntry->pid, true);
+        handleAppTermination(appEntry, true);
         break;
     default:
         delete msg;
@@ -75,7 +75,8 @@ void EdgeHypervisor::processRequestMessage(SIMCAN_Message *msg)
 
     switch (msg->getOperation())
     {
-    case SM_APP_Req:{
+    case SM_APP_Req:
+    {
         auto appRequest = (SM_UserAPP *)msg;
         auto numApps = appRequest->getAppArraySize();
 
@@ -93,7 +94,7 @@ void EdgeHypervisor::processRequestMessage(SIMCAN_Message *msg)
         break;
     }
     case SM_Syscall_Req:
-        processSyscall((SM_Syscall *) msg);
+        processSyscall((SM_Syscall *)msg);
         break;
     // Add the network packages !
     default:
@@ -103,33 +104,88 @@ void EdgeHypervisor::processRequestMessage(SIMCAN_Message *msg)
 
 void EdgeHypervisor::processSyscall(SM_Syscall *request)
 {
-    // TODO: Check if app instance is currently running !
-    // Get the app context
+    // Get the app context (this could be more general!)
     auto appEntry = appsControl[request->getPid()];
+
+    // TODO: Sanity checks
+
+    // Register the incoming request
     appEntry.lastRequest = request;
+
+    // Get the system call context
     auto callContext = request->getContext();
-    switch (callContext.opCode){
-        case Syscall::EXEC:
-            break;
-        case Syscall::READ:
-        case Syscall::WRITE:
-            break;
-        case Syscall::SEND_NETWORK:
-            break;
-        case Syscall::BIND_AND_LISTEN:
-            break;
-        case Syscall::EXIT:
-            break;
-        default:
-            error("Undefined system call operation code");
+
+    // Select the appropiate handler or actions
+    switch (callContext.opCode)
+    {
+    // Directly send the request to the CPU scheduler
+    case Syscall::EXEC:{
+        auto label = new AppIdLabel();
+        label->setPid(appEntry.pid);
+        label->setVmId(appEntry.vmId);
+        callContext.data.cpuRequest->setControlInfo(label);
+        sendRequestMessage(callContext.data.cpuRequest, gate("toCpuScheduler"));
+        break;
+    }
+    // Writing or reading from disk is pretty similar
+    case Syscall::READ:{
+        auto readBytes = callContext.data.bufferSize;
+        simtime_t eta = readBytes / hwSpecs.disk.readBandwidth;
+        auto event = new cMessage("IO Complete",AutoEvent::IO_DELAY);
+        event->setContextPointer(&appEntry);
+        scheduleAt(eta,event);
+        break;
+    }
+    case Syscall::WRITE:{
+        auto writeBytes = callContext.data.bufferSize;
+        simtime_t eta = writeBytes / hwSpecs.disk.writeBandwidth;
+        auto event = new cMessage("IO Complete",AutoEvent::IO_DELAY);
+        event->setContextPointer(&appEntry);
+        scheduleAt(eta,event);
+        break;
+    }
+    // TODO: Networking
+    case Syscall::SEND_NETWORK:
+        break;
+    case Syscall::BIND_AND_LISTEN:
+        break;
+    // Gracefully exit
+    case Syscall::EXIT:
+        handleAppTermination(appEntry, false);
+        break;
+    default:
+        error("Undefined system call operation code");
     }
 }
 
 void EdgeHypervisor::processResponseMessage(SIMCAN_Message *msg)
 {
     // Mostly it will be:
-    // 1 - CPU timeout
+    // 1 - CPU status update (including finish)
     // 2 - Network response (should check the port)
+    switch (msg->getOperation())
+    {
+    case SM_ExecCpu:{
+        auto appId = check_and_cast<AppIdLabel*>(msg->getControlInfo());
+        auto cpuRequest = check_and_cast<SM_CPU_Message*>(msg);
+
+        // If the batch is complete -> notify the app
+        if (cpuRequest->isCompleted())
+        {
+            // appId->getVmId(); Useful when we will consider also managing VMs
+            auto appEntry = appsControl[appId->getPid()];
+            appEntry.lastRequest = nullptr;
+            sendResponseMessage(msg);
+        }else
+        {
+            // TODO: Update or emit statistics ?
+            delete cpuRequest;
+        }
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void EdgeHypervisor::launchApps(SM_UserAPP *request)
@@ -148,31 +204,18 @@ void EdgeHypervisor::launchApps(SM_UserAPP *request)
     }
 }
 
-void EdgeHypervisor::handleAppTermination(uint32_t pid, bool force){}
+void EdgeHypervisor::handleAppTermination(AppControlBlock &app, bool force) {}
 
-void EdgeHypervisor::handleIOAppRequest(uint32_t pid, bool completed)
+void EdgeHypervisor::handleIOFinish(AppControlBlock &app)
 {
-    if (completed)
-    {
-        // Recover app context
-        auto appEntry = appsControl[pid];
+    // Get the original request
+    auto request = app.lastRequest;
+    
+    // Set all OK
+    request->setResult(SC_OK);
+    request->setIsResponse(true);
 
-        // Set all OK
-        appEntry.lastRequest->setResult(SC_OK);
-        appEntry.lastRequest->setIsResponse(true);
-
-        // Send back to app
-        sendResponseMessage(appEntry.lastRequest);
-    }
-    else
-    {
-        // TODO: Select Read or write accordingly
-        double size = 500;
-        double bandwidth = hwSpecs.disk.readBandwidth;
-
-        // Calculate delay and set timer to emulate IO operations
-        simtime_t eta = size / bandwidth;
-        auto completionEvent = new cMessage("IO complete", AutoEvent::IO_DELAY);
-        scheduleAt(eta, completionEvent);
-    }
+    // Send back to app and clear the request from control block
+    sendResponseMessage(request);
+    app.lastRequest = nullptr;
 }

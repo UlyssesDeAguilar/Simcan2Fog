@@ -1,10 +1,10 @@
-import Messages.SIMCAN_Message;
-
 cplusplus{{
-    #include "OperatingSystem/Hypervisors/common.h"
-    using hypervisor::Syscall;
-    using hypervisor::CallContext;
+#include "../OperatingSystem/Hypervisors/common.h"
+using hypervisor::Syscall;
+using hypervisor::CallContext;
 }};
+
+import Messages.SIMCAN_Message;
 
 class CallContext{@existingClass;}
 

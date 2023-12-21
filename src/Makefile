@@ -124,7 +124,8 @@ OBJS = \
     $O/Messages/SM_UserAPP_Finish_m.o \
     $O/Messages/SM_UserVM_m.o \
     $O/Messages/SM_UserVM_Cost_m.o \
-    $O/Messages/SM_UserVM_Finish_m.o
+    $O/Messages/SM_UserVM_Finish_m.o \
+    $O/OperatingSystem/AppIdLabel/AppIdLabel_m.o
 
 # Message files
 MSGFILES = \
@@ -140,7 +141,8 @@ MSGFILES = \
     Messages/SM_UserAPP_Finish.msg \
     Messages/SM_UserVM.msg \
     Messages/SM_UserVM_Cost.msg \
-    Messages/SM_UserVM_Finish.msg
+    Messages/SM_UserVM_Finish.msg \
+    OperatingSystem/AppIdLabel/AppIdLabel.msg
 
 # SM files
 SMFILES =
