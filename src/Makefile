@@ -110,6 +110,7 @@ OBJS = \
     $O/Messages/SM_UserAPP.o \
     $O/Messages/SM_UserVM.o \
     $O/OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.o \
+    $O/OperatingSystem/Hypervisors/EdgeHypervisor/EdgeHypervisor.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
@@ -118,6 +119,7 @@ OBJS = \
     $O/Messages/SM_CPU_Message_m.o \
     $O/Messages/SM_FogIO_m.o \
     $O/Messages/SM_ResolverRequest_m.o \
+    $O/Messages/SM_Syscall_m.o \
     $O/Messages/SM_UserAPP_m.o \
     $O/Messages/SM_UserAPP_Finish_m.o \
     $O/Messages/SM_UserVM_m.o \
@@ -133,6 +135,7 @@ MSGFILES = \
     Messages/SM_CPU_Message.msg \
     Messages/SM_FogIO.msg \
     Messages/SM_ResolverRequest.msg \
+    Messages/SM_Syscall.msg \
     Messages/SM_UserAPP.msg \
     Messages/SM_UserAPP_Finish.msg \
     Messages/SM_UserVM.msg \

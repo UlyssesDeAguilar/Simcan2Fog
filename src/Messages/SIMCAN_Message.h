@@ -38,6 +38,7 @@ static const int SM_Fog_Read = 601;
 
 // -------------------- Edge Operations -------------------- //
 static const int SM_Edge_Ping = 700;
+static const int SM_Syscall_Req = 800;
 
 // -------------------- User Generator -------------------- //
 

@@ -11,6 +11,8 @@
 
 #include <omnetpp.h>
 #include "Messages/SM_UserAPP.h"
+#include "Messages/INET_AppMessage.h"
+#include "Messages/SM_CPU_Message.h"
 
 namespace hypervisor
 {
@@ -28,6 +30,7 @@ namespace hypervisor
         RUNNING
     } ExitStatus;
 
+
     typedef enum
     {
         READ,            // Read from the disk
@@ -37,17 +40,27 @@ namespace hypervisor
         BIND_AND_LISTEN, // Bind and listen to incoming requests (maybe it's the entrypoint for service registration ?)
         EXIT,            // Finish the process
     } Syscall;
+    
+    // TODO: Consider if making the pointers smart pointers!
+    typedef struct{
+        Syscall opCode;
+        union CallContext
+        {
+            double bufferSize;            // Either for read or write
+            SM_CPU_Message  *cpuRequest;  // For CPU requests
+            INET_AppMessage *packet;      // For network I/O
+        };
+    } CallContext;
 
     /**
      * @brief Keeps all the necessary control information for the app
      */
-    typedef struct
-    {
+    typedef struct{
         uint32_t pid;                // Process Id
         uint32_t vmId;               // Group Id -- Will help to identify the VM
         int32_t exitStatus;          // The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
         APP_Request *request;        // The request that instantiated the app
-        SIMCAN_Message *lastRequest; // Last SYSCALL by the app
+        SM_Syscall *lastRequest; // Last SYSCALL by the app
 
         void initialize(uint32_t pid, uint32_t vmId)
         {

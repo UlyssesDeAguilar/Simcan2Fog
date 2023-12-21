@@ -1,4 +1,5 @@
 #include "EdgeHypervisor.h"
+using namespace hypervisor;
 Define_Module(EdgeHypervisor);
 
 void EdgeHypervisor::initialize()
@@ -74,7 +75,7 @@ void EdgeHypervisor::processRequestMessage(SIMCAN_Message *msg)
 
     switch (msg->getOperation())
     {
-    case SM_APP_Req:
+    case SM_APP_Req:{
         auto appRequest = (SM_UserAPP *)msg;
         auto numApps = appRequest->getAppArraySize();
 
@@ -90,13 +91,37 @@ void EdgeHypervisor::processRequestMessage(SIMCAN_Message *msg)
         // If everthing is alright then launch the Apps
         launchApps(appRequest);
         break;
-
-    case SM_ExecCpu:
-    case SM_AbortCpu:
-        // Handle app execution
+    }
+    case SM_Syscall_Req:
+        processSyscall((SM_Syscall *) msg);
         break;
+    // Add the network packages !
     default:
         break;
+    }
+}
+
+void EdgeHypervisor::processSyscall(SM_Syscall *request)
+{
+    // TODO: Check if app instance is currently running !
+    // Get the app context
+    auto appEntry = appsControl[request->getPid()];
+    appEntry.lastRequest = request;
+    auto callContext = request->getContext();
+    switch (callContext.opCode){
+        case Syscall::EXEC:
+            break;
+        case Syscall::READ:
+        case Syscall::WRITE:
+            break;
+        case Syscall::SEND_NETWORK:
+            break;
+        case Syscall::BIND_AND_LISTEN:
+            break;
+        case Syscall::EXIT:
+            break;
+        default:
+            error("Undefined system call operation code");
     }
 }
 
@@ -122,6 +147,8 @@ void EdgeHypervisor::launchApps(SM_UserAPP *request)
         cModule app;
     }
 }
+
+void EdgeHypervisor::handleAppTermination(uint32_t pid, bool force){}
 
 void EdgeHypervisor::handleIOAppRequest(uint32_t pid, bool completed)
 {
