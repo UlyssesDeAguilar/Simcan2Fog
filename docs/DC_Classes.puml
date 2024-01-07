@@ -1,0 +1,78 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class DataCentre
+{
+  - name: String
+  - computingRacks[]: Rack
+  - storageRacks[]: Rack
+  + addRack(rack: Rack, isStorage: bool)
+  + getRack(int index, isStorage: bool)
+  + getNumRacks(isStorage: bool): int
+}
+
+class DataCentre_CpuType
+{
+  - name: String
+  - nTotalAvailableCores: int
+  - nTotalCores: int
+  - getNodeListByCores(int numCores): Vector<NodeResourceInfo>
+  - getFreeNodeListByCores(int numCores): Vector<NodeResourceInfo>
+  - allocNewResources(pVmRequest: NodeResourceRequest, pList: Vector<NodeResourceInfo>): NodeResourceInfo
+  + insertNode(newNode: NodeResourceInfo, numCpus: int)
+  + handleVmRequest(pVmRequest: NodeResourceRequest)
+  + freeVmFromNode(strVmId: String, pResInfo: NodeResourceInfo)
+  + findResourceIndex(pList: Vector<NodeResourceInfo>, strResourceId: String): int
+}
+class Vector << STL >>
+class NodeResourceInfo
+
+note "Both maps are organized by the number of CPU cores" as NMAP
+DataCentre_CpuType o--> Vector: "- mapNodes"
+DataCentre_CpuType o--> Vector: "- mapFreeNodes"
+Vector o-r- NodeResourceInfo
+DataCentre_CpuType .. NMAP
+NMAP .. Vector
+
+interface IDataCentreCollection
+{
+  + initialize()
+  + isCloudFull(nRequestedCores: int): bool
+  + insertNode(nDatacentre: int, pNode: NodeResourceInfo)
+  + handleVmRequest(pVmRequest: NodeResourceRequest): bool
+  + freeVmRequest(strVmId: String): bool
+  + getTotalAvailableCores(): int
+  + getTotalCores(): int
+  + printDCSize()
+}
+
+class DataCentreInfoCollection
+{
+  + initialize()
+  + isCloudFull(nRequestedCores: int): bool
+  + insertNode(nDatacentre: int, pNode: NodeResourceInfo)
+  + handleVmRequest(pVmRequest: NodeResourceRequest): bool
+  + freeVmRequest(strVmId: String): bool
+  + getTotalAvailableCores(): int
+  + getTotalCores(): int
+  + printDCSize()
+}
+IDataCentreCollection <|-- DataCentreInfoCollection
+NodeResourceInfo <-- DataCentreInfoCollection: "- id2nodeMap"
+DataCentreInfoCollection --> DataCentre_CpuType: "- dataCentres"
+
+class DataCentreReservation
+{
+  - nReservedNodes: int
+}
+DataCentre <|-- DataCentreReservation
+
+class DataCentreInfoCollectionReservation
+{
+  - reservedNodes[]: int
+}
+DataCentreInfoCollection <|-- DataCentreInfoCollectionReservation
+DataCentreInfoCollectionReservation o--> DataCentre_CpuType: "- dataCentresReserved"
+DataCentreInfoCollectionReservation o--> NodeResourceInfo: "- id2reservedNodeMap"
+@enduml

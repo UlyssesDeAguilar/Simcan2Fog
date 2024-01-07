@@ -1,0 +1,21 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class Sla
+{
+  - type: String
+  + getVmCost(vmTypeStr: String)
+}
+
+struct VMCost
+{
+  + base: double
+  + increase: double
+  + discount: double
+  + compensation: double
+}
+
+Sla *--> VMCost: "- vmCostMap" 
+
+@enduml

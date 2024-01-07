@@ -1,0 +1,61 @@
+@startuml
+skinparam classAttributeIconSize 0
+class AppInstanceCollection
+{
+- generateInstances(userID: String, numInstances: int)
++ getNumInstances(): int
++ getApplicationBase(): Application
++ getInstance(nInstance: int): AppInstance
+}
+
+class AppInstance
+{
+- appName: String
+- instanceNumber: int
+- state: tApplicationState
+- userID: String
+- vmInstanceID: String
+- appInstanceID: String
+- stateToString(appState: tApplicationState): String
+}
+
+class Application
+{
+- type: String
+- appName: String
++ getParameter(index: int): AppParameter
++ insertParameter(param: AppParameter)
++ getParameterByName(strParameterName: String): AppParameter
+}
+
+class AppParameter
+{
+- name: String
+- type: tNedType
+- unit: String
+- value: String
+}
+
+enum tNedType
+{
+NedUnset
+NedInt
+NedBool
+NedString
+NedDouble
+}
+
+enum tApplicationState
+{
+appWaiting
+appRunning
+appFinishedOK
+appFinishedTimeout
+appFinishedError
+}
+
+Application "1" *-- "0..*" AppParameter: " instanceParameters"
+AppInstanceCollection "1" -- "1..*" AppInstance : " appInstances"
+AppInstanceCollection "1..*" -- "1" Application : " appBase"
+
+@enduml

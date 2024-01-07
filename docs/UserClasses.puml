@@ -1,0 +1,93 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class User
+{
+# type: String
+# numInstances: int
++ insertApplication(appPtr: Application, numInstances: int)
++ getApplication(index: int): UserAppReference;
++ getNumApplications(): int
+}
+
+class CloudUser
+{
+# type: String
+# numInstances: int
++ insertVirtualMachine(vmPtr: VirtualMachine, numInstances: int, nRentTime: int)
++ getVirtualMachine(int index): UserVmReference
++ getNumVitrualMachines(): int
+}
+
+class UserAppReference
+{
+-appBase: Application
+-numInstances: int
+}
+
+class UserVmReference
+{
+- vmBase: VirtualMachine
+- numInstances: int
+- nRentTime: int
+}
+
+class UserInstance
+{
+- userID: String
+- type: String
+- userNumber: uint
+- instanceNumber: uint
+- applications[]: AppInstanceCollection
+# insertNewApplicationInstances (appPtr: Application, numInstances: int)
+}
+
+class CloudUserInstance
+{
++ virtualMachines[]: VmInstanceCollection
+- maxStartTime_t1: int
+- nRentTime_t2: int
+- maxSubTime_t3: int
+- maxSubscriptionTime_t4: int
+- nId: int
+- numFinishedVMs: int
+- numActiveSubscriptions: int
+- dArrival2Cloud: SimTime
+- dInitTime: SimTime
+- dEndTime: SimTime
+- dInitWaitTime: SimTime
+- dWaitTime: SimTime
+- bSubscribe: bool
+- bFinished: bool
+# numTotalVMs: int
++ appInstances[]: appInstances
++ requestVmMsg: SM_UserVM
++ requestAppMsg: SM_UserAPP
++ suscribeVmMsg: SM_UserVM
++ bTimeout_t2: bool
++ bTimeout_t4: bool
+...()
+}
+note right:"This class contains way too many methods/attributes" 
+
+class CloudUserInstancePriority
+{
+- bCredit: bool
++ isBCredit(): bool
++ setBCredit(bCredit: bool)
+}
+
+class CloudUserInstanceTrace
+{
+#job: Job_t
+}
+User " 1" *-- " 1..*" UserAppReference
+User <|-- CloudUser
+UserInstance <|-- CloudUserInstance
+CloudUserInstance <|-- CloudUserInstancePriority
+CloudUserInstancePriority <|-- CloudUserInstanceTrace
+CloudUser "1 " *-- "1..*  " UserAppReference
+CloudUser "1 " *-- "1..*" UserVmReference
+
+@enduml

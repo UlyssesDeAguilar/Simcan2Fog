@@ -1,0 +1,43 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class VirtualMachine
+{
+- type: String
+- cost: double
+- numCores: int
+- scu: double
+- diskGB: double
+- memoryGB: double
+}
+
+class VmInstance
+{
+- vmInstanceID: String
+- vmType: String
+- instanceNumber: int
+- userID: String
+}
+
+enum tVmState
+{
++ vmIdle
++ vmAccepted
++ vmRunning
++ vmFinished
+}
+
+class VmInstanceCollection
+{
+- nRentTime: int
+- generateInstances(userID: String, numInstances: int, total: int, offset: int)
++ getVmInstance(int nIndex): VmInstance
++ getNumInstances(): int
+}
+
+VmInstance -d-> tVmState: - state
+VmInstanceCollection *--> VmInstance: "- vmInstances"
+VmInstanceCollection --> VirtualMachine: "- vmBase"
+
+@enduml

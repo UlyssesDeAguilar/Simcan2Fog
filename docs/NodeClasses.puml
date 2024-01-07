@@ -1,0 +1,114 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class NodeInfo
+{
+  - name: String
+  - storage: bool
+  - totalDiskGB: double
+  - totalMemoryGB: double
+  - numCPUs: int
+  - cpuSpeed: int
+}
+note left of NodeInfo::cpuSpeed
+Measured in MIPS
+end note
+
+class Node
+{
+  - ip: String
+  - remainingMemoryGB: double
+  - remaininDiskGB: double
+  - numCPUs: int
+  - numAvailableCpus: int
+  - racked: bool
+  + setState(newState: tCpuState, cpuIndex: int)
+  + getState(cpuIndex: int): tCpuState
+}
+note left of Node::remaininDiskGB
+Indeed it is a 
+misspelling in the source code
+end note
+
+enum tCpuState
+{
+  + cpuIdle
+  + cpuBusy
+}
+
+class NodeResourceRequest
+{
+  - userName: String
+  - nodeType: String
+  - strVmId: String
+  - totalCPUs: uint
+  - nTotalMemory: double
+  - cpuSpeed: uint
+  - totalDiskGB: double
+  - totalMemoryGB: double
+  - storage: bool
+  - maxStartTime_t1: int
+  - nRentTime_t2: int
+  - maxSubTime_t3: int
+  - maxSubcriptionTime_t4: int
+  - appRequestMsg: cMessage
+  - nStartTime: int
+  - nPrice: int
+  - ip: String
+}
+
+class RackInfo
+{
+  -name: String
+  -storage: bool
+  -numBoards: int
+  -nodesPerBoard: int
+}
+
+class Rack
+{
+  + getNumNodes(): int
+  + getNode(index: int): Node
+}
+
+class RackInstances
+{
+  + insertNewRack(newRack: Rack)
+  + getNumRacks(): int
+}
+
+class NodeResourceInfo
+{
+  - ip: String
+  - nodeType: String
+  - nDataCentre: int
+  - nAvailableCpus: uint
+  - nAvailableMemory: uint
+  - dAvailableDiskGB: double
+  - nTotalUsers: int
+  + hasFit(pUserRq: NodeResourceRequest): bool
+  + insertUserRequest(pUserRq: NodeResourceRequest): bool
+  + freeResources(pUser: NodeResourceRequest)
+  + freeVmById(strVmId: String)
+  + searchUser(strUserName: String)
+  + printNodeUsers()
+  + printAvailableResources()
+  + simpleInserUserRequest(pUser: NodeResourceRequest)
+  + getTotalCpusById(strVmId: String): uint
+}
+
+note right of NodeResourceInfo::simpleInserUserRequest
+Indeed it is another 
+misspelling in the source code
+end note
+
+Node *--> tCpuState: "- cpuState"
+RackInfo --> NodeInfo: "- nodeInfo"
+Rack --> RackInfo: "- rackInfo"
+Rack *--> Node: "- nodes" 
+RackInstances --> RackInfo
+RackInstances *-> Rack
+NodeResourceInfo *--> NodeResourceRequest: "- userRqMap"
+NodeInfo <|- NodeResourceInfo
+@enduml
