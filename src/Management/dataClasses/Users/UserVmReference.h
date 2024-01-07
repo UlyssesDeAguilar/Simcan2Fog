@@ -2,7 +2,7 @@
 #define USERVMREFERENCE_H_
 
 #include <string>
-#include "VirtualMachine.h"
+#include "Management/dataClasses/VirtualMachines/VirtualMachine.h"
 
 /**
  *

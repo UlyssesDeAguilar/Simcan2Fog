@@ -20,7 +20,7 @@ std::string UserAppReference::toString (){
 
     std::ostringstream info;
 
-        info << appBase->getAppName() << ":" << appBase->getType() << " - " << numInstances << " instances";
+        info << appBase->getName() << ":" << appBase->getType() << " - " << numInstances << " instances";
 
     return info.str();
 }

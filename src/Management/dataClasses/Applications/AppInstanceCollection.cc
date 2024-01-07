@@ -24,7 +24,7 @@ void AppInstanceCollection::generateInstances (std::string userID, int numInstan
 
         // Create and include replicas in the replica vector
         for (i=0; i<numInstances; i++){
-            newInstance = new AppInstance(appBase->getAppName(), i, numInstances, userID);
+            newInstance = new AppInstance(appBase->getName(), i, numInstances, userID);
             appInstances.push_back(newInstance);
         }
 }
@@ -53,7 +53,7 @@ std::string AppInstanceCollection::toString (bool showParameters){
     std::ostringstream info;
     int i, currentParameter;
 
-        info << "# Instances:" << appInstances.size() << " of " << appBase->getAppName() << "(" << appBase->getType() << ")" << std::endl;
+        info << "# Instances:" << appInstances.size() << " of " << appBase->getName() << "(" << appBase->getType() << ")" << std::endl;
 
         for (i=0; i<appInstances.size(); i++){
             info << "\t\t  - appInstance[" << i << "]: " << appInstances.at(i)->toString() << std::endl;
@@ -65,7 +65,7 @@ std::string AppInstanceCollection::toString (bool showParameters){
             info << "\t\t\tParameters:" << std::endl;
 
             for (currentParameter = 0; currentParameter < appBase->getNumParameters(); currentParameter++){
-                info << "\t\t\t  > " << appBase->getParameter(currentParameter)->toString() << std::endl;
+                info << "\t\t\t  > " << appBase->getParameter(currentParameter).toString() << std::endl;
             }
         }
 
