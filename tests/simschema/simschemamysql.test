@@ -1,0 +1,56 @@
+%description:
+Tests the correct behaviour of the SimSchemaMySQL implementation
+ - Before you run this, don't forget to include the password in S2F_DB_PASSWORD
+
+%inifile: omnetpp.ini
+[General]
+network = Unconnected
+sim-time-limit = 10s
+
+*.class = "SimSchemaMySQL"
+*.simschema.hostName = "tcp://127.0.0.1:3306"
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
+
+%contains: stdout
+Search App with name: AppCPUIntensive
+Name:    AppCPUIntensive
+Type:    LocalApplication
+Package: simcan2.Applications.UserApps.LocalApplication
+Path:    simcan2.Applications.UserApps.LocalApplication.LocalApplication
+Parameters:
+	int MIs = 79200000
+	int inputDataSize (MiB)  = 10MiB
+	string inputFile = "/inputFile_0.dat"
+	int iterations = 5
+	int outputDataSize (MiB)  = 5MiB
+	string outputFile = "/outputFile_0.dat"
+
+Search VM with name: VM_4xlarge
+Type:        VM_4xlarge
+Cost (h):    23
+Cores (#):   16
+Disk (GB):   1000
+Memory (GB): 1000
+
+Search SLA with name: Slai0d0c0
+Type:Slai0d0c0
+	  + VMCost[VM_2xlarge] -> base cost: 0.46 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_4xlarge] -> base cost: 0.92 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_large] -> base cost: 0.12 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_medium] -> base cost: 0.05 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_micro] -> base cost: 0.02 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_nano] -> base cost: 0.01 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_nanoHD] -> base cost: 0.01 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_nanoRAM] -> base cost: 0.01 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_small] -> base cost: 0.03 - cost increase: 0 - cost discount: 0 - compensation: 0
+	  + VMCost[VM_xlarge] -> base cost: 0.23 - cost increase: 0 - cost discount: 0 - compensation: 0
+
+Search VMCost with name: VM_4xlarge in SLA Slai0d0c0
+base cost: 0.92 - cost increase: 0 - cost discount: 0 - compensation: 0
+Search VMCost with name:  in SLA
+VMCost:  SLA:  not found

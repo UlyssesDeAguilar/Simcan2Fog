@@ -3,6 +3,8 @@
 
 #include <omnetpp.h>
 #include <string>
+#include <omnetpp/cpar.h>
+
 using namespace omnetpp;
 
 
@@ -173,7 +175,9 @@ typedef unsigned long long int off64_T;
 typedef unsigned long int reqNum_t;
 
 /** Typedef of NED basic types */
-typedef enum{NedUnset, NedInt, NedBool, NedString, NedDouble} tNedType;
+typedef cPar::Type tNedType;
+// Older definition: typedef enum{NedUnset, NedInt, NedBool, NedString, NedDouble} tNedType;
+
 
 /** Typedef of application states */
 typedef enum{appWaiting, appRunning, appFinishedOK, appFinishedTimeout, appFinishedError} tApplicationState;
