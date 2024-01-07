@@ -1,6 +1,6 @@
 #include "DNS_Service.h"
+Define_Module(dns::DNS_Service);
 using namespace dns;
-Define_Module(DNS_Service);
 
 std::set<std::string> DNS_Service::prefixSet = {"dc", "fg", "ed", "cloudProvider", "userGenerator"};
 

@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for Simcan2Cloud
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lINET$$\(D\)
+#  opp_makemake -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lmysqlcppconn -lINET$$\(D\)
 #
 
 # Name of target to be created (-o option)
@@ -22,7 +22,7 @@ INCLUDE_PATH = -I. -I$(INET4_PROJ)/src
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src  -lINET$(D)
+LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src  -lmysqlcppconn -lINET$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -51,6 +51,7 @@ OBJS = \
     $O/Architecture/Nodes/Iot/IotSensor.o \
     $O/Core/cSIMCAN_Core.o \
     $O/Core/CheckingHubModule/CheckingHubModule.o \
+    $O/Core/SimSchema/MySQL/SimSchemaMySQL.o \
     $O/Management/CloudManagerBase/CloudManagerBase.o \
     $O/Management/CloudProviders/CloudProviderBase/CloudProviderBase.o \
     $O/Management/CloudProviders/CloudProviderCost/CloudProviderCost.o \
@@ -63,15 +64,6 @@ OBJS = \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
     $O/Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \
-    $O/Management/dataClasses/AppInstance.o \
-    $O/Management/dataClasses/AppInstanceCollection.o \
-    $O/Management/dataClasses/Application.o \
-    $O/Management/dataClasses/AppParameter.o \
-    $O/Management/dataClasses/CloudUser.o \
-    $O/Management/dataClasses/CloudUserInstance.o \
-    $O/Management/dataClasses/CloudUserInstancePriority.o \
-    $O/Management/dataClasses/CloudUserInstanceTrace.o \
-    $O/Management/dataClasses/CloudUserPriority.o \
     $O/Management/dataClasses/DataCentre.o \
     $O/Management/dataClasses/DataCentre_CpuType.o \
     $O/Management/dataClasses/DataCentreInfoCollection.o \
@@ -84,14 +76,23 @@ OBJS = \
     $O/Management/dataClasses/Rack.o \
     $O/Management/dataClasses/RackInfo.o \
     $O/Management/dataClasses/RackInstances.o \
-    $O/Management/dataClasses/Sla.o \
-    $O/Management/dataClasses/User.o \
-    $O/Management/dataClasses/UserAppReference.o \
-    $O/Management/dataClasses/UserInstance.o \
-    $O/Management/dataClasses/UserVmReference.o \
-    $O/Management/dataClasses/VirtualMachine.o \
-    $O/Management/dataClasses/VmInstance.o \
-    $O/Management/dataClasses/VmInstanceCollection.o \
+    $O/Management/dataClasses/Applications/AppInstance.o \
+    $O/Management/dataClasses/Applications/AppInstanceCollection.o \
+    $O/Management/dataClasses/Applications/Application.o \
+    $O/Management/dataClasses/Applications/AppParameter.o \
+    $O/Management/dataClasses/SLAs/Sla.o \
+    $O/Management/dataClasses/Users/CloudUser.o \
+    $O/Management/dataClasses/Users/CloudUserInstance.o \
+    $O/Management/dataClasses/Users/CloudUserInstancePriority.o \
+    $O/Management/dataClasses/Users/CloudUserInstanceTrace.o \
+    $O/Management/dataClasses/Users/CloudUserPriority.o \
+    $O/Management/dataClasses/Users/User.o \
+    $O/Management/dataClasses/Users/UserAppReference.o \
+    $O/Management/dataClasses/Users/UserInstance.o \
+    $O/Management/dataClasses/Users/UserVmReference.o \
+    $O/Management/dataClasses/VirtualMachines/VirtualMachine.o \
+    $O/Management/dataClasses/VirtualMachines/VmInstance.o \
+    $O/Management/dataClasses/VirtualMachines/VmInstanceCollection.o \
     $O/Management/parser/AppListParser.o \
     $O/Management/parser/DataCentreConfigParser.o \
     $O/Management/parser/DataCentreListParser.o \
@@ -119,6 +120,7 @@ OBJS = \
     $O/Messages/SM_CPU_Message_m.o \
     $O/Messages/SM_FogIO_m.o \
     $O/Messages/SM_ResolverRequest_m.o \
+    $O/Messages/SM_REST_API_m.o \
     $O/Messages/SM_Syscall_m.o \
     $O/Messages/SM_UserAPP_m.o \
     $O/Messages/SM_UserAPP_Finish_m.o \
@@ -136,6 +138,7 @@ MSGFILES = \
     Messages/SM_CPU_Message.msg \
     Messages/SM_FogIO.msg \
     Messages/SM_ResolverRequest.msg \
+    Messages/SM_REST_API.msg \
     Messages/SM_Syscall.msg \
     Messages/SM_UserAPP.msg \
     Messages/SM_UserAPP_Finish.msg \

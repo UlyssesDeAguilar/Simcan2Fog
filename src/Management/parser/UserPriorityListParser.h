@@ -17,7 +17,7 @@
 #define MANAGEMENT_PARSER_USERPRIORITYLISTPARSER_H_
 
 #include "UserListParser.h"
-#include "Management/dataClasses/CloudUserPriority.h"
+#include "Management/dataClasses/Users/CloudUserPriority.h"
 
 class UserPriorityListParser: public UserListParser {
 protected:

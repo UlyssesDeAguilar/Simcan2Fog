@@ -538,10 +538,10 @@ Application* CloudProviderFirstFit::searchAppPerType(std::string strAppType)
     while(!bFound && nIndex < appTypes.size())
       {
         appTypeRet = appTypes.at(nIndex);
-        if(strAppType.compare(appTypeRet->getAppName()) == 0)
+        if(strAppType.compare(appTypeRet->getName()) == 0)
             bFound = true;
 
-        EV_DEBUG << __func__ << " - " << strAppType << " vs " << appTypeRet->getAppName() << " Found=" << bFound << endl;
+        EV_DEBUG << __func__ << " - " << strAppType << " vs " << appTypeRet->getName() << " Found=" << bFound << endl;
 
         nIndex++;
       }

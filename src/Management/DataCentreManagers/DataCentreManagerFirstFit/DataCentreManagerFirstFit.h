@@ -2,7 +2,7 @@
 #define __SIMCAN_2_0_DATACENTREMANAGERFIRSTFIT_H_
 
 #include "../DataCentreManagerBase/DataCentreManagerBase.h"
-#include "Management/dataClasses/CloudUserInstance.h"
+#include "Management/dataClasses/Users/CloudUserInstance.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/parser/DataCentreReservationConfigParser.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"

@@ -17,7 +17,7 @@
 #define MANAGEMENT_PARSER_VMLISTPARSER_H_
 
 #include "Parser.h"
-#include "Management/dataClasses/VirtualMachine.h"
+#include "Management/dataClasses/VirtualMachines/VirtualMachine.h"
 
 class VmListParser: public Parser<VirtualMachine> {
 public:

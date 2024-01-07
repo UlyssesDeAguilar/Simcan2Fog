@@ -5,7 +5,7 @@
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
-#include "Management/dataClasses/Application.h"
+#include "Management/dataClasses/Applications/Application.h"
 
 class Hypervisor : public cSIMCAN_Core
 {

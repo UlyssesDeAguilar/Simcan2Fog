@@ -472,10 +472,10 @@ Application *DataCentreManagerBase::searchAppPerType(std::string strAppType)
     while (!bFound && nIndex < appTypes.size())
     {
         appTypeRet = appTypes.at(nIndex);
-        if (strAppType.compare(appTypeRet->getAppName()) == 0)
+        if (strAppType.compare(appTypeRet->getName()) == 0)
             bFound = true;
 
-        EV_DEBUG << __func__ << " - " << strAppType << " vs " << appTypeRet->getAppName() << " Found=" << bFound << endl;
+        EV_DEBUG << __func__ << " - " << strAppType << " vs " << appTypeRet->getName() << " Found=" << bFound << endl;
 
         nIndex++;
     }
@@ -739,9 +739,6 @@ void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
             continue;
 
         std::string strInputDataSize, strOutputDataSize;
-        int nInputDataSize, nOutputDataSize, nMIs, nIterations, nTotalTime;
-        AppParameter *paramInputDataSize, *paramOutputDataSize, *paramMIs, *paramIterations;
-
         appType = searchAppPerType(userApp.strAppType);
 
         if (appType == nullptr)
@@ -749,31 +746,9 @@ void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
 
         // TODO: Cuidado con esto a ver si no peta.
         // Esto es un apaño temporal para no ejecutarlo en los datacentres reales
-        if ((appType->getAppName().compare("AppDataIntensive") == 0) || (appType->getAppName().compare("AppCPUIntensive") == 0))
+        if ((appType->getName().compare("AppDataIntensive") == 0) || (appType->getName().compare("AppCPUIntensive") == 0))
         {
             // DatasetInput
-            paramInputDataSize = appType->getParameterByName("inputDataSize");
-            paramOutputDataSize = appType->getParameterByName("outputDataSize");
-            paramMIs = appType->getParameterByName("MIs");
-            paramIterations = appType->getParameterByName("iterations");
-
-            if (paramInputDataSize != nullptr)
-            {
-                nInputDataSize = std::stoi(paramInputDataSize->getValue());
-            }
-            if (paramOutputDataSize != nullptr)
-            {
-                nOutputDataSize = std::stoi(paramOutputDataSize->getValue());
-            }
-            if (paramMIs != nullptr)
-            {
-                nMIs = std::stoi(paramMIs->getValue());
-            }
-            if (paramIterations != nullptr)
-            {
-                nIterations = std::stoi(paramIterations->getValue());
-            }
-
             std::string strAppType = "simcan2.Applications.UserApps." + appType->getType() + "." + appType->getType();
             cModuleType *moduleType = cModuleType::get(strAppType.c_str());
 
@@ -785,16 +760,50 @@ void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
             // Disconnect and delete dummy app
             deleteAppFromModule(pVmAppModule);
 
-            cModule *moduleApp;
-
-            moduleApp = moduleType->create("app", pVmAppModule);
+            cModule * moduleApp = moduleType->create("app", pVmAppModule);
             moduleApp->par("appInstance") = userApp.strApp;
             moduleApp->par("vmInstance") = userApp.vmId;
             moduleApp->par("userInstance") = strUsername;
-            moduleApp->par("inputDataSize") = nInputDataSize;
-            moduleApp->par("outputDataSize") = nOutputDataSize;
-            moduleApp->par("MIs") = nMIs;
-            moduleApp->par("iterations") = nIterations;
+
+            try
+            {
+                auto &paramInputDataSize = appType->getParameter("inputDataSize");
+                //auto nInputDataSize = std::stoi(paramInputDataSize.getValue());
+                moduleApp->par("inputDataSize") = paramInputDataSize.intValue();
+            }
+            catch (const std::out_of_range &e)
+            {
+            }
+
+            try
+            {
+                auto &paramOutputDataSize = appType->getParameter("outputDataSize");
+                //auto nOutputDataSize = std::stoi(paramOutputDataSize.getValue());
+                moduleApp->par("outputDataSize") = paramOutputDataSize.intValue();
+            }
+            catch (const std::out_of_range &e)
+            {
+            }
+
+            try
+            {
+                auto &paramMIs = appType->getParameter("MIs");
+                // auto nMIs = std::stoi(paramMIs.getValue());
+                moduleApp->par("MIs") = paramMIs.intValue();
+            }
+            catch (const std::out_of_range &e)
+            {
+            }
+
+            try
+            {
+                auto &paramIterations = appType->getParameter("iterations");
+                //auto nIterations = std::stoi(paramIterations.getValue());
+                moduleApp->par("iterations") = paramIterations.intValue();
+            }
+            catch (const std::out_of_range &e)
+            {
+            }
 
             unsigned int *appStateArr = getAppModuleById(userApp.strApp);
 
@@ -822,7 +831,7 @@ void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
             userAPP_Rq->changeState(userApp.strApp, userApp.vmId, appRunning);
             //           userAPP_Rq->changeStateByIndex(i, userApp.strApp, appRunning);
         }
-        else if (appType != NULL && appType->getAppName().compare("otraApp"))
+        else if (appType != NULL && appType->getName().compare("otraApp"))
         {
         }
     }

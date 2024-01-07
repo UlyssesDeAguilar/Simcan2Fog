@@ -1,186 +1,169 @@
 #include "UserGeneratorBase.h"
 
-static void parse_swf(vector<Job_t> *jobs, const char* swf_file);
+static void parse_swf(vector<Job_t> *jobs, const char *swf_file);
 
-UserGeneratorBase::~UserGeneratorBase(){
+UserGeneratorBase::~UserGeneratorBase()
+{
 }
 
-
-void UserGeneratorBase::initialize(){
-
+void UserGeneratorBase::initialize()
+{
     // Init super-class
     CloudManagerBase::initialize();
 
-    EV_INFO << "UserGeneratorBase::initialize - Init" << endl;
+    EV_INFO << "UserGeneratorBase::initialize - Init\n";
 
     // Init module parameters
-    startDelay = par ("startDelay");
-    distribution = &par ("distribution");
-    intervalBetweenUsers = par ("intervalBetweenUsers");
-    shuffleUsers = par ("shuffleUsers");
-    showUserInstances = par ("showUserInstances");
-    strUserTraceFilePath = par ("userTraceFilePath").stringValue();
-    traceStartTime = par ("traceStartTime");
-    traceEndTime = par ("traceEndTime");
-    userTraceMaxVms = par ("userTraceMaxVms");
+    startDelay = par("startDelay");
+    distribution = &par("distribution");
+    intervalBetweenUsers = par("intervalBetweenUsers");
+    shuffleUsers = par("shuffleUsers");
+    showUserInstances = par("showUserInstances");
+    strUserTraceFilePath = par("userTraceFilePath").stringValue();
+    traceStartTime = par("traceStartTime");
+    traceEndTime = par("traceEndTime");
+    userTraceMaxVms = par("userTraceMaxVms");
 
-    maxStartTime_t1 = par("maxStartTime_t1");
-    nRentTime_t2 = par("nRentTime_t2");
-    maxSubTime_t3 = par("maxSubTime_t3");
-    maxSubscriptionTime = par("maxSubscriptionTime");
+    timeoutsTemplate =
+        {
+            .maxStartTime = par("maxStartTime_t1"),
+            .nRentTime = par("nRentTime_t2"),
+            .maxSubTime = par("maxSubTime_t3"),
+            .maxSubscriptionTime = par("maxSubscriptionTime")};
 
-    activeCycles = par ("activeCycles");
-    numberOfCycles = par ("numberOfCycles");
-    durationOfCycle = par ("durationOfCycle");
-    isolateCycle = par ("isolateCycle");
-    cycleDistribution = &par ("cycleDistribution");
-
-    numberOfCycles = par ("numberOfCycles");
-    durationOfCycle = par ("durationOfCycle");
-    isolateCycle = par ("isolateCycle");
-    cycleDistribution = &par ("cycleDistribution");
+    activeCycles = par("activeCycles");
+    numberOfCycles = par("numberOfCycles");
+    durationOfCycle = par("durationOfCycle");
+    isolateCycle = par("isolateCycle");
+    cycleDistribution = &par("cycleDistribution");
 
     // Gates
-    fromCloudProviderGate = gate ("fromCloudProvider");
-    toCloudProviderGate = gate ("toCloudProvider");
+    fromCloudProviderGate = gate("fromCloudProvider");
+    toCloudProviderGate = gate("toCloudProvider");
 
-
-    EV_INFO << "UserGeneratorBase::initialize - Generating users before simulation" << endl;
+    EV_INFO << "UserGeneratorBase::initialize - Generating users before simulation\n";
 
     groupOfUsers.clear();
     userInstances.clear();
 
     nUserInstancesFinished = 0;
-    nUserIndex=0;
+    nUserIndex = 0;
 
     // Create user instances
     generateUsersBeforeSimulationStarts();
     parseTraceFile();
 
     // Show generated users instances
-    if (showUserInstances){
-        EV_DEBUG << usersIstancesToString ();
+    if (showUserInstances)
+    {
+        EV_DEBUG << usersIstancesToString();
     }
 
-    EV_INFO << "UserGeneratorBase::initialize - Scheduling a message" << endl;
+    EV_INFO << "UserGeneratorBase::initialize - Scheduling a message"
+            << "\n";
 
     // Start execution!
-    cMessage *waitToExecuteMsg = new cMessage (Timer_WaitToExecute.c_str());
-    scheduleAt (simTime()+SimTime(startDelay), waitToExecuteMsg);
+    cMessage *waitToExecuteMsg = new cMessage(Timer_WaitToExecute.c_str());
+    scheduleAt(simTime() + SimTime(startDelay), waitToExecuteMsg);
 
-    EV_INFO << "UserGeneratorBase::initialize - End" << endl;
+    EV_INFO << "UserGeneratorBase::initialize - End"
+            << "\n";
 }
 
+cGate *UserGeneratorBase::getOutGate(cMessage *msg)
+{
+    // If msg arrives from cloud provider
+    if (msg->getArrivalGate() == fromCloudProviderGate)
+        return toCloudProviderGate;
 
-cGate* UserGeneratorBase::getOutGate (cMessage *msg){
-
-    cGate* nextGate;
-
-           // Init...
-           nextGate = nullptr;
-
-           // If msg arrives from cloud provider
-           if (msg->getArrivalGate()==fromCloudProviderGate){
-               nextGate = toCloudProviderGate;
-           }
-
-       return nextGate;
+    return nullptr;
 }
 
-
-void UserGeneratorBase::generateUsersBeforeSimulationStarts (){
-
-    std::vector<CloudUser*>::iterator userTypeIterator;
-    std::vector <CloudUserInstance*> userInstancesLocal;
-    unsigned int currentUserNumber, currentUserInstance, totalUserInstance;
-    CloudUserInstance* newUser;
-    CloudUserInstance* pUser;
-    int  nSize;
+void UserGeneratorBase::generateUsersBeforeSimulationStarts()
+{
+    std::vector<CloudUserInstance *> userInstancesLocal;
+    unsigned int currentUserNumber, totalUserInstance;
+    CloudUserInstance *newUser, *pUser;
+    int nSize;
 
     // Init...
-    userTypeIterator = userTypes.begin();
     currentUserNumber = totalUserInstance = 0;
 
-    EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - Init" << endl;
+    EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - Init\n";
 
     // Process each user type to generate the user instances
-    while((userTypeIterator != userTypes.end()))
+    for (auto &user : userTypes)
     {
 
-        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 0" << endl;
+        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 0\n";
 
         // New vector of user instances
         userInstancesLocal.clear();
 
-        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 1" << endl;
+        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 1\n";
+
         // Generate the corresponding instances of the current user type
-        for (currentUserInstance = 0; currentUserInstance < (*userTypeIterator)->getNumInstances(); currentUserInstance++){
+        for (int currentUserInstance = 0; currentUserInstance < user->getNumInstances(); currentUserInstance++)
+        {
+            EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 2\n";
 
-            EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 2" << endl;
             // Create a new user instance
-            newUser = createCloudUserInstance (*userTypeIterator, totalUserInstance, currentUserNumber, currentUserInstance, (*userTypeIterator)->getNumInstances());
+            newUser = createCloudUserInstance(user, totalUserInstance, currentUserNumber, currentUserInstance, user->getNumInstances());
 
-            EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 3" << endl;
+            EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 3\n";
+
             // Insert current user instance into the corresponding vector
             userInstancesLocal.push_back(newUser);
-            userHashMap[newUser->getUserID()]=newUser;
+            userHashMap[newUser->getId()] = newUser;
 
-            EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 4" << endl;
-            //update user instance
+            EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 4\n";
+            // update user instance
             totalUserInstance++;
 
             userInstances.push_back(newUser);
         }
 
-
-        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 5" << endl;
+        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 5\n";
         // Insert current user instances in the global users vector
         groupOfUsers.push_back(userInstancesLocal);
 
         // Process next user type
-        userTypeIterator++;
         currentUserNumber++;
 
-        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 6" << endl;
+        EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 6\n";
     }
 
     generateUserArrivalTimes();
 
-    EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - End" << endl;
+    EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - End\n";
 }
 
-void UserGeneratorBase::generateUserArrivalTimes() {
-    SM_UserVM *userVm;
-    CloudUserInstance *pUserInstance;
-    CloudUserInstanceTrace *pUserInstanceTrace;
-    SimTime lastTime;
-
-    m_dInitSim = simTime()+SimTime(startDelay);
-
-    lastTime = 0;
+void UserGeneratorBase::generateUserArrivalTimes()
+{
+    SimTime lastTime = 0;
+    m_dInitSim = simTime() + SimTime(startDelay);
 
     if (shuffleUsers)
         generateShuffledUsers();
 
-    for (int i = 0; i < userInstances.size(); i++)
-      {
-        // Get current user
-        pUserInstance = userInstances.at(i);
+    for (auto &userInstance : userInstances)
+    {
+        auto userVm = createVmRequest(userInstance);
 
+        if (userVm != nullptr)
+            userInstance->setRequestVmMsg(userVm);
 
-        userVm = createVmRequest(pUserInstance);
-
-        if (userVm != nullptr) pUserInstance->setRequestVmMsg(userVm);
-
-        pUserInstanceTrace = dynamic_cast<CloudUserInstanceTrace*>(pUserInstance);
-        if (pUserInstanceTrace == nullptr) {
-            lastTime = getNextTime(pUserInstance, lastTime);
+        // FIXME: Maybe this could be done better
+        auto pUserInstanceTrace = dynamic_cast<CloudUserInstanceTrace *>(userInstance);
+        if (pUserInstanceTrace == nullptr)
+        {
             // Set init and arrival time!
-            pUserInstance->setInitTime(lastTime);
-            pUserInstance->setArrival2Cloud(lastTime);
+            lastTime = getNextTime(userInstance, lastTime);
+            auto times = userInstance->getInstanceTimesForUpdate();
+            times.initTime = lastTime;
+            times.arrival2Cloud = lastTime;
         }
-
-      }
+    }
 }
 
 SimTime UserGeneratorBase::getNextTime(CloudUserInstance *pUserInstance, SimTime last)
@@ -188,22 +171,25 @@ SimTime UserGeneratorBase::getNextTime(CloudUserInstance *pUserInstance, SimTime
     SimTime next;
 
     if (intervalBetweenUsers)
-      {
+    {
         if (last > 0)
             next = SimTime(distribution->doubleValue()) + last;
         else
             next = m_dInitSim;
-      }
-    else if (activeCycles) {
+    }
+    else if (activeCycles)
+    {
         next = SimTime(distribution->doubleValue()) + m_dInitSim;
     }
     else
-      {
+    {
         int cycle = 0;
         next = SimTime(distribution->doubleValue());
 
-        if (numberOfCycles > 1) {
-            do {
+        if (numberOfCycles > 1)
+        {
+            do
+            {
                 cycle = cycleDistribution->intValue();
             } while (cycle < 1 || cycle > numberOfCycles);
             cycle--;
@@ -213,245 +199,213 @@ SimTime UserGeneratorBase::getNextTime(CloudUserInstance *pUserInstance, SimTime
 
         while (((isolateCycle || cycle == 0) && next < 0) ||
                ((isolateCycle || cycle == numberOfCycles - 1) && next > durationOfCycle) ||
-               next + offset < 0 || next + offset > durationOfCycle * numberOfCycles) {
+               next + offset < 0 || next + offset > durationOfCycle * numberOfCycles)
+        {
             next = SimTime(distribution->doubleValue());
         }
 
         next = m_dInitSim + next + offset;
-      }
+    }
 
     return next;
 }
 
+SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
+{
+    int nCollectionNumber;
+    std::string userId;
 
-SM_UserVM* UserGeneratorBase::createVmRequest(
-        CloudUserInstance *pUserInstance) {
-    int nVmIndex, nCollectionNumber, nInstances;
-    double dRentTime;
-    std::string userId, vmType, instanceId;
-    SM_UserVM *pUserRet;
-    VmInstance *pVmInstance;
-    VmInstanceCollection *pVmCollection;
+    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - Init\n";
 
-    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
-
-    pUserRet = nullptr;
-
-    nVmIndex = 0;
-
-    if (pUserInstance != nullptr) {
-        pUserInstance->setRentTimes(maxStartTime_t1, nRentTime_t2,
-                maxSubTime_t3, maxSubscriptionTime);
-        nCollectionNumber = pUserInstance->getNumberVmCollections();
-        userId = pUserInstance->getUserID();
-
-        EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - UserId: " << userId
-                        << " | maxStartTime_t1: " << maxStartTime_t1
-                        << " | rentTime_t2: " << nRentTime_t2
-                        << " | maxSubTime: " << maxSubTime_t3
-                        << " | MaxSubscriptionTime:"
-                        << maxSubscriptionTime << endl;
-
-        if (nCollectionNumber > 0 && userId.size() > 0) {
-            //Creation of the message
-            pUserRet = createVmMessage();
-            pUserRet->setUserID(userId.c_str());
-            pUserRet->setIsResponse(false);
-            pUserRet->setOperation(SM_VM_Req);
-
-            //Get all the collections and all the instances!
-            for (int i = 0; i < nCollectionNumber; i++) {
-                pVmCollection = pUserInstance->getVmCollection(i);
-                if (pVmCollection) {
-                    nInstances = pVmCollection->getNumInstances();
-                    dRentTime = pVmCollection->getRentTime() * 3600;
-                    //Create a loop to insert all the instances.
-                    vmType = pVmCollection->getVmType();
-                    for (int j = 0; j < nInstances; j++) {
-                        pVmInstance = pVmCollection->getVmInstance(j);
-                        if (pVmInstance != NULL) {
-                            instanceId = pVmInstance->getVmInstanceId();
-                            pUserRet->createNewVmRequest(vmType, instanceId,
-                                    maxStartTime_t1, dRentTime, maxSubTime_t3,
-                                    maxSubscriptionTime);
-                        }
-                    }
-                } else {
-                    EV_TRACE
-                                    << "WARNING! [UserGenerator] The VM collection is empty"
-                                    << endl;
-                    throw omnetpp::cRuntimeError(
-                            "[UserGenerator] The VM collection is empty!");
-                }
-            }
-        } else {
-            EV_TRACE
-                            << "WARNING! [UserGenerator] Collection or User-ID malformed"
-                            << endl;
-            throw omnetpp::cRuntimeError(
-                    "[UserGenerator] Collection or User-ID malformed!");
-        }
-    } else {
-        EV_INFO
-                       << "UserGenerator::createNextVmRequest - The user instance is null"
-                       << endl;
+    if (pUserInstance == nullptr)
+    {
+        EV_INFO << "UserGenerator::createNextVmRequest - The user instance is null\n";
+        return nullptr;
     }
 
-    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End" << endl;
+    pUserInstance->setRentTimes(timeoutsTemplate);
+    nCollectionNumber = pUserInstance->getNumberVmCollections();
+    userId = pUserInstance->getId();
 
+    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - UserId: " << userId
+             << " | maxStartTime_t1: " << timeoutsTemplate.maxStartTime
+             << " | rentTime_t2: " << timeoutsTemplate.nRentTime
+             << " | maxSubTime: " << timeoutsTemplate.maxSubTime
+             << " | MaxSubscriptionTime:" << timeoutsTemplate.maxSubscriptionTime << "\n";
+
+    if (nCollectionNumber <= 0 || userId.size() <= 0)
+    {
+        EV_TRACE << "WARNING! [UserGenerator] Collection or User-ID malformed\n";
+        throw cRuntimeError("[UserGenerator] Collection or User-ID malformed!");
+    }
+
+    // Creation of the message
+    auto pUserRet = createVmMessage();
+    pUserRet->setUserID(userId.c_str());
+    pUserRet->setIsResponse(false);
+    pUserRet->setOperation(SM_VM_Req);
+
+    // Get all the collections and all the instances!
+    for (const auto &vmCollection : pUserInstance->allVmCollections())
+    {
+        double dRentTime = vmCollection->getRentTime() * 3600; // From hours to seconds
+        std::string vmType = vmCollection->getVmType();
+
+        // Create a loop to insert all the instances.
+        for (const auto &instance : vmCollection->allInstances())
+        {
+            std::string instanceId = instance->getVmInstanceId();
+
+            // FIXME: The VM request has an double to int conversion -- Loss of precision (to say the least)!
+            pUserRet->createNewVmRequest(vmType, instanceId,
+                                         timeoutsTemplate.maxStartTime, dRentTime, timeoutsTemplate.maxSubTime,
+                                         timeoutsTemplate.maxSubscriptionTime);
+        }
+    }
+
+    EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End\n";
     return pUserRet;
 }
 
-/**
- * Shuffle the list of users in order to reproduce the behaviour of the users in a real cloud environment.
- */
 void UserGeneratorBase::generateShuffledUsers()
 {
-    int nRandom, nSize;
+    int nSize = userInstances.size();
 
-    srand((int)33); //TODO: semilla. Comprobar si con las semillas del .ini se puede omitir esta. Así se controla mejor la aletoriedad solo desde el fichero .ini.
-    EV_INFO << "UserGenerator::generateShuffledUsers - Init" << endl;
+    srand((int)33); // TODO: semilla. Comprobar si con las semillas del .ini se puede omitir esta. Así se controla mejor la aletoriedad solo desde el fichero .ini.
+    EV_INFO << "UserGenerator::generateShuffledUsers - Init"
+            << "\n";
+    EV_INFO << "UserGenerator::generateShuffledUsers - instances size: " << nSize << "\n";
 
-    nSize = userInstances.size();
-
-    EV_INFO << "UserGenerator::generateShuffledUsers - instances size: "
-                   << userInstances.size() << endl;
-    //
     for (int i = 0; i < nSize; i++)
-      {
-        nRandom = rand() % nSize;
+    {
+        int nRandom = rand() % nSize;
         std::iter_swap(userInstances.begin() + i,
-                userInstances.begin() + nRandom);
-      }
+                       userInstances.begin() + nRandom);
+    }
 
-    EV_INFO << "UserGenerator::generateShuffledUsers - End" << endl;
+    EV_INFO << "UserGenerator::generateShuffledUsers - End"
+            << "\n";
 }
 
-string UserGeneratorBase::usersIstancesToString (){
-
-    std::vector<std::vector <CloudUserInstance*>>::iterator globalIterator;
-    std::vector <CloudUserInstance*>::iterator usersIterator;
+string UserGeneratorBase::usersIstancesToString()
+{
+    // Main text
     std::ostringstream info;
+    info << "\n"
+         << groupOfUsers.size() << " types of user instances in " << getFullPath() << "\n\n";
 
+    // For each entry in the users vector...
+    for (const auto &users : groupOfUsers)
+    {
+        // Print user type only once
+        if (users.size() > 0)
+            info << "\tUser type:" << users[0]->getType() << "  -  #instances: " << users.size() << "\n\n";
 
-        // Main text
-        info << std::endl << groupOfUsers.size() << " types of user instances in " << getFullPath() << endl << endl;
-
-        // Init iterators
-        globalIterator = groupOfUsers.begin();
-
-        // For each entry in the users vector...
-        while (globalIterator != groupOfUsers.end()){
-
-            // Init iterator for the current user type
-            usersIterator = (*globalIterator).begin();
-
-            // Print user type
-            if (usersIterator != (*globalIterator).end())
-                info << "\tUser type:" << (*usersIterator)->getType() << "  -  #instances: " << (*globalIterator).size() << endl << endl;
-
-            while (usersIterator != (*globalIterator).end()){
-
-                info << "\t  + UserID: " << (*usersIterator)->toString(false, false) << endl;
-
-                // Process next user instance
-                usersIterator++;
-            }
-
-            // Process next user type
-            globalIterator++;
-        }
+        for (const auto &userInstance : users)
+            info << "\t  + UserID: " << userInstance->toString(false, false) << "\n";
+    }
 
     return info.str();
 }
 
-
-CloudUserInstance* UserGeneratorBase::createCloudUserInstance(CloudUser *ptrUser, unsigned int  totalUserInstance, unsigned int  userNumber, int currentInstanceIndex, int totalUserInstances) {
-    return new CloudUserInstance (ptrUser, totalUserInstance, userNumber, currentInstanceIndex, totalUserInstances);
+CloudUserInstance *UserGeneratorBase::createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
+{
+    return new CloudUserInstance(ptrUser, totalUserInstance, userNumber, currentInstanceIndex, totalUserInstances);
 }
 
-SM_UserVM* UserGeneratorBase::createVmMessage() {
+SM_UserVM *UserGeneratorBase::createVmMessage()
+{
     return new SM_UserVM();
 }
 
-CloudUserInstance* UserGeneratorBase::createNewUserFromTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances)
+CloudUserInstance *UserGeneratorBase::createNewUserFromTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances)
 {
-    CloudUserInstance* pNewUser;
-    Application* pApp=findApplication("AppCPUIntensive");
+    CloudUserInstance *pNewUser;
+    Application *pApp = findApplication("AppCPUIntensive");
     pNewUser = new CloudUserInstanceTrace(jobIn, totalUserInstance, nCurrentNumber, nUserInstance, nTotalInstances, pApp);
     return pNewUser;
 }
 
-CloudUser* UserGeneratorBase::createUserTraceType(){
+CloudUser *UserGeneratorBase::createUserTraceType()
+{
     return new CloudUser("UserTrace", 0);
 }
 
-//Esto va directamente a otra clase
+// Esto va directamente a otra clase
 void UserGeneratorBase::parseTraceFile()
 {
     SM_UserVM *userVm;
     string strPath;
     vector<Job_t> jobs;
     Job_t singleJob;
-    CloudUserInstance* newUser;
+    CloudUserInstance *newUser;
     int nJobs, nTotalUserInstance;
     double dInitTime;
-    CloudUser* currentUserObject;
+    CloudUser *currentUserObject;
 
-    EV_DEBUG << "UserGeneratorBase::parseTraceFile - Init" << endl;
+    EV_DEBUG << "UserGeneratorBase::parseTraceFile - Init"
+             << "\n";
 
-    //DONE: Esto se debe sacar de un parametro omnet, con = par.
-    //strPath = "/home/pablo/applics/omnetpp-5.0/projects/SIMCAN-2.0/src/Management/traces/LPC.swf";
-    parse_swf( &jobs, strUserTraceFilePath.c_str());
+    // DONE: Esto se debe sacar de un parametro omnet, con = par.
+    // strPath = "/home/pablo/applics/omnetpp-5.0/projects/SIMCAN-2.0/src/Management/traces/LPC.swf";
+    parse_swf(&jobs, strUserTraceFilePath.c_str());
     nJobs = jobs.size();
     nTotalUserInstance = 0;
 
-    //Show the jobs info
-    if(nJobs > 0)
+    // Show the jobs info
+    if (nJobs > 0)
     {
         currentUserObject = createUserTraceType();
         userTypes.push_back(currentUserObject);
 
+        EV_INFO << "UserGeneratorBase::parseTraceFile - Jobs successfully loaded: " << nJobs << "\n";
 
-        EV_INFO << "UserGeneratorBase::parseTraceFile - Jobs successfully loaded: " << nJobs << endl;
-
-        //TODO: Ojo con poner esto a fuego. Debug
-        //for(int i=0;i<nJobs;i++)
-        for(int i=0;i<nJobs;i++)
+        // TODO: Ojo con poner esto a fuego. Debug
+        // for(int i=0;i<nJobs;i++)
+        for (int i = 0; i < nJobs; i++)
         {
             singleJob = jobs.at(i);
-            EV_DEBUG << "UserGeneratorBase::parseTraceFile - Job#" << i << " [" << singleJob.size<< " CPU]" << "[" << singleJob.runtime/3600 << "H]" <<endl;
+            EV_DEBUG << "UserGeneratorBase::parseTraceFile - Job#" << i << " [" << singleJob.size << " CPU]"
+                     << "[" << singleJob.runtime / 3600 << "H]"
+                     << "\n";
 
-            if(singleJob.runtime > 0 && singleJob.size != -1 && singleJob.submit >= traceStartTime && singleJob.submit <= traceEndTime)
+            if (singleJob.runtime > 0 && singleJob.size != -1 && singleJob.submit >= traceStartTime && singleJob.submit <= traceEndTime)
             {
-                //Limit number of vms per user
-                if (singleJob.size>userTraceMaxVms) singleJob.size = userTraceMaxVms;
+                // Limit number of vms per user
+                if (singleJob.size > userTraceMaxVms)
+                    singleJob.size = userTraceMaxVms;
 
-                //TODO: Aqui tendr�a que ser necesario hacer un matching entre el tipo de maquina
-                //y los cpus requeridos por el usuario
+                // TODO: Aqui tendr�a que ser necesario hacer un matching entre el tipo de maquina
+                // y los cpus requeridos por el usuario
 
-                //Para el paper de SUPE, tomamos la referencia de 1 cpu= 1 vmsmall
-                //New user type with the job, and ids.
-                dInitTime = singleJob.submit+startDelay-traceStartTime;
+                // Para el paper de SUPE, tomamos la referencia de 1 cpu= 1 vmsmall
+                // New user type with the job, and ids.
+                dInitTime = singleJob.submit + startDelay - traceStartTime;
                 newUser = createNewUserFromTrace(singleJob, nTotalUserInstance, nTotalUserInstance, nTotalUserInstance, nJobs);
-                newUser->setArrival2Cloud(SimTime(dInitTime));
-                newUser->setInitTime(SimTime(dInitTime));
+
+                // Init the times
+                auto times = newUser->getInstanceTimesForUpdate();
+                times.initTime = dInitTime;
+                times.arrival2Cloud = dInitTime;
+
                 userVm = createVmRequest(newUser);
-                //Create VM request
-                if (userVm != nullptr) newUser->setRequestVmMsg(userVm);
-                userHashMap[newUser->getUserID()]=newUser;
-                EV_DEBUG << "UserGeneratorBase::parseTraceFile - User generated: "<< newUser->getUserID() << endl;
-                //Aqui creo que falta algo, con respecto al otro generador
+                // Create VM request
+                if (userVm != nullptr)
+                    newUser->setRequestVmMsg(userVm);
+                userHashMap[newUser->getId()] = newUser;
+                EV_DEBUG << "UserGeneratorBase::parseTraceFile - User generated: " << newUser->getId() << "\n";
+                // Aqui creo que falta algo, con respecto al otro generador
                 userInstances.push_back(newUser);
 
                 nTotalUserInstance++;
 
-                if(EV_TRACE)
-                    singleJob.write(std::cout,1);
+                if (EV_TRACE)
+                    singleJob.write(std::cout, 1);
             }
         }
     }
-    EV_DEBUG << "UserGeneratorBase::parseTraceFile - End" << endl;
+    EV_DEBUG << "UserGeneratorBase::parseTraceFile - End"
+             << "\n";
 }
 
 //------------------------------------------------------------------------------
@@ -461,34 +415,35 @@ void UserGeneratorBase::parseTraceFile()
 // only "sane" jobs are read, the rest are filtered out. a sane job is a jon
 // with a positive and and a nonnegative runtime.
 //------------------------------------------------------------------------------
-static void parse_swf(vector<Job_t> *jobs, const char* swf_file)
+static void parse_swf(vector<Job_t> *jobs, const char *swf_file)
 {
     // 1- open the SWFfile
     std::ifstream swf(swf_file);
-    if(swf)
+    if (swf)
     {
         // 2- ready...
-            jobs->clear();
-            jobs->reserve(100000);
+        jobs->clear();
+        jobs->reserve(100000);
 
-            // 3- go!
-            int insane=0;
-            for(string line; ! getline(swf,line).eof(); ) {
+        // 3- go!
+        int insane = 0;
+        for (string line; !getline(swf, line).eof();)
+        {
             Job_t job;
-            if( job.read( line.c_str() ) )
-                if( job.runtime >= 0 && job.size > 0 ) // sane job
-                jobs->push_back( job );
+            if (job.read(line.c_str()))
+                if (job.runtime >= 0 && job.size > 0) // sane job
+                    jobs->push_back(job);
                 else
-                insane++;
+                    insane++;
             else
                 std::cout << line << "\n";
-            }
+        }
 
-            // 4- warn if filtered jobs
-            if( insane > 0 )
+        // 4- warn if filtered jobs
+        if (insane > 0)
             fprintf(stderr,
-                "#\n"
-                "# WARNING: %d jobs were filtered out (size<1 or runtime<0)\n",
-                insane);
+                    "#\n"
+                    "# WARNING: %d jobs were filtered out (size<1 or runtime<0)\n",
+                    insane);
     }
 }

@@ -31,7 +31,7 @@ module EdgeNode
         };
         
         // Let the scheduler know the number of cores and the non virtual environement
-        scheduler: <default("CpuShcedulerRR")> like ICpuScheduler
+        scheduler: <default("CpuSchedulerRR")> like ICpuScheduler
         {
             numCpuCores = numCpuCores;
             isVirtualHardware = false;

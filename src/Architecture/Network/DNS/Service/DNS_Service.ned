@@ -7,7 +7,7 @@ import inet.applications.contract.IApp;
 // @date 2023-10-6
 simple DNS_Service like IApp {
     parameters:
-    	@class(DNS_Service);
+    	@class(dns::DNS_Service);
     gates:
         input socketIn @labels(ITransportPacket/up);
         output socketOut @labels(ITransportPacket/down);

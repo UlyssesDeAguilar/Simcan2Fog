@@ -17,8 +17,9 @@
 #define MANAGEMENT_PARSER_APPLISTPARSER_H_
 
 #include "Parser.h"
-#include "Management/dataClasses/Application.h"
+#include "Management/dataClasses/Applications/Application.h"
 
+// FIXME: Update this class, won't work with the new Application parameters !
 class AppListParser: public Parser<Application> {
 public:
     /**

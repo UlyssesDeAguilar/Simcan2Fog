@@ -17,9 +17,9 @@
 #define MANAGEMENT_PARSER_USERLISTPARSER_H_
 
 #include "Parser.h"
-#include "Management/dataClasses/VirtualMachine.h"
-#include "Management/dataClasses/CloudUser.h"
-#include "Management/dataClasses/Sla.h"
+#include "Management/dataClasses/VirtualMachines/VirtualMachine.h"
+#include "Management/dataClasses/Users/CloudUser.h"
+#include "Management/dataClasses/SLAs/Sla.h"
 
 class UserListParser: public Parser<CloudUser> {
 public:

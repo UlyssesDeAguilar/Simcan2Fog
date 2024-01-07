@@ -31,7 +31,9 @@ simple UserGenerator_simple extends UserGeneratorBase{
         @statisticTemplate[notifySingleTemplate](record=vector);
         @statistic[timeout](record=vector);
         @statisticTemplate[timeoutSingleTemplate](record=vector);
-        double maxStartTime_t1 = default (5.0);
+    
+    
+    double maxStartTime_t1 = default (5.0);
 		double nRentTime_t2 = default (5.0);
 		double maxSubTime_t3 = default (5.0);
 		double maxSubscriptionTime;

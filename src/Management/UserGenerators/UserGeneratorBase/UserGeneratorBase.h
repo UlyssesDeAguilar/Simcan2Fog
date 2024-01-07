@@ -2,169 +2,121 @@
 #define __SIMCAN_2_0_USERGENERATOR_BASE_H_
 
 #include "Management/CloudManagerBase/CloudManagerBase.h"
-#include "Management/dataClasses/CloudUserInstance.h"
-#include "Management/dataClasses/CloudUserInstanceTrace.h"
+#include "Management/dataClasses/Users/CloudUserInstance.h"
+#include "Management/dataClasses/Users/CloudUserInstanceTrace.h"
 #include "Messages/SM_UserVM_m.h"
 
 #include <fstream>
 
 /**
- * Base class for User generators.
- *
- * This class parses and manages cloud users
+ * @brief Base class for User generators.
+ * @details class parses and manages cloud users
+ * @author Pablo Cerro Cañizares
  */
-class UserGeneratorBase: public CloudManagerBase{
+class UserGeneratorBase : public CloudManagerBase
+{
 
-    protected:
+protected:
+    typedef std::map<std::string, CloudUserInstance *> UserMap;
+    typedef std::vector<CloudUserInstance *> UserInstanceList;
 
-        /** Vector that contains the user instances */
-        std::vector<std::vector <CloudUserInstance*>> groupOfUsers;
+    std::vector<std::vector<CloudUserInstance *>> groupOfUsers; // Vector that contains the user instances
+    UserInstanceList userInstances;                             // Vector that contains all the cloud (individual) user instances
+    UserMap userHashMap;                                        // Hashmap to accelerate the management of the users (EDIT: It is an RB tree actually)
 
-        /** Vector that contains all the cloud (individual) user instances */
-        std::vector<CloudUserInstance*> userInstances;
+    int nUserInstancesFinished; // ??
+    int nUserIndex;             // Index of the next user which must be processed
 
-        /** */
-        int nUserInstancesFinished;
+    cGate *fromCloudProviderGate; // Input gate from DataCentre
+    cGate *toCloudProviderGate;   // Output gates to DataCentre
 
-        /**Index of the next user which must be processed */
-        int nUserIndex;
+    /* Flags */
+    bool showUserInstances;    // Show parsed user instances
+    bool intervalBetweenUsers; // Flag for generating all the user instances at once
+    bool shuffleUsers;         // Flag for suffling users
+    bool activeCycles;         // ??
 
-        /**Hasmap to accelerate the management of the users*/
-        std::map<std::string, CloudUserInstance*> userHashMap;
+    InstanceRequestTimes timeoutsTemplate;  // The "maximum" times acceptable by users
+    string strUserTraceFilePath;
 
-        /** Input gate from DataCentre. */
-        cGate* fromCloudProviderGate;
+    int userTraceMaxVms;
 
-        /** Output gates to DataCentre. */
-        cGate* toCloudProviderGate;
+    double startDelay;  // Starting time delay
+    cPar *distribution; // Interval gap between users arrivals
 
-        /** Show parsed user instances */
-        bool showUserInstances;
+    int numberOfCycles;
+    bool isolateCycle;
+    double durationOfCycle;
+    cPar *cycleDistribution;
 
-        /** Flag for generating all the user instances at once */
-        bool intervalBetweenUsers;
+    int traceStartTime;
+    int traceEndTime;
 
-        bool shuffleUsers;
+    // TODO: Delete
+    SimTime m_dInitSim;
 
-        string strUserTraceFilePath;
+    /**
+     * Destructor
+     */
+    ~UserGeneratorBase();
 
-        int userTraceMaxVms;
+    /**
+     * Initialize method. Invokes the parsing process to allocate the existing cloud users in the corresponding data structures.
+     */
+    virtual void initialize();
 
-        /**< Starting time delay */
-        double startDelay;
+    /**
+     * Get the out Gate to the module that sent <b>msg</b>.
+     *
+     * @param msg Arrived message.
+     * @return Gate (out) to module that sent <b>msg</b> or \a nullptr if gate not found.
+     */
+    virtual cGate *getOutGate(cMessage *msg) override;
 
-        /** Interval gap between users arrivals */
-        cPar *distribution;
+    /**
+     * Generates the collection of user instances that were defined in the initial configuration.
+     *
+     * This process is performed before the simulation starts (in cold).
+     *
+     */
+    virtual void generateUsersBeforeSimulationStarts();
 
-        bool activeCycles;
-        int numberOfCycles;
+    /**
+     * Shuffles the arrival time of the generated users
+     */
+    virtual void generateShuffledUsers();
 
-        double durationOfCycle;
+    virtual void generateUserArrivalTimes();
 
-        bool isolateCycle;
+    /**
+     * Parses the current content of the users vector into a string.
+     *
+     * @return String containing the current status of the users vector.
+     */
+    virtual string usersIstancesToString();
 
-        cPar *cycleDistribution;
+    virtual CloudUserInstance *createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 
-        int traceStartTime;
+    void parseTraceFile();
 
-        int traceEndTime;
+    /**
+     * Builds the VM request which corresponds with the provided user instance.
+     */
+    virtual SM_UserVM *createVmRequest(CloudUserInstance *pUserInstance);
 
-        //TODO: Delete
-        SimTime m_dInitSim;
+    /**
+     * Returns the time the next user will arrive to the cloud
+     *
+     * @param pUserInstance Pointer to the user instance.
+     * @param last Last user arrival time.
+     */
+    virtual SimTime getNextTime(CloudUserInstance *pUserInstance, SimTime last);
 
-        // Timeouts
-        double maxStartTime_t1;
-        double nRentTime_t2;
-        double maxSubTime_t3;
-        double maxSubscriptionTime;
+    virtual SM_UserVM *createVmMessage();
 
-        /**
-         * Destructor
-         */
-        ~UserGeneratorBase();
+    virtual CloudUserInstance *createNewUserFromTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances);
 
-        /**
-         * Initialize method. Invokes the parsing process to allocate the existing cloud users in the corresponding data structures.
-         */
-        virtual void initialize();
-
-
-       /**
-        * Get the out Gate to the module that sent <b>msg</b>.
-        *
-        * @param msg Arrived message.
-        * @return Gate (out) to module that sent <b>msg</b> or \a nullptr if gate not found.
-        */
-        virtual cGate* getOutGate (cMessage *msg) override;
-
-       /**
-        * Generates the collection of user instances that were defined in the initial configuration.
-        *
-        * This process is performed before the simulation starts (in cold).
-        *
-        */
-        virtual void generateUsersBeforeSimulationStarts ();
-
-        /**
-         * Shuffles the arrival time of the generated users
-         */
-        virtual void generateShuffledUsers();
-
-        virtual void generateUserArrivalTimes();
-
-        /**
-         * Parses the current content of the users vector into a string.
-         *
-         * @return String containing the current status of the users vector.
-         */
-        virtual string usersIstancesToString ();
-
-        virtual CloudUserInstance* createCloudUserInstance(CloudUser *ptrUser, unsigned int  totalUserInstance, unsigned int  userNumber, int currentInstanceIndex, int totalUserInstances);
-
-        void parseTraceFile();
-
-        /**
-         * Builds the VM request which corresponds with the provided user instance.
-         */
-        virtual SM_UserVM* createVmRequest(CloudUserInstance *pUserInstance);
-
-        /**
-         * Returns the time the next user will arrive to the cloud
-         *
-         * @param pUserInstance Pointer to the user instance.
-         * @param last Last user arrival time.
-         */
-        virtual SimTime getNextTime(CloudUserInstance *pUserInstance, SimTime last);
-
-        virtual SM_UserVM* createVmMessage();
-
-        virtual CloudUserInstance* createNewUserFromTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances);
-
-        virtual CloudUser* createUserTraceType();
-
-//       /**
-//        * Process a self message.
-//        *
-//        * @param msg Received (self) message.
-//        */
-//        virtual void processSelfMessage (cMessage *msg) = 0;
-//
-//       /**
-//        * Process a request message.
-//        *
-//        * @param sm Incoming message.
-//        */
-//        virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
-//
-//       /**
-//        * Process a response message from an external module.
-//        *
-//        * @param sm Incoming message.
-//        */
-//        virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
-
-
-
+    virtual CloudUser *createUserTraceType();
 };
 
 #endif

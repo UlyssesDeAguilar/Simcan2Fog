@@ -189,12 +189,12 @@ std::string CloudManagerBase::appsToString (){
             // For each application
             for (currentApp=0; currentApp<appTypes.size(); currentApp++){
 
-                info << "\tApplication[" << currentApp << "] --> " << appTypes.at(currentApp)->getAppName()  << ":" << appTypes.at(currentApp)->getType()
+                info << "\tApplication[" << currentApp << "] --> " << appTypes.at(currentApp)->getName()  << ":" << appTypes.at(currentApp)->getType()
                      << " (" << appTypes.at(currentApp)->getNumParameters() << " parameters)" << endl;
 
                 // For each parameter in the current application
                 for (currentParameter = 0; currentParameter < appTypes.at(currentApp)->getNumParameters(); currentParameter++){
-                    info << "\t   + " << appTypes.at(currentApp)->getParameter(currentParameter)->toString() << endl;
+                    info << "\t   + " << appTypes.at(currentApp)->getParameter(currentParameter).toString() << endl;
                 }
 
                 info << endl;
@@ -259,7 +259,7 @@ Application* CloudManagerBase::findApplication (std::string appName){
         // Search...
         while((!found) && (it != appTypes.end())){
 
-            if ((*it)->getAppName() == appName){
+            if ((*it)->getName() == appName){
                 found = true;
                 result = *it;
             }

@@ -235,7 +235,7 @@ Application* UserListParser::findApplication (std::string appName) {
     // Search...
     while (it != appTypes->end())
       {
-        if ((*it)->getAppName().compare(appName) == 0)
+        if ((*it)->getName().compare(appName) == 0)
           {
             result = *it;
             break;

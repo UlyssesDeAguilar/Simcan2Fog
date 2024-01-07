@@ -16,30 +16,30 @@
 class UserGenerator_simple: public UserGeneratorBase {
 
 protected:
-    //Timeouts active
-    bool bMaxStartTime_t1_active;
+    typedef std::map<std::string, std::function<void(cMessage*)>> CallbackStrMap;
+    typedef std::map<int, std::function<CloudUserInstance*(SIMCAN_Message*)>> CallbackIntMap;
+    typedef std::map<std::string, simsignal_t> SignalMap;
 
-
-    double offerAcceptanceRate;
+    bool bMaxStartTime_t1_active; // Timeouts active
+    double offerAcceptanceRate;   // Rate or probability of acceptance
 
     // Handlers hashMap
-    std::map<std::string, std::function<void(cMessage*)>> selfMessageHandlers;
-    std::map<std::string, std::function<void(cMessage*)>> requestHandlers;
-    std::map<int, std::function<CloudUserInstance*(SIMCAN_Message*)>> responseHandlers;
+    CallbackStrMap selfMessageHandlers;
+    CallbackStrMap requestHandlers;
+    CallbackIntMap responseHandlers;
 
     // Signals
     simsignal_t  requestSignal;
     simsignal_t  responseSignal;
-    std::map<std::string, simsignal_t> executeSignal;
-    std::map<std::string, simsignal_t> okSignal;
-    std::map<std::string, simsignal_t> failSignal;
-    std::map<std::string, simsignal_t> subscribeSignal;
-    std::map<std::string, simsignal_t> notifySignal;
-    std::map<std::string, simsignal_t> timeoutSignal;
+    SignalMap executeSignal;
+    SignalMap okSignal;
+    SignalMap failSignal;
+    SignalMap subscribeSignal;
+    SignalMap notifySignal;
+    SignalMap timeoutSignal;
 
     std::map<std::string, int> extensionTimeHashMap;
 
-    /** Iterators */
     /**
      * Destructor
      */
@@ -171,8 +171,6 @@ protected:
      * Handles the App response sent from the CloudProvider
      * @param userApp incoming message
      */
-
-
     virtual bool hasToSubscribeVm(SM_UserAPP *userApp);
 
     /**
@@ -203,9 +201,11 @@ protected:
     void updateUserApp(SM_UserAPP *userApp);
 
 
-
+    /**
+     *  This is exactly the overloaded < operator
+     */
     inline static bool compareArrivalTime(CloudUserInstance *a, CloudUserInstance *b) {
-        return a->getArrival2Cloud() < b->getArrival2Cloud();
+        return a->getInstanceTimes().arrival2Cloud < b->getInstanceTimes().arrival2Cloud;
     }
 
     virtual void deleteIfEphemeralMessage(SIMCAN_Message *msg);

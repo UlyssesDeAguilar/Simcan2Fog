@@ -12,7 +12,7 @@
 #include "OperatingSystem/Hypervisors/common.h"
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
-#include "Management/dataClasses/Application.h"
+#include "Management/dataClasses/Applications/Application.h"
 #include "Messages/SIMCAN_Message.h"
 #include "Messages/SM_Syscall_m.h"
 #include "Core/cSIMCAN_Core.h"
