@@ -25,7 +25,7 @@ void IotSensor::finish()
 
 void IotSensor::processSelfMessage(cMessage *msg)
 {
-    // This is pretty much a infinite loop
+    // This is pretty much an infinite loop
     sendRequestMessage(ping->dup(), gate("out"));
     scheduleAt(simTime() + updatePeriod, ping);
 }

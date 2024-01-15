@@ -1,6 +1,7 @@
 #include "CloudManagerBase.h"
 
-CloudManagerBase::~CloudManagerBase(){
+CloudManagerBase::~CloudManagerBase()
+{
     vmTypes.clear();
     userTypes.clear();
     appTypes.clear();
@@ -10,8 +11,8 @@ CloudManagerBase::~CloudManagerBase(){
     responseHandlers.clear();
 }
 
-
-void CloudManagerBase::initialize(){
+void CloudManagerBase::initialize()
+{
     // Init super-class
     cSIMCAN_Core::initialize();
 
@@ -22,311 +23,342 @@ void CloudManagerBase::initialize(){
     initializeSelfHandlers();
     initializeRequestHandlers();
     initializeResponseHandlers();
-
 }
 
-void CloudManagerBase::parseConfig() {
+void CloudManagerBase::parseConfig()
+{
     int result;
 
     // Init module parameters
-    showApps = par ("showApps");
+    showApps = par("showApps");
 
     // Parse application list
     result = parseAppList();
 
     // Something goes wrong...
-    if (result == SC_ERROR){
-        error ("Error while parsing application list.");
+    if (result == SC_ERROR)
+    {
+        error("Error while parsing application list.");
     }
-    else if (showApps){
-        EV_DEBUG << appsToString ();
+    else if (showApps)
+    {
+        EV_DEBUG << appsToString();
     }
 
     // Init module parameters
-    showUsersVms = par ("showUsersVms");
+    showUsersVms = par("showUsersVms");
 
     // Parse VMs list
     result = parseVmsList();
 
     // Something goes wrong...
-    if (result == SC_ERROR){
-     error ("Error while parsing VMs list");
+    if (result == SC_ERROR)
+    {
+        error("Error while parsing VMs list");
     }
-    else if (showUsersVms){
-       EV_DEBUG << vmsToString ();
+    else if (showUsersVms)
+    {
+        EV_DEBUG << vmsToString();
     }
 
     // Parse user list
     result = parseUsersList();
 
     // Something goes wrong...
-    if (result == SC_ERROR){
-       error ("Error while parsing users list");
+    if (result == SC_ERROR)
+    {
+        error("Error while parsing users list");
     }
-    else if (showUsersVms){
-       EV_DEBUG << usersToString ();
+    else if (showUsersVms)
+    {
+        EV_DEBUG << usersToString();
     }
 }
 
-int CloudManagerBase::parseAppList (){
+int CloudManagerBase::parseAppList()
+{
     int result;
     const char *appListChr;
 
-    appListChr= par ("appList");
+    appListChr = par("appList");
     AppListParser appParser(appListChr);
     result = appParser.parse();
-    if (result == SC_OK) {
+    if (result == SC_OK)
+    {
         appTypes = appParser.getResult();
     }
     return result;
 }
 
-int CloudManagerBase::parseVmsList (){
+int CloudManagerBase::parseVmsList()
+{
     int result;
     const char *vmListChr;
 
-    vmListChr= par ("vmList");
+    vmListChr = par("vmList");
     VmListParser vmParser(vmListChr);
     result = vmParser.parse();
-    if (result == SC_OK) {
+    if (result == SC_OK)
+    {
         vmTypes = vmParser.getResult();
     }
     return result;
 }
 
-int CloudManagerBase::parseUsersList (){
+int CloudManagerBase::parseUsersList()
+{
     int result;
     const char *userListChr;
 
-    userListChr= par ("userList");
+    userListChr = par("userList");
     UserListParser userParser(userListChr, &vmTypes, &appTypes);
     result = userParser.parse();
-    if (result == SC_OK) {
+    if (result == SC_OK)
+    {
         userTypes = userParser.getResult();
     }
     return result;
 
-//    int result;
-//    const char *userListChr;
-//
-//    userListChr= par ("userList");
-//    UserListParser userParser(userListChr, &vmTypes, &appTypes);
-//    result = userParser.parse();
-//    if (result == SC_OK) {
-//        userTypes = userParser.getResult();
-//    }
-//    return result;
+    //    int result;
+    //    const char *userListChr;
+    //
+    //    userListChr= par ("userList");
+    //    UserListParser userParser(userListChr, &vmTypes, &appTypes);
+    //    result = userParser.parse();
+    //    if (result == SC_OK) {
+    //        userTypes = userParser.getResult();
+    //    }
+    //    return result;
 }
 
-
-void CloudManagerBase::processSelfMessage (cMessage *msg){
-    std::map<std::string, std::function<void(cMessage*)>>::iterator it;
+void CloudManagerBase::processSelfMessage(cMessage *msg)
+{
+    std::map<std::string, std::function<void(cMessage *)>>::iterator it;
 
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
 
     it = selfHandlers.find(msg->getName());
 
     if (it != selfHandlers.end())
-        it->second(msg);  //Perform the operations...
+        it->second(msg); // Perform the operations...
     else
-        error ("Unknown self message [%s]", msg->getName());
+        error("Unknown self message [%s]", msg->getName());
 
     cancelAndDelete(msg);
 
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End" << endl;
 }
 
-void CloudManagerBase::processRequestMessage (SIMCAN_Message *sm)
+void CloudManagerBase::processRequestMessage(SIMCAN_Message *sm)
 {
-    SM_CloudProvider_Control* userControl;
-    std::map<int, std::function<void(SIMCAN_Message*)>>::iterator it;
+    SM_CloudProvider_Control *userControl;
+    std::map<int, std::function<void(SIMCAN_Message *)>>::iterator it;
 
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
 
     userControl = dynamic_cast<SM_CloudProvider_Control *>(sm);
 
-    if(userControl != nullptr)
-      {
-        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received end of party"  << endl;
-        //Stop the checking process.
+    if (userControl != nullptr)
+    {
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received end of party" << endl;
+        // Stop the checking process.
         bFinished = true;
         cancelAndDelete(userControl);
-      } else {
-          it = requestHandlers.find(sm->getOperation());
+    }
+    else
+    {
+        it = requestHandlers.find(sm->getOperation());
 
-          if (it != requestHandlers.end())
-            {
-              it->second(sm);
-            }
-      }
+        if (it != requestHandlers.end())
+        {
+            it->second(sm);
+        }
+    }
 }
 
-void CloudManagerBase::processResponseMessage (SIMCAN_Message *sm){
-    SM_CloudProvider_Control* userControl;
-    std::map<int, std::function<void(SIMCAN_Message*)>>::iterator it;
+void CloudManagerBase::processResponseMessage(SIMCAN_Message *sm)
+{
+    SM_CloudProvider_Control *userControl;
+    std::map<int, std::function<void(SIMCAN_Message *)>>::iterator it;
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Request Message" << endl;
 
     it = responseHandlers.find(sm->getResult());
 
     if (it != responseHandlers.end())
-      {
-        //Perform the operations...
+    {
+        // Perform the operations...
         it->second(sm);
-      }
+    }
 }
 
-
-
-
-std::string CloudManagerBase::appsToString (){
+std::string CloudManagerBase::appsToString()
+{
 
     std::ostringstream info;
     int currentApp, currentParameter;
 
-        // Main text for the applications of this manager
-        info << std::endl << appTypes.size() << " applications parsed from ManagerBase in " << getFullPath() << endl << endl;
+    // Main text for the applications of this manager
+    info << std::endl
+         << appTypes.size() << " applications parsed from ManagerBase in " << getFullPath() << endl
+         << endl;
 
-            // For each application
-            for (currentApp=0; currentApp<appTypes.size(); currentApp++){
+    // For each application
+    for (currentApp = 0; currentApp < appTypes.size(); currentApp++)
+    {
 
-                info << "\tApplication[" << currentApp << "] --> " << appTypes.at(currentApp)->getName()  << ":" << appTypes.at(currentApp)->getType()
-                     << " (" << appTypes.at(currentApp)->getNumParameters() << " parameters)" << endl;
+        info << "\tApplication[" << currentApp << "] --> " << appTypes.at(currentApp)->getName() << ":" << appTypes.at(currentApp)->getType()
+             << " (" << appTypes.at(currentApp)->getNumParameters() << " parameters)" << endl;
 
-                // For each parameter in the current application
-                for (currentParameter = 0; currentParameter < appTypes.at(currentApp)->getNumParameters(); currentParameter++){
-                    info << "\t   + " << appTypes.at(currentApp)->getParameter(currentParameter).toString() << endl;
-                }
 
-                info << endl;
-            }
+        // For each parameter in the current application
+        for (auto const &parameter: appTypes.at(currentApp)->getAllParameters())
+            info << "\t   + " << *parameter << '\n';
+
+        info << endl;
+    }
 
     info << "---------------- End of parsed Applications in " << getFullPath() << " ----------------" << endl;
 
     return info.str();
 }
 
-
-std::string CloudManagerBase::vmsToString (){
-
-    std::ostringstream info;
-    int i;
-
-        info.str("");
-
-        // Main text for the VMs of this manager
-        info << std::endl << vmTypes.size() << " VMs parsed from ManagerBase in " << getFullPath() << endl << endl;
-
-        // For each VM...
-        for (i=0; i<vmTypes.size(); i++){
-            info << "\tVM[" << i << "]  --> " << vmTypes.at(i)->getType() << " : " << vmTypes.at(i)->featuresToString() << endl;
-        }
-
-        info << endl;
-        info << "---------------- End of parsed VMs in " << getFullPath() << " ----------------" << endl;
-
-    return info.str();
-}
-
-std::string CloudManagerBase::usersToString (){
+std::string CloudManagerBase::vmsToString()
+{
 
     std::ostringstream info;
     int i;
 
-        // Main text for the users of this manager
-        info << std::endl << userTypes.size() << " CloudUsers parsed from ManagerBase in " << getFullPath() << endl << endl;
+    info.str("");
 
-        for (i=0; i<userTypes.size(); i++){
-            info << "\tUser[" << i << "]  --> " << userTypes.at(i)->toString() << endl;
-        }
+    // Main text for the VMs of this manager
+    info << std::endl
+         << vmTypes.size() << " VMs parsed from ManagerBase in " << getFullPath() << endl
+         << endl;
 
-        info << "---------------- End of parsed CloudUsers in " << getFullPath() << " ----------------" << endl;
+    // For each VM...
+    for (i = 0; i < vmTypes.size(); i++)
+    {
+        info << "\tVM[" << i << "]  --> " << vmTypes.at(i)->getType() << " : " << vmTypes.at(i)->featuresToString() << endl;
+    }
+
+    info << endl;
+    info << "---------------- End of parsed VMs in " << getFullPath() << " ----------------" << endl;
 
     return info.str();
 }
 
+std::string CloudManagerBase::usersToString()
+{
 
-Application* CloudManagerBase::findApplication (std::string appName){
+    std::ostringstream info;
+    int i;
 
-    std::vector<Application*>::iterator it;
-    Application* result;
+    // Main text for the users of this manager
+    info << std::endl
+         << userTypes.size() << " CloudUsers parsed from ManagerBase in " << getFullPath() << endl
+         << endl;
+
+    for (i = 0; i < userTypes.size(); i++)
+    {
+        info << "\tUser[" << i << "]  --> " << userTypes.at(i)->toString() << endl;
+    }
+
+    info << "---------------- End of parsed CloudUsers in " << getFullPath() << " ----------------" << endl;
+
+    return info.str();
+}
+
+Application *CloudManagerBase::findApplication(std::string appName)
+{
+
+    std::vector<Application *>::iterator it;
+    Application *result;
     bool found;
 
-        // Init
-        found = false;
-        result = nullptr;
-        it = appTypes.begin();
+    // Init
+    found = false;
+    result = nullptr;
+    it = appTypes.begin();
 
-        // Search...
-        while((!found) && (it != appTypes.end())){
+    // Search...
+    while ((!found) && (it != appTypes.end()))
+    {
 
-            if ((*it)->getName() == appName){
-                found = true;
-                result = *it;
-            }
-            else
-                it++;
+        if ((*it)->getName() == appName)
+        {
+            found = true;
+            result = *it;
         }
+        else
+            it++;
+    }
 
     return result;
 }
 
+VirtualMachine *CloudManagerBase::findVirtualMachine(std::string vmType)
+{
 
-VirtualMachine* CloudManagerBase::findVirtualMachine (std::string vmType){
-
-    std::vector<VirtualMachine*>::iterator it;
-    VirtualMachine* result;
+    std::vector<VirtualMachine *>::iterator it;
+    VirtualMachine *result;
     bool found;
 
-        // Init
-        found = false;
-        result = nullptr;
-        it = vmTypes.begin();
+    // Init
+    found = false;
+    result = nullptr;
+    it = vmTypes.begin();
 
-        // Search...
-        while((!found) && (it != vmTypes.end())){
+    // Search...
+    while ((!found) && (it != vmTypes.end()))
+    {
 
-            if ((*it)->getType() == vmType){
-                found = true;
-                result = (*it);
-            }
-            else
-                it++;
+        if ((*it)->getType() == vmType)
+        {
+            found = true;
+            result = (*it);
         }
+        else
+            it++;
+    }
 
     return result;
 }
 
-CloudUser* CloudManagerBase::findUser (std::string userType){
+CloudUser *CloudManagerBase::findUser(std::string userType)
+{
 
-    std::vector<CloudUser*>::iterator it;
-    CloudUser* result;
+    std::vector<CloudUser *>::iterator it;
+    CloudUser *result;
     bool found;
 
-        // Init
-        found = false;
-        result = nullptr;
-        it = userTypes.begin();
+    // Init
+    found = false;
+    result = nullptr;
+    it = userTypes.begin();
 
-        // Search...
-        while((!found) && (it != userTypes.end())){
+    // Search...
+    while ((!found) && (it != userTypes.end()))
+    {
 
-            if ((*it)->getType() == userType){
-                found = true;
-                result = (*it);
-            }
-            else
-                it++;
+        if ((*it)->getType() == userType)
+        {
+            found = true;
+            result = (*it);
         }
+        else
+            it++;
+    }
 
     return result;
 }
 
-CloudUser* CloudManagerBase::findUserTypeById (std::string strUserId){
+CloudUser *CloudManagerBase::findUserTypeById(std::string strUserId)
+{
 
     string strUserType;
     size_t fromPos, toPos;
-    std::vector<CloudUser*>::iterator it;
-    CloudUser* result;
+    std::vector<CloudUser *>::iterator it;
+    CloudUser *result;
     bool found;
 
     fromPos = strUserId.find_first_of(')');
@@ -334,17 +366,20 @@ CloudUser* CloudManagerBase::findUserTypeById (std::string strUserId){
 
     result = nullptr;
 
-    if (fromPos != string::npos && toPos != string::npos && fromPos < toPos) {
+    if (fromPos != string::npos && toPos != string::npos && fromPos < toPos)
+    {
 
-        strUserType = strUserId.substr(fromPos+1, toPos-fromPos-1);
+        strUserType = strUserId.substr(fromPos + 1, toPos - fromPos - 1);
 
         found = false;
 
         it = userTypes.begin();
 
         // Search...
-        while((!found) && (it != userTypes.end())){
-            if (strUserType.compare((*it)->getType()) == 0) {
+        while ((!found) && (it != userTypes.end()))
+        {
+            if (strUserType.compare((*it)->getType()) == 0)
+            {
                 found = true;
                 result = (*it);
             }
@@ -359,13 +394,13 @@ CloudUser* CloudManagerBase::findUserTypeById (std::string strUserId){
 int CloudManagerBase::getTotalCoresByVmType(std::string strVmType)
 {
     int nRet;
-    VirtualMachine* pVmType;
+    VirtualMachine *pVmType;
 
-    nRet=0;
+    nRet = 0;
 
     pVmType = findVirtualMachine(strVmType);
 
-    if(pVmType != NULL)
+    if (pVmType != NULL)
     {
         nRet = pVmType->getNumCores();
     }
@@ -373,41 +408,41 @@ int CloudManagerBase::getTotalCoresByVmType(std::string strVmType)
     return nRet;
 }
 
-int CloudManagerBase::calculateTotalCoresRequested(SM_UserVM* userVM_Rq)
+int CloudManagerBase::calculateTotalCoresRequested(SM_UserVM *userVM_Rq)
 {
     int nRet, nRequestedVms;
 
-    nRet=nRequestedVms=0;
-    if(userVM_Rq != NULL)
+    nRet = nRequestedVms = 0;
+    if (userVM_Rq != NULL)
     {
         nRequestedVms = userVM_Rq->getTotalVmsRequests();
 
-        for(int i=0;i<nRequestedVms;i++)
+        for (int i = 0; i < nRequestedVms; i++)
         {
-            const VM_Request& vmRequest = userVM_Rq->getVms(i);
+            const VM_Request &vmRequest = userVM_Rq->getVms(i);
 
-            nRet+=getTotalCoresByVmType(vmRequest.strVmType);
+            nRet += getTotalCoresByVmType(vmRequest.strVmType);
         }
     }
-    EV_DEBUG << "User:" << userVM_Rq->getUserID() << " has requested: "<< nRet << " cores" << endl;
+    EV_DEBUG << "User:" << userVM_Rq->getUserID() << " has requested: " << nRet << " cores" << endl;
 
     return nRet;
 }
 
-SM_UserVM_Finish* CloudManagerBase::scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, std::string strVmType, double rentTime)
+SM_UserVM_Finish *CloudManagerBase::scheduleVmMsgTimeout(std::string name, std::string strUserName, std::string strVmId, std::string strVmType, double rentTime)
 {
     SM_UserVM_Finish *pMsg = new SM_UserVM_Finish();
 
     pMsg->setUserID(strUserName.c_str());
     pMsg->setName(name.c_str());
 
-    if(!strVmId.empty())
-        pMsg ->setStrVmId(strVmId.c_str());
+    if (!strVmId.empty())
+        pMsg->setStrVmId(strVmId.c_str());
 
-    if(!strVmType.empty())
-            pMsg ->setStrVmType(strVmType.c_str());
+    if (!strVmType.empty())
+        pMsg->setStrVmType(strVmType.c_str());
 
-    EV_INFO << "Scheduling Msg name " << pMsg << " at "<< simTime().dbl() + rentTime << endl;
+    EV_INFO << "Scheduling Msg name " << pMsg << " at " << simTime().dbl() + rentTime << endl;
     scheduleAt(simTime() + SimTime(rentTime), pMsg);
 
     return pMsg;

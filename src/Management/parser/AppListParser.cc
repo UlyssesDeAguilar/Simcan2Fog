@@ -70,8 +70,8 @@ int AppListParser::parse()
             result = SC_ERROR;
         }
 
-        // FIXME:: READ THE APP PACKAGE HERE
-        std::string package;
+        // FIXME:: READ THE APP PACKAGE HERE -- This fix behaves like the original method in DC manager Base handleUserAppRequest()
+        std::string package =  "simcan2.Applications.UserApps." + instanceTypeStr + "." +  instanceTypeStr;
 
         // Get the number of parameters
         if ((tokenizer.hasMoreTokens()) && (result == SC_OK))
@@ -90,7 +90,7 @@ int AppListParser::parse()
         {
 
             // New AppInstance
-            currentAppObj = new Application(instanceTypeStr, instanceNameStr, package);
+            currentAppObj = new Application(instanceNameStr,instanceTypeStr, package);
             currentParam = 0;
 
             // Read app parameters...
@@ -114,22 +114,6 @@ int AppListParser::parse()
                 {
                     const char *paramTypeChr = tokenizer.nextToken();
                     paramTypeStr = paramTypeChr;
-
-                    /*
-                    if (paramTypeStr.compare("int") == 0)
-                        paramTypeNed = tNedType::INT;
-                    else if (paramTypeStr.compare("double") == 0)
-                        paramTypeNed = NedDouble;
-                    else if (paramTypeStr.compare("bool") == 0)
-                        paramTypeNed = NedBool;
-                    else if (paramTypeStr.compare("string") == 0)
-                        paramTypeNed = NedString;
-                    else
-                    {
-                        EV_ERROR << "Unknown parameter type[" << currentParam << "] for application:" << currentApp << endl;
-                        result = SC_ERROR;
-                    }
-                    */
                 }
                 else
                 {
@@ -137,32 +121,20 @@ int AppListParser::parse()
                     result = SC_ERROR;
                 }
 
-                // Get the parameter unit
+                // Get the parameter value and unit
                 if (tokenizer.hasMoreTokens())
                 {
-                    const char *paramUnitChr = tokenizer.nextToken();
-                    paramUnitStr = paramUnitChr;
+                    const char *paramValueChar = tokenizer.nextToken();
+                    paramValueStr = paramValueChar;
                 }
                 else
                 {
-                    EV_ERROR << "Cannot read parameter unit[" << currentParam << "] for application:" << currentApp << endl;
-                    result = SC_ERROR;
-                }
-
-                // Get the parameter value
-                if (tokenizer.hasMoreTokens())
-                {
-                    const char *paramValueChr = tokenizer.nextToken();
-                    paramValueStr = paramValueChr;
-                }
-                else
-                {
-                    EV_ERROR << "Cannot read parameter value[" << currentParam << "] for application:" << currentApp << endl;
+                    EV_ERROR << "Cannot read parameter value and unit[" << currentParam << "] for application:" << currentApp << endl;
                     result = SC_ERROR;
                 }
 
                 // Create a parameter object FIXME: DEFAULT UNIT - is a problem
-                currentParameterObj = new AppParameter(paramNameStr, paramTypeStr, paramValueStr + paramUnitStr);
+                currentParameterObj = new AppParameter(paramNameStr, paramTypeStr, paramValueStr);
 
                 // Set values...
                 currentAppObj->insertParameter(currentParameterObj);

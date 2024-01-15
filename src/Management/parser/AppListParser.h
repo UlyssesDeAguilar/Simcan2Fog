@@ -36,7 +36,7 @@ protected:
     tNedType paramTypeNed;
     Application* currentAppObj;
     AppParameter* currentParameterObj;
-    std::string instanceNameStr, instanceTypeStr, paramNameStr, paramTypeStr, paramUnitStr, paramValueStr;
+    std::string instanceNameStr, instanceTypeStr, paramNameStr, paramTypeStr, paramValueStr;
 
 };
 

@@ -145,9 +145,9 @@ void EdgeHypervisor::processSyscall(SM_Syscall *request)
         break;
     }
     // TODO: Networking
-    case Syscall::SEND_NETWORK:
+    case Syscall::SEND:
         break;
-    case Syscall::BIND_AND_LISTEN:
+    case Syscall::REGISTER_SERVICE:
         break;
     // Gracefully exit
     case Syscall::EXIT:

@@ -8,6 +8,7 @@ simple FogNode extends cSIMCAN_Core {
         double storageSize @unit(GB) = default(2000GB);
         double storageBandwidth @unit(Mbps) = default(10Mbps);  // It's Mbit/s
         @class(FogNode);                                    // Important for the NED builder
+        @display("i=device/router");
     gates:
         input fromDataCentre;
         output toDataCentre;

@@ -36,12 +36,12 @@ namespace hypervisor
 
     typedef enum
     {
-        READ,            // Read from the disk
-        WRITE,           // Write from the disk
-        EXEC,            // Execute / Calculate
-        SEND_NETWORK,    // Send through network
-        BIND_AND_LISTEN, // Bind and listen to incoming requests (maybe it's the entrypoint for service registration ?)
-        EXIT,            // Finish the process
+        READ,             // Read from disk
+        WRITE,            // Write to disk
+        EXEC,             // Execute / Calculate
+        SEND,             // Send through socket
+        REGISTER_SERVICE, // Register a service and start listening (Port + Subdomain + Name)
+        EXIT,             // Finish the process
     } Syscall;
 
     // TODO: Consider if making the pointers smart pointers!

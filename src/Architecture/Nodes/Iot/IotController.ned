@@ -5,6 +5,7 @@ import simcan2.Core.cSIMCAN_Core;
 simple IotController extends cSIMCAN_Core {
     parameters:
         @class(IotController);
+        @display("i=device/accesspoint");
     gates:
         input fromFog;
         output toFog;
