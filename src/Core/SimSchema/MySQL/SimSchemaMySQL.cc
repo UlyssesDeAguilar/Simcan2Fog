@@ -1,18 +1,64 @@
 #include "SimSchemaMySQL.h"
+using namespace simschema;
 Define_Module(SimSchemaMySQL);
 
 const SimSchemaMySQL::QueryDefinitionArray SimSchemaMySQL::queriesDefinition = {
+    // APP_DATA
     R"(SELECT apps.name, parameters, app_models.name as type, package, interface 
     FROM apps JOIN app_models ON apps.model_id = app_models.id
     WHERE apps.name = ?)",
+    // VM_DATA
     "SELECT type,cost,cores,scu,memory,disk FROM vms WHERE type = ?",
+    // SLA_DATA
     R"(SELECT vms.type, sla_vms.cost, increase, discount, compensation
     FROM sla JOIN sla_vms ON sla.id = sla_id JOIN vms ON vm_id = vms.id 
     WHERE sla.type = ?)",
+    // VM_COST
     R"(SELECT sla_vms.cost, increase, discount, compensation
     FROM sla JOIN sla_vms ON sla.id = sla_id JOIN vms ON vm_id = vms.id 
-    WHERE sla.type = ? AND vms.type = ?)"
-};
+    WHERE sla.type = ? AND vms.type = ?)",
+    // USER_BASE_INFO
+    R"(
+SELECT
+    users.name, users.priority, sla.type as sla_type, experiment_users.instances
+FROM
+    experiment
+    JOIN experiment_users ON experiment.id = experiment_users.experiment_id
+    JOIN users ON experiment_users.user_id = users.id
+    JOIN sla ON users.sla_id = sla.id
+WHERE
+    users.name = ? AND experiment.name = ?)",
+    // SIM_USERS
+    R"(
+SELECT
+    users.name, users.priority, sla.type as sla_type, experiment_users.instances
+FROM
+    experiment
+    JOIN experiment_users ON experiment.id = experiment_users.experiment_id
+    JOIN users ON experiment_users.user_id = users.id
+    JOIN sla ON users.sla_id = sla.id
+WHERE
+    experiment.name = ?)",
+    // APP_INFO
+    R"(
+SELECT 
+    user_apps.instances, apps.name
+FROM
+    users
+    JOIN user_apps ON users.id = user_apps.user_id
+    JOIN apps ON apps.id = user_apps.app_id
+WHERE
+    users.name = ?)",
+    // VM_INFO
+    R"(
+SELECT
+    user_vms.instances, user_vms.rent_time, vms.type
+FROM
+    users
+    JOIN user_vms ON users.id = user_vms.user_id
+    JOIN vms ON vms.id = user_vms.vm_id
+WHERE
+    users.name = ?)"};
 
 // Abbreviation for convenience
 using nlohmann::json;
@@ -74,7 +120,7 @@ void SimSchemaMySQL::attemptReconnect()
     deleteStatements();
 
     // Actual attempt to reconnect
-    if(!connection->reconnect())
+    if (!connection->reconnect())
         throw sql::SQLException("Unable to reconnect with the database !");
 
     // Reload the prepared statements
@@ -107,6 +153,9 @@ SimSchemaMySQL::executeStatement(Queries selectedQuery, std::function<void(sql::
 std::unique_ptr<Application>
 SimSchemaMySQL::searchApp(const std::string &name)
 {
+    // Notify the kernel
+    Enter_Method_Silent("Query App : %s\n", name.c_str());
+
     // Bind and run query
     auto binder = [name](sql::PreparedStatement *s)
     {
@@ -155,6 +204,9 @@ SimSchemaMySQL::searchApp(const std::string &name)
 std::unique_ptr<VirtualMachine>
 SimSchemaMySQL::searchVirtualMachine(const std::string &name)
 {
+    // Notify the kernel
+    Enter_Method_Silent("Query VM : %s\n", name.c_str());
+
     // Bind and run query
     auto binder = [name](sql::PreparedStatement *s)
     {
@@ -182,6 +234,9 @@ SimSchemaMySQL::searchVirtualMachine(const std::string &name)
 std::unique_ptr<Sla>
 SimSchemaMySQL::searchSLA(const std::string &name)
 {
+    // Notify the kernel
+    Enter_Method_Silent("Query SLA : %s\n", name.c_str());
+
     // Bind and run query
     auto binder = [name](sql::PreparedStatement *s)
     {
@@ -217,6 +272,9 @@ SimSchemaMySQL::searchSLA(const std::string &name)
 std::unique_ptr<Sla::VMCost>
 SimSchemaMySQL::searchVMCost(const std::string &sla, const std::string &vmType)
 {
+    // Notify the kernel
+    Enter_Method_Silent("Query VMCost => sla: %s - vmType: %s\n", sla.c_str(), vmType.c_str());
+
     // Bind and run query
     auto binder = [sla, vmType](sql::PreparedStatement *s)
     {
@@ -237,4 +295,151 @@ SimSchemaMySQL::searchVMCost(const std::string &sla, const std::string &vmType)
                                    .discount = static_cast<double>(res->getDouble("discount")),
                                    .compensation = static_cast<double>(res->getDouble("compensation"))});
     return std::unique_ptr<Sla::VMCost>(vmCost);
+}
+
+std::unique_ptr<UserBaseInfo>
+SimSchemaMySQL::searchUserBaseInfo(const std::string &user, const std::string &experiment)
+{
+    // Notify the kernel
+    Enter_Method_Silent("Query UserBasicInfo => user: %s from experiment: %s\n", user.c_str(), experiment.c_str());
+
+    // Bind and run query
+    auto binder = [user, experiment](sql::PreparedStatement *s)
+    {
+        s->setString(1, user);
+        s->setString(2, experiment);
+    };
+    auto res = executeStatement(Queries::USER_BASE_INFO, binder);
+
+    // In the case we did not find any match or the query failed
+    if (!res || res->rowsCount() == 0)
+        return nullptr;
+
+    // Load row and retrieve the basic info
+    res->next();
+
+    auto base = new UserBaseInfo();
+    base->userName = res->getString("name").asStdString();
+    base->numInstances = res->getInt("instances");
+    base->slaId = res->getString("sla_type").asStdString();
+    base->priority = res->getInt("priority") == 1 ? tPriorityType::Priority : tPriorityType::Regular;
+
+    return std::unique_ptr<UserBaseInfo>(base);
+}
+
+DataList<UserBaseInfo>
+SimSchemaMySQL::searchUsersInExperiment(const std::string &experiment)
+{
+    // Notify the kernel
+    Enter_Method_Silent("Query users in experiment: %s", experiment.c_str());
+
+    // Bind and run query
+    auto binder = [experiment](sql::PreparedStatement *s)
+    {
+        s->setString(1, experiment);
+    };
+    auto res = executeStatement(Queries::SIM_USERS, binder);
+
+    // In the case we did not find any match or the query failed
+    if (!res || res->rowsCount() == 0)
+        return nullptr;
+
+    // Create vector
+    auto usersList = DataList<UserBaseInfo>(new std::vector<UserBaseInfo>());
+
+    // We know the rows -> help the vector
+    usersList->reserve(res->rowsCount());
+
+    // Load rows and retrieve the basic info
+    while (res->next())
+    {
+        // Allocate in place the element
+        usersList->emplace_back();
+        auto& base = usersList->back();
+
+        // Fill in with reference
+        base.userName = res->getString("name").asStdString();
+        base.numInstances = res->getInt("instances");
+        base.slaId = res->getString("sla_type").asStdString();
+        base.priority = res->getInt("priority") == 1 ? tPriorityType::Priority : tPriorityType::Regular;
+    }
+
+    return usersList;
+}
+
+DataList<UserAppInfo>
+SimSchemaMySQL::searchUserApps(const std::string &user) 
+{
+    // Notify the kernel
+    Enter_Method_Silent("Query requested apps of user: %s", user.c_str());
+
+    // Bind and run query
+    auto binder = [user](sql::PreparedStatement *s)
+    {
+        s->setString(1, user);
+    };
+    auto res = executeStatement(Queries::APP_INFO, binder);
+
+    // In the case we did not find any match or the query failed
+    if (!res || res->rowsCount() == 0)
+        return nullptr;
+
+    // Create vector
+    auto appsList = DataList<UserAppInfo>(new std::vector<UserAppInfo>());
+
+    // We know the rows -> help the vector
+    appsList->reserve(res->rowsCount());
+
+    // Load rows and retrieve the basic info
+    while (res->next())
+    {
+        // Allocate in place the element
+        appsList->emplace_back();
+        auto& base = appsList->back();
+
+        // Fill in with reference
+        base.appName = res->getString("name").asStdString();
+        base.numInstances = res->getInt("instances");
+    }
+
+    return appsList;
+}
+
+DataList<UserVmInfo>
+SimSchemaMySQL::searchUserVms(const std::string &user) 
+{
+    // Notify the kernel
+    Enter_Method_Silent("Query requested vms of user: %s", user.c_str());
+
+    // Bind and run query
+    auto binder = [user](sql::PreparedStatement *s)
+    {
+        s->setString(1, user);
+    };
+    auto res = executeStatement(Queries::VM_INFO, binder);
+
+    // In the case we did not find any match or the query failed
+    if (!res || res->rowsCount() == 0)
+        return nullptr;
+
+    // Create vector
+    auto vmsList = DataList<UserVmInfo>(new std::vector<UserVmInfo>());
+
+    // We know the rows -> help the vector
+    vmsList->reserve(res->rowsCount());
+
+    // Load rows and retrieve the basic info
+    while (res->next())
+    {
+        // Allocate in place the element
+        vmsList->emplace_back();
+        auto& base = vmsList->back();
+
+        // Fill in with reference
+        base.type = res->getString("type").asStdString();
+        base.numInstances = res->getInt("instances");
+        base.nRentTime = res->getInt("rent_time");
+    }
+
+    return vmsList;
 }

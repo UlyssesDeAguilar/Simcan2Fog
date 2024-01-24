@@ -1,46 +1,45 @@
 /*
-CREATE USER 'sim' IDENTIFIED BY 'change-me';
-
-GRANT ALL
-    ON simcan2fog.*
-    TO 'sim'@'%';
-
-GRANT SELECT, INSERT, UPDATE ON simcan2fog.* TO 'sim'@'%';
-*/
-
+ CREATE USER 'sim' IDENTIFIED BY 'change-me';
+ 
+ GRANT ALL
+ ON simcan2fog.*
+ TO 'sim'@'%';
+ 
+ GRANT SELECT, INSERT, UPDATE ON simcan2fog.* TO 'sim'@'%';
+ */
 -- VM definitions
-CREATE TABLE vms
-(
-    id           INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    type         VARCHAR(20)  NOT NULL UNIQUE,
-    cost         DECIMAL(5,2) NOT NULL, 
-    cores        INT unsigned,
-    scu          DOUBLE PRECISION,  -- Scientific Computing Unit
-    disk         DOUBLE PRECISION,  -- GB
-    memory       DOUBLE PRECISION   -- GB
+CREATE TABLE vms (
+    id INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(20) NOT NULL UNIQUE,
+    cost DECIMAL(5, 2) NOT NULL,
+    cores INT unsigned,
+    scu DOUBLE PRECISION,
+    disk DOUBLE PRECISION,
+    memory DOUBLE PRECISION
 );
 
-INSERT INTO vms(type, cost, cores, scu, disk, memory)
+INSERT INTO
+    vms(type, cost, cores, scu, disk, memory)
 VALUES
-    ("VM_4xlarge", 23.0, 16, 16.0, 1000.0, 64.0), 
-    ("VM_2xlarge", 23.0, 8,  8.0,  1000.0, 32.0),
-    ("VM_xlarge",  23.0, 4,  4.0,  1000.0, 16.0), 
-    ("VM_large",   23.0, 4,  4.0,  1000.0, 8.0), 
-    ("VM_medium",  15.0, 2,  2.0,  500.0,  4.0), 
-    ("VM_small",   15.0, 1,  1.0,  250.0,  2.0), 
-    ("VM_micro",   15.0, 1,  1.0,  100.0,  1.0), 
-    ("VM_nanoHD",  15.0, 1,  1.0,  500.0,  0.5), 
-    ("VM_nanoRAM", 15.0, 1,  1.0,  100.0,  2.0), 
-    ("VM_nano",    15.0, 1,  1.0,  100.0,  0.5);
+    ("VM_4xlarge", 23.0, 16, 16.0, 1000.0, 64.0),
+    ("VM_2xlarge", 23.0, 8, 8.0, 1000.0, 32.0),
+    ("VM_xlarge", 23.0, 4, 4.0, 1000.0, 16.0),
+    ("VM_large", 23.0, 4, 4.0, 1000.0, 8.0),
+    ("VM_medium", 15.0, 2, 2.0, 500.0, 4.0),
+    ("VM_small", 15.0, 1, 1.0, 250.0, 2.0),
+    ("VM_micro", 15.0, 1, 1.0, 100.0, 1.0),
+    ("VM_nanoHD", 15.0, 1, 1.0, 500.0, 0.5),
+    ("VM_nanoRAM", 15.0, 1, 1.0, 100.0, 2.0),
+    ("VM_nano", 15.0, 1, 1.0, 100.0, 0.5);
 
 -- SLA definitions
-CREATE TABLE sla
-(
-    id          INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    type        VARCHAR(20) NOT NULL UNIQUE
+CREATE TABLE sla (
+    id INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(20) NOT NULL UNIQUE
 );
 
-INSERT INTO sla(type)
+INSERT INTO
+    sla(type)
 VALUES
     ("Slai0d0c0"),
     ("Slai05d0c0"),
@@ -68,21 +67,22 @@ VALUES
     ("Slai03d02c01");
 
 -- Relation between SLA and offered VMs
-CREATE TABLE sla_vms
-(
-    sla_id       INT unsigned,
-    vm_id        INT unsigned,
-    cost         DECIMAL(5,2) DEFAULT 0.0,  -- "Base" cost for renting the machine
-    increase     DECIMAL(5,2) DEFAULT 0.0,
-    discount     DECIMAL(5,2) DEFAULT 0.0,
-    compensation DECIMAL(5,2) DEFAULT 0.0,
+CREATE TABLE sla_vms (
+    sla_id INT unsigned,
+    vm_id INT unsigned,
+    cost DECIMAL(5, 2) DEFAULT 0.0,
+    -- "Base" cost for renting the machine
+    increase DECIMAL(5, 2) DEFAULT 0.0,
+    discount DECIMAL(5, 2) DEFAULT 0.0,
+    compensation DECIMAL(5, 2) DEFAULT 0.0,
     PRIMARY KEY (sla_id, vm_id),
-    FOREIGN KEY (sla_id) REFERENCES sla(id), -- MySQL ignores inline REFERENCES field declaration so it has to be declared this way
+    FOREIGN KEY (sla_id) REFERENCES sla(id),
+    -- MySQL ignores inline REFERENCES field declaration so it has to be declared this way
     FOREIGN KEY (vm_id) REFERENCES vms(id)
 );
 
-
-INSERT INTO sla_vms(sla_id, vm_id, cost, increase, discount, compensation) 
+INSERT INTO
+    sla_vms(sla_id, vm_id, cost, increase, discount, compensation)
 VALUES
     (1, 1, 0.92, 0.0, 0.0, 0.0),
     (1, 2, 0.46, 0.0, 0.0, 0.0),
@@ -326,74 +326,255 @@ VALUES
     (24, 10, 0.01, 0.3, 0.2, 0.1);
 
 -- Definition for App Models
-CREATE TABLE app_models
-(
-    id        INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name      VARCHAR(40),
-    package   VARCHAR(150),
-    interface JSON            -- It is expected to be a object with structure{ param1: [data_type, unit] , ... }
+CREATE TABLE app_models (
+    id INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(40) UNIQUE,
+    package VARCHAR(150),
+    interface JSON -- It is expected to be a object with structure{ param1: [data_type, unit] , ... }
 );
 
-INSERT INTO app_models(name,package,interface) 
+INSERT INTO
+    app_models(name, package, interface)
 VALUES
-(
-    "LocalApplication",
-    "simcan2.Applications.UserApps.LocalApplication",
-    JSON_OBJECT(
-        "inputDataSize", "int", 
-        "outputDataSize", "int",
-        "inputFile", "string",
-        "outputFile", "string",
-        "MIs", "int",
-        "iterations", "int"
-    )
-);
+    (
+        "LocalApplication",
+        "simcan2.Applications.UserApps.LocalApplication",
+        JSON_OBJECT(
+            "inputDataSize",
+            "int",
+            "outputDataSize",
+            "int",
+            "inputFile",
+            "string",
+            "outputFile",
+            "string",
+            "MIs",
+            "int",
+            "iterations",
+            "int"
+        )
+    );
 
 -- Definition of App Instances: Could be seen as a docker repository
-CREATE TABLE apps
-(
-    id          INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name        VARCHAR(40),
-    model_id    INT unsigned,
-    parameters  JSON,       -- Must match the parameters of the App model { param1: data, ...}
+-- Parameters must match the "schema" of the App model { param1: data, ...}
+CREATE TABLE apps (
+    id INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(40) UNIQUE,
+    model_id INT unsigned,
+    parameters JSON,
     FOREIGN KEY (model_id) REFERENCES app_models(id)
 );
 
-INSERT INTO apps(name, model_id, parameters)
+INSERT INTO
+    apps(name, model_id, parameters)
 VALUES
-(
-    "AppCPUIntensive",
-    1,
-    JSON_OBJECT(
-        "inputDataSize", "10 MiB", 
-        "outputDataSize", "5 MiB", 
-        "inputFile", "/inputFile_0.dat", 
-        "outputFile", "/outputFile_0.dat", 
-        "MIs", "79200000", 
-        "iterations", "5"
-    )
-),
-(
-    "AppDataIntensive",
-    1,
-    JSON_OBJECT(
-        "inputDataSize", "50 MiB", 
-        "outputDataSize", "75 MiB", 
-        "inputFile", "/inputFile_0.dat", 
-        "outputFile", "/outputFile_0.dat", 
-        "MIs", "1000", 
-        "iterations", "5"
-    )
-),
-(
-    "AppSmall",
-    1,
-    JSON_OBJECT(
-        "inputDataSize", "1 MiB", 
-        "outputDataSize", "1 MiB", 
-        "inputFile", "/inputFile_0.dat", 
-        "outputFile", "/outputFile_0.dat", 
-        "MIs", "100", 
-        "iterations", "1"
-    )
+    (
+        "AppCPUIntensive",
+        1,
+        JSON_OBJECT(
+            "inputDataSize",
+            "10 MiB",
+            "outputDataSize",
+            "5 MiB",
+            "inputFile",
+            "/inputFile_0.dat",
+            "outputFile",
+            "/outputFile_0.dat",
+            "MIs",
+            "79200000",
+            "iterations",
+            "5"
+        )
+    ),
+    (
+        "AppDataIntensive",
+        1,
+        JSON_OBJECT(
+            "inputDataSize",
+            "50 MiB",
+            "outputDataSize",
+            "75 MiB",
+            "inputFile",
+            "/inputFile_0.dat",
+            "outputFile",
+            "/outputFile_0.dat",
+            "MIs",
+            "1000",
+            "iterations",
+            "5"
+        )
+    ),
+    (
+        "AppSmall",
+        1,
+        JSON_OBJECT(
+            "inputDataSize",
+            "1 MiB",
+            "outputDataSize",
+            "1 MiB",
+            "inputFile",
+            "/inputFile_0.dat",
+            "outputFile",
+            "/outputFile_0.dat",
+            "MIs",
+            "100",
+            "iterations",
+            "1"
+        )
+    );
+
+-- Priority: 0 is Regular / 1 is Priority
+CREATE TABLE users (
+    id INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(40) UNIQUE,
+    priority INT unsigned,
+    sla_id INT unsigned,
+    FOREIGN KEY (sla_id) REFERENCES app_models(id)
 );
+
+INSERT INTO
+    users(name, priority, sla_id)
+VALUES
+    ("User_A", 0, 1),
+    ("User_B", 0, 1),
+    ("User_C", 0, 1),
+    ("User_D", 0, 1),
+    ("User_E", 0, 1),
+    ("User_F", 0, 1),
+    ("User_G", 0, 1),
+    ("User_H", 0, 1),
+    ("User_I", 0, 1),
+    ("User_J", 0, 1);
+
+-- CHECK THIS ! -- Does rent time refer to hours ?
+CREATE TABLE user_vms (
+    user_id INT unsigned,
+    vm_id INT unsigned,
+    instances INT unsigned,
+    rent_time INT unsigned,
+    PRIMARY KEY (user_id, vm_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (vm_id) REFERENCES vms(id)
+);
+
+INSERT INTO
+    user_vms(user_id, vm_id, instances, rent_time)
+VALUES
+    (1, 6, 5, 2),
+    (2, 4, 5, 3),
+    (2, 5, 5, 2),
+    (3, 5, 2, 2),
+    (4, 5, 50, 2),
+    (5, 4, 1, 10),
+    (6, 7, 2, 2),
+    (6, 6, 2, 3),
+    (7, 7, 2, 2),
+    (7, 5, 2, 1),
+    (7, 6, 2, 2),
+    (8, 9, 1, 24),
+    (9, 10, 1, 1),
+    (10, 4, 5, 3),
+    (10, 5, 5, 3),
+    (10, 6, 5, 2);
+
+CREATE TABLE user_apps (
+    user_id INT unsigned,
+    app_id INT unsigned,
+    instances INT unsigned,
+    PRIMARY KEY (user_id, app_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (app_id) REFERENCES apps(id)
+);
+
+INSERT INTO
+    user_apps(user_id, app_id, instances)
+VALUES
+    (1, 1, 1),
+    (2, 1, 1),
+    (3, 1, 1),
+    (4, 1, 1),
+    (5, 1, 1),
+    (6, 1, 1),
+    (7, 1, 1),
+    (8, 1, 1),
+    (9, 1, 1),
+    (10, 1, 1);
+
+-- This is the most interesting table
+--      Determines the users
+--      Could determine the RNG seed/s
+--      Could (and should) determine the network to be simulated
+CREATE TABLE experiment (
+    id INT unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(40) UNIQUE
+);
+
+INSERT INTO
+    experiment(name)
+VALUES
+    ("Test");
+
+CREATE TABLE experiment_users (
+    experiment_id INT unsigned,
+    user_id INT unsigned,
+    instances INT unsigned,
+    PRIMARY KEY (experiment_id, user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (experiment_id) REFERENCES experiment(id)
+);
+
+INSERT INTO
+    experiment_users
+VALUES
+    (1, 1, 1);
+
+SELECT
+    users.name,
+    users.priority,
+    sla.type as sla_type,
+    experiment_users.instances
+FROM
+    experiment
+    JOIN experiment_users ON experiment.id = experiment_users.experiment_id
+    JOIN users ON experiment_users.user_id = users.id
+    JOIN sla ON users.sla_id = sla.id
+WHERE
+    users.name = "User_A"
+    AND experiment.name = "Test";
+
+SELECT
+    users.name,
+    users.priority,
+    sla.type as sla_type,
+    experiment_users.instances
+FROM
+    experiment
+    JOIN experiment_users ON experiment.id = experiment_users.experiment_id
+    JOIN users ON experiment_users.user_id = users.id
+    JOIN sla ON users.sla_id = sla.id
+WHERE
+    experiment.name = "Test";
+
+SELECT
+    user_apps.instances,
+    apps.name
+FROM
+    users
+    JOIN user_apps ON users.id = user_apps.user_id
+    JOIN apps ON apps.id = user_apps.app_id
+WHERE
+    users.name = "User_A";
+
+-- Después ciclar searchApp -> caching helps
+SELECT
+    user_vms.instances,
+    user_vms.rent_time,
+    vms.type
+FROM
+    users
+    JOIN user_vms ON users.id = user_vms.user_id
+    JOIN vms ON vms.id = user_vms.vm_id
+WHERE
+    users.name = "User_A";
+
+-- Después ciclar searchApp -> caching helps
