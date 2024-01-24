@@ -3,11 +3,14 @@
 
 #include <omnetpp.h>
 
-#include "../../../Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
+#include "Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
 
 #define IO_READ_OPERATION "IO_READ_OPERATION"
 #define IO_WRITE_OPERATION "IO_WRITE_OPERATION"
+
+// Forward declaration
+class DataCentreManagerBase;
 
 /**
  * @class LocalApplication LocalApplication.h "LocalApplication.h"
@@ -109,12 +112,12 @@ public:
 	   /**
  		*  Module initialization.
  		*/
-	    virtual void initialize();
+	    virtual void initialize() override;
 
 	   /**
  		* Module ending.
  		*/
-	    virtual void finish();
+	    virtual void finish() override;
 
 	   /**
 		* Process a self message.

@@ -84,12 +84,12 @@ class UserAppBase: public cSIMCAN_Core{
 	   /**
 		* Module initialization.
 		*/
-		virtual void initialize();			   
+		virtual void initialize() override;			   
 
 	   /**
 		* Module ending.
 		*/
-		virtual void finish();
+		virtual void finish() override;
 		
 
 	   /**

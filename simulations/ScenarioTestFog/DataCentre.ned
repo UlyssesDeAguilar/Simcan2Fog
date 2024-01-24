@@ -29,10 +29,6 @@ import simcan2.Architecture.Network.DataCentreNetwork.*;
 module DataCentre_A
 {
     parameters:
-        string appList;
-        string vmList;
-        string slaList;
-        string userList;
         int numCmpRacksA;
         int numCmpRacksB;
         int numStoRacks = 0;
@@ -48,10 +44,6 @@ module DataCentre_A
         // ---------------------------------------------------------------
         dcManager: DataCentreManagerFirstFit {
             parameters:
-                appList = appList;
-                vmList = vmList;
-                slaList = slaList;
-                userList = userList;
                 @display("p=193,148");
         }
 

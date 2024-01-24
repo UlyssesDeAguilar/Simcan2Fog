@@ -28,12 +28,12 @@ class DummyApplication: public UserAppBase{
 	   /**
  		*  Module initialization.
  		*/
-	    virtual void initialize();
+	    virtual void initialize() override;
 
 	   /**
  		* Module ending.
  		*/
-	    virtual void finish();
+	    virtual void finish() override;
 
 	   /**
 		* Process a self message.

@@ -15,6 +15,7 @@
 
 package simcan2.simulations.ScenarioTestFog;
 
+import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.Architecture.Nodes.Fog.FogNode;
 import simcan2.Architecture.Network.Adapter.NetworkAdapter;
@@ -40,13 +41,10 @@ network INETComm
         // ---------------------------------------------------------------
         //   Definition of the data-centres
         // ---------------------------------------------------------------
-        dc_DataCentre[1]: DataCentre_A {
-            parameters:
-                appList = appList;
-                vmList = vmList;
-                slaList = slaList;
-                userList = userList;
-                @display("p=717,62");
+        simData : SimData;
+        
+        dc_DataCentre[1]: DataCentre_A {	
+            	@display("p=717,62");
         }
 
         fog_node: FogNode {
