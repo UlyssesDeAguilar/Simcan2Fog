@@ -78,7 +78,7 @@ public:
      * @brief Gets all the parameters into a vector (constant) which is iterable
      * @return The vector containing all the parameters
      */
-    const std::vector<AppParameter *> &getAllParameters() { return parameters; }
+    const std::vector<AppParameter *> &getAllParameters() const { return parameters; }
 
     /**
      * Inserts a new parameter in the parameters vector. The new parameter is allocated at the last position in the parameter vector.

@@ -19,11 +19,19 @@ DataCentreManagerBase::~DataCentreManagerBase()
 
 void DataCentreManagerBase::initialize()
 {
-
-    int result;
-
     // Init super-class
     CloudManagerBase::initialize();
+
+    // Turn off accepting responses
+    acceptResponses = false;
+
+    // Link app builder
+    appBuilder = new DataCentreApplicationBuilder();
+    appBuilder->setManager(this);
+
+    // FIXME: The method parseConfig() no longer exists -- see implications
+    if (parseDataCentreConfig() == SC_ERROR)
+        error("Error while parsing data-centres list");
 
     // Init variables
     nTotalCores = nTotalAvailableCores = nTotalMachines = nTotalActiveMachines = 0;
@@ -41,23 +49,35 @@ void DataCentreManagerBase::initialize()
 
     // Parse data-centre list
     // TODO: Meta-data only
-    // result = parseDataCentreConfig();
-    result = initDataCentreMetadata();
+
+    int result = initDataCentreMetadata();
 
     // Something goes wrong...
     if (result == SC_ERROR)
     {
-        error("Error while parsing data-centres list");
+        error("Error while parsing data-centres (initialize) list");
     }
     else if (showDataCentreConfig)
     {
         EV_DEBUG << dataCentreToString();
     }
 
-    cpuManageMachinesMessage = new cMessage(MANAGE_MACHINES);
-    cpuStatusMessage = new cMessage(CPU_STATUS);
+    // Create and schedule auto events
+    cpuManageMachinesMessage = new cMessage("MANAGE_MACHINES", MANAGE_MACHINES);
+    cpuStatusMessage = new cMessage("CPU_STATUS", CPU_STATUS);
     scheduleAt(SimTime(), cpuManageMachinesMessage);
     scheduleAt(SimTime(), cpuStatusMessage);
+}
+
+void DataCentreManagerBase::finish()
+{
+    // Delete the events
+    cancelAndDelete(cpuManageMachinesMessage);
+    cancelAndDelete(cpuStatusMessage);
+    delete appBuilder;
+
+    // Print statistics
+    printFinal();
 }
 
 int DataCentreManagerBase::initDataCentreMetadata()
@@ -319,42 +339,27 @@ int DataCentreManagerBase::parseDataCentreConfig()
     return result;
 }
 
-void DataCentreManagerBase::parseConfig()
-{
-    CloudManagerBase::parseConfig();
-    parseDataCentreConfig();
-}
-
 std::string DataCentreManagerBase::dataCentreToString()
 {
-
+    // FIXME: What was this inteded for and why is it empty ?
     std::ostringstream info;
     int i;
-
-    info << std::endl;
-
+    info << '\n';
     return info.str();
 }
 
 cGate *DataCentreManagerBase::getOutGate(cMessage *msg)
 {
-
-    cGate *nextGate;
-
-    // Init...
-    nextGate = nullptr;
-
     // If msg arrives from the Hypervisor
     if (msg->getArrivalGate() == inGate)
     {
-        nextGate = outGate;
+        return outGate;
     }
-
     // Msg arrives from an unknown gate
     else
         error("Message received from an unknown gate [%s]", msg->getName());
 
-    return nextGate;
+    return nullptr;
 }
 
 /**
@@ -389,21 +394,15 @@ void DataCentreManagerBase::initializeRequestHandlers()
     { return handleUserAppRequest(msg); };
 }
 
-void DataCentreManagerBase::processResponseMessage(SIMCAN_Message *sm)
-{
-    error("This module cannot process response messages:%s", sm->contentsToString(showMessageContents, showMessageTrace).c_str());
-}
-
 void DataCentreManagerBase::handleCpuStatus(cMessage *msg)
 {
     const char *strName = getParentModule()->getName();
-    EV_FATAL << "#___cpuUsage#" << strName << " " << simTime().dbl() << " " << getCurrentCpuPercentageUsage() << endl;
+    EV_FATAL << "#___cpuUsage#" << strName << " " << simTime().dbl() << " " << getCurrentCpuPercentageUsage() << "\n";
 
-    cpuStatusMessage = nullptr;
+    // If not finished, reuse the same message CPU_STATUS
     if (!bFinished)
     {
-        cpuStatusMessage = new cMessage(CPU_STATUS);
-        scheduleAt(simTime() + SimTime(nCpuStatusInterval, SIMTIME_S), cpuStatusMessage);
+        scheduleAt(simTime() + SimTime(nCpuStatusInterval, SIMTIME_S), msg);
     }
 }
 
@@ -414,15 +413,13 @@ void DataCentreManagerBase::handleManageMachines(cMessage *msg)
     int machinesInUse = getMachinesInUse();
     int activeMachines = getActiveMachines();
     int activeOrInUseMachines = getActiveOrInUseMachines();
-    EV_FATAL << "#___machinesInUse#" << strName << " " << simTime().dbl() << " " << machinesInUse << endl;
-    EV_FATAL << "#___activeMachines#" << strName << " " << simTime().dbl() << " " << activeMachines << endl;
-    EV_FATAL << "#___activeOrInUseMachines#" << strName << " " << simTime().dbl() << " " << activeOrInUseMachines << endl;
+    EV_FATAL << "#___machinesInUse#" << strName << " " << simTime().dbl() << " " << machinesInUse << '\n';
+    EV_FATAL << "#___activeMachines#" << strName << " " << simTime().dbl() << " " << activeMachines << '\n';
+    EV_FATAL << "#___activeOrInUseMachines#" << strName << " " << simTime().dbl() << " " << activeOrInUseMachines << '\n';
 
+    // If not finished, reuse the same message MANAGE_MACHINES
     if (!bFinished)
-    {
-        cpuManageMachinesMessage = new cMessage(MANAGE_MACHINES);
-        scheduleAt(simTime() + SimTime(nCpuStatusInterval, SIMTIME_S), cpuManageMachinesMessage);
-    }
+        scheduleAt(simTime() + SimTime(nCpuStatusInterval, SIMTIME_S), msg);
 
     if (forecastActiveMachines)
     {
@@ -430,7 +427,8 @@ void DataCentreManagerBase::handleManageMachines(cMessage *msg)
         smthForecastingResult = timeSeriesForecasting.push_to_pop(currForecastingQuery);
 
         machinesInUseForecasting = smthForecastingResult[0];
-        EV_FATAL << "#___machinesInUseForecast#" << strName << " " << (simTime() + SimTime(nCpuStatusInterval, SIMTIME_S)).dbl() << " " << machinesInUseForecasting << endl;
+        EV_FATAL << "#___machinesInUseForecast#" << strName << " " << (simTime() + SimTime(nCpuStatusInterval, SIMTIME_S)).dbl()
+                 << " " << machinesInUseForecasting << '\n';
 
         nLastMachinesInUseForecasting = machinesInUseForecasting;
         if (machinesInUseForecasting + nActiveMachinesThreshold > machinesInUse)
@@ -457,99 +455,10 @@ void DataCentreManagerBase::manageActiveMachines()
     }
 }
 
-Application *DataCentreManagerBase::searchAppPerType(std::string strAppType)
+std::tuple<unsigned int, simtime_t **, simtime_t *> DataCentreManagerBase::getTimersTupleByHypervisorPath(const std::string &fullPath)
 {
-    Application *appTypeRet;
-    bool bFound;
-    int nIndex;
-
-    appTypeRet = nullptr;
-    bFound = false;
-    nIndex = 0;
-
-    EV_DEBUG << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
-
-    while (!bFound && nIndex < appTypes.size())
-    {
-        appTypeRet = appTypes.at(nIndex);
-        if (strAppType.compare(appTypeRet->getName()) == 0)
-            bFound = true;
-
-        EV_DEBUG << __func__ << " - " << strAppType << " vs " << appTypeRet->getName() << " Found=" << bFound << endl;
-
-        nIndex++;
-    }
-
-    if (!bFound)
-        appTypeRet = nullptr;
-
-    return appTypeRet;
-}
-
-SM_UserAPP *DataCentreManagerBase::getUserAppRequestPerUser(std::string strUserId)
-{
-    SM_UserAPP *pUserApp = nullptr;
-    std::map<std::string, SM_UserAPP *>::iterator it;
-    it = handlingAppsRqMap.find(strUserId);
-    if (it != handlingAppsRqMap.end())
-    {
-        pUserApp = it->second;
-    }
-    return pUserApp;
-}
-
-cModule *DataCentreManagerBase::getAppsVectorModulePerVm(std::string strVmId)
-{
-    cModule *pVmAppVectorModule = nullptr;
-    std::map<std::string, cModule *>::iterator itAppVectorModule;
-    itAppVectorModule = mapAppsVectorModulePerVm.find(strVmId);
-    if (itAppVectorModule != mapAppsVectorModulePerVm.end())
-    {
-        pVmAppVectorModule = itAppVectorModule->second;
-    }
-    return pVmAppVectorModule;
-}
-
-cModule *DataCentreManagerBase::getFreeAppModuleInVector(std::string strVmId)
-{
-    cModule *pVmAppModule = nullptr;
-    cModule *pVmAppVectorModule = nullptr;
-    bool bFound = false;
-    bool *runningAppsArr;
-
-    pVmAppVectorModule = getAppsVectorModulePerVm(strVmId);
-
-    if (pVmAppVectorModule == nullptr)
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app ventor module for the VM!!").c_str());
-
-    int numMaxApps = pVmAppVectorModule->par("numApps");
-
-    runningAppsArr = getAppsRunningInVectorModuleByVm(strVmId);
-
-    for (int i = 0; i < numMaxApps && !bFound; i++)
-    {
-        if (!runningAppsArr[i])
-        {
-            runningAppsArr[i] = true;
-            pVmAppModule = pVmAppVectorModule->getSubmodule("appModule", i);
-            bFound = true;
-        }
-    }
-
-    return pVmAppModule;
-}
-
-std::tuple<unsigned int, simtime_t **, simtime_t *> DataCentreManagerBase::getTimersTupleByHypervisorPath(std::string strHypervisorFullPath)
-{
-    std::tuple<unsigned int, simtime_t **, simtime_t *> timersTuple = std::make_tuple(0, nullptr, nullptr);
-    std::map<std::string, std::tuple<unsigned int, simtime_t **, simtime_t *>>::iterator it;
-
-    it = mapCpuUtilizationTimePerHypervisor.find(strHypervisorFullPath);
-    if (it != mapCpuUtilizationTimePerHypervisor.end())
-    {
-        timersTuple = it->second;
-    }
-    return timersTuple;
+    std::tuple<unsigned int, simtime_t**, simtime_t*> timersTuple = std::make_tuple(0, nullptr, nullptr);
+    return getOrDefault(mapCpuUtilizationTimePerHypervisor, fullPath, timersTuple);
 }
 
 simtime_t **DataCentreManagerBase::getStartTimeByHypervisorPath(std::string strHypervisorFullPath)
@@ -580,53 +489,6 @@ simtime_t *DataCentreManagerBase::getTimerArrayByHypervisorPath(std::string strH
     return timerArray;
 }
 
-unsigned int DataCentreManagerBase::getNumCoresByHypervisorPath(std::string strHypervisorFullPath)
-{
-    std::tuple<unsigned int, simtime_t **, simtime_t *> timersTuple = getTimersTupleByHypervisorPath(strHypervisorFullPath);
-    unsigned int numCores = std::get<0>(timersTuple);
-
-    return numCores;
-}
-
-Hypervisor *DataCentreManagerBase::getNodeHypervisorByVm(std::string strVmId)
-{
-    Hypervisor *pHypervisor = nullptr;
-    std::map<std::string, Hypervisor *>::iterator it;
-
-    it = acceptedVMsMap.find(strVmId);
-    if (it != acceptedVMsMap.end())
-    {
-        pHypervisor = it->second;
-    }
-    return pHypervisor;
-}
-
-bool *DataCentreManagerBase::getAppsRunningInVectorModuleByVm(std::string strVmId)
-{
-    bool *appsRunningArr = nullptr;
-    std::map<std::string, bool *>::iterator it;
-
-    it = mapAppsRunningInVectorModulePerVm.find(strVmId);
-    if (it != mapAppsRunningInVectorModulePerVm.end())
-    {
-        appsRunningArr = it->second;
-    }
-    return appsRunningArr;
-}
-
-unsigned int *DataCentreManagerBase::getAppModuleById(std::string appInstance)
-{
-    unsigned int *appModule = nullptr;
-    std::map<std::string, unsigned int *>::iterator it;
-
-    it = mapAppsModulePerId.find(appInstance);
-    if (it != mapAppsModulePerId.end())
-    {
-        appModule = it->second;
-    }
-    return appModule;
-}
-
 void DataCentreManagerBase::createDummyAppInAppModule(cModule *pVmAppModule)
 {
     std::string strAppType = "simcan2.Applications.UserApps.DummyApp.DummyApplication";
@@ -639,7 +501,6 @@ void DataCentreManagerBase::createDummyAppInAppModule(cModule *pVmAppModule)
     moduleApp->finalizeParameters();
 
     pVmAppModule->gate("fromHub")->connectTo(moduleApp->gate("in"));
-
     moduleApp->gate("out")->connectTo(pVmAppModule->gate("toHub"));
 
     // create internals, and schedule it
@@ -658,7 +519,7 @@ void DataCentreManagerBase::cleanAppVectorModule(cModule *pVmAppVectorModule)
     {
         pVmAppModule = pVmAppVectorModule->getSubmodule("appModule", i);
         // Disconnect and delete dummy app
-        deleteAppFromModule(pVmAppModule);
+        appBuilder->deleteApp(pVmAppModule);
         createDummyAppInAppModule(pVmAppModule);
     }
 }
@@ -679,190 +540,101 @@ void DataCentreManagerBase::storeAppFromModule(cModule *pVmAppModule)
     pDummyAppModule->deleteModule();
 }
 
-void DataCentreManagerBase::deleteAppFromModule(cModule *pVmAppModule)
+cModule *DataCentreManagerBase::getFreeAppModuleInVector(const std::string &vmId)
 {
-    cModule *pDummyAppModule = pVmAppModule->getSubmodule("app");
-    pDummyAppModule->callFinish();
-    pVmAppModule->gate("fromHub")->disconnect();
-    pVmAppModule->gate("toHub")->getPreviousGate()->disconnect();
-    pDummyAppModule->deleteModule();
+    cModule *appVector = getAppsVectorModulePerVm(vmId);
+    if (appVector == nullptr)
+        error("[%s] There is no app ventor module for the VM!!", LogUtils::prettyFunc(__FILE__, __func__).c_str());
+
+    int numMaxApps = appVector->par("numApps");
+    bool *runningAppsArr = getAppsRunningInVectorModuleByVm(vmId);
+
+    for (int i = 0; i < numMaxApps; i++)
+    {
+        if (!runningAppsArr[i])
+        {
+            runningAppsArr[i] = true;
+            return appVector->getSubmodule("appModule", i);
+        }
+    }
+
+    return nullptr;
 }
 
 void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
 {
-    // Get the user name, and recover the info about the VmRequests;
-    SM_UserAPP *userAPP_Rq;
-    cModule *pVmAppVectorModule;
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle AppRequest" << '\n';
 
-    bool bHandle;
+    // Cast request
+    auto userAPP_Rq = check_and_cast<SM_UserAPP *>(sm);
+    std::string userId = userAPP_Rq->getUserID();
 
-    std::string strUsername,
-        strVmId,
-        strIp,
-        strAppName;
-
-    SimTime appStartTime,
-        appExecutedTime,
-        nTotalTime;
-
-    Application *appType;
-
-    VM_Request vmRequest;
-
-    APP_Request userApp;
-
-    std::map<std::string, SM_UserVM *>::iterator it;
-
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle AppRequest" << endl;
-    userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
-
-    if (userAPP_Rq == nullptr)
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userAPP_Rq. Nullpointer!!").c_str());
-
-    bHandle = false;
-    userAPP_Rq->printUserAPP();
-
-    strUsername = userAPP_Rq->getUserID();
-
+    // Sanity check
     if (userAPP_Rq->getAppArraySize() < 1)
-    {
-        EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has the application list empty!" << endl;
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] The list of applications of a the user is empty!!").c_str());
-    }
+        error("[%s] The list of applications of the user: %s is empty!!", LogUtils::prettyFunc(__FILE__, __func__).c_str(), userId.c_str());
+
+    // FIXME: The behaviour for rejecting app requests is not defined!
+    // Prepare context
+    ApplicationBuilder::ApplicationContext ctx;
+    bool bHandle = false;
+    ctx.userId = &userId;
+
+    // Print the request
+    userAPP_Rq->printUserAPP();
 
     for (unsigned int i = 0; i < userAPP_Rq->getAppArraySize(); i++)
     {
         // Get the app
-        userApp = userAPP_Rq->getApp(i);
+        APP_Request userApp = userAPP_Rq->getApp(i);
 
         if (userApp.eState == appFinishedOK || userApp.eState == appFinishedError)
             continue;
 
-        std::string strInputDataSize, strOutputDataSize;
-        appType = searchAppPerType(userApp.strAppType);
+        // Fill the context
+        ctx.appId = &userApp.strApp;
+        ctx.vmId = &userApp.vmId;
+        ctx.schema = dataManager->searchApp(userApp.strAppType);
 
-        if (appType == nullptr)
-            error("%s - Unable to find App. Wrong AppType [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), appType);
+        if (ctx.schema == nullptr)
+            error("%s - Unable to find App. Wrong AppType [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), userApp.strAppType.c_str());
 
-        // TODO: Cuidado con esto a ver si no peta.
-        // Esto es un apaño temporal para no ejecutarlo en los datacentres reales
-        if ((appType->getName().compare("AppDataIntensive") == 0) || (appType->getName().compare("AppCPUIntensive") == 0))
-        {
-            // DatasetInput
-            std::string strAppType = "simcan2.Applications.UserApps." + appType->getType() + "." + appType->getType();
-            cModuleType *moduleType = cModuleType::get(strAppType.c_str());
+        // Locate the free "app slot"
+        cModule *pVmAppModule = getFreeAppModuleInVector(userApp.vmId);
+        if (pVmAppModule == nullptr)
+            continue;
 
-            cModule *pVmAppModule = getFreeAppModuleInVector(userApp.vmId);
+        // Build the application
+        appBuilder->build(pVmAppModule, ctx);
 
-            if (pVmAppModule == nullptr)
-                continue;
-
-            // Disconnect and delete dummy app
-            deleteAppFromModule(pVmAppModule);
-
-            cModule * moduleApp = moduleType->create("app", pVmAppModule);
-            moduleApp->par("appInstance") = userApp.strApp;
-            moduleApp->par("vmInstance") = userApp.vmId;
-            moduleApp->par("userInstance") = strUsername;
-
-            try
-            {
-                auto &paramInputDataSize = appType->getParameter("inputDataSize");
-                //auto nInputDataSize = std::stoi(paramInputDataSize.getValue());
-                moduleApp->par("inputDataSize") = paramInputDataSize.intValue();
-            }
-            catch (const std::out_of_range &e)
-            {
-            }
-
-            try
-            {
-                auto &paramOutputDataSize = appType->getParameter("outputDataSize");
-                //auto nOutputDataSize = std::stoi(paramOutputDataSize.getValue());
-                moduleApp->par("outputDataSize") = paramOutputDataSize.intValue();
-            }
-            catch (const std::out_of_range &e)
-            {
-            }
-
-            try
-            {
-                auto &paramMIs = appType->getParameter("MIs");
-                // auto nMIs = std::stoi(paramMIs.getValue());
-                moduleApp->par("MIs") = paramMIs.intValue();
-            }
-            catch (const std::out_of_range &e)
-            {
-            }
-
-            try
-            {
-                auto &paramIterations = appType->getParameter("iterations");
-                //auto nIterations = std::stoi(paramIterations.getValue());
-                moduleApp->par("iterations") = paramIterations.intValue();
-            }
-            catch (const std::out_of_range &e)
-            {
-            }
-
-            unsigned int *appStateArr = getAppModuleById(userApp.strApp);
-
-            if (appStateArr != nullptr)
-            {
-                LocalApplication *appInstancePtr = dynamic_cast<LocalApplication *>(moduleApp);
-                appInstancePtr->setCurrentIteration(appStateArr[0]);
-                appInstancePtr->setCurrentRemainingMIs(appStateArr[1]);
-                mapAppsModulePerId.erase(userApp.strApp);
-                moduleApp->par("initialized") = true;
-            }
-
-            moduleApp->finalizeParameters();
-
-            pVmAppModule->gate("fromHub")->connectTo(moduleApp->gate("in"));
-
-            moduleApp->gate("out")->connectTo(pVmAppModule->gate("toHub"));
-
-            // create internals, and schedule it
-            moduleApp->buildInside();
-            moduleApp->scheduleStart(simTime());
-
-            moduleApp->callInitialize();
-
-            userAPP_Rq->changeState(userApp.strApp, userApp.vmId, appRunning);
-            //           userAPP_Rq->changeStateByIndex(i, userApp.strApp, appRunning);
-        }
-        else if (appType != NULL && appType->getName().compare("otraApp"))
-        {
-        }
+        userAPP_Rq->changeState(userApp.strApp, userApp.vmId, appRunning);
     }
     bHandle = true;
 
-    if (bHandle)
+    if (!bHandle)
     {
-        std::map<std::string, SM_UserAPP *>::iterator appIt = handlingAppsRqMap.find(strUsername);
-        if (appIt == handlingAppsRqMap.end())
-        {
-            // Registering the appRq
-            handlingAppsRqMap[strUsername] = userAPP_Rq;
-        }
-        else
-        {
-            SM_UserAPP *uapp = appIt->second;
-            uapp->update(userAPP_Rq);
-            delete userAPP_Rq; // Delete ephemeral message after update global message.
-        }
+        rejectAppRequest(userAPP_Rq);
+        return;
+    }
+
+    // Search for the app in manager map
+    auto appIt = handlingAppsRqMap.find(userId);
+    if (appIt == handlingAppsRqMap.end())
+    {
+        // Registering the appRq
+        handlingAppsRqMap[userId] = userAPP_Rq;
     }
     else
     {
-        rejectAppRequest(userAPP_Rq);
+        SM_UserAPP *uapp = appIt->second;
+        uapp->update(userAPP_Rq);
+        delete userAPP_Rq; // Delete ephemeral message after update global message.
     }
 }
 
 void DataCentreManagerBase::rejectAppRequest(SM_UserAPP *userAPP_Rq)
 {
     // Create a request_rsp message
-
-    EV_INFO << "Rejecting app request from user:" << userAPP_Rq->getUserID() << endl;
+    EV_INFO << "Rejecting app request from user:" << userAPP_Rq->getUserID() << '\n';
 
     // Fill the message
     userAPP_Rq->setIsResponse(true);
@@ -875,54 +647,34 @@ void DataCentreManagerBase::rejectAppRequest(SM_UserAPP *userAPP_Rq)
 
 void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
 {
-    SM_UserVM *userVM_Rq;
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request" << '\n';
 
-    userVM_Rq = dynamic_cast<SM_UserVM *>(sm);
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request" << endl;
+    auto userVM_Rq = check_and_cast<SM_UserVM *>(sm);
+    userVM_Rq->printUserVM();
 
-    if (userVM_Rq != nullptr)
-    {
-        userVM_Rq->printUserVM();
-        // Check if is a VmRequest or a subscribe
-        if (checkVmUserFit(userVM_Rq))
-        {
-            acceptVmRequest(userVM_Rq);
-        }
-        else
-        {
-            rejectVmRequest(userVM_Rq);
-        }
-    }
+    // Check if is a VmRequest or a subscribe
+    if (checkVmUserFit(userVM_Rq))
+        acceptVmRequest(userVM_Rq);
     else
-    {
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
-    }
+        rejectVmRequest(userVM_Rq);
 }
 
 void DataCentreManagerBase::handleVmSubscription(SIMCAN_Message *sm)
 {
-    SM_UserVM *userVM_Rq;
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Subscribe operation" << '\n';
 
-    userVM_Rq = dynamic_cast<SM_UserVM *>(sm);
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Subscribe operation" << endl;
+    auto userVM_Rq = check_and_cast<SM_UserVM *>(sm);
 
-    if (userVM_Rq != nullptr)
-    {
-        if (checkVmUserFit(userVM_Rq))
-            notifySubscription(userVM_Rq);
-        else
-            rejectVmSubscribe(userVM_Rq); // Store the vmRequest
-    }
+    if (checkVmUserFit(userVM_Rq))
+        notifySubscription(userVM_Rq);
     else
-    {
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
-    }
+        rejectVmSubscribe(userVM_Rq); // Store the vmRequest
 }
 
 void DataCentreManagerBase::rejectVmSubscribe(SM_UserVM *userVM_Rq)
 {
-    EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << endl;
-    EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
+    EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << '\n';
+    EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
 
     // Fill the message
     userVM_Rq->setIsResponse(true);
@@ -936,8 +688,8 @@ void DataCentreManagerBase::rejectVmSubscribe(SM_UserVM *userVM_Rq)
 void DataCentreManagerBase::notifySubscription(SM_UserVM *userVM_Rq)
 {
     SM_UserVM_Finish *pMsgTimeout;
-    EV_INFO << "Notifying request from user: " << userVM_Rq->getUserID() << endl;
-    EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << endl;
+    EV_INFO << "Notifying request from user: " << userVM_Rq->getUserID() << '\n';
+    EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
 
     // Fill the message
     userVM_Rq->setIsResponse(true);
@@ -967,10 +719,8 @@ void DataCentreManagerBase::handleAppExecEndSingle(std::string strUsername, std:
     //    endSingleAppResponse(pUserApp, strVmId, strAppName);
     //    scheduleAppTimeout(EXEC_APP_END_SINGLE, strUsername, strAppName, strVmId, SimTime());
 
-    EV_INFO << "The execution of the App [" << strAppName
-            << " / " << strVmId
-            << "] launched by the user " << strUsername
-            << " has finished" << endl;
+    EV_INFO << "The execution of the App [" << strAppName << " / " << strVmId
+            << "] launched by the user " << strUsername << " has finished" << '\n';
 
     pUserApp->increaseFinishedApps();
     // Check for a possible timeout
@@ -978,7 +728,7 @@ void DataCentreManagerBase::handleAppExecEndSingle(std::string strUsername, std:
     {
         EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
                 << " - Changing status of the application [ app: "
-                << strAppName << " | vmId: " << strVmId << endl;
+                << strAppName << " | vmId: " << strVmId << '\n';
         pUserApp->printUserAPP();
 
         pUserApp->changeState(strAppName, strVmId, appFinishedOK);
@@ -1008,12 +758,12 @@ void DataCentreManagerBase::handleAppExecEndSingle(std::string strUsername, std:
 
 void DataCentreManagerBase::acceptVmRequest(SM_UserVM *userVM_Rq)
 {
-    EV_INFO << "Accepting request from user:" << userVM_Rq->getUserID() << endl;
+    EV_INFO << "Accepting request from user:" << userVM_Rq->getUserID() << '\n';
 
     //    if(acceptedUsersRqMap.find(userVM_Rq->getUserID()) == acceptedUsersRqMap.end())
     //    {
     //        //Accepting new user
-    //        EV_INFO << "Registering new user in the system:" << userVM_Rq->getUserID() << endl;
+    //        EV_INFO << "Registering new user in the system:" << userVM_Rq->getUserID() << '\n';
     //        acceptedUsersRqMap[userVM_Rq->getUserID()] = userVM_Rq;
     //    }
 
@@ -1031,7 +781,7 @@ void DataCentreManagerBase::rejectVmRequest(SM_UserVM *userVM_Rq)
 {
     // Create a request_rsp message
 
-    EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserID() << endl;
+    EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserID() << '\n';
 
     userVM_Rq->setIsResponse(true);
     userVM_Rq->setOperation(SM_VM_Req_Rsp);
@@ -1041,134 +791,92 @@ void DataCentreManagerBase::rejectVmRequest(SM_UserVM *userVM_Rq)
     sendResponseMessage(userVM_Rq);
 }
 
-int DataCentreManagerBase::getNTotalAvailableCores() const
-{
-    return nTotalAvailableCores;
-}
-
-void DataCentreManagerBase::setNTotalAvailableCores(int nTotalAvailableCores)
-{
-    this->nTotalAvailableCores = nTotalAvailableCores;
-}
-
-int DataCentreManagerBase::getNTotalCores() const
-{
-    return nTotalCores;
-}
-
-void DataCentreManagerBase::setNTotalCores(int nTotalCores)
-{
-    this->nTotalCores = nTotalCores;
-}
-
 bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
 {
-    bool bRet,
-        bAccepted;
+    assert_msg(userVM_Rq != nullptr, "checkVmUserFit - WARNING!! nullpointer detected\n");
 
-    int nTotalRequestedCores,
-        nRequestedVms,
-        nAvailableCores,
-        nTotalCores;
+    std::string nodeIp, strVmId;
+    int nRequestedVms = userVM_Rq->getTotalVmsRequests();
+    std::string userId = userVM_Rq->getUserID();
 
-    std::string nodeIp,
-        strUserName,
-        strVmId;
+    EV_DEBUG << "checkVmUserFit- Init" << '\n';
+    EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << userId << '\n';
 
-    Hypervisor *hypervisor;
-    int nRentTime;
+    // Before starting the process, it is neccesary to check if the
+    int nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
+    int nAvailableCores = getNTotalAvailableCores();
 
-    bAccepted = bRet = true;
-    if (userVM_Rq != nullptr)
+    if (nTotalRequestedCores > nAvailableCores)
     {
-        nRequestedVms = userVM_Rq->getTotalVmsRequests();
-        strUserName = userVM_Rq->getUserID();
+        EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
+        return false;
+    }
 
-        EV_DEBUG << "checkVmUserFit- Init" << endl;
-        EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << strUserName << endl;
+    int nTotalCores = getNTotalCores();
+    EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
 
-        // Before starting the process, it is neccesary to check if the
-        nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
-        nAvailableCores = getNTotalAvailableCores();
+    // Process all the VMs
+    bool bRet, bAccepted;
+    bAccepted = bRet = true;
 
-        if (nTotalRequestedCores <= nAvailableCores)
+    for (int i = 0; i < nRequestedVms && bRet; i++)
+    {
+        EV_DEBUG << "\ncheckVmUserFit - Trying to handle the VM: " << i << '\n';
+
+        // Get the VM request
+        auto vmRequest = userVM_Rq->getVms(i);
+
+        Hypervisor *hypervisor = selectNode(userVM_Rq, vmRequest);
+
+        if (hypervisor != nullptr)
         {
-            nTotalCores = getNTotalCores();
-            EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
-
-            //            strUserName = userVM_Rq->getUserID();
-            //            if (strUserName.compare("(0)User_A[65/100]")==0)
-            //                EV_DEBUG << endl <<"Parar: " << endl;
-            // Process all the VMs
-            for (int i = 0; i < nRequestedVms && bRet; i++)
-            {
-                EV_DEBUG << endl
-                         << "checkVmUserFit - Trying to handle the VM: " << i << endl;
-
-                // Get the VM request
-                auto vmRequest = userVM_Rq->getVms(i);
-
-                hypervisor = selectNode(userVM_Rq, vmRequest);
-
-                if (hypervisor != nullptr)
-                {
-                    acceptedVMsMap[vmRequest.strVmId] = hypervisor;
-                    nodeIp = hypervisor->getFullPath();
-                    bAccepted = true;
-                }
-                else
-                {
-                    bAccepted = false;
-                }
-
-                bRet &= bAccepted;
-
-                userVM_Rq->createResponse(i, bRet, simTime().dbl(), nodeIp, 0);
-
-                if (!bRet)
-                {
-                    clearVMReq(userVM_Rq, i);
-                    // EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << endl;
-                }
-                else
-                {
-                    // Getting VM and scheduling renting timeout
-                    strVmId = userVM_Rq->getStrVmId();
-                    if (!strVmId.empty() && userVM_Rq->getOperation() == SM_VM_Sub)
-                        nRentTime = 3600;
-                    else
-                        nRentTime = vmRequest.nRentTime_t2;
-
-                    vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.strVmType, nRentTime);
-                }
-            }
-
-            EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: " << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
+            acceptedVMsMap[vmRequest.strVmId] = hypervisor;
+            nodeIp = hypervisor->getFullPath();
+            bAccepted = true;
         }
         else
         {
-            EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << endl;
-            bRet = false;
+            bAccepted = false;
         }
 
-        if (bRet)
+        bRet &= bAccepted;
+
+        userVM_Rq->createResponse(i, bRet, simTime().dbl(), nodeIp, 0);
+
+        if (!bRet)
         {
-            acceptedUsersRqMap[strUserName] = userVM_Rq;
-            nTotalAvailableCores -= nTotalRequestedCores;
-            EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << endl;
+            clearVMReq(userVM_Rq, i);
+            // EV_DEBUG << "checkVmUserFit - The VM: " << i << "has not been handled, not enough space, all the request of the user " << strUserName << "have been deleted" << '\n';
         }
         else
         {
-            EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << endl;
+            int nRentTime;
+            // Getting VM and scheduling renting timeout
+            strVmId = userVM_Rq->getStrVmId();
+            if (!strVmId.empty() && userVM_Rq->getOperation() == SM_VM_Sub)
+                nRentTime = 3600;
+            else
+                nRentTime = vmRequest.nRentTime_t2;
+
+            // vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.strVmType, nRentTime);
+            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, nRentTime);
         }
+
+        EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: " << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
+    }
+
+    if (bRet)
+    {
+        acceptedUsersRqMap[userId] = userVM_Rq;
+        nTotalAvailableCores -= nTotalRequestedCores;
+        EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << '\n';
     }
     else
     {
-        EV_ERROR << "checkVmUserFit - WARNING!! nullpointer detected" << endl;
-        bRet = false;
+        EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << '\n';
     }
 
-    EV_DEBUG << "checkVmUserFit- End" << endl;
+    EV_DEBUG << "checkVmUserFit- End" << '\n';
 
     return bRet;
 }
@@ -1250,14 +958,14 @@ void DataCentreManagerBase::handleExecVmRentTimeout(cMessage *msg)
     if (pUserVmFinish == nullptr)
         error("%s - Unable to cast msg to SM_UserVM_Finish*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), msg->getName());
 
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - INIT" << endl;
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - INIT" << '\n';
     strVmId = pUserVmFinish->getStrVmId();
     strVmType = pUserVmFinish->getStrVmType();
 
     strUsername = pUserVmFinish->getUserID();
     EV_INFO << "The rent of the VM [" << strVmId
             << "] launched by the user " << strUsername
-            << " has finished" << endl;
+            << " has finished" << '\n';
 
     deallocateVmResources(strVmId);
     nTotalAvailableCores += getTotalCoresByVmType(strVmType);
@@ -1271,81 +979,73 @@ void DataCentreManagerBase::handleExecVmRentTimeout(cMessage *msg)
 
     // Check the Application status
 
-    EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << endl;
-    EV_INFO
-        << "Checking the status of the applications which are running over this VM"
-        << endl;
+    EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << '\n';
+    EV_INFO << "Checking the status of the applications which are running over this VM\n";
 
     // Abort the running applications
     if (!pUserApp->allAppsFinished(strVmId))
     {
-        EV_INFO << "Aborting running applications" << endl;
+        EV_INFO << "Aborting running applications\n";
         abortAllApps(strVmId);
         pUserApp->abortAllApps(strVmId);
     }
     // Check the result and send it
     checkAllAppsFinished(pUserApp, strVmId);
 
-    EV_INFO << "Freeing resources..." << endl;
+    EV_INFO << "Freeing resources...\n";
+
+    // Delete the event!
+    delete msg;
 }
 
 void DataCentreManagerBase::checkAllAppsFinished(SM_UserAPP *pUserApp, std::string strVmId)
 {
-    std::string strUsername;
+    assert_msg(pUserApp != nullptr, "Nullpointer in argument detected!");
 
-    if (pUserApp != nullptr)
+    auto userId = pUserApp->getUserID();
+
+    if (!pUserApp->allAppsFinished(strVmId))
     {
-        strUsername = pUserApp->getUserID();
-        if (pUserApp->allAppsFinished(strVmId))
-        {
-            if (pUserApp->allAppsFinishedOK(strVmId))
-            {
-                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                        << " - All the apps corresponding with the user "
-                        << strUsername
-                        << " have finished successfully" << endl;
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                << " - Total apps finished: "
+                << pUserApp->getNFinishedApps() << " of "
+                << pUserApp->getAppArraySize() << '\n';
+        return;
+    }
 
-                pUserApp->printUserAPP();
+    if (pUserApp->allAppsFinishedOK(strVmId))
+    {
+        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
+                << " - All the apps corresponding with the user "
+                << userId
+                << " have finished successfully" << '\n';
 
-                // Notify the user the end of the execution
-                acceptAppRequest(pUserApp, strVmId);
-            }
-            else
-            {
-                EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                        << " - All the apps corresponding with the user "
-                        << strUsername
-                        << " have finished with some errors" << endl;
+        pUserApp->printUserAPP();
 
-                // Check the subscription queue
-                // updateSubsQueue();
-
-                // if (!pUserApp->getFinished())
-                timeoutAppRequest(pUserApp, strVmId); // Notify the user the end of the execution
-            }
-
-            // Delete the application on the hashmap
-            // handlingAppsRqMap.erase(strUsername);
-        }
-        else
-        {
-            EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                    << " - Total apps finished: "
-                    << pUserApp->getNFinishedApps() << " of "
-                    << pUserApp->getAppArraySize() << endl;
-        }
+        // Notify the user the end of the execution
+        acceptAppRequest(pUserApp, strVmId);
     }
     else
     {
         EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                << " - WARNING! Null pointer parameter "
-                << strUsername << endl;
+                << " - All the apps corresponding with the user "
+                << userId
+                << " have finished with some errors" << '\n';
+
+        // Check the subscription queue
+        // updateSubsQueue();
+
+        // if (!pUserApp->getFinished())
+        timeoutAppRequest(pUserApp, strVmId); // Notify the user the end of the execution
     }
+
+    // Delete the application on the hashmap
+    // handlingAppsRqMap.erase(userId);
 }
 
 void DataCentreManagerBase::acceptAppRequest(SM_UserAPP *userAPP_Rq, std::string strVmId)
 {
-    EV_INFO << "Sending vm end to the CP:" << userAPP_Rq->getUserID() << endl;
+    EV_INFO << "Sending vm end to the CP:" << userAPP_Rq->getUserID() << '\n';
 
     SM_UserAPP *userAPP_Res = userAPP_Rq->dup();
     userAPP_Res->printUserAPP();
@@ -1364,8 +1064,8 @@ void DataCentreManagerBase::acceptAppRequest(SM_UserAPP *userAPP_Rq, std::string
 
 void DataCentreManagerBase::timeoutAppRequest(SM_UserAPP *userAPP_Rq, std::string strVmId)
 {
-    EV_INFO << "Sending timeout to the user:" << userAPP_Rq->getUserID() << endl;
-    EV_INFO << "Last id gate: " << userAPP_Rq->getLastGateId() << endl;
+    EV_INFO << "Sending timeout to the user:" << userAPP_Rq->getUserID() << '\n';
+    EV_INFO << "Last id gate: " << userAPP_Rq->getLastGateId() << '\n';
 
     SM_UserAPP *userAPP_Res = userAPP_Rq->dup(strVmId);
     userAPP_Res->printUserAPP();
@@ -1383,8 +1083,6 @@ void DataCentreManagerBase::timeoutAppRequest(SM_UserAPP *userAPP_Rq, std::strin
 
 void DataCentreManagerBase::clearVMReq(SM_UserVM *&userVM_Rq, int lastId)
 {
-    std::map<std::string, Hypervisor *>::iterator it;
-    Hypervisor *pHypervisor;
     for (int i = 0; i < lastId; i++)
     {
         auto vmRequest = userVM_Rq->getVms(i);
@@ -1396,45 +1094,6 @@ void DataCentreManagerBase::clearVMReq(SM_UserVM *&userVM_Rq, int lastId)
         // datacentreCollection->freeVmRequest(vmRequest.strVmId);
     }
 }
-
-// Hypervisor* DataCentreManagerBase::selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest){
-//     VirtualMachine *pVMBase;
-//     Hypervisor *pHypervisor = nullptr;
-//     NodeResourceRequest *pResourceRequest;
-//     int numCoresRequested, numNodeTotalCores, numAvailableCores;
-//     std::map<int, std::vector<Hypervisor*>>::iterator itMap;
-//     std::vector<Hypervisor*> vectorHypervisor;
-//     std::vector<Hypervisor*>::iterator itVector;
-//     bool bHandled;
-//     string strUserName;
-//
-//     if (userVM_Rq==nullptr) return nullptr;
-//
-//     strUserName = userVM_Rq->getUserID();
-//
-//     pVMBase = findVirtualMachine(vmRequest.strVmType);
-//     numCoresRequested = pVMBase->getNumCores();
-//
-//     bHandled = false;
-//     for (itMap = mapHypervisorPerNodes.begin(); itMap != mapHypervisorPerNodes.end() && !bHandled; ++itMap){
-//         numNodeTotalCores = itMap->first;
-//         if (numNodeTotalCores >= numCoresRequested) {
-//             vectorHypervisor = itMap->second;
-//             for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && !bHandled; ++itVector) {
-//                 pHypervisor = *itVector;
-//                 numAvailableCores = pHypervisor->getAvailableCores();
-//                 if (numAvailableCores >= numCoresRequested) {
-//                     pResourceRequest = generateNode(strUserName, vmRequest);
-//                     bHandled = allocateVM(pResourceRequest, pHypervisor);
-//                     if (bHandled) return pHypervisor;
-//                 }
-//             }
-//
-//         }
-//     }
-//
-//     return nullptr;
-// }
 
 bool DataCentreManagerBase::allocateVM(NodeResourceRequest *pResourceRequest, Hypervisor *pHypervisor)
 {
@@ -1470,13 +1129,11 @@ NodeResourceRequest *DataCentreManagerBase::generateNode(std::string strUserName
 
 void DataCentreManagerBase::fillVmFeatures(std::string strVmType, NodeResourceRequest *&pNode)
 {
-    VirtualMachine *pVmType;
+    auto pVmType = dataManager->searchVirtualMachine(strVmType);
 
-    pVmType = findVirtualMachine(strVmType);
-
-    if (pVmType != NULL)
+    if (pVmType != nullptr)
     {
-        EV_INFO << "fillVmFeatures - Vm:" << strVmType << " cpus: " << pVmType->getNumCores() << " mem: " << pVmType->getMemoryGb() << endl;
+        EV_INFO << "fillVmFeatures - Vm:" << strVmType << " cpus: " << pVmType->getNumCores() << " mem: " << pVmType->getMemoryGb() << '\n';
 
         pNode->setTotalCpUs(pVmType->getNumCores());
         pNode->setTotalMemory(pVmType->getMemoryGb());
@@ -1484,30 +1141,22 @@ void DataCentreManagerBase::fillVmFeatures(std::string strVmType, NodeResourceRe
     }
 }
 
-void DataCentreManagerBase::finish()
-{
-    printFinal();
-}
-
 void DataCentreManagerBase::printFinal()
 {
-    std::map<std::string, std::tuple<unsigned int, simtime_t **, simtime_t *>>::iterator it;
-    std::tuple<unsigned int, simtime_t **, simtime_t *> timersTuple;
-    unsigned int numCores;
-    simtime_t *timerArray = nullptr;
     simtime_t finalSimulationTime = simTime();
     const char *strName = getParentModule()->getName();
     int nTotalIndex = 0;
 
-    for (it = mapCpuUtilizationTimePerHypervisor.begin(); it != mapCpuUtilizationTimePerHypervisor.end(); it++)
+    for (const auto &entry : mapCpuUtilizationTimePerHypervisor)
     {
-        timersTuple = it->second;
-        numCores = std::get<0>(timersTuple);
-        timerArray = std::get<2>(timersTuple);
+        auto timersTuple = entry.second;
+        uint32_t numCores = std::get<0>(timersTuple);
+        simtime_t *timerArray = std::get<2>(timersTuple);
 
         for (int i = 0; i < numCores; i++)
         {
-            EV_FATAL << "#___cpuTime#" << strName << " " << nTotalIndex << " " << timerArray[i].dbl() << " " << timerArray[i].dbl() / finalSimulationTime.dbl() << endl;
+            EV_FATAL << "#___cpuTime#" << strName << " " << nTotalIndex << " " << timerArray[i].dbl()
+                     << " " << timerArray[i].dbl() / finalSimulationTime.dbl() << '\n';
             nTotalIndex++;
         }
     }

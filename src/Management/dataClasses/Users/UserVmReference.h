@@ -9,61 +9,50 @@
  * This class represents the number of instances of a virtual machine that is required by the user.
  *
  */
-class UserVmReference {
+class UserVmReference
+{
 
-    private:
+private:
+    const VirtualMachine *vmBase; // Pointer to the virtual machine required by the user
+    int numInstances;             // Number of virtual machine instances
+    int nRentTime;                // Rental time (FIXME: hours ??)
 
-        /** Pointer to the virtual machine required by the user */
-        VirtualMachine* vmBase;
+public:
+    /**
+     * Constructor.
+     *
+     * @param base Pointer to the virtual machine.
+     * @param numInstances Number of virtual machine instances.
+     * @param nRentTime Rental time of machine instances.
+     */
+    UserVmReference(const VirtualMachine *base, int numInstances, int nRentTime) : vmBase(base), numInstances(numInstances), nRentTime(nRentTime){};
 
-        /** Number of virtual machine instances */
-        int numInstances;
+    /**
+     * Gets the virtual machine required by the user.
+     *
+     * @return Virtual machine required by the user.
+     */
+    const VirtualMachine *getVmBase() const { return vmBase; }
 
-        /** Rental time*/
-        int nRentTime;
+    /**
+     * Gets the number of instances of this virtual machine.
+     *
+     * @return Number of instances of this virtual machine.
+     */
+    int getNumInstances() const { return numInstances; }
 
-    public:
+    /**
+     * Gets the renting time of instances of this virtual machine
+     * @return Rent time of instances of this virtual machine
+     */
+    int getRentTime() const { return nRentTime; }
 
-        /**
-         * Constructor.
-         *
-         * @param vmPtr Pointer to the virtual machine.
-         * @param numInstances Number of virtual machine instances.
-         * @param nRentTime Rental time of machine instances.
-         */
-        UserVmReference(VirtualMachine* vmPtr, int numInstances, int nRentTime);
-
-        /**
-         * Destructor.
-         */
-        ~UserVmReference();
-
-        /**
-         * Gets the virtual machine required by the user.
-         *
-         * @return Virtual machine required by the user.
-         */
-        VirtualMachine* getVmBase();
-
-        /**
-         * Gets the number of instances of this virtual machine.
-         *
-         * @return Number of instances of this virtual machine.
-         */
-        int getNumInstances() const;
-
-        /**
-         * Gets the renting time of instances of this virtual machine
-         * @return Rent time of instances of this virtual machine
-         */
-        int getRentTime() const;
-
-        /**
-         * Converts the information of the virtual machine to a string.
-         *
-         * @return String containing the information of the required virtual machine.
-         */
-        std::string toString();
+    /**
+     * Converts the information of the virtual machine to a string.
+     *
+     * @return String containing the information of the required virtual machine.
+     */
+    std::string toString();
 };
 
 #endif /* USERVMREFERENCE_H_ */

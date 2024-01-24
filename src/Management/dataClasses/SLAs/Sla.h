@@ -61,7 +61,7 @@ public:
      * @param vmTypeStr Name of the VM type
      * @return VMCost A struct that contains the rental costs of a VM.
      */
-    const Sla::VMCost &getVmCost(std::string vmTypeStr);
+    const Sla::VMCost *getVmCost(const std::string& vmType) const;
 
     /**
      * Converts the information of this sla into a string.

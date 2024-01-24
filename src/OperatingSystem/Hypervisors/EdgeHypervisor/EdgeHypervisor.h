@@ -36,8 +36,8 @@ namespace hypervisor
         uint32_t runningApps;
         cModule *appsVector;
 
-        void initialize();
-        void finish();
+        void initialize() override;
+        void finish() override;
 
         void processSyscall(SM_Syscall *syscall);
         void launchApps(SM_UserAPP *request);

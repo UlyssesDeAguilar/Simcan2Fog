@@ -79,7 +79,7 @@ protected:
      * @param vmPtr Pointer to the </b>VirtualMachine</b> object that contains the main features of the generated VM.
      * @param numInstances Number of instances of the generated VM.
      */
-    void insertNewVirtualMachineInstances(VirtualMachine *vmPtr, int numInstances, int nRentTime, int total, int offset);
+    void insertNewVirtualMachineInstances(const VirtualMachine *vmPtr, int numInstances, int nRentTime, int total, int offset);
 
     /**
      * @brief Flattens the AppCollections into a single vector!
@@ -93,7 +93,7 @@ protected:
      * @param user   The user reference
      * @return int   The number of instances required
      */
-    int getNumVms(std::string vmType, CloudUser *user);
+    int getNumVms(std::string vmType, const CloudUser *user);
 
 public:
     /**
@@ -106,7 +106,7 @@ public:
      * @param currentInstanceIndex User instance. First instance of this user must be 0.
      * @param totalUserInstances Total number of user instances to be created for this <b>userNumber</b>.
      */
-    CloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
+    CloudUserInstance(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 
     /**
      * Destructor.

@@ -15,27 +15,13 @@
 
 #include "CloudUserPriority.h"
 
-CloudUserPriority::CloudUserPriority(std::string type, int numInstances, tPriorityType priorityType, Sla* slaPtr) : CloudUser(type, numInstances){
+CloudUserPriority::CloudUserPriority(std::string type, int numInstances, tPriorityType priorityType, const std::string &sla) : CloudUser(type, numInstances)
+{
     this->priorityType = priorityType;
-    this->sla = slaPtr;
-}
-
-CloudUserPriority::~CloudUserPriority() {
-    // TODO Auto-generated destructor stub
-}
-
-tPriorityType CloudUserPriority::getPriorityType() const {
-    return priorityType;
-}
-
-Sla* CloudUserPriority::getSla() const {
-    return sla;
-}
-
-void CloudUserPriority::setSla(Sla* sla) {
     this->sla = sla;
 }
 
-void CloudUserPriority::setPriorityType(tPriorityType priorityType) {
-    this->priorityType = priorityType;
+CloudUserPriority::~CloudUserPriority()
+{
+    // TODO Auto-generated destructor stub
 }

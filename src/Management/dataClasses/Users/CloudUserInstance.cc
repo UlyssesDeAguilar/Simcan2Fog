@@ -1,6 +1,6 @@
 #include "CloudUserInstance.h"
 
-CloudUserInstance::CloudUserInstance(CloudUser *ptrUser,
+CloudUserInstance::CloudUserInstance(const CloudUser *ptrUser,
                                      unsigned int totalUserInstance,
                                      unsigned int userNumber,
                                      int currentInstanceIndex,
@@ -59,7 +59,7 @@ CloudUserInstance::~CloudUserInstance()
     virtualMachines.clear();
 }
 
-int CloudUserInstance::getNumVms(std::string vmType, CloudUser *user)
+int CloudUserInstance::getNumVms(std::string vmType, const CloudUser *user)
 {
     int numVms = 0;
 
@@ -70,7 +70,7 @@ int CloudUserInstance::getNumVms(std::string vmType, CloudUser *user)
     return numVms;
 }
 
-void CloudUserInstance::insertNewVirtualMachineInstances(VirtualMachine *vmPtr, int numInstances, int nRentTime, int total, int offset)
+void CloudUserInstance::insertNewVirtualMachineInstances(const VirtualMachine *vmPtr, int numInstances, int nRentTime, int total, int offset)
 {
     auto newVmCollection = new VmInstanceCollection(vmPtr, this->id, numInstances, nRentTime, total, offset);
     virtualMachines.push_back(newVmCollection);

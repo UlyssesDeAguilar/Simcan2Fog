@@ -1,6 +1,6 @@
 #include "VmInstanceCollection.h"
 
-VmInstanceCollection::VmInstanceCollection(VirtualMachine *vmPtr, std::string userID, int numInstances, int nRentTime, int total, int offset)
+VmInstanceCollection::VmInstanceCollection(const VirtualMachine *vmPtr, std::string userID, int numInstances, int nRentTime, int total, int offset)
 {
     // Check!
     if (vmPtr == nullptr)
@@ -42,7 +42,7 @@ std::string VmInstanceCollection::toString(bool includeVmFeatures)
         info << "\t\t  - VMs[" << i++ << "]: " << instance->toString() << "\n";
 
     if (includeVmFeatures)
-        info << "\t\t\t Features:" << vmBase->featuresToString() << "\n";
+        info << "\t\t\t Features:" << *vmBase << "\n";
 
     info << "\n";
 

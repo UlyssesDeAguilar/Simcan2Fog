@@ -15,7 +15,7 @@
 
 #include "CloudUserInstanceTrace.h"
 
-CloudUserInstanceTrace::CloudUserInstanceTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances, Application *ptrApp)
+CloudUserInstanceTrace::CloudUserInstanceTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances, const Application *ptrApp)
     : CloudUserInstancePriority(nullptr, totalUserInstance, nCurrentNumber, nUserInstance, nTotalInstances)
 {
     UserVmReference *vmReference;

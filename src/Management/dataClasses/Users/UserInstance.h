@@ -32,7 +32,7 @@ public:
      * @param currentInstanceIndex User instance. First instance of this user must be 0.
      * @param totalUserInstances Total number of user instances to be created for this <b>userNumber</b>.
      */
-    UserInstance(User *user, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
+    UserInstance(const User *user, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 
     /**
      * Destructor
@@ -101,7 +101,7 @@ protected:
      * @param appPtr Pointer to the </b>Application</b> object that contains the main features of the generated application.
      * @param numInstances Number of instances of the generated application.
      */
-    void insertNewApplicationInstances(Application *appPtr, int numInstances);
+    void insertNewApplicationInstances(const Application *appPtr, int numInstances);
 };
 
 #endif /* USERINSTANCE_H_ */

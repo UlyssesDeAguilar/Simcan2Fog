@@ -2,10 +2,7 @@
 #define __SIMCAN_2_0_CLOUDMANAGER_BASE_H_
 
 #include "Core/cSIMCAN_Core.h"
-#include "Management/parser/UserPriorityListParser.h"
-#include "Management/parser/SlaListParser.h"
-#include "Management/parser/VmListParser.h"
-#include "Management/parser/AppListParser.h"
+#include "Core/DataManager/DataManager.h"
 #include "Management/utils/LogUtils.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
 #include "Messages/SM_UserVM.h"
@@ -13,192 +10,136 @@
 #include <algorithm>
 #include <functional>
 
-
-#define INITIAL_STAGE  "INITIAL_STAGE"
-#define EXEC_APP_END  "EXEC_APP_END"
-#define EXEC_VM_RENT_TIMEOUT "EXEC_VM_RENT_TIMEOUT"
-#define EXEC_APP_END_SINGLE "EXEC_APP_END_SINGLE"
-#define EXEC_APP_END_SINGLE_TIMEOUT "EXEC_APP_END_SINGLE_TIMEOUT"
-#define MANAGE_SUBSCRIBTIONS  "MANAGE_SUBSCRIBTIONS"
-#define USER_SUBSCRIPTION_TIMEOUT  "SUBSCRIPTION_TIMEOUT"
-#define SIMCAN_MESSAGE "SIMCAN_Message"
-#define CPU_STATUS "CPU_STATUS"
-#define MANAGE_MACHINES "MANAGE_MACHINES"
+// #define INITIAL_STAGE "INITIAL_STAGE"
+// #define EXEC_APP_END "EXEC_APP_END"
+// #define EXEC_VM_RENT_TIMEOUT "EXEC_VM_RENT_TIMEOUT"
+// #define EXEC_APP_END_SINGLE "EXEC_APP_END_SINGLE"
+// #define EXEC_APP_END_SINGLE_TIMEOUT "EXEC_APP_END_SINGLE_TIMEOUT"
+// #define MANAGE_SUBSCRIBTIONS "MANAGE_SUBSCRIBTIONS"
+// #define USER_SUBSCRIPTION_TIMEOUT "SUBSCRIPTION_TIMEOUT"
+// #define SIMCAN_MESSAGE "SIMCAN_Message"
+// #define CPU_STATUS "CPU_STATUS"
+// #define MANAGE_MACHINES "MANAGE_MACHINES"
 #define FORECASTING_DIMENSION 1
 
 /**
- * Base class for Cloud Managers.
- *
- * This class parses and manages VMs and users
+ * @brief Base class for Cloud Managers.
+ * @details This class is the base for managing users. Before it also took the responsibility to parse the data types
+ * but that functionality has been given to the DataManager.
+ * @author Pablo Cerro Cañizares
+ * @author Ulysses de Aguilar Gudmundsson
+ * @version 2.0
  */
-class CloudManagerBase: public cSIMCAN_Core{
+class CloudManagerBase : public cSIMCAN_Core
+{
 
-    protected:
-        /** Show parsed slas */
-        bool showSlas;
+protected:
+  typedef enum
+  {
+    INITIAL_STAGE,
+    EXEC_APP_END,
+    EXEC_VM_RENT_TIMEOUT,
+    EXEC_APP_END_SINGLE,
+    EXEC_APP_END_SINGLE_TIMEOUT,
+    MANAGE_SUBSCRIBTIONS,
+    USER_SUBSCRIPTION_TIMEOUT,
+    SIMCAN_MESSAGE,
+    CPU_STATUS,
+    MANAGE_MACHINES
+  }Event;
+  template <class T>
+  using Callback = std::map<int, std::function<void(T *)>>;
 
-        /** Show parsed users and VMs */
-        bool showUsersVms;
+  DataManager *dataManager; // Data Manager
+  bool bFinished;           // Flag that indicates if the process has been finished
+  bool acceptResponses;     // Flag that indicates if the module allows accepting responses
 
-        /** Shows the parsed applications */
-        bool showApps;
+  /** Handler maps */
+  Callback<cMessage> selfHandlers;
+  Callback<SIMCAN_Message> requestHandlers;
+  Callback<SIMCAN_Message> responseHandlers;
 
-        /** Flag that indicates if the process has been finished*/
-        bool bFinished;
+  /** Time Series Forecasting object **/
+  single_exponential_smoothing<double, FORECASTING_DIMENSION> timeSeriesForecasting;
+  es_vec<double, FORECASTING_DIMENSION> currForecastingQuery;
+  es_vec<double, FORECASTING_DIMENSION> smthForecastingResult;
 
-        /** Vector that contains the set of application types used in the current simulation */
-        std::vector<Application*> appTypes;
+  /**
+   * Destructor
+   */
+  virtual ~CloudManagerBase();
 
-        /** Vector that contains the types of VM used in the current simulation */
-        std::vector<VirtualMachine*> vmTypes;
+  // Base Core functions, documentation will be inherited from super class
+  
+  virtual void initialize() override;
+  virtual void finish() override {}
+  virtual cGate *getOutGate(cMessage *msg) override = 0;
+  virtual void processSelfMessage(cMessage *msg) override;
+  virtual void processRequestMessage(SIMCAN_Message *sm) override;
+  virtual void processResponseMessage(SIMCAN_Message *sm) override; 
 
-        /** Vector that contains the types of users generated in the current simulation */
-        std::vector<CloudUser*> userTypes;
+  /**
+   * Get the total cores of a virtual machine type.
+   * @param vmType Type of the virtual machine.
+   * @return Number of cores.
+   */
+  int getTotalCoresByVmType(const std::string &vmType);
 
-        /** Handler maps */
-        std::map<std::string, std::function<void(cMessage*)>> selfHandlers;
-        std::map<int, std::function<void(SIMCAN_Message*)>> requestHandlers;
-        std::map<int, std::function<void(SIMCAN_Message*)>> responseHandlers;
+  /**
+   * @brief Calculate the total cores requested by an specific user.
+   * @details This method is specially useful in order to check if there exist enough space in the datacentre to handle
+   * all the requests of the user.
+   * @param vmRequest User VM request.
+   * @return Total number of cores requested by the user.
+   */
+  int calculateTotalCoresRequested(const SM_UserVM *vmRequest);
 
-        /** Time Series Forecasting object **/
-        single_exponential_smoothing<double, FORECASTING_DIMENSION> timeSeriesForecasting;
-        es_vec<double, FORECASTING_DIMENSION> currForecastingQuery;
-        es_vec<double, FORECASTING_DIMENSION> smthForecastingResult;
+  /**
+   * @brief Creates and schedules a timeout message for a vm request message
+   * 
+   * @param eventType Type of event (tipically EXEC_VM_RENT_TIMEOUT)
+   * @param userId   Owner of the request
+   * @param request  vm request
+   * @param timeOut  If different than 0, override renting time of vm request (T2)
+   * @return SM_UserVM_Finish* Scheduled message
+   */
+  SM_UserVM_Finish *scheduleVmMsgTimeout(Event eventType, std::string &userId, VM_Request &request, double timeOut = 0.0);
 
-        /**
-         * Destructor
-         */
-        ~CloudManagerBase();
+  /**
+   * @brief Creates and schedules a timeout message for a given request
+   * @details It's used for user subscription timeouts
+   * @param eventType Type of event (tipically USER_SUBSCRIPTION_TIMEOUT)
+   * @param request   VM request from user
+   * @param timeOut   Time out for the event
+   * @return SM_UserVM_Finish* Scheduled message
+   */
+  SM_UserVM_Finish *scheduleVmMsgTimeout(Event eventType, const SM_UserVM * request, double timeOut);
 
-        /**
-         * Initialize method. Invokes the parsing process to allocate the existing VMs and users in the corresponding data structures.
-         */
-        virtual void initialize();
+  /**
+   * @brief Finds the user type by it's id
+   * 
+   * @param userId The user id
+   * @return CloudUser or nullptr if not found 
+   */
+  const CloudUser *findUserTypeById(const std::string &userId);
 
-        virtual void initializeSelfHandlers(){};
-        virtual void initializeRequestHandlers(){};
-        virtual void initializeResponseHandlers(){};
+  /**
+   * @brief Configures the mapping for auto events (self messages)
+   * @details Uses the cMessage kind field for indexing
+   */
+  virtual void initializeSelfHandlers() = 0;
 
-        /**
-         * Parses the config of the simulation.
-         */
-        virtual void parseConfig();
+  /**
+   * @brief Configures the mapping for request events
+   * @details Uses the SIMCAN_Message operation field for indexing
+   */
+  virtual void initializeRequestHandlers() = 0;
 
-        /**
-         * Parses each application type used in the simulation.
-         * These applications are allocated in the <b>appTypes</b> vector.
-         *
-         * @return If the parsing process is successfully executed, this method returns SC_OK. In other case, it returns SC_ERROR.
-         */
-        virtual int parseAppList();
-
-        /**
-         * Parses each VM type used in the simulation. These VMs are allocated in the <b>vmTypes</b> vector.
-         *
-         * @return If the parsing process is successfully executed, this method returns SC_OK. In other case, it returns SC_ERROR.
-         */
-        virtual int parseVmsList();
-
-        /**
-         * Parses each user type used in the simulation. These users are allocated in the <b>userTypes</b> vector.
-         *
-         * @return If the parsing process is successfully executed, this method returns SC_OK. In other case, it returns SC_ERROR.
-         */
-        virtual int parseUsersList();
-
-       /**
-        * Converts the parsed applications to string format. Usually, this method is invoked for debugging/logging purposes.
-        *
-        * @return String containing the parsed applications.
-        */
-        std::string appsToString();
-
-        /**
-         * Converts the parsed VMs into string format.
-         *
-         * @return A string containing the parsed VMs.
-         */
-        std::string vmsToString();
-
-        /**
-         * Converts the parsed user into string format.
-         *
-         * @return A string containing the parsed users.
-         */
-        std::string usersToString();
-
-        /**
-         * Search for the application <b>appName</b>.
-         *
-         * @param appName Instance name of the requested application.
-         * @return If the requested application is located in the vector, then a pointer to its object is returned. In other case, \a nullptr is returned.
-         */
-         Application* findApplication (std::string appName);
-
-        /**
-         * Search for a specific type of VM.
-         *
-         * @param vmType Type of a VM.
-         * @return If the requested type of VM is located in the vmTypes vector, then a pointer to its object is returned. In other case, a \a nullptr is returned.
-         */
-         VirtualMachine* findVirtualMachine (std::string vmType);
-
-
-       /**
-        * Search for a specific type of CloudUser.
-        *
-        * @param userType Type of a user.
-        * @return If the requested type of user is located in the userTypes vector, then a pointer to its object is returned. In other case, \a nullptr is returned.
-        */
-        CloudUser* findUser (std::string userType);
-        CloudUser* findUserTypeById (std::string userId);
-
-        /**
-         * Get the total cores of a virtual machine type.
-         * @param strVmType Type of the virtual machine.
-         * @return Number of cores.
-         */
-        int getTotalCoresByVmType(std::string strVmType);
-
-        /**
-         * Calculate the total cores requested by an specific user.
-         * This method is specially useful in order to check if there exist enough space in the datacentre to handle
-         * all the requests of the user.
-         * @param userVM_Rq User VM request.
-         * @return Total number of cores requested by the user.
-         */
-        int calculateTotalCoresRequested(SM_UserVM *userVM_Rq);
-
-        SM_UserVM_Finish* scheduleVmMsgTimeout (std::string name, std::string strUserName, std::string strVmId, std::string strVmType, double rentTime);
-
-       /**
-        * Get the out Gate to the module that sent <b>msg</b>.
-        *
-        * @param msg Arrived message.
-        * @return Gate (out) to module that sent <b>msg</b> or \a nullptr if gate not found.
-        */
-        virtual cGate* getOutGate (cMessage *msg) = 0;
-
-       /**
-        * Process a self message.
-        *
-        * @param msg Received (self) message.
-        */
-        virtual void processSelfMessage (cMessage *msg) override;
-
-       /**
-        * Process a request message.
-        *
-        * @param sm Incoming message.
-        */
-        virtual void processRequestMessage (SIMCAN_Message *sm) override;
-
-       /**
-        * Process a response message from an external module.
-        *
-        * @param sm Incoming message.
-        */
-        virtual void processResponseMessage (SIMCAN_Message *sm) override;
+  /**
+   * @brief Configures the mapping for response events
+   * @details Uses the SIMCAN_Message result field for indexing
+   */
+  virtual void initializeResponseHandlers() = 0;
 };
 
 #endif

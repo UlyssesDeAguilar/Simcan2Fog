@@ -37,7 +37,7 @@ public:
      * @param numInstances Number of instances of the new virtual machine.
      * @param nRentTime Rental time of instances of the new virtual machine.
      */
-    void insertVirtualMachine(VirtualMachine *vmPtr, int numInstances, int nRentTime);
+    void insertVirtualMachine(const VirtualMachine *vmPtr, int numInstances, int nRentTime);
 
     /**
      * Gets the virtual machine at index position in the <b>virtualMachines</b> vector.

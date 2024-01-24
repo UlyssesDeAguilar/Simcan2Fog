@@ -55,37 +55,6 @@ protected:
 
     virtual CloudUserInstance *handleResponseAppTimeout(SIMCAN_Message *msg) override;
 
-    virtual void parseConfig() override;
-
-    /**
-     * Parses each sla type used in the simulation. These slas are allocated in the <b>slaTypes</b> vector.
-     *
-     * @return If the parsing process is successfully executed, this method returns SC_OK. In other case, it returns SC_ERROR.
-     */
-    virtual int parseSlasList();
-
-    /**
-     * Parses each user type used in the simulation. These users are allocated in the <b>userTypes</b> vector.
-     *
-     * @return If the parsing process is successfully executed, this method returns SC_OK. In other case, it returns SC_ERROR.
-     */
-    virtual int parseUsersList() override;
-
-    /**
-     * Converts the parsed sla into string format.
-     *
-     * @return A string containing the parsed slas.
-     */
-    std::string slasToString();
-
-    /**
-     * Search for a specific type of CloudUser.
-     *
-     * @param userType Type of a user.
-     * @return If the requested type of user is located in the userTypes vector, then a pointer to its object is returned. In other case, \a nullptr is returned.
-     */
-    Sla *findSla(std::string slaType);
-
     virtual bool hasToExtendVm(SM_UserAPP *userApp);
 
     virtual void resumeExecution(SM_UserAPP *userApp);
@@ -94,7 +63,7 @@ protected:
 
     virtual SM_UserVM *createVmMessage() override;
 
-    virtual CloudUserInstance *createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances) override;
+    virtual CloudUserInstance *createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 
     virtual CloudUser *createUserTraceType() override;
     //

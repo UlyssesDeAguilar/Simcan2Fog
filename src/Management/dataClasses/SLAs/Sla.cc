@@ -43,23 +43,9 @@ void Sla::addVmCost(const std::string &vmType, double base, double increase, dou
     }
 }
 
-const Sla::VMCost &Sla::getVmCost(std::string vmTypeStr)
+const Sla::VMCost *Sla::getVmCost(const std::string& vmType) const
 {
-    if (vmCostMap.find(vmTypeStr) != vmCostMap.end())
-    {
-        return vmCostMap.at(vmTypeStr);
-    }
-    else
-    {
-        EV_FATAL << "#___#SLA VM not found ins SLA: " << vmTypeStr << std::endl;
-        VMCost vmCost = {
-            .base = 0.0,
-            .increase = 0.0,
-            .discount = 0.0,
-            .compensation = 0.0};
-        vmCostMap[vmTypeStr] = vmCost;
-        return vmCostMap.at(vmTypeStr);
-    }
+    return getOrNullConst(vmCostMap, vmType);
 }
 
 std::string Sla::toString()

@@ -48,7 +48,7 @@ public:
      * @param appPtr Pointer to the new application assigned to this user.
      * @param numInstances Number of instances of the new application.
      */
-    void insertApplication(Application *appPtr, int numInstances);
+    void insertApplication(const Application *appPtr, int numInstances);
 
     /**
      * Gets the application at index position in the <b>applications</b> vector.

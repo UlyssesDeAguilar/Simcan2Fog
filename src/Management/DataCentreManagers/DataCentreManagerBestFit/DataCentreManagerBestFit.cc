@@ -1,73 +1,77 @@
 #include "DataCentreManagerBestFit.h"
-
-#include "Management/utils/LogUtils.h"
-
-
 Define_Module(DataCentreManagerBestFit);
 
-DataCentreManagerBestFit::~DataCentreManagerBestFit(){
-}
-
-void DataCentreManagerBestFit::initialize(){
-
+void DataCentreManagerBestFit::initialize()
+{
     // Init super-class
     DataCentreManagerBase::initialize();
 }
 
-Hypervisor* DataCentreManagerBestFit::selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest){
-    VirtualMachine *pVMBase;
-    Hypervisor *pHypervisor = nullptr;
-    NodeResourceRequest *pResourceRequest;
-    int numCoresRequested, numAvailableCores;
-    std::map<int, std::vector<Hypervisor*>>::iterator itMap;
-    std::vector<Hypervisor*>::iterator itVector;
-    bool bHandled;
-    string strUserName;
+Hypervisor *DataCentreManagerBestFit::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
+{
+    if (userVM_Rq == nullptr)
+        return nullptr;
 
-    if (userVM_Rq==nullptr) return nullptr;
+    auto userId = userVM_Rq->getUserID();
+    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.strVmType);
+    int numCoresRequested = pVMBase->getNumCores();
 
-    strUserName = userVM_Rq->getUserID();
+    // Search in buckets the available nodes with the needed cores
+    for (const auto &entry : mapHypervisorPerNodes)
+    {
+        int numAvailableCores = entry.first;
 
-    pVMBase = findVirtualMachine(vmRequest.strVmType);
-    numCoresRequested = pVMBase->getNumCores();
+        // If we don't have enough resources go to the next node
+        if (numAvailableCores < numCoresRequested)
+            continue;
 
-    bHandled = false;
-    for (itMap = mapHypervisorPerNodes.begin(); itMap != mapHypervisorPerNodes.end() && !bHandled; ++itMap){
-        numAvailableCores = itMap->first;
-        if (numAvailableCores >= numCoresRequested) {
-            std::vector<Hypervisor*> &vectorHypervisor = itMap->second;
-            for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && !bHandled; ++itVector) {
-                pHypervisor = *itVector;
-                numAvailableCores = pHypervisor->getAvailableCores();
-                if (numAvailableCores >= numCoresRequested) {
-                    pResourceRequest = generateNode(strUserName, vmRequest);
-                    bHandled = allocateVM(pResourceRequest, pHypervisor);
+        // Search in buckets the available Hypervisors with the needed cores
+        auto vectorHypervisor = entry.second;
+        int i = 0;
+        for (const auto &hypervisor : vectorHypervisor)
+        {
+            numAvailableCores = hypervisor->getAvailableCores();
 
-                    if (bHandled) {
-                        // Move to right vector by avaible cores
-                        vectorHypervisor.erase(itVector);
-                        mapHypervisorPerNodes[pHypervisor->getAvailableCores()].push_back(pHypervisor);
-                        manageActiveMachines();
-
-                        return pHypervisor;
-                    }
-                }
+            // If we don't have enough resources go to the next hypervisor
+            if (numAvailableCores < numCoresRequested)
+            {
+                i++;
+                continue;
             }
 
+            NodeResourceRequest *resourceRequest = generateNode(userId, vmRequest);
+            if (allocateVM(resourceRequest, hypervisor))
+            {
+                // As order doesn't matter, swap with last element and then pop back
+                // This is O(1) vs std::vector::erase which is O(N)
+                std::swap(vectorHypervisor[i], vectorHypervisor.back());
+                vectorHypervisor.pop_back();
+
+                // Move to right vector by avaible cores
+                mapHypervisorPerNodes[hypervisor->getAvailableCores()].push_back(hypervisor);
+                manageActiveMachines();
+
+                return hypervisor;
+            }
+            else
+            {
+                // In case the allocation fails, release resources and return
+                delete resourceRequest;
+                return nullptr;
+            }
         }
     }
 
+    // There wasn't any available node with the necessary resources
     return nullptr;
 }
 
 void DataCentreManagerBestFit::deallocateVmResources(std::string strVmId)
 {
-    std::map<int, std::vector<Hypervisor*>>::iterator itMap;
-    std::vector<Hypervisor*> vectorHypervisor;
     Hypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
 
-    if (pHypervisor==nullptr)
-        error ("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
+    if (pHypervisor == nullptr)
+        error("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
 
     removeNodeFromMap(pHypervisor);
 
@@ -79,21 +83,25 @@ void DataCentreManagerBestFit::deallocateVmResources(std::string strVmId)
     manageActiveMachines();
 }
 
-void DataCentreManagerBestFit::storeNodeInMap (Hypervisor* pHypervisor){
-    if (pHypervisor!=nullptr) {
+void DataCentreManagerBestFit::storeNodeInMap(Hypervisor *pHypervisor)
+{
+    if (pHypervisor != nullptr)
+    {
         mapHypervisorPerNodes[pHypervisor->getAvailableCores()].push_back(pHypervisor);
     }
-
 }
 
-void DataCentreManagerBestFit::removeNodeFromMap (Hypervisor* pHypervisor){
-    std::map<int, std::vector<Hypervisor*>>::iterator itMap;
+void DataCentreManagerBestFit::removeNodeFromMap(Hypervisor *pHypervisor)
+{
+    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
 
-    if (pHypervisor!=nullptr) {
+    if (pHypervisor != nullptr)
+    {
         itMap = mapHypervisorPerNodes.find(pHypervisor->getAvailableCores());
 
-        if (itMap != mapHypervisorPerNodes.end()) {
-            std::vector<Hypervisor*> &vectorHypervisor = itMap->second;
+        if (itMap != mapHypervisorPerNodes.end())
+        {
+            std::vector<Hypervisor *> &vectorHypervisor = itMap->second;
             vectorHypervisor.erase(std::remove(vectorHypervisor.begin(), vectorHypervisor.end(), pHypervisor), vectorHypervisor.end());
         }
     }

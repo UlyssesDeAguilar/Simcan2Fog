@@ -2,7 +2,6 @@
 
 const AppParameter::TypeMap AppParameter::typeMap = {
     {"int", tNedType::INT},
-    {"long", tNedType::LONG},
     {"double", tNedType::DOUBLE},
     {"string", tNedType::STRING},
     {"xml", tNedType::XML},
@@ -60,6 +59,31 @@ AppParameter::AppParameter(std::string name, std::string type, std::string expre
     catch (const std::runtime_error &e)
     {
         throw cRuntimeError("App: %s -- Error parsing %s into type %s", name.c_str(), expression.c_str(), type.c_str());
+    }
+}
+
+void AppParameter::initModuleParameter(cPar *&param)
+{
+    switch (parameter->getType())
+    {
+    case tNedType::INT:
+        param->setIntValue(intValue());
+        break;
+    case tNedType::DOUBLE:
+        param->setDoubleValue(doubleValue());
+        break;
+    case tNedType::STRING:
+        param->setStringValue(stdstringValue());
+        break;
+    case tNedType::XML:
+        param->setXMLValue(xmlValue());
+        break;
+    case tNedType::BOOL:
+        param->setBoolValue(boolValue());
+        break;
+    default:
+        // Will implode if the types don't match
+        break;
     }
 }
 

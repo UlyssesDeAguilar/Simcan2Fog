@@ -99,10 +99,13 @@ public:
     /**
      * #FIXME: Should be deleted and substituted by << operator !
      * Parses the contents of the parameter into a string.
-     * 
+     *
      * @return String containing the information of the parameter.
      */
     std::string toString() const;
+
+    // TODO:
+    void initModuleParameter(cPar *&param);
 
     /**
      * @brief Outputs an instance into a stream

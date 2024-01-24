@@ -35,23 +35,10 @@ protected:
     /** Destructor */
     ~CloudProviderFirstFit();
 
-    /** Initialize the cloud provider*/
-    virtual void initialize();
-
-    /**
-     * Initializes the self message handlers.
-     */
-    virtual void initializeSelfHandlers();
-
-    /**
-     * Initializes the request handlers.
-     */
-    virtual void initializeRequestHandlers();
-
-    /**
-     * Initializes the response handlers.
-     */
-    virtual void initializeResponseHandlers();
+    virtual void initialize() override;
+    virtual void initializeSelfHandlers() override;
+    virtual void initializeRequestHandlers() override;
+    virtual void initializeResponseHandlers() override;
 
     /**
      * Process a request message.
@@ -113,13 +100,6 @@ protected:
      * @param strVmId Identifier of the VM.
      */
     virtual void freeVm(std::string strVmId);
-
-    /**
-     * Search a virtual machine per type. This method is used to extract the characteristics necessaries in the fillVmFeatures method.
-     * @param strVmType
-     * @return
-     */
-    virtual VirtualMachine* searchVmPerType(std::string strVmType);
 
     /**
      * Stores a user subscription.
@@ -190,10 +170,10 @@ protected:
 
     /**
      * Get the price of a VM given its type.
-     * @param strPrice Type of the VM.
+     * @param vmType Type of the VM.
      * @return Price of the VM.
      */
-    int getPriceByVmType(std::string strPrice);
+    int getPriceByVmType(const std::string& vmType);
 
     /**
      * Fill the VM request features given its type.
@@ -289,14 +269,6 @@ protected:
      * @return The index of the user.
      */
     int searchUserInSubQueue(std::string strUsername, std::string strVmId);
-
-    /**
-     * Search an application type by using an identifier.
-     * @param strAppType Indentifier of the application
-     * @return
-     */
-    Application* searchAppPerType(std::string strAppType);
-
 };
 
 #endif

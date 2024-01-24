@@ -40,7 +40,7 @@ public:
     /**
      * Initialise the datacentre
      */
-    virtual void initialize();
+    virtual void initialize() override;
 
     /**
      * Checks if all the datacentres are full.

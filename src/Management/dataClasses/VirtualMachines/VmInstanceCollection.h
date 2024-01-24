@@ -12,7 +12,7 @@
 class VmInstanceCollection
 {
 private:
-    VirtualMachine *vmBase;                // Pointer to the object that contains the features of this VM
+    const VirtualMachine *vmBase;          // Pointer to the object that contains the features of this VM
     std::vector<VmInstance *> vmInstances; // Collection of VM instances to be instantiated
     int nRentTime;                         // Number of renting hours for each VM instance
 
@@ -34,7 +34,7 @@ public:
      * @param userID User that contains this collection of VMs.
      * @param numInstances Number of VM instances to be created.
      */
-    VmInstanceCollection(VirtualMachine *vmPtr, std::string userID, int numInstances, int nRentTime, int total, int offset);
+    VmInstanceCollection(const VirtualMachine *vmPtr, std::string userID, int numInstances, int nRentTime, int total, int offset);
 
     /**
      * Destructor
@@ -46,13 +46,13 @@ public:
      *
      * @return Pointer to the object that contains the features of this VM.
      */
-    VirtualMachine *getVirtualMachineBase() { return vmBase; }
+    const VirtualMachine *getVirtualMachineBase() { return vmBase; }
 
     /**
      * @brief Get the Vm Type
-     * @return Reference to a constant string containing the type 
+     * @return Reference to a constant string containing the type
      */
-    const std::string& getVmType() { return vmBase->getType(); }
+    const std::string &getVmType() { return vmBase->getType(); }
 
     /**
      * Gets the number of instances.

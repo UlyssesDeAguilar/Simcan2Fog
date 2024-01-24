@@ -1,6 +1,6 @@
 #include "UserInstance.h"
 
-UserInstance::UserInstance(User *user, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
+UserInstance::UserInstance(const User *user, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
 {
 
     // Init main attributes
@@ -30,7 +30,7 @@ UserInstance::~UserInstance()
     applications.clear();
 }
 
-void UserInstance::insertNewApplicationInstances(Application *appPtr, int numInstances)
+void UserInstance::insertNewApplicationInstances(const Application *appPtr, int numInstances)
 {
     auto newAppCollection = new AppInstanceCollection(appPtr, this->id, numInstances);
     applications.push_back(newAppCollection);

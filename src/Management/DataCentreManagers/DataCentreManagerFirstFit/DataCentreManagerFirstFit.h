@@ -7,23 +7,16 @@
 #include "Management/parser/DataCentreReservationConfigParser.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 #include "Messages/SM_UserVM_Cost_m.h"
-//#include "Applications/UserApps/LocalApplication/LocalApplication.h"
 
 /**
  * Module that implementa a data-centre manager for cloud environments
  */
-class DataCentreManagerFirstFit: public DataCentreManagerBase{
-
-    public:
-        virtual void initialize();
-    protected:
-
-
-
-        ~DataCentreManagerFirstFit();
-
-
-        virtual Hypervisor* selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest) override;
+class DataCentreManagerFirstFit : public DataCentreManagerBase
+{
+protected:
+    ~DataCentreManagerFirstFit() {};
+    virtual void initialize() override;
+    virtual Hypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
 };
 
 #endif

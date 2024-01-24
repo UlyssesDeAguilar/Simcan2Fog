@@ -10,27 +10,13 @@ VirtualMachine::VirtualMachine(std::string type, double cost, int numCores, doub
     this->memoryGB = memoryGB;
 }
 
-VirtualMachine::~VirtualMachine()
-{
-}
-
-std::string VirtualMachine::featuresToString()
-{
-
-    std::ostringstream info;
-
-    info << "cost: " << cost << "  -  #Cores:" << numCores << "  -  SCU:" << scu;
-    info << "  -  Disk space: " << diskGB << " GB  -  Memory space: " << memoryGB << " GB";
-
-    return info.str();
-}
-
 std::ostream &operator<<(std::ostream &os, const VirtualMachine &obj)
 {
     // General information
     return os << "Type:        " << obj.type << "\n"
               << "Cost (h):    " << obj.cost << "\n"
               << "Cores (#):   " << obj.numCores << "\n"
+              << "SCU (#):     " << obj.scu << "\n"
               << "Disk (GB):   " << obj.diskGB << "\n"
               << "Memory (GB): " << obj.diskGB << "\n";
 }

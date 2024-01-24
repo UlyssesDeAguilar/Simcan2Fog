@@ -4,8 +4,7 @@ import simcan2.Management.DataCentreManagers.DataCentreManagerBase.DataCentreMan
 //
 // Implementation of a Cloud DataCentre Manager
 //
-simple DataCentreManagerFirstFit extends DataCentreManagerBase { 
-
+simple DataCentreManagerFirstFit extends DataCentreManagerBase 
+{ 
    @class(DataCentreManagerFirstFit); 
-
 }

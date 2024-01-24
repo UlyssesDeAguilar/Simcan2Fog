@@ -31,11 +31,6 @@ public:
     VirtualMachine(std::string type, double cost, int numCores, double scu, double diskGB, double memoryGB);
 
     /**
-     * Destructor.
-     */
-    virtual ~VirtualMachine();
-
-    /**
      * Gets the cost of this VM.
      *
      * @return Cost of this VM.
@@ -118,13 +113,6 @@ public:
      * @param type new type for this VM.
      */
     void setType(const std::string &type) { this->type = type; }
-
-    /**
-     * Converts the features of this VM into a string.
-     *
-     * @return A string containing the features of this VM.
-     */
-    std::string featuresToString();
 
     /**
      * @brief Outputs an object instance into a stream

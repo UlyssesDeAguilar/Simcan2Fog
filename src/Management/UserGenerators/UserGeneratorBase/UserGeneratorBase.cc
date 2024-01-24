@@ -92,9 +92,9 @@ void UserGeneratorBase::generateUsersBeforeSimulationStarts()
     EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - Init\n";
 
     // Process each user type to generate the user instances
-    for (auto &user : userTypes)
+    auto vec = dataManager->getSimUsers();
+    for (auto &user : *vec)
     {
-
         EV_DEBUG << "UserGeneratorBase::generateUsersBeforeSimulationStarts - 0\n";
 
         // New vector of user instances
@@ -308,7 +308,7 @@ string UserGeneratorBase::usersIstancesToString()
     return info.str();
 }
 
-CloudUserInstance *UserGeneratorBase::createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
+CloudUserInstance *UserGeneratorBase::createCloudUserInstance(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
 {
     return new CloudUserInstance(ptrUser, totalUserInstance, userNumber, currentInstanceIndex, totalUserInstances);
 }
@@ -320,10 +320,8 @@ SM_UserVM *UserGeneratorBase::createVmMessage()
 
 CloudUserInstance *UserGeneratorBase::createNewUserFromTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances)
 {
-    CloudUserInstance *pNewUser;
-    Application *pApp = findApplication("AppCPUIntensive");
-    pNewUser = new CloudUserInstanceTrace(jobIn, totalUserInstance, nCurrentNumber, nUserInstance, nTotalInstances, pApp);
-    return pNewUser;
+    auto pApp = dataManager->searchApp("AppCPUIntensive");
+    return new CloudUserInstanceTrace(jobIn, totalUserInstance, nCurrentNumber, nUserInstance, nTotalInstances, pApp);
 }
 
 CloudUser *UserGeneratorBase::createUserTraceType()
@@ -331,6 +329,7 @@ CloudUser *UserGeneratorBase::createUserTraceType()
     return new CloudUser("UserTrace", 0);
 }
 
+// FIXME: This actually doesn't work
 // Esto va directamente a otra clase
 void UserGeneratorBase::parseTraceFile()
 {
@@ -356,7 +355,7 @@ void UserGeneratorBase::parseTraceFile()
     if (nJobs > 0)
     {
         currentUserObject = createUserTraceType();
-        userTypes.push_back(currentUserObject);
+        // userTypes.push_back(currentUserObject);
 
         EV_INFO << "UserGeneratorBase::parseTraceFile - Jobs successfully loaded: " << nJobs << "\n";
 

@@ -2,177 +2,80 @@
 
 #include "Management/utils/LogUtils.h"
 
-
 Define_Module(DataCentreManagerCost);
 
-DataCentreManagerCost::~DataCentreManagerCost(){
-}
-
-void DataCentreManagerCost::initialize(){
-
+void DataCentreManagerCost::initialize()
+{
     checkReservedFirst = par("checkReservedFirst");
 
     // Init super-class
     DataCentreManagerBase::initialize();
+
+    // FIXME: Should check this! parseConfig() does no longer exist
+    parseDataCentreConfig();
 }
 
-void DataCentreManagerCost::initializeRequestHandlers() {
-    DataCentreManagerBase::initializeRequestHandlers();
-
-    requestHandlers[SM_APP_Req_Resume] = [this](SIMCAN_Message *msg) -> void { return handleExtendVmAndResumeExecution(msg); };
-    requestHandlers[SM_APP_Req_End] = [this](SIMCAN_Message *msg) -> void { return handleEndVmAndAbortExecution(msg); };
+void DataCentreManagerCost::initializeRequestHandlers()
+{
+    requestHandlers[SM_APP_Req_Resume] = [this](SIMCAN_Message *msg) -> void
+    { return handleExtendVmAndResumeExecution(msg); };
+    requestHandlers[SM_APP_Req_End] = [this](SIMCAN_Message *msg) -> void
+    { return handleEndVmAndAbortExecution(msg); };
 }
 
-void DataCentreManagerCost::parseConfig() {
-    int result;
-
-        // Init module parameters
-        showApps = par ("showApps");
-
-        // Parse application list
-        result = parseAppList();
-
-        // Something goes wrong...
-        if (result == SC_ERROR){
-            error ("Error while parsing application list.");
-        }
-        else if (showApps){
-            EV_DEBUG << appsToString ();
-        }
-
-        // Init module parameters
-        showUsersVms = par ("showUsersVms");
-
-        // Parse VMs list
-        result = parseVmsList();
-
-        // Something goes wrong...
-        if (result == SC_ERROR){
-         error ("Error while parsing VMs list");
-        }
-        else if (showUsersVms){
-           EV_DEBUG << vmsToString ();
-        }
-
-        // Init module parameters
-        showSlas = par ("showSlas");
-
-        // Parse sla list
-        result = parseSlasList();
-
-        //Something goes wrong...
-        if (result == SC_ERROR){
-           error ("Error while parsing slas list");
-        }
-        else if (showSlas){
-           EV_DEBUG << slasToString ();
-        }
-
-        // Parse user list
-        result = parseUsersList();
-
-        // Something goes wrong...
-        if (result == SC_ERROR){
-           error ("Error while parsing users list");
-        }
-        else if (showUsersVms){
-           EV_DEBUG << usersToString ();
-        }
-
-        parseDataCentreConfig ();
-}
-
-int DataCentreManagerCost::parseDataCentreConfig (){
+int DataCentreManagerCost::parseDataCentreConfig()
+{
     int result;
     const char *dataCentresConfigChr;
 
-    dataCentresConfigChr= par ("dataCentreConfig");
+    dataCentresConfigChr = par("dataCentreConfig");
     DataCentreReservationConfigParser dataCentreParser(dataCentresConfigChr);
     result = dataCentreParser.parse();
-    if (result == SC_OK) {
+    if (result == SC_OK)
+    {
         dataCentresBase = dataCentreParser.getResult();
     }
     return result;
 }
 
-int DataCentreManagerCost::parseSlasList (){
-    int result;
-    const char *slaListChr;
-
-    slaListChr= par ("slaList");
-    SlaListParser slaParser(slaListChr, &vmTypes);
-    result = slaParser.parse();
-    if (result == SC_OK) {
-        slaTypes = slaParser.getResult();
-    }
-    return result;
-}
-
-int DataCentreManagerCost::parseUsersList (){
-    int result;
-    const char *userListChr;
-
-    userListChr= par ("userList");
-    UserPriorityListParser userParser(userListChr, &vmTypes, &appTypes, &slaTypes);
-    result = userParser.parse();
-    if (result == SC_OK) {
-        userTypes = userParser.getResult();
-    }
-    //TODO: Cambiar
-    userTypes.push_back(new CloudUserPriority("UserTrace", 0, Regular, findSla("Slai0d0c0")));
-    return result;
-}
-
-std::string DataCentreManagerCost::slasToString (){
-
-    std::ostringstream info;
-    int i;
-
-        // Main text for the users of this manager
-        info << std::endl << slaTypes.size() << " Slas parsed from ManagerBase in " << getFullPath() << endl << endl;
-
-        for (i=0; i<slaTypes.size(); i++){
-            info << "\tSla[" << i << "]  --> " << slaTypes.at(i)->toString() << endl;
-        }
-
-        info << "---------------- End of parsed Slas in " << getFullPath() << " ----------------" << endl;
-
-    return info.str();
-}
-
-int DataCentreManagerCost::initDataCentreMetadata (){
+int DataCentreManagerCost::initDataCentreMetadata()
+{
     int result = SC_OK;
-    DataCentreReservation *pDataCentreBase = dynamic_cast<DataCentreReservation*>(dataCentresBase[0]);
+    DataCentreReservation *pDataCentreBase = dynamic_cast<DataCentreReservation *>(dataCentresBase[0]);
     cModule *pRackModule, *pBoardModule, *pNodeModule;
     int numBoards, numNodes, numCores, numTotalCores = 0;
     int numReserverNodes = pDataCentreBase->getReservedNodes();
 
-    for (int nRackIndex=0; nRackIndex < pDataCentreBase->getNumRacks(false); nRackIndex++ ) {
-        Rack* pRackBase = pDataCentreBase->getRack(nRackIndex,false);
-        //Generate rack name in the data centre
+    for (int nRackIndex = 0; nRackIndex < pDataCentreBase->getNumRacks(false); nRackIndex++)
+    {
+        Rack *pRackBase = pDataCentreBase->getRack(nRackIndex, false);
+        // Generate rack name in the data centre
         string strRackName = "rackCmp_" + pRackBase->getRackInfo()->getName();
         pRackModule = getParentModule()->getSubmodule(strRackName.c_str(), nRackIndex);
 
-        numBoards =  pRackModule->par("numBoards");
+        numBoards = pRackModule->par("numBoards");
 
-        for (int nBoardIndex=0; nBoardIndex < numBoards; nBoardIndex++) {
+        for (int nBoardIndex = 0; nBoardIndex < numBoards; nBoardIndex++)
+        {
             pBoardModule = pRackModule->getSubmodule("board", nBoardIndex);
             numNodes = pBoardModule->par("numBlades");
 
-
-            for (int nNodeIndex=0; nNodeIndex < numNodes; nNodeIndex++) {
+            for (int nNodeIndex = 0; nNodeIndex < numNodes; nNodeIndex++)
+            {
                 pNodeModule = pBoardModule->getSubmodule("blade", nNodeIndex);
 
-                if (numReserverNodes>0) {
+                if (numReserverNodes > 0)
+                {
                     storeReservedNodeMetadata(pNodeModule);
                     numReserverNodes--;
-                    numCores=0;
-                } else {
-                    numCores=storeNodeMetadata(pNodeModule);
+                    numCores = 0;
+                }
+                else
+                {
+                    numCores = storeNodeMetadata(pNodeModule);
                 }
 
-                numTotalCores+=numCores;
-
+                numTotalCores += numCores;
             }
         }
     }
@@ -182,7 +85,8 @@ int DataCentreManagerCost::initDataCentreMetadata (){
     return result;
 }
 
-int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule) {
+int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule)
+{
     cModule *pHypervisorModule;
     Hypervisor *pHypervisor;
     int numCores;
@@ -191,80 +95,86 @@ int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule) {
 
     numCores = pNodeModule->par("numCpuCores");
 
-    pHypervisor = check_and_cast<Hypervisor*>(pHypervisorModule);
+    pHypervisor = check_and_cast<Hypervisor *>(pHypervisorModule);
 
     simtime_t **startTimeArray = new simtime_t *[numCores];
     simtime_t *timerArray = new simtime_t[numCores];
-    for (int i=0; i<numCores;i++) {
+    for (int i = 0; i < numCores; i++)
+    {
         startTimeArray[i] = nullptr;
         timerArray[i] = SimTime();
     }
 
-
-    //Store hypervisor pointers by number of cores
+    // Store hypervisor pointers by number of cores
     mapHypervisorPerNodesReserved[numCores].push_back(pHypervisor);
-    //Initialize cpu utilization timers
+    // Initialize cpu utilization timers
     mapCpuUtilizationTimePerHypervisor[pHypervisorModule->getFullPath()] = std::make_tuple(numCores, startTimeArray, timerArray);
 
     return numCores;
 }
 
-Hypervisor* DataCentreManagerCost::selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest){
-    CloudUserPriority *pCloudUser = dynamic_cast<CloudUserPriority*>(findUserTypeById(userVM_Rq->getUserID()));
+Hypervisor *DataCentreManagerCost::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
+{
+    auto pCloudUser = dynamic_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserID()));
     Hypervisor *pHypervisor = nullptr;
-    SM_UserVM_Cost *userVM_Rq_Cost = dynamic_cast<SM_UserVM_Cost*>(userVM_Rq);
+    SM_UserVM_Cost *userVM_Rq_Cost = dynamic_cast<SM_UserVM_Cost *>(userVM_Rq);
 
-    if(pCloudUser == nullptr)
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong pCloudUser. Null pointer or wrong cloud user class!").c_str());
+    if (pCloudUser == nullptr)
+        error("[%s] Wrong pCloudUser. Null pointer or wrong cloud user class!", LogUtils::prettyFunc(__FILE__, __func__).c_str());
 
-
-    if (!checkReservedFirst) {
-        pHypervisor = DataCentreManagerFirstFit::selectNode (userVM_Rq, vmRequest);
+    if (!checkReservedFirst)
+    {
+        pHypervisor = DataCentreManagerFirstFit::selectNode(userVM_Rq, vmRequest);
     }
 
-    if (pHypervisor == nullptr && pCloudUser->getPriorityType() == Priority)  {
+    if (pHypervisor == nullptr && pCloudUser->getPriorityType() == Priority)
+    {
         pHypervisor = selectNodeReserved(userVM_Rq_Cost, vmRequest);
     }
 
-    if (pHypervisor == nullptr && checkReservedFirst) {
-        pHypervisor = DataCentreManagerFirstFit::selectNode (userVM_Rq, vmRequest);
+    if (pHypervisor == nullptr && checkReservedFirst)
+    {
+        pHypervisor = DataCentreManagerFirstFit::selectNode(userVM_Rq, vmRequest);
     }
 
-     return pHypervisor;
+    return pHypervisor;
 }
 
-Hypervisor* DataCentreManagerCost::selectNodeReserved (SM_UserVM_Cost*& userVM_Rq, const VM_Request& vmRequest){
-    VirtualMachine *pVMBase;
-    Hypervisor *pHypervisor = nullptr;
-    NodeResourceRequest *pResourceRequest;
-    int numCoresRequested, numNodeTotalCores, numAvailableCores;
-    std::map<int, std::vector<Hypervisor*>>::iterator itMap;
-    std::vector<Hypervisor*> vectorHypervisor;
-    std::vector<Hypervisor*>::iterator itVector;
+Hypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq, const VM_Request &vmRequest)
+{
+    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
+    std::vector<Hypervisor *> vectorHypervisor;
+    std::vector<Hypervisor *>::iterator itVector;
     bool bHandled;
-    string strUserName;
 
-    if (userVM_Rq==nullptr) return nullptr;
+    if (userVM_Rq == nullptr)
+        return nullptr;
 
-    strUserName = userVM_Rq->getUserID();
+    std::string userId = userVM_Rq->getUserID();
 
-    pVMBase = findVirtualMachine(vmRequest.strVmType);
-    numCoresRequested = pVMBase->getNumCores();
+    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.strVmType);
+    int numCoresRequested = pVMBase->getNumCores();
 
     bHandled = false;
-    for (itMap = mapHypervisorPerNodesReserved.begin(); itMap != mapHypervisorPerNodesReserved.end() && !bHandled; ++itMap){
-        numNodeTotalCores = itMap->first;
-        if (numNodeTotalCores >= numCoresRequested) {
+    for (itMap = mapHypervisorPerNodesReserved.begin(); itMap != mapHypervisorPerNodesReserved.end() && !bHandled; ++itMap)
+    {
+        int numNodeTotalCores = itMap->first;
+        if (numNodeTotalCores >= numCoresRequested)
+        {
             vectorHypervisor = itMap->second;
-            for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && !bHandled; ++itVector) {
-                pHypervisor = *itVector;
-                numAvailableCores = pHypervisor->getAvailableCores();
-                if (numAvailableCores >= numCoresRequested) {
-                    pResourceRequest = generateNode(strUserName, vmRequest);
+            for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && !bHandled; ++itVector)
+            {
+                Hypervisor *pHypervisor = *itVector;
+                int numAvailableCores = pHypervisor->getAvailableCores();
+                if (numAvailableCores >= numCoresRequested)
+                {
+                    NodeResourceRequest *pResourceRequest = generateNode(userId, vmRequest);
+
                     // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaci�n al map y que sea el hypervisor el que controle a que VM va.
                     // TODO: Finalmente deber�a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
                     cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
-                    if (pVmAppVectorModule!=nullptr) {
+                    if (pVmAppVectorModule != nullptr)
+                    {
                         updateCpuUtilizationTimeForHypervisor(pHypervisor);
                         mapAppsVectorModulePerVm[vmRequest.strVmId] = pVmAppVectorModule;
                         int numMaxApps = pVmAppVectorModule->par("numApps");
@@ -274,170 +184,133 @@ Hypervisor* DataCentreManagerCost::selectNodeReserved (SM_UserVM_Cost*& userVM_R
                         bHandled = true;
                         return pHypervisor;
                     }
-
                 }
             }
-
         }
     }
 
     return nullptr;
 }
 
-void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg) {
+void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg)
+{
     SM_UserAPP *pUserApp;
     Hypervisor *pHypervisor;
 
     std::string strUsername,
-                strVmType,
-                strVmId,
-                strAppName,
-                strIp;
+        strVmType,
+        strVmId,
+        strAppName,
+        strIp;
 
     bool bAlreadyFinished;
 
     SM_UserVM_Finish *pUserVmFinish;
 
-    std::map<std::string, SM_UserAPP*>::iterator it;
+    std::map<std::string, SM_UserAPP *>::iterator it;
 
-    pUserVmFinish = dynamic_cast<SM_UserVM_Finish*>(msg);
+    pUserVmFinish = dynamic_cast<SM_UserVM_Finish *>(msg);
     if (pUserVmFinish == nullptr)
-        error ("%s - Unable to cast msg to SM_UserVM_Finish*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), msg->getName());
+        error("%s - Unable to cast msg to SM_UserVM_Finish*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), msg->getName());
 
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - INIT" << endl;
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - INIT" << '\n';
     strVmId = pUserVmFinish->getStrVmId();
 
     strUsername = pUserVmFinish->getUserID();
     EV_INFO << "The rent of the VM [" << strVmId
-                           << "] launched by the user " << strUsername
-                           << " has finished" << endl;
+            << "] launched by the user " << strUsername
+            << " has finished" << '\n';
 
-    //deallocateVmResources(strVmId);
+    // deallocateVmResources(strVmId);
 
     pUserApp = getUserAppRequestPerUser(strUsername);
 
-    if (pUserApp == nullptr) {
+    if (pUserApp == nullptr)
+    {
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app request message from the User!").c_str());
     }
-//    acceptAppRequest(pUserApp, strVmId);
+    //    acceptAppRequest(pUserApp, strVmId);
 
-        //Check the Application status
+    // Check the Application status
 
-
-        EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << endl;
-        EV_INFO
+    EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << '\n';
+    EV_INFO
         << "Checking the status of the applications which are running over this VM"
-        << endl;
+        << '\n';
 
-        //Abort the running applications
-        if (!pUserApp->allAppsFinished(strVmId))
-          {
-            EV_INFO << "Aborting running applications" << endl;
-            abortAllApps(strVmId);
-            pUserApp->abortAllApps(strVmId);
-          } else {
-              deallocateVmResources(strVmId);
-              strVmType = pUserVmFinish->getStrVmType();
-              nTotalAvailableCores += getTotalCoresByVmType(strVmType);
-          }
-        // Check the result and send it
-        checkAllAppsFinished(pUserApp, strVmId);
+    // Abort the running applications
+    if (!pUserApp->allAppsFinished(strVmId))
+    {
+        EV_INFO << "Aborting running applications" << '\n';
+        abortAllApps(strVmId);
+        pUserApp->abortAllApps(strVmId);
+    }
+    else
+    {
+        deallocateVmResources(strVmId);
+        strVmType = pUserVmFinish->getStrVmType();
+        nTotalAvailableCores += getTotalCoresByVmType(strVmType);
+    }
+    // Check the result and send it
+    checkAllAppsFinished(pUserApp, strVmId);
 
-
-        EV_INFO << "Freeing resources..." << endl;
-
+    EV_INFO << "Freeing resources..." << '\n';
 }
 
 void DataCentreManagerCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
 {
-        string strVmId, strUsername;
-        SM_UserAPP *userAPP_Rq;
-        SM_UserVM* pUserVmRequest;
-        std::map<std::string, SM_UserVM*>::iterator it;
-        userAPP_Rq = dynamic_cast<SM_UserAPP*>(sm);
-        bool bFound;
+    auto userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
+    if (userAPP_Rq == nullptr)
+        error("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
 
-        if (userAPP_Rq != nullptr) {
-            strVmId = userAPP_Rq->getVmId();
-            if (!strVmId.empty()) {
-                strUsername = userAPP_Rq->getUserID();
-                it = acceptedUsersRqMap.find(strUsername);
+    std::string strVmId = userAPP_Rq->getVmId();
+    if (strVmId.empty())
+        return; // Original behavior, Should we warn the user ?
 
-                if(it != acceptedUsersRqMap.end())
-                  {
-                    pUserVmRequest = it->second;
-                    bFound = false;
-                    for(int j = 0; j < pUserVmRequest->getVmsArraySize() && !bFound; j++)
-                      {
-                        //Getting VM and scheduling renting timeout
-                        auto vmRequest = pUserVmRequest->getVms(j);
-                        //scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
+    std::string userId = userAPP_Rq->getUserID();
+    SM_UserVM *userVmRequest = nullptr;
 
-                        if (strVmId.compare(vmRequest.strVmId) == 0) {
-                            bFound = true;
-                            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, strVmId, vmRequest.strVmType, 3600);
-                            handleUserAppRequest(sm);
-                        }
+    // Try to find the user and his vm request
+    try
+    {
+        userVmRequest = acceptedUsersRqMap.at(userId);
+    }
+    catch (std::out_of_range const &e)
+    {
+        EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << userId << "has not previously registered!!" << '\n';
+        return;
+    }
 
-                      }
+    for (int j = 0; j < userVmRequest->getVmsArraySize(); j++)
+    {
+        // Getting VM and scheduling renting timeout
+        auto vmRequest = userVmRequest->getVms(j);
+        // scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
 
-                  }
-                else
-                  {
-                    EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << strUsername << "has not previously registered!!"<< endl;
-                  }
-            }
+        if (strVmId.compare(vmRequest.strVmId) == 0)
+        {
+            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, 3600);
+            handleUserAppRequest(sm);
+            return;
         }
-        else
-      {
-        error ("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
-      }
+    }
 }
 
 void DataCentreManagerCost::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
 {
-    string strVmId;
-    SM_UserAPP *userAPP_Rq;
-    userAPP_Rq = dynamic_cast<SM_UserAPP*>(sm);
-    if (userAPP_Rq != nullptr) {
-        strVmId = userAPP_Rq->getVmId();
-        if (!strVmId.empty()) {
-            EV_INFO << "Freeing resources..." << endl;
+    auto userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
+    if (userAPP_Rq == nullptr)
+        error("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
 
-            //Free the VM resources
-            deallocateVmResources(strVmId);
-
-            delete sm; //Delete ephemeral message
-        }
-    }
-    else
+    std::string vmId = userAPP_Rq->getVmId();
+    if (!vmId.empty())
     {
-      error ("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
+        EV_INFO << "Freeing resources..." << '\n';
+
+        // Free the VM resources
+        deallocateVmResources(vmId);
+
+        // Delete ephemeral message
+        delete sm;
     }
 }
-
-Sla* DataCentreManagerCost::findSla (std::string slaType){
-
-    std::vector<Sla*>::iterator it;
-    Sla* result;
-    bool found;
-
-        // Init
-        found = false;
-        result = nullptr;
-        it = slaTypes.begin();
-
-        // Search...
-        while((!found) && (it != slaTypes.end())){
-
-            if ((*it)->getType() == slaType){
-                found = true;
-                result = (*it);
-            }
-            else
-                it++;
-        }
-
-    return result;
-}
-

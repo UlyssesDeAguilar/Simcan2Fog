@@ -20,12 +20,12 @@ class Switch: public cSIMCAN_Core{
         /**
          *  Module initialization.
          */
-         void initialize();
+         void initialize() override;
 
         /**
          * Module ending.
          */
-         void finish();
+         void finish() override;
 
 
     private:

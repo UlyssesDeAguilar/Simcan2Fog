@@ -25,7 +25,7 @@ class CloudUserInstanceTrace : public CloudUserInstancePriority
 protected:
     Job_t job;
 public:
-    CloudUserInstanceTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances, Application *ptrApp);
+    CloudUserInstanceTrace(Job_t jobIn, int totalUserInstance, int nCurrentNumber, int nUserInstance, int nTotalInstances, const Application *ptrApp);
     void setJob(Job_t jobIn) { job = jobIn; };
     Job_t getJob() { return job; };
 };

@@ -7,25 +7,24 @@
 #include "Management/parser/DataCentreReservationConfigParser.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 #include "Messages/SM_UserVM_Cost_m.h"
-//#include "Applications/UserApps/LocalApplication/LocalApplication.h"
+#include "Management/utils/LogUtils.h"
+
+// #include "Applications/UserApps/LocalApplication/LocalApplication.h"
 
 /**
  * Module that implementa a data-centre manager for cloud environments
  */
-class DataCentreManagerBestFit: public DataCentreManagerBase{
+class DataCentreManagerBestFit : public DataCentreManagerBase
+{
 
+protected:
+    virtual ~DataCentreManagerBestFit() {};
+    virtual void initialize() override;
 
-    protected:
-
-
-
-        ~DataCentreManagerBestFit();
-        virtual void initialize();
-
-        virtual Hypervisor* selectNode (SM_UserVM*& userVM_Rq, const VM_Request& vmRequest) override;
-        virtual void deallocateVmResources(std::string strVmId) override;
-        virtual void storeNodeInMap (Hypervisor* pHypervisor);
-        virtual void removeNodeFromMap (Hypervisor* pHypervisor);
+    virtual Hypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
+    virtual void deallocateVmResources(std::string strVmId) override;
+    virtual void storeNodeInMap(Hypervisor *pHypervisor);
+    virtual void removeNodeFromMap(Hypervisor *pHypervisor);
 };
 
 #endif

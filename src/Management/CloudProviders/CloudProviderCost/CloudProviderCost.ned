@@ -4,7 +4,7 @@ import simcan2.Management.CloudProviders.CloudProviderFirstFit.CloudProviderFirs
 //
 // Implementation of a system manager for cloud environments
 //
-simple CloudProviderCost extends CloudProviderFirstFit{
-
+simple CloudProviderCost extends CloudProviderFirstFit
+{
     @class(CloudProviderCost);	
 }

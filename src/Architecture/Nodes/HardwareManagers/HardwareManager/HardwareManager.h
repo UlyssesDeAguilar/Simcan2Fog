@@ -56,7 +56,7 @@ private:
   //       UserExecution** userVector;
 
 protected:
-  virtual void initialize();
+  virtual void initialize() override;
   virtual void handleMessage(cMessage *msg);
 };
 

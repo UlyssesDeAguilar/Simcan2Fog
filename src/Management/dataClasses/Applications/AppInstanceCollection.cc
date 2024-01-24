@@ -1,6 +1,6 @@
 #include "AppInstanceCollection.h"
 
-AppInstanceCollection::AppInstanceCollection(Application* appPtr, std::string userID, int numInstances){
+AppInstanceCollection::AppInstanceCollection(const Application* appPtr, std::string userID, int numInstances){
 
     // Check!
     if (appPtr == nullptr)
@@ -29,7 +29,7 @@ void AppInstanceCollection::generateInstances (std::string userID, int numInstan
         }
 }
 
-Application* AppInstanceCollection::getApplicationBase (){
+const Application* AppInstanceCollection::getApplicationBase (){
     return appBase;
 }
 

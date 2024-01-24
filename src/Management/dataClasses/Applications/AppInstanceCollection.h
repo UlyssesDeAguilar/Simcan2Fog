@@ -15,7 +15,7 @@ class AppInstanceCollection{
     private:
 
         /** Pointer to the object that contains the parameters of the application */
-        Application* appBase;
+        const Application* appBase;
 
         /** Collection of applicaiton instances to be executed */
         std::vector<AppInstance*> appInstances;
@@ -32,7 +32,7 @@ class AppInstanceCollection{
          * @param userID User that contains this collection of applications.
          * @param numInstances Number of instances to be created.
          */
-        AppInstanceCollection(Application* appPtr, std::string userID, int numInstances);
+        AppInstanceCollection(const Application* appPtr, std::string userID, int numInstances);
 
         /**
          * Destructor.
@@ -44,7 +44,7 @@ class AppInstanceCollection{
          *
          * @return Pointer to the object that contains the parameters of the application.
          */
-        Application* getApplicationBase ();
+        const Application* getApplicationBase ();
 
         /**
          * Gets the number of instances.

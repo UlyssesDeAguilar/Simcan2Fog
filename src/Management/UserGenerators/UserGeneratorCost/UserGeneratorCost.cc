@@ -50,7 +50,6 @@ void UserGeneratorCost::initializeHashMaps()
 
 CloudUserInstance *UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *userVm_RAW)
 {
-    CloudUserPriority *pCloudUser;
     CloudUserInstance *pUserInstance = nullptr;
     SM_UserVM_Cost *userVm = dynamic_cast<SM_UserVM_Cost *>(userVm_RAW);
 
@@ -62,7 +61,7 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *use
     if (pUserInstance == nullptr)
         error("User instance not found!");
 
-    pCloudUser = dynamic_cast<CloudUserPriority *>(findUser(pUserInstance->getType()));
+    auto pCloudUser = dataManager->searchUser(pUserInstance->getType());
 
     if (pCloudUser == nullptr)
         error("Could not cast CloudUser* to CloudUserPriority* (wrong user id, user type or user class?)");
@@ -78,7 +77,6 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *use
 
 CloudUserInstance *UserGeneratorCost::handleResponseVmReject(SIMCAN_Message *userVm_RAW)
 {
-    CloudUserPriority *pCloudUser;
     CloudUserInstance *pUserInstance = nullptr;
     SM_UserVM_Cost *userVm = dynamic_cast<SM_UserVM_Cost *>(userVm_RAW);
 
@@ -90,7 +88,7 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmReject(SIMCAN_Message *use
         if (pUserInstance == nullptr)
             error("User instance not found!");
 
-        pCloudUser = dynamic_cast<CloudUserPriority *>(findUser(pUserInstance->getType()));
+        auto pCloudUser = dynamic_cast<const CloudUserPriority *>(dataManager->searchUser(pUserInstance->getType()));
 
         // Check the response and proceed with the next action
         if (pCloudUser != nullptr && pCloudUser->getPriorityType() == Priority)
@@ -176,106 +174,6 @@ CloudUserInstance *UserGeneratorCost::handleResponseAppTimeout(SIMCAN_Message *m
     return pUserInstance;
 }
 
-void UserGeneratorCost::parseConfig()
-{
-    int result;
-
-    // Init super-class
-    cSIMCAN_Core::initialize();
-
-    // Init module parameters
-    showApps = par("showApps");
-
-    // Parse application list
-    result = parseAppList();
-
-    // Something goes wrong...
-    if (result == SC_ERROR)
-    {
-        error("Error while parsing application list.");
-    }
-    else if (showApps)
-    {
-        EV_DEBUG << appsToString();
-    }
-
-    // Init module parameters
-    showUsersVms = par("showUsersVms");
-
-    // Parse VMs list
-    result = parseVmsList();
-
-    // Something goes wrong...
-    if (result == SC_ERROR)
-    {
-        error("Error while parsing VMs list");
-    }
-    else if (showUsersVms)
-    {
-        EV_DEBUG << vmsToString();
-    }
-
-    // Init module parameters
-    showSlas = par("showSlas");
-    strUserTraceSla = par("userTraceSla").stringValue();
-
-    // Parse sla list
-    result = parseSlasList();
-
-    // Something goes wrong...
-    if (result == SC_ERROR)
-    {
-        error("Error while parsing slas list");
-    }
-    else if (showSlas)
-    {
-        EV_DEBUG << slasToString();
-    }
-
-    // Parse user list
-    result = parseUsersList();
-
-    // Something goes wrong...
-    if (result == SC_ERROR)
-    {
-        error("Error while parsing users list");
-    }
-    else if (showUsersVms)
-    {
-        EV_DEBUG << usersToString();
-    }
-}
-
-int UserGeneratorCost::parseSlasList()
-{
-    int result;
-    const char *slaListChr;
-
-    slaListChr = par("slaList");
-    SlaListParser slaParser(slaListChr, &vmTypes);
-    result = slaParser.parse();
-    if (result == SC_OK)
-    {
-        slaTypes = slaParser.getResult();
-    }
-    return result;
-}
-
-int UserGeneratorCost::parseUsersList()
-{
-    int result;
-    const char *userListChr;
-
-    userListChr = par("userList");
-    UserPriorityListParser userParser(userListChr, &vmTypes, &appTypes, &slaTypes);
-    result = userParser.parse();
-    if (result == SC_OK)
-    {
-        userTypes = userParser.getResult();
-    }
-    return result;
-}
-
 bool UserGeneratorCost::hasToExtendVm(SM_UserAPP *userApp)
 {
     double dRandom;
@@ -324,56 +222,7 @@ CloudUserInstance *UserGeneratorCost::createCloudUserInstance(CloudUser *ptrUser
 
 CloudUser *UserGeneratorCost::createUserTraceType()
 {
-    return new CloudUserPriority("UserTrace", 0, Regular, findSla(strUserTraceSla));
-}
-
-std::string UserGeneratorCost::slasToString()
-{
-
-    std::ostringstream info;
-    int i;
-
-    // Main text for the users of this manager
-    info << std::endl
-         << slaTypes.size() << " Slas parsed from ManagerBase in " << getFullPath() << endl
-         << endl;
-
-    for (i = 0; i < slaTypes.size(); i++)
-    {
-        info << "\tSla[" << i << "]  --> " << slaTypes.at(i)->toString() << endl;
-    }
-
-    info << "---------------- End of parsed Slas in " << getFullPath() << " ----------------" << endl;
-
-    return info.str();
-}
-
-Sla *UserGeneratorCost::findSla(std::string slaType)
-{
-
-    std::vector<Sla *>::iterator it;
-    Sla *result;
-    bool found;
-
-    // Init
-    found = false;
-    result = nullptr;
-    it = slaTypes.begin();
-
-    // Search...
-    while ((!found) && (it != slaTypes.end()))
-    {
-
-        if ((*it)->getType() == slaType)
-        {
-            found = true;
-            result = (*it);
-        }
-        else
-            it++;
-    }
-
-    return result;
+    return new CloudUserPriority("UserTrace", 0, Regular, strUserTraceSla);
 }
 
 void UserGeneratorCost::calculateStatistics()
@@ -383,7 +232,7 @@ void UserGeneratorCost::calculateStatistics()
     int nIndex, nTotalUnprovided, nTotalRentTimeout, nAcceptOffer, nUsersAcceptOffer, nTotalTimeouts;
     int nPUnprovided, nRUnprovided, nPProvided, nPRProvided, nRProvided;
     std::string strPriorityType;
-
+    Sla::VMCost slaZero = {0.0};
     // UserGenerator_simple::calculateStatistics(); FIXME: Maybe could be fixed or generalized so this could happen
 
     nIndex = 1;
@@ -396,7 +245,7 @@ void UserGeneratorCost::calculateStatistics()
     {
         double dSubTime = 0.0;
         // Check the user type
-        auto pCloudUser = dynamic_cast<CloudUserPriority *>(findUser(userInstance->getType()));
+        auto pCloudUser = dataManager->searchUser(userInstance->getType());
         if (pCloudUser == nullptr)
             error("Could not cast CloudUser* to CloudUserPriority* (wrong userType or class?)");
 
@@ -416,7 +265,7 @@ void UserGeneratorCost::calculateStatistics()
         bool bUserAcceptOffer = false;
 
         bool bPriorized = priorizedHashMap.at(userInstance->getId());
-        auto pSla = pCloudUser->getSla();
+        auto pSla = dataManager->searchSla(pCloudUser->getSla());
         auto pUserVM_Rq = userInstance->getRequestVmMsg();
 
         if (bSubscribed)
@@ -443,7 +292,9 @@ void UserGeneratorCost::calculateStatistics()
             int nRentTime = vmCollection->getRentTime();
 
             // Create a loop to insert all the instances.
-            auto vmCost = pSla->getVmCost(vmCollection->getVmType());
+            auto pvmCost = pSla->getVmCost(vmCollection->getVmType());
+            auto &vmCost = pvmCost == nullptr ? *pvmCost : slaZero;
+            
             dBaseCost = vmCost.base;
 
             if (bPriorized)

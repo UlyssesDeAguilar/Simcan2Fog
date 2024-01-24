@@ -11,7 +11,7 @@ User::~User()
     applications.clear();
 }
 
-void User::insertApplication(Application *appPtr, int numInstances)
+void User::insertApplication(const Application *appPtr, int numInstances)
 {
     auto newElement = new UserAppReference(appPtr, numInstances);
     applications.push_back(newElement);

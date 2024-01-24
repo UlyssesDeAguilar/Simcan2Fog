@@ -69,12 +69,12 @@ protected:
 	/**
 	 *  Module initialization.
 	 */
-	void initialize();
+	void initialize() override;
 
 	/**
 	 * Module ending.
 	 */
-	void finish();
+	void finish() override;
 	bool deleteFromRequestsQueue(SIMCAN_Message *sm);
 	bool deleteFromAbortsQueue(SIMCAN_Message *sm);
 	int getVirtualCpuIndex(unsigned int realCpuIndex);

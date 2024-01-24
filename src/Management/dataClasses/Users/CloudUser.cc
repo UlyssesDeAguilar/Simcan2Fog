@@ -4,7 +4,7 @@ CloudUser::~CloudUser() {
     virtualMachines.clear();
 }
 
-void CloudUser::insertVirtualMachine(VirtualMachine *vmPtr, int numInstances, int nRentTime) {
+void CloudUser::insertVirtualMachine(const VirtualMachine *vmPtr, int numInstances, int nRentTime) {
     auto newElement = new UserVmReference(vmPtr, numInstances, nRentTime);
     virtualMachines.push_back(newElement);
 }

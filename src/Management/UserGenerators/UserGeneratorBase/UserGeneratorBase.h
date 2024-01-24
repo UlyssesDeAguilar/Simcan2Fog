@@ -4,6 +4,7 @@
 #include "Management/CloudManagerBase/CloudManagerBase.h"
 #include "Management/dataClasses/Users/CloudUserInstance.h"
 #include "Management/dataClasses/Users/CloudUserInstanceTrace.h"
+#include "Core/include/GroupVector.hpp"
 #include "Messages/SM_UserVM_m.h"
 
 #include <fstream>
@@ -20,9 +21,10 @@ protected:
     typedef std::map<std::string, CloudUserInstance *> UserMap;
     typedef std::vector<CloudUserInstance *> UserInstanceList;
 
+    // group_vector<CloudUserInstance *> groupOfUsers; // Vector that contains the user instances (can be used in a flatenned version)
     std::vector<std::vector<CloudUserInstance *>> groupOfUsers; // Vector that contains the user instances
-    UserInstanceList userInstances;                             // Vector that contains all the cloud (individual) user instances
-    UserMap userHashMap;                                        // Hashmap to accelerate the management of the users (EDIT: It is an RB tree actually)
+    UserInstanceList userInstances; // Vector that contains all the cloud (individual) user instances
+    UserMap userHashMap;            // Hashmap to accelerate the management of the users (EDIT: It is an RB tree actually)
 
     int nUserInstancesFinished; // ??
     int nUserIndex;             // Index of the next user which must be processed
@@ -36,7 +38,7 @@ protected:
     bool shuffleUsers;         // Flag for suffling users
     bool activeCycles;         // ??
 
-    InstanceRequestTimes timeoutsTemplate;  // The "maximum" times acceptable by users
+    InstanceRequestTimes timeoutsTemplate; // The "maximum" times acceptable by users
     string strUserTraceFilePath;
 
     int userTraceMaxVms;
@@ -63,7 +65,8 @@ protected:
     /**
      * Initialize method. Invokes the parsing process to allocate the existing cloud users in the corresponding data structures.
      */
-    virtual void initialize();
+    virtual void initialize() override;
+    virtual void initializeRequestHandlers() {};
 
     /**
      * Get the out Gate to the module that sent <b>msg</b>.
@@ -95,7 +98,7 @@ protected:
      */
     virtual string usersIstancesToString();
 
-    virtual CloudUserInstance *createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
+    virtual CloudUserInstance *createCloudUserInstance(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 
     void parseTraceFile();
 

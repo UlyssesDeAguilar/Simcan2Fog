@@ -32,6 +32,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 # Object files for local .cc, .msg and .sm files
 OBJS = \
     $O/Applications/Base/UserAppBase/UserAppBase.o \
+    $O/Applications/Builder/DC/DataCentreApplicationBuilder.o \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
@@ -51,6 +52,7 @@ OBJS = \
     $O/Architecture/Nodes/Iot/IotSensor.o \
     $O/Core/cSIMCAN_Core.o \
     $O/Core/CheckingHubModule/CheckingHubModule.o \
+    $O/Core/DataManager/DataManager.o \
     $O/Core/SimSchema/MySQL/SimSchemaMySQL.o \
     $O/Management/CloudManagerBase/CloudManagerBase.o \
     $O/Management/CloudProviders/CloudProviderBase/CloudProviderBase.o \

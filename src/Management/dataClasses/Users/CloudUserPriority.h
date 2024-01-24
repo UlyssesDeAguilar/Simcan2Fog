@@ -18,17 +18,15 @@
 
 #include "CloudUser.h"
 
-class CloudUserPriority: public CloudUser {
+class CloudUserPriority : public CloudUser
+{
 
 private:
-    /** Priority type of the user requests in the cloud  */
-    tPriorityType priorityType;
-
-    /** Sla signed by the user */
-    Sla* sla;
+    tPriorityType priorityType; // Priority type of the user requests in the cloud
+    std::string sla;            //
 
 public:
-    CloudUserPriority(std::string type, int numInstances, tPriorityType priorityType, Sla* slaPtr);
+    CloudUserPriority(std::string type, int numInstances, tPriorityType priorityType, const std::string &sla);
     virtual ~CloudUserPriority();
 
     /**
@@ -36,28 +34,28 @@ public:
      *
      * @return tPriorityType Priority type of the user requests in the cloud
      */
-    tPriorityType getPriorityType() const;
+    tPriorityType getPriorityType() const { return priorityType; }
 
     /**
      * Assigns a priority type to this user.
      *
      * @param priorityType Priority type of the user requests in the cloud
      */
-    void setPriorityType(tPriorityType priorityType);
+    void setPriorityType(tPriorityType priorityType) { this->priorityType = priorityType; }
 
     /**
      * Gets the sla assigned to this user.
      *
      * @return Sla signed by the user in the cloud
      */
-    Sla* getSla() const;
+    const std::string &getSla() const { return sla; }
 
     /**
      * Assigns a sla to this user.
      *
      * @param sla signed by the user in the cloud
      */
-    void setSla(Sla* sla);
+    void setSla(const std::string &sla) { this->sla = sla; }
 };
 
 #endif /* MANAGEMENT_DATACLASSES_CLOUDUSERPRIORITY_H_ */

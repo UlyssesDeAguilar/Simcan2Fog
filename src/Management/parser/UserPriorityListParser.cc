@@ -76,14 +76,6 @@ int UserPriorityListParser::parse() {
         if ((tokenizer.hasMoreTokens()) && (result==SC_OK)){
             const char *slaTypeChr = tokenizer.nextToken();
             slaTypeStr = slaTypeChr;
-            // Locate the Sla in the vector
-            slaPtr = findSla (slaTypeStr);
-
-            // Sla not found!
-            if (slaPtr == nullptr){
-                EV_ERROR << "Sla not found [" << slaTypeStr << "] in user:" << userTypeStr << endl;
-                result = SC_ERROR;
-            }
         }
         else{
             EV_ERROR << "Cannot read the sla type for user:" << userTypeStr << endl;
@@ -122,7 +114,7 @@ int UserPriorityListParser::parse() {
             currentApp = 0;
 
             // Create current user instance
-            currentUserObject = new CloudUserPriority(userTypeStr, numUserInstances, priorityType, slaPtr);
+            currentUserObject = new CloudUserPriority(userTypeStr, numUserInstances, priorityType, slaTypeStr);
 
             // Include each application
             while ((currentApp < numApps) && (result == SC_OK))
