@@ -1,12 +1,12 @@
 #ifndef __SIMCAN_2_0_DATACENTREMANAGERBASE_H_
 #define __SIMCAN_2_0_DATACENTREMANAGERBASE_H_
 
+#include "Applications/Builder/include.h"
 #include "Management/CloudManagerBase/CloudManagerBase.h"
 #include "Management/dataClasses/Users/CloudUserInstance.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/parser/DataCentreConfigParser.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
-// #include "Applications/UserApps/LocalApplication/LocalApplication.h"
 
 class DataCentreApplicationBuilder;
 
@@ -66,7 +66,7 @@ protected:
 
     ~DataCentreManagerBase();
     virtual void initialize() override;
-    virtual cGate *getOutGate(cMessage *msg);
+    virtual cGate *getOutGate(cMessage *msg) override;
 
     virtual void initializeSelfHandlers() override;
     virtual void initializeRequestHandlers() override;
@@ -180,7 +180,5 @@ protected:
     
     friend class DataCentreApplicationBuilder;
 };
-
-#include "Applications/Builder/DC/DataCentreApplicationBuilder.h"
 
 #endif

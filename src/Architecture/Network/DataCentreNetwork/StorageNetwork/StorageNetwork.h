@@ -21,7 +21,7 @@ class StorageNetwork: public cSIMCAN_Core{
         /**
          *  Module initialization.
          */
-         void initialize() override;
+         virtual void initialize() override;
 
         /**
          * Module ending.

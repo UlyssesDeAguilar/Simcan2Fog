@@ -384,7 +384,7 @@ CloudUserInstance *UserGenerator_simple::handleResponseAppAccept(SIMCAN_Message 
     {
         strVmId = userApp->getVmId();
         // Print a debug trace ...
-        userApp->printUserAPP();
+        EV_INFO << *userApp << '\n';
 
         EV_INFO << __func__ << " - Init" << endl;
 
@@ -416,7 +416,7 @@ CloudUserInstance *UserGenerator_simple::handleResponseAppReject(SIMCAN_Message 
     {
         strVmid = userApp->getVmId();
         // Print a debug trace ...
-        userApp->printUserAPP();
+        EV_INFO << *userApp << '\n';
 
         EV_INFO << __func__ << " - Init" << endl;
 
@@ -472,7 +472,7 @@ CloudUserInstance *UserGenerator_simple::handleResponseAppTimeout(SIMCAN_Message
 
         // Print a debug trace ...
         strVmId = userApp->getVmId();
-        userApp->printUserAPP();
+        EV_INFO << *userApp << '\n';
 
         pUserInstance = userHashMap.at(userApp->getUserID());
         if (pUserInstance != nullptr)

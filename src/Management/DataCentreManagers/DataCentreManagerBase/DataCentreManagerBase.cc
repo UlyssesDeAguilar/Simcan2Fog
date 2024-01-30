@@ -575,12 +575,12 @@ void DataCentreManagerBase::handleUserAppRequest(SIMCAN_Message *sm)
 
     // FIXME: The behaviour for rejecting app requests is not defined!
     // Prepare context
-    ApplicationBuilder::ApplicationContext ctx;
+    ApplicationBuilder::Context ctx;
     bool bHandle = false;
     ctx.userId = &userId;
 
     // Print the request
-    userAPP_Rq->printUserAPP();
+    EV_INFO << *userAPP_Rq << '\n';
 
     for (unsigned int i = 0; i < userAPP_Rq->getAppArraySize(); i++)
     {
@@ -729,10 +729,9 @@ void DataCentreManagerBase::handleAppExecEndSingle(std::string strUsername, std:
         EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
                 << " - Changing status of the application [ app: "
                 << strAppName << " | vmId: " << strVmId << '\n';
-        pUserApp->printUserAPP();
+        EV_INFO << *pUserApp << '\n';
 
         pUserApp->changeState(strAppName, strVmId, appFinishedOK);
-        pUserApp->setEndTime(strAppName, strVmId, simTime().dbl());
     }
 
     cModule *pVmAppVectorModule = nullptr;
@@ -1020,7 +1019,7 @@ void DataCentreManagerBase::checkAllAppsFinished(SM_UserAPP *pUserApp, std::stri
                 << userId
                 << " have finished successfully" << '\n';
 
-        pUserApp->printUserAPP();
+        EV_INFO << *pUserApp << '\n';
 
         // Notify the user the end of the execution
         acceptAppRequest(pUserApp, strVmId);
@@ -1048,7 +1047,7 @@ void DataCentreManagerBase::acceptAppRequest(SM_UserAPP *userAPP_Rq, std::string
     EV_INFO << "Sending vm end to the CP:" << userAPP_Rq->getUserID() << '\n';
 
     SM_UserAPP *userAPP_Res = userAPP_Rq->dup();
-    userAPP_Res->printUserAPP();
+    EV_INFO << *userAPP_Res << '\n';
 
     userAPP_Res->setVmId(strVmId.c_str());
     userAPP_Res->setFinished(true);
@@ -1068,7 +1067,7 @@ void DataCentreManagerBase::timeoutAppRequest(SM_UserAPP *userAPP_Rq, std::strin
     EV_INFO << "Last id gate: " << userAPP_Rq->getLastGateId() << '\n';
 
     SM_UserAPP *userAPP_Res = userAPP_Rq->dup(strVmId);
-    userAPP_Res->printUserAPP();
+    EV_INFO << *userAPP_Res << '\n';
 
     userAPP_Res->setVmId(strVmId.c_str());
 

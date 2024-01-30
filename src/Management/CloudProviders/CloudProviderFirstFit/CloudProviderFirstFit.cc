@@ -620,7 +620,7 @@ void CloudProviderFirstFit::timeoutAppRequest(SM_UserAPP *userAPP_Rq, std::strin
   EV_INFO << "Last id gate: " << userAPP_Rq->getLastGateId() << '\n';
 
   SM_UserAPP *userAPP_Res = userAPP_Rq->dup(strVmId);
-  userAPP_Res->printUserAPP();
+  EV_INFO << *userAPP_Res << "\n";
 
   userAPP_Res->setVmId(strVmId.c_str());
 

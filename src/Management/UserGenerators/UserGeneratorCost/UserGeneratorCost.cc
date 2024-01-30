@@ -136,7 +136,7 @@ CloudUserInstance *UserGeneratorCost::handleResponseAppTimeout(SIMCAN_Message *m
 
         // Print a debug trace ...
         strVmId = userApp->getVmId();
-        userApp->printUserAPP();
+        EV_INFO << *userApp << '\n';
 
         pUserInstance = userHashMap.at(userApp->getUserID());
         if (pUserInstance != nullptr)

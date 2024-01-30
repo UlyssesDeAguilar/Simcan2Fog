@@ -32,7 +32,6 @@ public:
         double increase;
         double discount;
         double compensation;
-        // std::string toString();
         friend std::ostream &operator<<(std::ostream &os, const VMCost &obj);
     };
 

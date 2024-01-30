@@ -4,7 +4,7 @@
 class SimSchemaQuerier : public cSimpleModule
 {
 protected:
-    SimSchema* simSchema;
+    simschema::SimSchema* simSchema;
     
     virtual void initialize() override;
     virtual void finish() override;

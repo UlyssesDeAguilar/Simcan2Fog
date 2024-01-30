@@ -3,95 +3,48 @@
 
 #include "Core/cSIMCAN_Core.h"
 
-
 /**
  * @class CpuCore CpuCore.h "CpuCore.h"
- *   
+ *
  * Network Service Module
- * 
+ *
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @date 2009-03-11
  */
-class CpuCore : public cSIMCAN_Core{
+class CpuCore : public cSIMCAN_Core
+{
+protected:
+	double speed;	// Speed of the CPU core 
+	simtime_t tick; // Tick time (in seconds) 
+	double ipt;		// Instructions per tick 
 
+	cGate *inGate;	// Gate ID. Input gate. 
+	cGate *outGate; // Gate ID. Output gate. 
 
-	protected:
+	cMessage *pendingMessage; // Pending message 
 
-        /** Speed of the CPU core */
-        double speed;
+	virtual void initialize() override;
+	virtual void finish() override;
 
-        /** Tick time (in seconds) */
-        simtime_t tick;
+private:
+	/**
+	 * Calculates the amount of time to execute completely the current computing block.
+	 * @param reainingMIs Million instructions to be executed.
+	 * @return Time to execute reainingMIs instructions.
+	 */
+	simtime_t getTimeToExecuteCompletely(unsigned long reainingMIs);
 
-        /** Instructions per tick */
-        double ipt;
-		
-		/** Gate ID. Input gate. */
-	    cGate* inGate;
-	    
-	    /** Gate ID. Output gate. */
-	    cGate* outGate;  
-	    
-	    /** Pending message */
-        cMessage *pendingMessage;
+	/**
+	 * Calculates the amount of time to execute completely the current computing block.
+	 * @param reainingTime Amount of time for executing current CB.
+	 * @return Amount of CPU time to execute reainingTime.
+	 */
+	simtime_t getMaximumTimeToExecute(simtime_t reainingTime);
 
-	        	
-	   /**
-	    * Destructor.
-	    */    		
-	    ~CpuCore();
-	  	        			  	    	    
-	   /**
-	 	*  Module initialization.
-	 	*/
-	    void initialize() override;
-	    
-	   /**
-	 	* Module ending.
-	 	*/ 
-	    void finish() override;
-	    
-	    
-	private:
-	
-	   /**
-		* Get the outGate ID to the module that sent <b>msg</b>
-		* @param msg Arrived message.
-		* @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
-		*/ 
-		cGate* getOutGate (cMessage *msg);
-
-	   /**
-		* Process a self message.
-		* @param msg Self message.
-		*/
-		void processSelfMessage (cMessage *msg);
-
-	   /**
-		* Process a request message.
-		* @param sm Request message.
-		*/
-		void processRequestMessage (SIMCAN_Message *sm);
-
-	   /**
-		* Process a response message.
-		* @param sm Request message.
-		*/
-		void processResponseMessage (SIMCAN_Message *sm);  
-		
-	   /**
-		* Calculates the amount of time to execute completely the current computing block.
-		* @param reainingMIs Million instructions to be executed.
-		* @return Time to execute reainingMIs instructions.
-		*/
-		simtime_t getTimeToExecuteCompletely (unsigned long reainingMIs);
-		
-	   /**
-		* Calculates the amount of time to execute completely the current computing block.
-		* @param reainingTime Amount of time for executing current CB.
-		* @return Amount of CPU time to execute reainingTime.
-		*/
-		simtime_t getMaximumTimeToExecute (simtime_t reainingTime);
+	virtual cGate *getOutGate(cMessage *msg) override;
+	virtual void processSelfMessage(cMessage *msg) override;
+	virtual void processRequestMessage(SIMCAN_Message *sm) override;
+	virtual void processResponseMessage(SIMCAN_Message *sm) override;
 };
 
 #endif
