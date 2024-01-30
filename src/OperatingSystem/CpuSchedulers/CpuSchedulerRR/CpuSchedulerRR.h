@@ -24,26 +24,14 @@ public:
 	void setIsCpuIdle(bool *isCpuIdle);
 
 protected:
-	/** Indicates if this blade allows virtualization */
-	bool isVirtualHardware;
+	unsigned int numCpuCores;	  // Number of CPU cores in the CPU processor 
+	unsigned int managedCpuCores; // Number of CPU cores managed by this scheduler 
+	int quantum;				  // Quantum 
+	bool isVirtualHardware;		  // Indicates if this blade allows virtualization 
+	bool bRunning;				  // Flag that indicates if this scheduler is currently used 
 
-	/** Number of CPU cores in the CPU processor */
-	unsigned int numCpuCores;
-
-	/** Number of CPU cores managed by this scheduler */
-	unsigned int managedCpuCores;
-
-	/** Quantum */
-	int quantum;
-
-	/** Flag that indicates if this scheduler is currently used */
-	bool bRunning;
-
-	/** Array to show the CPU with an idle state */
-	bool *isCPU_Idle;
-
-	/** Array that indicates the CPU cores managed by this schedulers */
-	unsigned int *cpuCoreIndex;
+	bool *isCPU_Idle;	 		  // Array to show the CPU with an idle state 
+	unsigned int *cpuCoreIndex;	  // Array that indicates the CPU cores managed by this schedulers 
 
 	/** Request queue array */
 	cQueue requestsQueue;
@@ -66,15 +54,9 @@ protected:
 	 */
 	~CpuSchedulerRR();
 
-	/**
-	 *  Module initialization.
-	 */
-	void initialize() override;
-
-	/**
-	 * Module ending.
-	 */
-	void finish() override;
+	virtual void initialize() override;
+	virtual void finish() override;
+	
 	bool deleteFromRequestsQueue(SIMCAN_Message *sm);
 	bool deleteFromAbortsQueue(SIMCAN_Message *sm);
 	int getVirtualCpuIndex(unsigned int realCpuIndex);
@@ -87,25 +69,25 @@ private:
 	 * @param msg Arrived message.
 	 * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
 	 */
-	cGate *getOutGate(cMessage *msg);
+	virtual cGate *getOutGate(cMessage *msg) override;
 
 	/**
 	 * Process a self message.
 	 * @param msg Self message.
 	 */
-	void processSelfMessage(cMessage *msg);
+	virtual void processSelfMessage(cMessage *msg) override;
 
 	/**
 	 * Process a request message.
 	 * @param sm Request message.
 	 */
-	void processRequestMessage(SIMCAN_Message *sm);
+	virtual void processRequestMessage(SIMCAN_Message *sm) override;
 
 	/**
 	 * Process a response message.
 	 * @param sm Request message.
 	 */
-	void processResponseMessage(SIMCAN_Message *sm);
+	virtual void processResponseMessage(SIMCAN_Message *sm) override;
 
 	/**
 	 * Search for an idle CPU

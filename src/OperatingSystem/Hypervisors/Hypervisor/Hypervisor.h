@@ -86,7 +86,7 @@ protected:
    /**
     *  Module initialization.
     */
-   void initialize() override;
+   virtual void initialize() override;
 
    /**
     * Module ending.
@@ -101,25 +101,25 @@ private:
     * @param msg Arrived message.
     * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
     */
-   cGate *getOutGate(cMessage *msg);
+   virtual cGate *getOutGate(cMessage *msg) override;
 
    /**
     * Process a self message.
     * @param msg Self message.
     */
-   void processSelfMessage(cMessage *msg);
+   virtual void processSelfMessage(cMessage *msg) override;
 
    /**
     * Process a request message.
     * @param sm Request message.
     */
-   void processRequestMessage(SIMCAN_Message *sm);
+   virtual void processRequestMessage(SIMCAN_Message *sm) override;
 
    /**
     * Process a response message.
     * @param sm Request message.
     */
-   void processResponseMessage(SIMCAN_Message *sm);
+   virtual void processResponseMessage(SIMCAN_Message *sm) override;
 };
 
 #endif

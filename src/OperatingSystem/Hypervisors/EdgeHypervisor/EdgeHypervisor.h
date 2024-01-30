@@ -13,9 +13,8 @@
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/dataClasses/Applications/Application.h"
-#include "Messages/SIMCAN_Message.h"
-#include "Messages/SM_Syscall_m.h"
 #include "Core/cSIMCAN_Core.h"
+#include "OperatingSystem/Hypervisors/OsCore/OsCore.h"
 
 /**
  * @brief Class that models the behaviour of the EdgeNode hypervisor
@@ -29,6 +28,8 @@ namespace hypervisor
         // TODO : Evaluate if it belongs to a single user ? (It should)
     protected:
         HardwareManager *hardwareManager; // Currently not used
+        OsCore osCore;                    // The core operating system utilities
+
         AppControlBlock *appsControl;
         std::vector<uint32_t> freePids; // Helps keep track of the available "slots" for the apps
         SystemSpecs hwSpecs;
@@ -36,40 +37,20 @@ namespace hypervisor
         uint32_t runningApps;
         cModule *appsVector;
 
-        void initialize() override;
-        void finish() override;
+        virtual void initialize() override;
+        virtual void finish() override;
+        virtual cGate *getOutGate(cMessage *msg) override;
+        virtual void processSelfMessage(cMessage *msg) override;
+        virtual void processRequestMessage(SIMCAN_Message *sm) override;
+        virtual void processResponseMessage(SIMCAN_Message *sm) override;
 
-        void processSyscall(SM_Syscall *syscall);
-        void launchApps(SM_UserAPP *request);
-        void handleAppTermination(AppControlBlock &app, bool force);
-        void handleIOFinish(AppControlBlock &app);
-        void handleSendRequest(AppControlBlock &app, bool completed);
-        void handleBindAndListen(AppControlBlock &app);
+        uint32_t newPid(int vmId);
+        void releasePid(int vmId, int pid) { freePids.push_back(pid); }
 
-        /**
-         * Get the outGate ID to the module that sent <b>msg</b>
-         * @param msg Arrived message.
-         * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
-         */
-        cGate *getOutGate(cMessage *msg);
+        cModule *getApplicationModule(int vmId, int pid) { return appsVector->getSubmodule("appModule", pid); }
+        AppControlBlock &getControlBlock(int vmId, int pid) { return appsControl[vmId * 0 + pid]; }
 
-        /**
-         * Process a self message.
-         * @param msg Self message.
-         */
-        void processSelfMessage(cMessage *msg);
-
-        /**
-         * Process a request message.
-         * @param sm Request message.
-         */
-        void processRequestMessage(SIMCAN_Message *sm);
-
-        /**
-         * Process a response message.
-         * @param sm Request message.
-         */
-        void processResponseMessage(SIMCAN_Message *sm);
+        friend class OsCore;
     };
 }
 

@@ -30,6 +30,11 @@ void EdgeHypervisor::initialize()
     for (int i = 0; i < maxApps; i++)
         appsControl->initialize(i, 0);
 
+    // Initialize the OsCore
+    DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
+    osCore.setManager(dataManager);
+    osCore.setHypervisor(this);
+    
     // Get the direct pointer to the HardwareManager and the App Vector module
     hardwareManager = check_and_cast<HardwareManager *>(getModuleByPath("^.hwm"));
     appsVector = getModuleByPath("^.apps");
@@ -42,7 +47,28 @@ void EdgeHypervisor::finish()
     appsControl = nullptr;
 }
 
-cGate *EdgeHypervisor::getOutGate(cMessage *msg) {}
+cGate *EdgeHypervisor::getOutGate(cMessage *msg)
+{
+    auto sm = check_and_cast<SIMCAN_Message *>(msg);
+
+    switch (sm->getOperation())
+    {
+    case SM_Syscall_Req:
+    {
+        auto syscall = check_and_cast<SM_Syscall *>(msg);
+
+        // This allows the app hub to return the result
+        sm->setNextModuleIndex(syscall->getPid());
+
+        // return gate() asssociated with syscall->getVmId() )
+        // namely gate("toApps", getVmId())
+        return gate("toApps");
+        break;
+    }
+    default:
+        return nullptr;
+    }
+}
 
 void EdgeHypervisor::processSelfMessage(cMessage *msg)
 {
@@ -51,14 +77,11 @@ void EdgeHypervisor::processSelfMessage(cMessage *msg)
     switch (msg->getKind())
     {
     case AutoEvent::IO_DELAY:
-        handleIOFinish(appEntry);
-        break;
-    case AutoEvent::APP_TIMEOUT:
-        handleAppTermination(appEntry, true);
+        osCore.handleIOFinish(appEntry);
         break;
     default:
-        delete msg;
         error("Unkown auto event of kind: %d", msg->getKind());
+        delete msg;
         break;
     }
 
@@ -90,71 +113,15 @@ void EdgeHypervisor::processRequestMessage(SIMCAN_Message *msg)
         }
 
         // If everthing is alright then launch the Apps
-        launchApps(appRequest);
+        osCore.launchApps(appRequest);
         break;
     }
     case SM_Syscall_Req:
-        processSyscall((SM_Syscall *)msg);
+        osCore.processSyscall(check_and_cast<SM_Syscall *>(msg));
         break;
     // Add the network packages !
     default:
         break;
-    }
-}
-
-void EdgeHypervisor::processSyscall(SM_Syscall *request)
-{
-    // Get the app context (this could be more general!)
-    auto appEntry = appsControl[request->getPid()];
-
-    // TODO: Sanity checks
-
-    // Register the incoming request
-    appEntry.lastRequest = request;
-
-    // Get the system call context
-    auto callContext = request->getContext();
-
-    // Select the appropiate handler or actions
-    switch (callContext.opCode)
-    {
-    // Directly send the request to the CPU scheduler
-    case Syscall::EXEC:{
-        auto label = new AppIdLabel();
-        label->setPid(appEntry.pid);
-        label->setVmId(appEntry.vmId);
-        callContext.data.cpuRequest->setControlInfo(label);
-        sendRequestMessage(callContext.data.cpuRequest, gate("toCpuScheduler"));
-        break;
-    }
-    // Writing or reading from disk is pretty similar
-    case Syscall::READ:{
-        auto readBytes = callContext.data.bufferSize;
-        simtime_t eta = readBytes / hwSpecs.disk.readBandwidth;
-        auto event = new cMessage("IO Complete",AutoEvent::IO_DELAY);
-        event->setContextPointer(&appEntry);
-        scheduleAt(eta,event);
-        break;
-    }
-    case Syscall::WRITE:{
-        auto writeBytes = callContext.data.bufferSize;
-        simtime_t eta = writeBytes / hwSpecs.disk.writeBandwidth;
-        auto event = new cMessage("IO Complete",AutoEvent::IO_DELAY);
-        event->setContextPointer(&appEntry);
-        scheduleAt(eta,event);
-        break;
-    }
-    // TODO: Networking
-    case Syscall::SEND:
-        break;
-    case Syscall::REGISTER_SERVICE:
-        break;
-    // Gracefully exit
-    case Syscall::EXIT:
-        handleAppTermination(appEntry, false);
-        break;
-    default:
-        error("Undefined system call operation code");
     }
 }
 
@@ -165,9 +132,10 @@ void EdgeHypervisor::processResponseMessage(SIMCAN_Message *msg)
     // 2 - Network response (should check the port)
     switch (msg->getOperation())
     {
-    case SM_ExecCpu:{
-        auto appId = check_and_cast<AppIdLabel*>(msg->getControlInfo());
-        auto cpuRequest = check_and_cast<SM_CPU_Message*>(msg);
+    case SM_ExecCpu:
+    {
+        auto appId = check_and_cast<AppIdLabel *>(msg->getControlInfo());
+        auto cpuRequest = check_and_cast<SM_CPU_Message *>(msg);
 
         // If the batch is complete -> notify the app
         if (cpuRequest->isCompleted())
@@ -176,7 +144,8 @@ void EdgeHypervisor::processResponseMessage(SIMCAN_Message *msg)
             auto appEntry = appsControl[appId->getPid()];
             appEntry.lastRequest = nullptr;
             sendResponseMessage(msg);
-        }else
+        }
+        else
         {
             // TODO: Update or emit statistics ?
             delete cpuRequest;
@@ -188,34 +157,9 @@ void EdgeHypervisor::processResponseMessage(SIMCAN_Message *msg)
     }
 }
 
-void EdgeHypervisor::launchApps(SM_UserAPP *request)
+uint32_t EdgeHypervisor::newPid(int vmId)
 {
-    for (int i = 0; i < request->getAppArraySize(); i++)
-    {
-        // Retrieve the app
-        auto appInstance = request->getApp(i);
-
-        // Initalize the control block
-        uint32_t newPid = freePids.back();
-        freePids.pop_back();
-
-        // TODO: Construct the app module -- Lookups / Typing
-        cModule app;
-    }
-}
-
-void EdgeHypervisor::handleAppTermination(AppControlBlock &app, bool force) {}
-
-void EdgeHypervisor::handleIOFinish(AppControlBlock &app)
-{
-    // Get the original request
-    auto request = app.lastRequest;
-    
-    // Set all OK
-    request->setResult(SC_OK);
-    request->setIsResponse(true);
-
-    // Send back to app and clear the request from control block
-    sendResponseMessage(request);
-    app.lastRequest = nullptr;
+    int newPid = freePids.back();
+    freePids.pop_back();
+    return newPid;
 }

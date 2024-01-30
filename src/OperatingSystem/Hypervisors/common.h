@@ -10,6 +10,8 @@
 #define SIMCAN_EX_HYPERVISOR_COMMON
 
 #include <omnetpp.h>
+#include "Core/DataManager/DataManager.h"
+#include "Applications/Builder/include.h"
 #include "Messages/SM_UserAPP.h"
 #include "Messages/INET_AppMessage.h"
 #include "Messages/SM_CPU_Message.h"
@@ -28,20 +30,14 @@ namespace hypervisor
 
     typedef enum
     {
-        OK,
-        ERROR,
-        FORCED_EXIT,
-        RUNNING
-    } ExitStatus;
-
-    typedef enum
-    {
-        READ,             // Read from disk
-        WRITE,            // Write to disk
-        EXEC,             // Execute / Calculate
-        SEND,             // Send through socket
-        REGISTER_SERVICE, // Register a service and start listening (Port + Subdomain + Name)
-        EXIT,             // Finish the process
+        READ,      // Read from disk
+        WRITE,     // Write to disk
+        EXEC,      // Execute / Calculate
+        OPEN_CLI,  // Open client socket : PORT/IP
+        OPEN_SERV, // Open server socket : PORT/DOMAIN/SERVICE_NAME
+        SEND,      // Send through socket
+        RECV,      // Recieve through socket
+        EXIT,      // Finish the process
     } Syscall;
 
     // TODO: Consider if making the pointers smart pointers!
@@ -52,8 +48,33 @@ namespace hypervisor
         {
             double bufferSize;          // Either for read or write
             SM_CPU_Message *cpuRequest; // For CPU requests
-            INET_AppMessage *packet;    // For network I/O
+            struct NetIO
+            {
+                INET_AppMessage *packet; // For network I/O
+                int fd;                  // For network I/O
+            };
         } data;
+    };
+
+    struct Connection
+    {
+        enum Flags
+        {
+            BIND = 1, // If set the port is binded, ephemeral otherwise
+            OPEN = 2  // If set the port/socket is open, closed otherwise
+        };
+
+        int fd;
+        short flags;
+
+        Connection(int fd, bool binded, bool open = true)
+        {
+            this->fd = fd;
+            if (binded)
+                flags |= Flags::BIND;
+            if (open)
+                flags |= Flags::OPEN;
+        }
     };
 
     /**
@@ -61,22 +82,30 @@ namespace hypervisor
      */
     struct AppControlBlock
     {
-        uint32_t pid;                // Process Id
-        uint32_t vmId;               // Group Id -- Will help to identify the VM
-        int32_t exitStatus;          // The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
-        APP_Request *request;        // The request that instantiated the app
-        SM_Syscall  *lastRequest;    // Last SYSCALL by the app
+        uint32_t pid;                      // Process Id
+        uint32_t vmId;                     // Group Id -- Will help to identify the VM
+        tApplicationState status;          // The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
+        std::map<int, Connection> sockets; // Map that contains the application sockets
+        SM_UserAPP *request;               // The request that instantiated the app
+        int deploymentIndex;               // The index relative for that request
+        SM_Syscall *lastRequest;           // Last SYSCALL by the app
 
         void initialize(uint32_t pid, uint32_t vmId)
         {
             this->pid = pid;
             this->vmId = vmId;
-            exitStatus = ExitStatus::OK;
+            status = tApplicationState::appWaiting;
             request = nullptr;
             lastRequest = nullptr;
         }
 
-        bool isRunning() { return exitStatus == ExitStatus::RUNNING; }
+        void reset()
+        {
+            request = nullptr;
+            lastRequest = nullptr;
+        }
+
+        bool isRunning() { return status == tApplicationState::appRunning; }
     };
 
     // TODO: Consider moving all of this functionality to the HardwareManager

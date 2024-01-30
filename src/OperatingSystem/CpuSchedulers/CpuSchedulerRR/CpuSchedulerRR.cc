@@ -10,9 +10,6 @@ CpuSchedulerRR::~CpuSchedulerRR()
 
 void CpuSchedulerRR::initialize()
 {
-
-    int i;
-
     // Init the super-class
     cSIMCAN_Core::initialize();
 
@@ -51,14 +48,14 @@ void CpuSchedulerRR::initialize()
         isCPU_Idle = new bool[numCpuCores];
 
         // Init state to idle!
-        for (i = 0; i < numCpuCores; i++)
+        for (int i = 0; i < numCpuCores; i++)
             isCPU_Idle[i] = true;
 
         // Index of each CPU core
         cpuCoreIndex = new unsigned int[numCpuCores];
 
         // Init state to idle!
-        for (i = 0; i < numCpuCores; i++)
+        for (int i = 0; i < numCpuCores; i++)
             cpuCoreIndex[i] = i;
     }
 
@@ -87,17 +84,9 @@ void CpuSchedulerRR::finish()
 
 cGate *CpuSchedulerRR::getOutGate(cMessage *msg)
 {
-
-    cGate *outGate;
-
-    // Init...
-    outGate = nullptr;
-
     // If msg arrives from the Hypervisor
     if (msg->getArrivalGate() == fromHypervisorGate)
-    {
-        outGate = toHypervisorGate;
-    }
+        return toHypervisorGate;
 
     // If msg arrives from the checking hub
     else if (msg->getArrivalGate() == fromHubGate)
@@ -108,8 +97,7 @@ cGate *CpuSchedulerRR::getOutGate(cMessage *msg)
     // Msg arrives from an unknown gate
     //        else
     //            error ("Message received from an unknown gate [%s]", msg->getName());
-
-    return outGate;
+    return nullptr;
 }
 
 void CpuSchedulerRR::processSelfMessage(cMessage *msg)
@@ -121,8 +109,6 @@ void CpuSchedulerRR::processRequestMessage(SIMCAN_Message *sm)
 {
     // Check and cast if it is a CPU request
     auto sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
-    if (sm_cpu == nullptr)
-        error("%s - Unable to cast msg to SM_CPU_Message*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
 
     if (sm_cpu->getOperation() == SM_AbortCpu)
     {
@@ -152,7 +138,6 @@ void CpuSchedulerRR::processRequestMessage(SIMCAN_Message *sm)
     // All CPUs are busy
     if (cpuIndex == SC_NotFound)
     {
-
         EV_DEBUG << "(processRequestMessage) No idle CPU found..." << endl
                  << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
         EV_INFO << "Pushing message to queue..." << endl;
@@ -181,50 +166,47 @@ void CpuSchedulerRR::processRequestMessage(SIMCAN_Message *sm)
 
 bool CpuSchedulerRR::deleteFromRequestsQueue(SIMCAN_Message *sm)
 {
-    SM_CPU_Message *sm_cpu;
-    bool bFound = false;
     // Cast to CPU Message!
-    sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
+    auto sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
 
-    for (cQueue::Iterator iter(requestsQueue); !iter.end() && !bFound; iter++)
+    for (cQueue::Iterator iter(requestsQueue); !iter.end(); iter++)
     {
         SM_CPU_Message *msg = (SM_CPU_Message *)*iter;
+
+        // Found
         if (strcmp(msg->getAppInstance(), sm_cpu->getAppInstance()) == 0)
         {
             requestsQueue.remove(msg);
-            bFound = true;
+            return true;
         }
     }
 
-    return bFound;
+    // Not found
+    return false;
 }
 
 bool CpuSchedulerRR::deleteFromAbortsQueue(SIMCAN_Message *sm)
 {
-    SM_CPU_Message *sm_cpu;
-    bool bFound = false;
     // Cast to CPU Message!
-    sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
+    auto sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
 
-    for (cQueue::Iterator iter(abortsQueue); !iter.end() && !bFound; iter++)
+    for (cQueue::Iterator iter(abortsQueue); !iter.end(); iter++)
     {
         SM_CPU_Message *msg = (SM_CPU_Message *)*iter;
         if (strcmp(msg->getAppInstance(), sm_cpu->getAppInstance()) == 0)
         {
             abortsQueue.remove(msg);
-            bFound = true;
+            return true;
         }
     }
+
+    return false;
 }
 
 void CpuSchedulerRR::processResponseMessage(SIMCAN_Message *sm)
 {
-
-    int realCpuIndex, virtualCpuIndex;
-    SM_CPU_Message *sm_cpu;
-
     // Cast
-    sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
+    auto sm_cpu = check_and_cast<SM_CPU_Message *>(sm);
 
     // Zombie request arrives. This scheduler has been disabled!
     if (!bRunning)
@@ -234,12 +216,10 @@ void CpuSchedulerRR::processResponseMessage(SIMCAN_Message *sm)
         delete (sm);
         return;
     }
-
-    // Scheduler is running...
-
+    
     // Update CPU state!
-    realCpuIndex = sm_cpu->getNextModuleIndex();
-    virtualCpuIndex = getVirtualCpuIndex(realCpuIndex);
+    int realCpuIndex = sm_cpu->getNextModuleIndex();
+    int virtualCpuIndex = getVirtualCpuIndex(realCpuIndex);
 
     // Check bounds
     if ((virtualCpuIndex >= managedCpuCores) || (virtualCpuIndex < 0))
@@ -354,7 +334,7 @@ int CpuSchedulerRR::searchIdleCPU()
     for (int i = 0; i < managedCpuCores; i++)
         if (isCPU_Idle[i])
             return i;
-    
+
     return SC_NotFound;
 }
 

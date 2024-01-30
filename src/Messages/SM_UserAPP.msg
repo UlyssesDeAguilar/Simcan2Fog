@@ -1,21 +1,7 @@
 import Messages.SIMCAN_Message;
 
 cplusplus {{
-	#include "SIMCAN_Message.h"
-	#include "SM_UserAPP_Finish_m.h"	
-	
-    struct APP_Request
-	{
-	    //request
-		std::string strApp;		
-		std::string strAppType;		
-		std::string strIp;		
-		std::string vmId;	
-		int startTime;
-		int finishTime;			
-		tApplicationState eState;		
-		SM_UserAPP_Finish* pMsgTimeout;
-	};
+#include "AppRequest.h"
 }}
 
 struct APP_Request { @existingClass; }
@@ -35,5 +21,6 @@ message SM_UserAPP extends SIMCAN_Message{
     bool finished; 	// If the cloudprovide has already notified the user
 }
 
-
-
+cplusplus{{
+#include "Messages/SM_UserAPP.h"
+}}

@@ -2,19 +2,20 @@
 #define SM_USERAPP_H_
 
 #include "SM_UserAPP_m.h"
-#define APP_REALLOC_SIZE_STEP 10
+#include <vector>
+#include <algorithm>
+
 /**
  * @brief Class that describes a user app deployment request
- * @details Updated by Ulysses de Aguilar Gudmundsson based
- * onto the work of the author.
  * @author Pablo Cerro Cañizares
- * @version 1.1
- * @date 24-09-2023
+ * @author Ulysses de Aguilar
+ * @version 1.2
+ * @date 28-01-2024
  */
 class SM_UserAPP : public SM_UserAPP_Base
 {
 private:
-    // APP_Request* findRequest(std::string strService,std::string strIp);
+    // APP_Request* findRequest(const std::string &service,std::string strIp);
     void copy(const SM_UserAPP &other);
 
     /**
@@ -24,12 +25,10 @@ private:
      * @param dest  Destination request
      */
     void copyAppRequest(const APP_Request &src, APP_Request &dest);
-    int findRequestIndex(std::string strService, std::string strIp);
+    int findRequestIndex(const std::string &service, const std::string &vmId);
 
 protected:
-    APP_Request *app;
-    int appArraySize;
-    int idCounter;
+    std::vector<APP_Request> apps;
 
     /**
      * @brief Sets the Apps Array new size
@@ -37,7 +36,7 @@ protected:
      * For adding new app requests one should use the createNewApp* or addAppRequest methods
      * @param size new size
      */
-    virtual void setAppArraySize(size_t size);
+    virtual void setAppArraySize(size_t size){};
 
     /**
      * @brief Set the App object in the specified position
@@ -47,6 +46,13 @@ protected:
      */
     virtual void setApp(size_t k, const APP_Request &app);
 
+    /**
+     * @brief Copies an instance request, duplicates (obviously) the timeout message also
+     * @details Helper method for dup() operator
+     * @param request The instance request to be duplicated
+     */
+    void copyAndInsertRequest(const APP_Request &request);
+
 public:
     SM_UserAPP();
     SM_UserAPP(const SM_UserAPP &other);
@@ -54,45 +60,53 @@ public:
 
     SM_UserAPP &operator=(const SM_UserAPP &other);
 
-    void printUserAPP();
-    int createNewAppRequestFull(std::string strApp, std::string strAppType, std::string strIp, std::string vmId, int startTime, int finishTime, tApplicationState eState, SM_UserAPP_Finish *pMsgTimeout);
-    int createNewAppRequest(std::string strService, std::string strAppType, std::string strIp, std::string strVmId, int nStartRentTime);
-    int createNewAppRequestFull(std::string strApp, std::string strIp, std::string vmId, int startTime, int finishTime, tApplicationState eState, SM_UserAPP_Finish *pMsgTimeout);
-    int createNewAppRequest(std::string strService, std::string strIp, std::string strVmId, int nStartRentTime);
-    int addAppRequest(APP_Request appReq);
+    void createNewAppRequest(const std::string &service, const std::string &appType, const std::string &ip, const std::string &vmId, double startRentTime);
+
     void increaseFinishedApps() { nFinishedApps++; };
     void decreaseFinishedApps() { nFinishedApps--; };
 
-    size_t getAppArraySize() const { return idCounter; }
-    APP_Request &getApp(size_t k);
+    size_t getAppArraySize() const { return apps.size(); }
+    APP_Request &getApp(size_t k) { return apps.at(k); }
     const APP_Request &getApp(size_t k) const { return const_cast<SM_UserAPP *>(this)->getApp(k); };
 
-    void changeStateByIndex(int nIndex, std::string strService, tApplicationState eNewState);
-    void changeState(std::string strService, std::string strIp, tApplicationState eNewState);
-    void setStartTime(std::string strService, std::string strIp, double dTime);
-    void setEndTime(std::string strService, std::string strIp, double dTime);
+    void changeState(const std::string &service, const std::string &vmId, tApplicationState eNewState);
+    void changeStateByIndex(int nIndex, tApplicationState eNewState);
 
-    bool isFinishedOK(std::string strService, std::string strIp);
-    bool isFinishedKO(std::string strService, std::string strIp);
-    bool allAppsFinished();
-    bool allAppsFinishedOK();
-    bool allAppsFinishedKO();
-    bool allAppsFinished(std::string strVmId);
-    bool allAppsFinishedOK(std::string strVmId);
-    void abortAllApps(std::string strVmId);
-    std::string stateToString(tApplicationState eState);
+    // void setStartTime(const std::string &service, std::string strIp, double dTime);
+    // void setEndTime(const std::string &service, const std::string &vmId, double dTime);
+    void abortAllApps(const std::string &vmId);
 
-    // TODO: Esto hay que quitarlo en un futuro, cuando arreglemos la excepcion
-    void setVmIdByIndex(int nIndex, std::string strIp, std::string strVmId);
+    bool isFinishedOK(const std::string &service, const std::string &vmId);
+    bool isFinishedKO(const std::string &service, const std::string &vmId);
+
+    bool allAppsFinishedOK() { return std::all_of(apps.begin(), apps.end(), APP_Request::isFinishedOK); }
+    bool allAppsFinishedKO() { return std::all_of(apps.begin(), apps.end(), APP_Request::isFinishedKO); }
+    bool allAppsFinishedOK(const std::string &vmId);
+
+    bool allAppsFinished() { return nFinishedApps >= getAppArraySize(); }
+    bool allAppsFinished(const std::string &vmId);
+
     virtual SM_UserAPP *dup() const { return new SM_UserAPP(*this); }
-    virtual SM_UserAPP *dup(std::string strVmId) const;
+    virtual SM_UserAPP *dup(const std::string &vmId) const;
 
-    virtual void update(SM_UserAPP *newData);
+    /**
+     * @brief Updates the state of each individual app instance
+     * #FIXME: Watch out with the possible message leaking!
+     * @param newData A SM_UserAPP containing the newerstates
+     */
+    virtual void update(const SM_UserAPP *newData);
 
+    /**
+     * @brief Inserts and application
+     * @param app APP_Request
+     */
+    virtual void insertApp(const APP_Request &app) { apps.emplace_back(app); };
+    
     /* Extra methods, could be reused for the future*/
-    virtual void insertApp(const APP_Request& app) {};
-    virtual void insertApp(size_t k, const APP_Request& app) {};
-    virtual void eraseApp(size_t k) {};
+    virtual void insertApp(size_t k, const APP_Request &app){};
+    virtual void eraseApp(size_t k){};
+
+    friend std::ostream &operator<<(std::ostream &os, const SM_UserAPP &obj);
 };
 
 #endif /* SM_USERAPP_H_ */
