@@ -2,148 +2,108 @@
 #define __SIMCAN_2_0_USER_APP_BASE_H_
 
 #include "Core/cSIMCAN_Core.h"
-using std::vector;
+#include "Messages/SM_Syscall_m.h"
 
 /**
  * @class SimcanAPI SimcanAPI.h "SimcanAPI.h"
  *
  * Base class for the user applications. This class contains the operating system calls interface.
- * 
+ *
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @date 2016-07-01
  */
-class UserAppBase: public cSIMCAN_Core{
+class UserAppBase : public cSIMCAN_Core
+{
 
+protected:
+   enum State
+   {
+      RUN,
+      WAIT
+   };
 
-	protected:
+   enum Event
+   {
+      EXEC_START
+   };
 
-        /**< Starting time delay */
-        double startDelay;
+   /**
+    * Structure that represents a connection between two TCP applications.
+    */
+   struct SIMCAN_App_Connector
+   {
+      string localAddress; /**< Local Address. */
+      string destAddress;  /**< Destination Address. */
+      int localPort;       /**< Local Port */
+      int destPort;        /**< Destination Port */
+      int id;              /**< Local connection ID */
+      int connectionId;    /**< Connection Id (for sockets) */
+   };
+   typedef struct SIMCAN_App_Connector connector;
 
-        /**< Connection delay time */
-        double connectionDelay;
+   uint32_t pid;             //!< Process id
+   uint32_t vmId;            //!< Virtual machine id
+   uint32_t pc;              //!< Program counter
+   State state;              //!< Application state
+   simtime_t operationStart; //!< Timestamp of the starting of an operation
+   double startDelay;        //!< Starting time delay
+   double connectionDelay;   //!< Connection delay time
+   unsigned int myRank;      //!< Rank of the application's process
+   string testID;            //!< Test ID
+   string appInstance;       //!< Name of the application's instance
+   string vmInstance;        //!< Name of the vm's instance
+   string userInstance;      //!< Name of the user's instance
+   bool isDistributedApp;    //!< Is a distributed application?
+   bool debugUserAppBase;    //!< Show log messages of UserAppBase (for deep-debugging purpose only)
 
-        /**< Is a distributed application? */
-        bool isDistributedApp;
+   cMessage *event; //!< Message reserved for auto events
+   cGate *inGate;   /**< Input gate from OS. */
+   cGate *outGate;  /**< Output gate to OS. */
 
-        /**< Rank of the application's process */
-        unsigned int myRank;
+   string appLocalIP; /**< Local IP */
+   int appLocalPort;  /**< Local port */
 
-        /**< Test ID */
-        string testID;
+   /**
+    * Connector vector that contains the corresponding data to establish connection with servers.
+    * Note: Must be initialized on derived classes.
+    */
+   std::vector<connector> connections;
 
-        /**< Name of the application's instance */
-        string appInstance;
-        string vmInstance;
-        string userInstance;
+   virtual ~UserAppBase();
+   virtual void initialize() override;
+   virtual void finish() override;
+   virtual void processSelfMessage(cMessage *msg) override;
+   virtual void processRequestMessage(SIMCAN_Message *msg) override{};
+   virtual void processResponseMessage(SIMCAN_Message *msg) override;
+   virtual void sendRequestMessage(SIMCAN_Message *msg, cGate *outGate) override;
 
-        /**< Show log messages of UserAppBase (for deep-debugging purpose only) */
-        bool debugUserAppBase;
+   virtual void run() = 0;
 
-        /**< Input gate from OS. */
-        cGate* inGate;
+   void execute(double MIs);
+   void execute(simtime_t cpuTime);
+   void read(double bytes){};
+   void write(double bytes){};
+   // void open_socket()
+   // void open_socket()
+   // void send()
+   // void recv()
+   void abort();
+   void _exit(){};
 
-        /**< Output gate to OS. */
-        cGate* outGate;
+public:
+   class ICallback
+   {
+   public:
+      virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) = 0;
+      virtual void returnRead(simtime_t timeElapsed) = 0;
+      virtual void returnWrite(simtime_t timeElapsed) = 0;
+   };
 
-        int nextModuleIndex;
+   void setReturnCallback(ICallback *callback) { this->callback = callback; }
 
-
-       /**
-        * Structure that represents a connection between two TCP applications.
-        */
-        struct SIMCAN_App_Connector{
-            string localAddress;			/**< Local Address. */
-            string destAddress;				/**< Destination Address. */
-            int localPort;					/**< Local Port */
-            int destPort;					/**< Destination Port */
-            int id;							/**< Local connection ID */
-            int connectionId;				/**< Connection Id (for sockets) */
-        };
-        typedef struct SIMCAN_App_Connector connector;
-
-        /**< Local IP */
-        string appLocalIP;
-
-        /**< Local port */
-        int appLocalPort;
-
-       /** connector vector that contains the corresponding data to establish connection with servers.
-        * Note: Must be initialized on derived classes.
-        */
-        vector <connector> connections;
-
-
-		
-	   /**
-		* Destructor
-		*/
-	    ~UserAppBase();
-
-
-	   /**
-		* Module initialization.
-		*/
-		virtual void initialize() override;			   
-
-	   /**
-		* Module ending.
-		*/
-		virtual void finish() override;
-		
-
-	   /**
-		* Process a self message.
-		* @param msg Self message.
-		*/
-		virtual void processSelfMessage (cMessage *msg) = 0;
-
-
-//	   /**
-//		* Process a request message.
-//		* @param sm Request message.
-//		*/
-//		virtual void processRequestMessage (SIMCAN_Message *sm) = 0;
-//
-//
-//	   /**
-//		* Process a response message from a module in the local node.
-//		* @param sm Response message.
-//		*/
-//		virtual void processResponseMessage (SIMCAN_Message *sm) = 0;
-		
-		
-
-		// ----------------- CPU ----------------- //
-		
-		/**
-		 * Request for CPU execution
-		 * This function creates and sends the corresponding message to CPU module.
-		 * @param MIs Million instructions to be executed.		 
-		 */
-		void SIMCAN_request_cpu (double MIs);
-		
-		
-		/**
-		 * Request for CPU execution
-		 * This function creates and sends the corresponding message to CPU module.
-		 * @param cpuTime Time to execute the current CPU request.		 
-		 */
-		void SIMCAN_request_cpuTime (simtime_t cpuTime);
-		
-		void SIMCAN_abort_request_cpu ();
-		
-		
-	private:
-
-	   /**
-		* Get the out Gate to the module that sent <b>msg</b>.
-		* @param msg Arrived message.
-		* @return Gate (out) to module that sent <b>msg</b> or NULL if gate not found.
-		*/
-		cGate* getOutGate (cMessage *msg);		
-		
+private:
+   ICallback *callback;
+   cGate *getOutGate(cMessage *msg);
 };
 
 #endif
-

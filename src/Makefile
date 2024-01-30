@@ -32,6 +32,7 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 # Object files for local .cc, .msg and .sm files
 OBJS = \
     $O/Applications/Base/UserAppBase/UserAppBase.o \
+    $O/Applications/Builder/ApplicationBuilder.o \
     $O/Applications/Builder/DC/DataCentreApplicationBuilder.o \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
@@ -54,6 +55,7 @@ OBJS = \
     $O/Core/CheckingHubModule/CheckingHubModule.o \
     $O/Core/DataManager/DataManager.o \
     $O/Core/SimSchema/MySQL/SimSchemaMySQL.o \
+    $O/Core/include/internal_types.o \
     $O/Management/CloudManagerBase/CloudManagerBase.o \
     $O/Management/CloudProviders/CloudProviderBase/CloudProviderBase.o \
     $O/Management/CloudProviders/CloudProviderCost/CloudProviderCost.o \
@@ -105,6 +107,7 @@ OBJS = \
     $O/Management/parser/UserPriorityListParser.o \
     $O/Management/parser/VmListParser.o \
     $O/Management/utils/LogUtils.o \
+    $O/Messages/AppRequest.o \
     $O/Messages/DNS_Request.o \
     $O/Messages/INET_AppMessage.o \
     $O/Messages/SIMCAN_Message.o \
@@ -115,6 +118,7 @@ OBJS = \
     $O/OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.o \
     $O/OperatingSystem/Hypervisors/EdgeHypervisor/EdgeHypervisor.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
+    $O/OperatingSystem/Hypervisors/OsCore/OsCore.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \

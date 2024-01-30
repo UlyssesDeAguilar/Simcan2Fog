@@ -25,15 +25,9 @@ class DummyApplication: public UserAppBase{
 		*/
 		~DummyApplication();
 
-	   /**
- 		*  Module initialization.
- 		*/
 	    virtual void initialize() override;
-
-	   /**
- 		* Module ending.
- 		*/
 	    virtual void finish() override;
+		virtual void run() {};
 
 	   /**
 		* Process a self message.

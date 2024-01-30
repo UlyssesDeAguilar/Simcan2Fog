@@ -9,6 +9,7 @@ import simcan2.Core.CheckingHubModule.CheckingHubModule;
 module AppsVector
 {
     parameters:
+        int vmId = default(-1);             // The virtual machine ID where this vector is contained
         int numApps;						// Number of applications in this vector
         bool staticAppAssignment;			// True if the assignment of application is static or False in another case
 
@@ -19,9 +20,10 @@ module AppsVector
 
     submodules:
         appModule[numApps]: UserAppModule {	// Applications launched by the user      
-
+            pid = index;
             @display("p=121.972496,257.4975,r,100;i=appsSet");
         }
+
         appHub: CheckingHubModule {					// Hub that manages messages to be received by the corresponding applicationç
 
             parameters:

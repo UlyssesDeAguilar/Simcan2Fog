@@ -8,8 +8,8 @@ import simcan2.Applications.UserApps.IUserApp;
 module UserAppModule
 {
     parameters:
+        int pid = default(-1);                // PID of the application (within the vector)
         string userAppName;		// Name of the application
-
         @display("bgb=221,131");
     gates:
         input fromHub;			// Input gate from ModuleHub

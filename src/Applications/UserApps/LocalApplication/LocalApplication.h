@@ -2,12 +2,8 @@
 #define __LOCAL_APPLICATION_H_
 
 #include <omnetpp.h>
-
 #include "Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
-
-#define IO_READ_OPERATION "IO_READ_OPERATION"
-#define IO_WRITE_OPERATION "IO_WRITE_OPERATION"
 
 // Forward declaration
 class DataCentreManagerBase;
@@ -19,140 +15,44 @@ class DataCentreManagerBase;
  * This application alternates I/O operations with CPU.
  *
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
- * @date 2009-03-13
+ * @author Ulysses de Aguilar
+ * @date 2009-03-13 (v1)
+ * @date 29/01/2024 (v2)
  */
-class LocalApplication: public UserAppBase{
+class LocalApplication : public UserAppBase, public UserAppBase::ICallback
+{
+
+protected:
+	unsigned int inputDataSize;	 //!< Size of the data to be read (in bytes)
+	unsigned int outputDataSize; //!< Size of the data to be written (in bytes)
+	unsigned int MIs;			 //!< Number of MIs to be executed
+	unsigned int iterations;	 //!< Number of iterations to be performed
+	string inputFile;			 //!< Input file name
+	string outputFile;			 //!< Output file name
+
+	unsigned int currentRemainingMIs; //!< Number of MIs remaining to be executed
+	unsigned int currentIteration;	  //!< Current iteration
+
+	simtime_t simStartTime; //!< Simulation Starting timestamp
+	time_t runStartTime;	//!< Running starting timestamp (real execution time)
+
+	simtime_t total_service_CPU; //!< Spent time in CPU system
+	simtime_t total_service_IO;	 //!< Spent time in IO system
+
+	virtual ~LocalApplication() = default;
+	virtual void initialize() override;
+	virtual void finish() override;
+
+	virtual void run() override;
+	virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override;
+	virtual void returnRead(simtime_t timeElapsed) override;
+	virtual void returnWrite(simtime_t timeElapsed) override;
+
 public:
-    unsigned int getCurrentIteration() const;
-    void setCurrentIteration(unsigned int currentIteration);
-    unsigned int getCurrentRemainingMIs() const;
-    void setCurrentRemainingMIs(unsigned int currentRemainingMIs);
-    void sendAbortRequest();
-
-	protected:
-
-        /** Size of the data to be read (in bytes) */
-		unsigned int inputDataSize;
-
-		/** Size of the data to be written (in bytes) */
-		unsigned int outputDataSize;
-
-		/** Number of MIs to be executed */
-		unsigned int MIs;
-		unsigned int currentRemainingMIs;
-
-		/** Number of iterations to be performed */
-		unsigned int iterations;
-
-		/** Current iteration */
-		unsigned int currentIteration;
-
-		/** Input file name */
-		string inputFile;
-
-		/** Output file name */
-		string outputFile;
-
-		/** Read offset */
-        int readOffset;
-
-        /** Write offset */
-        int writeOffset;
-
-		/** Simulation Starting timestamp */
-		simtime_t simStartTime;
-
-		/** Simulation Ending timestamp */
-		simtime_t simEndTime;
-		
-		/** Running starting timestamp (real execution time) */
-		time_t runStartTime;
-
-		/** Running ending timestamp (real execution time) */
-		time_t runEndTime;		
-				
-		/** Call Starting timestamp (IO) */
-		simtime_t startServiceIO;
-		
-		/** Call Ending timestamp (IO) */
-		simtime_t endServiceIO;
-		
-		/** Call Starting timestamp (CPU) */
-		simtime_t startServiceCPU;
-		
-		/** Call Ending timestamp (CPU) */
-		simtime_t endServiceCPU;
-		
-		/** Spent time in CPU system */
-		simtime_t total_service_CPU;
-		
-		/** Spent time in IO system */
-		simtime_t total_service_IO;
-				
-		/** Execute CPU */
-		bool executeCPU;
-		
-		/** Execute read operation */
-		bool executeRead;
-				
-		/** Execute write operation */
-		bool executeWrite;
-		
-		DataCentreManagerBase *pDataCentreManager;
-
-		cMessage *selfMessage;
-				
-								
-		
-	   /**
-		* Destructor
-		*/
-		~LocalApplication();
-
-	   /**
- 		*  Module initialization.
- 		*/
-	    virtual void initialize() override;
-
-	   /**
- 		* Module ending.
- 		*/
-	    virtual void finish() override;
-
-	   /**
-		* Process a self message.
-		* @param msg Self message.
-		*/
-		void processSelfMessage (cMessage *msg);
-
-	   /**
-		* Process a request message.
-		* @param sm Request message.
-		*/
-		void processRequestMessage (SIMCAN_Message *sm);
-
-	   /**
-		* Process a response message.
-		* @param sm Request message.
-		*/
-		void processResponseMessage (SIMCAN_Message *sm);
-
-
-		void sendEndResponse();
-
-
-	private:
-
-	   /**
-		* Method that creates and sends a CPU request.
-		*/
-		void executeCPUrequest();
-		void executeIORequest();
-
-	   /**
-		* Print results.
-		*/
-		void printResults();
+	unsigned int getCurrentIteration() const { return currentIteration; }
+	void setCurrentIteration(unsigned int currentIteration) { this->currentIteration = currentIteration; }
+	unsigned int getCurrentRemainingMIs() const { return MIs; }
+	void setCurrentRemainingMIs(unsigned int currentRemainingMIs) { this->MIs = MIs; }
 };
 
 #endif
