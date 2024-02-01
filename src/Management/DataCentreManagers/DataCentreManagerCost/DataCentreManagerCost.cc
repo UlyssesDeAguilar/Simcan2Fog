@@ -142,48 +142,43 @@ Hypervisor *DataCentreManagerCost::selectNode(SM_UserVM *&userVM_Rq, const VM_Re
 
 Hypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq, const VM_Request &vmRequest)
 {
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
-    std::vector<Hypervisor *> vectorHypervisor;
-    std::vector<Hypervisor *>::iterator itVector;
-    bool bHandled;
-
-    if (userVM_Rq == nullptr)
-        return nullptr;
+    assert_msg((userVM_Rq != nullptr), "Nullpointer");
 
     std::string userId = userVM_Rq->getUserID();
-
     auto pVMBase = dataManager->searchVirtualMachine(vmRequest.strVmType);
     int numCoresRequested = pVMBase->getNumCores();
 
-    bHandled = false;
-    for (itMap = mapHypervisorPerNodesReserved.begin(); itMap != mapHypervisorPerNodesReserved.end() && !bHandled; ++itMap)
-    {
-        int numNodeTotalCores = itMap->first;
-        if (numNodeTotalCores >= numCoresRequested)
-        {
-            vectorHypervisor = itMap->second;
-            for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && !bHandled; ++itVector)
-            {
-                Hypervisor *pHypervisor = *itVector;
-                int numAvailableCores = pHypervisor->getAvailableCores();
-                if (numAvailableCores >= numCoresRequested)
-                {
-                    NodeResourceRequest *pResourceRequest = generateNode(userId, vmRequest);
+    // Search the possible candidate
+    auto hasSufficientCores = [numCoresRequested](auto &e)
+    { return e->first >= numCoresRequested; };
 
-                    // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaci�n al map y que sea el hypervisor el que controle a que VM va.
-                    // TODO: Finalmente deber�a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
-                    cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
-                    if (pVmAppVectorModule != nullptr)
-                    {
-                        updateCpuUtilizationTimeForHypervisor(pHypervisor);
-                        mapAppsVectorModulePerVm[vmRequest.strVmId] = pVmAppVectorModule;
-                        int numMaxApps = pVmAppVectorModule->par("numApps");
-                        bool *runningAppsArr = new bool[numMaxApps]{false};
-                        mapAppsRunningInVectorModulePerVm[vmRequest.strVmId] = runningAppsArr;
-                        userVM_Rq->setBPriorized(true);
-                        bHandled = true;
-                        return pHypervisor;
-                    }
+    auto hypervisorBucket = std::find_if(mapHypervisorPerNodesReserved.begin(), mapHypervisorPerNodesReserved.end(), hasSufficientCores);
+
+    // Start checking
+    for (; hypervisorBucket != mapHypervisorPerNodesReserved.end(); ++hypervisorBucket)
+    {
+        auto vectorHypervisor = hypervisorBucket->second;
+        for (auto &hypervisor : vectorHypervisor)
+        {
+            int numAvailableCores = hypervisor->getAvailableCores();
+            if (numAvailableCores >= numCoresRequested)
+            {
+                NodeResourceRequest *pResourceRequest = generateNode(userId, vmRequest);
+
+                // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaci�n al map y que sea el hypervisor el que controle a que VM va.
+                // TODO: Finalmente deber�a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
+
+                // FIXME: Possible memory leak!
+                cModule *pVmAppVectorModule = hypervisor->allocateNewResources(pResourceRequest);
+                if (pVmAppVectorModule != nullptr)
+                {
+                    updateCpuUtilizationTimeForHypervisor(hypervisor);
+                    mapAppsVectorModulePerVm[vmRequest.strVmId] = pVmAppVectorModule;
+                    int numMaxApps = pVmAppVectorModule->par("numApps");
+                    bool *runningAppsArr = new bool[numMaxApps]{false};
+                    mapAppsRunningInVectorModulePerVm[vmRequest.strVmId] = runningAppsArr;
+                    userVM_Rq->setBPriorized(true);
+                    return hypervisor;
                 }
             }
         }

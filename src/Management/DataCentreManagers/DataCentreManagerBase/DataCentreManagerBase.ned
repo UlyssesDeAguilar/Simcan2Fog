@@ -18,6 +18,7 @@ simple DataCentreManagerBase extends CloudManagerBase {
     //@class(DataCentreManagerBase); 
                  
     gates:
-        input in;
-        output out;
+        input networkIn;
+        output networkOut;
+        inout localNetwork;
 }

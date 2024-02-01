@@ -14,50 +14,54 @@ module EdgeNode
 
         // Hardware specs
         int numCpuCores = default(4);                        // The cores of the CPU equipped in this node
-        double memorySize @unit(GB) = default(16GB);    
-		double diskSize @unit(GB) = default(500GB);                      
-		double diskReadBandwidth @unit(Mbps)  = default(800Mbps);
-		double diskWriteBandwidth @unit(Mbps) = default(800Mbps);
-    submodules:
-        na: NetworkAdapter;
-        hy: EdgeHypervisor;
-
-        // Set up the cpu with kind and number of cores
-        cpu: CpuProcessor
-        {
-            numCpuCores = numCpuCores;
-            cpuCoreType = "CpuCore";
-            staticAppAssignment = staticAppAssignment;
-        };
+        double memorySize @unit(GB) = default(16GB);
+        double diskSize @unit(GB) = default(500GB);
+        double diskReadBandwidth @unit(Mbps) = default(800Mbps);
+        double diskWriteBandwidth @unit(Mbps) = default(800Mbps);
         
-        // Let the scheduler know the number of cores and the non virtual environement
-        scheduler: <default("CpuSchedulerRR")> like ICpuScheduler
-        {
-            numCpuCores = numCpuCores;
-            isVirtualHardware = false;
-        };
+        // Propagating values to submodules + configuration
+        *.numCpuCores = numCpuCores;
+        *.staticAppAssignment = staticAppAssignment;
+        apps.numApps = maxApps;
+        cpu.cpuCoreType = "CpuCore";
+        scheduler.isVirtualHardware = false;
+        
+        @display("bgb=463,275");
+    submodules:
+        na: NetworkAdapter {
+            @display("p=220,221");
+        }
+        
+        hy: EdgeHypervisor {
+            @display("p=220,127");
+        }
+        
+        cpu: CpuProcessor {
+            @display("p=402,127");
+        }
 
-        // Prepare the slots for the apps
-        apps: AppsVector
-        {
-            numApps = numApps;
-            staticAppAssignment = staticAppAssignment;
-        };
+        scheduler: <default("CpuSchedulerRR")> like ICpuScheduler {
+            @display("p=316,127");
+        }
 
-        connections:
-            // Connect hypervisor to scheduler
-            hy.toCpuScheduler --> scheduler.fromHypervisor;
-            hy.fromCpuScheduler <-- scheduler.toHypervisor;
-            
-            // Enable network comms
-            hy.toNetwork   --> na.moduleIn;
-            hy.fromNetwork <-- na.moduleOut;
+        apps: AppsVector {
+            @display("p=93,127");
+        }
 
-            // Connect CPU - Scheduler
-            scheduler.toHub --> cpu.fromOs;
-            scheduler.fromHub <-- cpu.toOs;
+    connections:
+        // Connect hypervisor to scheduler
+        hy.toCpuScheduler --> scheduler.fromHypervisor;
+        hy.fromCpuScheduler <-- scheduler.toHypervisor;
 
-            // Connect apps to hypervisor
-            hy.toApps   --> apps.fromOS;
-            hy.fromApps <-- apps.toOS;
+        // Enable network comms
+        hy.toNetwork --> na.moduleIn;
+        hy.fromNetwork <-- na.moduleOut;
+
+        // Connect CPU - Scheduler
+        scheduler.toHub --> cpu.fromOs;
+        scheduler.fromHub <-- cpu.toOs;
+
+        // Connect apps to hypervisor
+        hy.toApps --> apps.fromOS;
+        hy.fromApps <-- apps.toOS;
 }

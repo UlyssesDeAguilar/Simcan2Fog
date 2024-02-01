@@ -44,8 +44,8 @@ void DataCentreManagerBase::initialize()
     forecastActiveMachines = par("forecastActiveMachines");
 
     // Get gates
-    inGate = gate("in");
-    outGate = gate("out");
+    networkInGateId = gate("networkIn")->getId();
+    localInGateId = gateHalf("localNetwork", cGate::INPUT)->getId();
 
     // Parse data-centre list
     // TODO: Meta-data only
@@ -350,12 +350,13 @@ std::string DataCentreManagerBase::dataCentreToString()
 
 cGate *DataCentreManagerBase::getOutGate(cMessage *msg)
 {
-    // If msg arrives from the Hypervisor
-    if (msg->getArrivalGate() == inGate)
-    {
-        return outGate;
-    }
-    // Msg arrives from an unknown gate
+    int gateId = msg->getArrivalGate()->getId();
+
+    // Check from which network the request came from
+    if (gateId == networkInGateId)
+        return gate("networkOut");
+    else if (gateId == localInGateId)
+        return gateHalf("localNetwork", cGate::OUTPUT);
     else
         error("Message received from an unknown gate [%s]", msg->getName());
 
@@ -1116,11 +1117,13 @@ NodeResourceRequest *DataCentreManagerBase::generateNode(std::string strUserName
     NodeResourceRequest *pNode = new NodeResourceRequest();
 
     pNode->setUserName(strUserName);
+    pNode->setVmId(vmRequest.strVmId);
+
     pNode->setMaxStartTimeT1(vmRequest.maxStartTime_t1);
     pNode->setRentTimeT2(vmRequest.nRentTime_t2);
     pNode->setMaxSubTimeT3(vmRequest.maxSubTime_t3);
     pNode->setMaxSubscriptionTimeT4(vmRequest.maxSubscriptionTime_t4);
-    pNode->setVmId(vmRequest.strVmId);
+    
     fillVmFeatures(vmRequest.strVmType, pNode);
 
     return pNode;

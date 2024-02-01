@@ -107,19 +107,6 @@ namespace hypervisor
 
         bool isRunning() { return status == tApplicationState::appRunning; }
     };
-
-    // TODO: Consider moving all of this functionality to the HardwareManager
-    struct SystemSpecs
-    {
-        double totalCores;  // All cores of the CPU
-        double totalMemory; // Total RAM  (In GB)
-        struct Disk
-        {
-            double total;          // Total Disk (In GB)
-            double readBandwidth;  // In Mbit/s
-            double writeBandwidth; // In Mbit/s
-        } disk;
-    };
 }
 
 // Include the Syscall message after to avoid import loop

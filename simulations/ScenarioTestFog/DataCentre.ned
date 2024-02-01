@@ -18,6 +18,7 @@ package simcan2.simulations.ScenarioTestFog;
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Nodes.Cloud.CloudBoard;
 import simcan2.Architecture.Nodes.Cloud.CloudRack;
+import simcan2.Architecture.Network.Switch.Switch;
 import simcan2.Architecture.Network.Adapter.NetworkAdapter;
 import simcan2.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
 import simcan2.Management.CloudProviders.*.*;
@@ -33,10 +34,13 @@ module DataCentre_A
         int numCmpRacksB;
         int numStoRacks = 0;
 
-        @display("i=data-center");
+        // Configure the main switch
+        switch.level = 0;
+
+        @display("i=data-center;bgb=756,453");
     gates:
         inout comm[];
-    
+
     submodules:
 
         // ---------------------------------------------------------------
@@ -44,65 +48,60 @@ module DataCentre_A
         // ---------------------------------------------------------------
         dcManager: DataCentreManagerFirstFit {
             parameters:
-                @display("p=193,148");
+                @display("p=197,207");
         }
 
-        networkAdapter: NetworkAdapter;
-
+        networkAdapter: NetworkAdapter {
+            @display("p=83,207");
+        }
+        
+        switch: Switch {
+            @display("p=441,206");
+        }
+        
+        // Assign addresses continously
         rackCmp_Rack_A[numCmpRacksA]: CloudRack {
-            @display("p=154,51");
+            address = string(index);
+            @display("p=615,207");
         }
 
         rackCmp_Rack_B[numCmpRacksB]: CloudRack {
-            @display("p=502,99");
+            address = string(numCmpRacksA + index);
+            @display("p=441,104");
         }
 
         rackSto_Rack_B[numStoRacks]: CloudRack {
-            @display("p=400,30");
-        }
-
-
-        // ---------------------------------------------------------------
-        //   Definition of Network
-        // ---------------------------------------------------------------
-        dataCentreNetwork: DataCentreNetwork {
-            @display("p=325,126");
-            gates:
-                inComm[numCmpRacksA+numCmpRacksB];
-                outComm[numCmpRacksA+numCmpRacksB];
-                inStorage[numStoRacks];
-                outStorage[numStoRacks];
+            address = string(numCmpRacksA + numCmpRacksB + index);
+            @display("p=441,309");
         }
 
     // ---------------------------------------------------------------
     //   Connections section
     // ---------------------------------------------------------------
-    connections allowunconnected:
-
-        // Connections between Data-Centre manager and Data-centre outside
-        dcManager.out --> ned.IdealChannel --> networkAdapter.moduleIn;
-        dcManager.in <-- ned.IdealChannel <-- networkAdapter.moduleOut;
-
-        // Jump the ethernet wiring to the networkAdapter
-        // WARING: Do not put any delay inbetween
-        for i=0..sizeof(comm)-1{
+    connections:
+		// Connect the ethernet wiring to the networkAdapter
+        for i=0..sizeof(comm)-1 {
             networkAdapter.ethg++ <--> comm[i];
         }
-
-        // Connections between computing racks and the network
+        
+        // Connections between Data-Centre manager and Data-centre outside
+        dcManager.networkOut --> ned.IdealChannel --> networkAdapter.moduleIn;
+        dcManager.networkIn <-- ned.IdealChannel <-- networkAdapter.moduleOut;
+		
+		// Connect the main switch with the Manager
+        switch.upper <-->  dcManager.localNetwork;
+		
+		// Interconnect all the racks
         for i=0..numCmpRacksA-1 {
-            rackCmp_Rack_A[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
-            rackCmp_Rack_A[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
+            rackCmp_Rack_A[i].comm <--> DataCentreEth40G_channel <--> switch.comm++;
         }
 
         for i=0..numCmpRacksB-1 {
-            rackCmp_Rack_B[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inComm++;
-            rackCmp_Rack_B[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outComm++;
+            rackCmp_Rack_B[i].comm <--> DataCentreEth40G_channel <--> switch.comm++;
         }
 
-        // Connections between storage racks and the network
         for i=0..numStoRacks-1 {
-            rackSto_Rack_B[i].out --> DataCentreEth40G_channel --> dataCentreNetwork.inStorage++;
-            rackSto_Rack_B[i].in <-- DataCentreEth40G_channel <-- dataCentreNetwork.outStorage++;
+            rackSto_Rack_B[i].comm <--> DataCentreEth40G_channel <--> switch.comm++;
         }
+
 }

@@ -17,6 +17,7 @@ package simcan2.OperatingSystem.CpuSchedulers;
 moduleinterface ICpuScheduler{
     
     parameters:
+        @display("p=125,96;i=scheduler");
         bool isVirtualHardware;		// True if this blade allows virtualization and False in another case
         int numCpuCores;			// Number of CPU cores in the CPU processor
 

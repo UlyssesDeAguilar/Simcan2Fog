@@ -7,39 +7,40 @@ import simcan2.Architecture.Network.DataCentreNetwork.*;
 //
 // Node Board that contains "numBlades" blades and one switch
 //
-module CloudBoard{
-    
+module CloudBoard
+{
     parameters:
+        string address;			// The address of the Board inside a rack
+        int level;
         int numBlades;
         string channelType;
-        
+
+        // Forward the level to the switch
+        switch.level = level;
+
+        @display("bgb=262,346");
     gates:
-        input in;
-        output out;   
+        inout comm;
 
     submodules:
-        
-        blade[numBlades]: CloudBlade;		// Blades
-        
-        switch: Switch{				// Switch
-            parameters:
-                type = "board";
-                
-        	gates:
-        		in[numBlades+1];	
-      	   		out[numBlades+1];           
+
+        blade[numBlades]: CloudBlade {
+            address = address + "." + string(index);	// Composing the address based on the index
+            @display("p=193,158,c,120");
         }
-        
-    connections:  
-            
+
+        switch: Switch {
+
+            @display("p=59,158");
+        }
+    connections:
+
         // Connections between the blades and the switch          
-    	for i=0..numBlades-1 {
-		   blade[i].in <-- <channelType> like IDataCentreChannel  <-- switch.out++;
-		   blade[i].out --> <channelType> like IDataCentreChannel  --> switch.in++;
-		}
-		
+        for i=0..numBlades-1 {
+            blade[i].comm <--> <channelType> like IDataCentreChannel <--> switch.comm++;
+        }
+
 		// Connections between the board and the switch
-       	in --> switch.in++;
-       	out <-- switch.out++; 
+        comm <--> switch.upper;
 }
 

@@ -13,15 +13,15 @@ module CpuProcessor
     parameters:
         int numCpuCores;							// Number of CPU cores
         string cpuCoreType;							// Type of the CPU cores
-		bool staticAppAssignment;					// True if the assignment of application is static or False in another case
-        @display("bgb=499,209");
+        bool staticAppAssignment;					// True if the assignment of application is static or False in another case
+        @display("i=cpu,bgb=499,209");
     gates:
         input fromOs;					// Input gate from the Operating System
         output toOs;  					// Output gate to the Operating System
 
     submodules:
         cpuCore[numCpuCores]: <cpuCoreType> like ICpuCore {		// CPU cores        
-            @display("p=51,71,r,120;i=device/cpu");
+            @display("p=209,85,r,120;i=device/cpu");
         }
         cpuHub: CheckingHubModule {       								// Hub that manages incoming messages 
 

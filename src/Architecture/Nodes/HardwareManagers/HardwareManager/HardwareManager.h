@@ -6,58 +6,76 @@
 using namespace omnetpp;
 
 /**
- * TODO - Generated class
+ * @brief This class manages the resources given a node
+ * @author Pablo Cerro Cañizares
+ * @author Ulysses de Aguilar Gudmundsson
  */
 class HardwareManager : public cSimpleModule
 {
 
 public:
-  int getAvailableCores();
-  int getNumCores();
-  int getAvailableRam();
+  struct Resources
+  {
+    double memory;  //!< Total RAM  (In GB)
+    double disk;    //!< Disk (In GB)
+    uint32_t cores; //!< Cores of the CPU
+    uint32_t vms;   //!< Number of VMs executed in this computer
+    uint32_t users; //!< Number of users executed in this computer
+  };
 
-  unsigned int *allocateCores(int numCores);
-  bool allocateRam(double memory);
-  bool allocateDisk(double disk);
-  int deallocateCores(int numCores, unsigned int *cpuCoreIndex);
-  double deallocateRam(double memory);
-  double deallocateDisk(double disk);
-  bool *getFreeCoresArrayPtr() const;
-  double getAvailableDisk() const;
-  void setAvailableDisk(double availableDisk);
+  struct DiskSpecs
+  {
+    double readBandwidth;  //!< In Mbit/s
+    double writeBandwidth; //!< In Mbit/s
+  } diskSpecs;
 
 private:
-  /** Indicates if this module is able to virtualize hardware */
-  bool isVirtualHardware;
-
-  /** Number of CPU cores managed by this module */
-  unsigned int numCpuCores;
-
-  unsigned int numAvailableCpuCores;
-
-  /** Maximum number of VMs executed in this computer */
-  unsigned int maxVMs;
-
-  /** Maximum number of users executed in this computer */
-  unsigned int maxUsers;
-
-  bool *freeCoresArrayPtr;
-
-  double memorySize;
-  double availableMemory;
-  double diskSize;
-  double availableDisk;
-
-  //
-  //                               /** Array to assign CPU scheduler to different users */
-  //                               bool *cpuSchedulerUtilization;
-  //
-  //       /** List of users currently executing apps in this computer */
-  //       UserExecution** userVector;
+  Resources available;     //<! Available HW/SW resources
+  Resources total;         //<! Specifications of the HW/SW resources
+  bool isVirtualHardware;  //<! Indicates if this module is able to virtualize hardware
+  bool *freeCoresArrayPtr; //<! Keeps track of the free cores in the system
 
 protected:
   virtual void initialize() override;
   virtual void handleMessage(cMessage *msg) override;
+
+public:
+  /**
+   * @brief Attempts to allocate resources
+   *
+   * @param cores Number of cores requested
+   * @param memory Memory requested (GB)
+   * @param disk Disk requested (GB)
+   * @param coreIndex The index indicating which cores were allocated (on error it's set to nullptr)
+   * @return true If the resources where allocated
+   * @return false If the resources where unable to be allocated
+   */
+  bool tryAllocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t **coreIndex);
+
+  /**
+   * @brief Deallocates resources
+   *
+   * @param cores Number of cores requested
+   * @param memory Memory requested (GB)
+   * @param disk Disk requested (GB)
+   * @param coreIndex The index indicating which cores were allocated
+   */
+  void deallocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t *coreIndex);
+
+  /**
+   * @brief Gets the total resources of the node
+   * @return const Resources&
+   */
+  const Resources &getTotalResources() { return this->total; }
+
+  /**
+   * @brief Gets the available resources of the node
+   * @return const Resources&
+   */
+  const Resources &getAvailableResources() { return this->available; }
+
+  // FIXME
+  bool *getFreeCoresArrayPtr() const { return freeCoresArrayPtr; };
 };
 
 #endif

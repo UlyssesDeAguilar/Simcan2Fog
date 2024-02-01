@@ -2,19 +2,18 @@ package simcan2.Architecture.Network.Switch;
 import simcan2.Core.cSIMCAN_Core;
 
 //
-// Cloud switch for connecting CloudBlades and CloudBoards
+// General switch, it assumes an address syntax of "x.x.x.x"  -> Transformed into a LocalAddress
+// The level parameter indicates at which level it is located
 //
 simple Switch extends cSIMCAN_Core{
     
     parameters:
-        string type;			// Type of cloud switch: "rack" or "board"        
-        
-        @class(Switch);							//b
+        @class(Switch);
+        string type;			// Type of cloud switch: "rack" or "board"
+        int level;				// Level at which the switch is located
         
     gates:
-        input in[];	
-        output out[];
-        
-    
+        inout upper;			// Gate for the upper level
+        inout comm[];			// Communication gates    
 }
 

@@ -10,22 +10,20 @@
 
 #include "DataCentre_CpuType.h"
 #include "IDataCentreCollection.h"
+
 /**
- * This class is used to handle and manage the VMs that are requested to this datacentre. For this, this class contains a simplified version, that contains the information necessary,
+ * This class is used to handle and manage the VMs that are requested to this datacentre.
+ * For this, this class contains a simplified version, that contains the information necessary,
  * of the datacentre, nodes and its resources.
  */
-class DataCentreInfoCollection: public IDataCentreCollection {
+class DataCentreInfoCollection : public IDataCentreCollection
+{
 
 private:
-
-    /** Map used to store the (accepted) requests performed by each user*/
-    std::map<std::string, NodeResourceInfo*> id2nodeMap;
-
-    /** Vector that contains a collection of DataCentres that structures Nodes by CPU type */
-    std::vector<DataCentre_CpuType*> dataCentres;
+    std::map<std::string, NodeResourceInfo *> id2nodeMap; /** Map used to store the (accepted) requests performed by each user*/
+    std::vector<DataCentre_CpuType *> dataCentres;        /** Vector that contains a collection of DataCentres that structures Nodes by CPU type */
 
 public:
-
     /**
      * Constructor.
      */
@@ -35,7 +33,6 @@ public:
      * Destructor.
      */
     virtual ~DataCentreInfoCollection();
-
 
     /**
      * Initialise the datacentre
@@ -53,14 +50,14 @@ public:
      * @param nDatacentre
      * @param pNode
      */
-    virtual void insertNode(int nDataCentre, NodeResourceInfo* pNode);
+    virtual void insertNode(int nDataCentre, NodeResourceInfo *pNode);
 
     /**
      * This method handles a VM request
      * @param pVmRequest VM request
      * @return TRUE if this VM is accepted. FALSE i.o.c.
      */
-    virtual bool handleVmRequest(NodeResourceRequest*& pVmRequest);
+    virtual bool handleVmRequest(NodeResourceRequest *&pVmRequest);
 
     /**
      * Free a VM request

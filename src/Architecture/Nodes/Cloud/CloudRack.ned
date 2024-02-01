@@ -8,46 +8,43 @@ import simcan2.Architecture.Network.DataCentreNetwork.*;
 //
 // This FileConfigManager is shared by all nodes contained in this rack. 
 //
-module CloudRack{
-    
+module CloudRack
+{
     parameters:
+        string address;			// The address of the Rack inside a network 
         string channelType;		// Type of the network inside the rack
         int numBoards;			// Number of Boards.
         int bladesPerBoard;		// Number of blades per Board.
+        int level;
 
-	gates:
-	    input in;
-	    output out;
+        // Forward the level for the switch
+        switch.level = level;
+        @display("bgb=286,383");
+    gates:
+        inout comm;
 
     submodules:
-        
+
         board[numBoards]: CloudBoard {		// Boards
             parameters:
+                address = address + "." + string(index);	// Composing the address based on the index
                 channelType = channelType;
                 numBlades = bladesPerBoard;
+                level = level + 1;
+                @display("p=197,159,c,120");
         }
-        
-        switch: Switch{				// Switch
-            parameters:
-                type = "rack";
-                
-        	gates:
-        		in[numBoards+1];	
-      	   		out[numBoards+1];           
+
+        switch: Switch {
+            @display("p=64,159");
         }
-        
-                
- 	connections:
- 	    
+    connections:
         // Connections between the boards and the switch          
-    	for i=0..numBoards-1 {
-		   board[i].in <-- <channelType> like IDataCentreChannel  <-- switch.out++;
-		   board[i].out --> <channelType> like IDataCentreChannel  --> switch.in++;
-		}
-		
+        for i=0..numBoards-1 {
+            board[i].comm <--> <channelType> like IDataCentreChannel <--> switch.comm++;
+        }
+
 		// Connections between the rack and the switch
-       	in --> switch.in++;
-       	out <-- switch.out++; 
+        comm <--> switch.upper;
 }
 
 

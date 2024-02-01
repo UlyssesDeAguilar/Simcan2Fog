@@ -4,76 +4,47 @@ Define_Module(HardwareManager);
 
 void HardwareManager::initialize()
 {
-
-    int i;
-
     // Obtain the parameters of the module
     isVirtualHardware = par("isVirtualHardware");
-    maxVMs = par("maxVMs");
-    numAvailableCpuCores = numCpuCores = par("numCpuCores");
-    availableMemory = memorySize = par("memorySize");
-    availableDisk = diskSize = par("diskSize");
-    maxUsers = par("maxUsers");
-    freeCoresArrayPtr = new bool[numCpuCores];
+
+    // Init the resource specs
+    total.cores = par("numCores");
+    total.memory = par("memorySize");
+    total.disk = par("diskSize");
+    total.vms = par("maxVMs");
+    total.users = par("masUsers");
+
+    // Init the available specs
+    available = total;
+
+    // Init the free core list
+    freeCoresArrayPtr = new bool[total.cores]{true};
 
     // Check consistency (cloud environments)
     if (isVirtualHardware)
     {
 
-        if ((maxVMs <= 0) || (maxVMs > numCpuCores))
+        if ((total.vms <= 0) || (total.vms > total.cores))
             error("For virtual environments, 0 < maxVMs <= numCpuCores");
 
-        if (numCpuCores <= 0)
+        if (total.cores <= 0)
             error("The parameter numCpuCores must be a positive value (>0)");
 
-        if (maxUsers != maxVMs)
+        if (total.users != total.vms)
             error("For virtual environments, maxUsers = maxVMs");
     }
     // Check consistency (cluster environments)
     else
     {
-        if (maxVMs != 1)
+        if (total.vms != 1)
             error("For non-virtual environments, maxVMs must be 1");
 
-        if (numCpuCores <= 0)
+        if (total.cores <= 0)
             error("The parameter numCpuCores must be a positive value (>0)");
 
-        if (maxUsers <= 0)
+        if (total.users <= 0)
             error("The parameter maxUsers must be a positive value (>0)");
     }
-
-    for (int i = 0; i < numCpuCores; i++)
-        freeCoresArrayPtr[i] = true;
-
-    //        // Create user vector
-    //        userVector = new UserExecution* [maxVMs];
-    //
-    //        // Init user vector
-    //        for (i=0; i<maxVMs; i++)
-    //            userVector[i] = nullptr;
-    //
-
-    //        // Create aux structures for CPU schedulers
-    //        if (isVirtualHardware){
-    //
-    //            cpuSchedulerUtilization = new bool[numCpuCores];
-    //
-    //            for (i=0; i<numCpuCores; i++)
-    //               cpuSchedulerUtilization[i] = false;
-    //    }
-    //        else{
-    //            cpuSchedulerUtilization = nullptr;
-    //        }
-}
-
-double HardwareManager::getAvailableDisk() const
-{
-    return availableDisk;
-}
-
-void HardwareManager::setAvailableDisk(double availableDisk)
-{
-    this->availableDisk = availableDisk;
 }
 
 void HardwareManager::handleMessage(cMessage *msg)
@@ -81,115 +52,65 @@ void HardwareManager::handleMessage(cMessage *msg)
     // TODO - Generated method body
 }
 
-int HardwareManager::getAvailableRam()
+bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t **coreIndex)
 {
-    return availableMemory;
-}
+    // Initialize
+    *coreIndex = nullptr;
 
-int HardwareManager::getAvailableCores()
-{
-    return numAvailableCpuCores;
-}
-
-int HardwareManager::getNumCores()
-{
-    return numCpuCores;
-}
-
-bool HardwareManager::allocateRam(double memory)
-{
-    if (memory > getAvailableRam())
+    // Check availability of the resources
+    if (memory > available.memory || disk > available.disk || cores > available.cores)
         return false;
 
-    availableMemory -= memory;
+    // Prepare the index
+    uint32_t *cpuCoreIndex = new unsigned int[cores]{-1};
+
+    // Search the free slots
+    for (int i = 0, j = 0; i < cores && j < total.cores; i++)
+    {
+        // Keep going until we get a free slot
+        while (!freeCoresArrayPtr[j])
+            j++;
+
+        // Register position and mark allocated
+        cpuCoreIndex[i] = j;
+        freeCoresArrayPtr[j] = false;
+
+        // Jump to next index
+        j++;
+    }
+
+    // Mark as allocated
+    available.cores -= cores;
+    available.memory -= memory;
+    available.disk -= disk;
+
+    // Give back the index
+    *coreIndex = cpuCoreIndex;
 
     return true;
 }
 
-bool HardwareManager::allocateDisk(double disk)
+void HardwareManager::deallocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t *coreIndex)
 {
-    if (disk > getAvailableDisk())
-        return false;
+    // Release memory
+    available.memory += memory;
 
-    availableDisk -= disk;
+    if (available.memory > total.memory)
+        available.memory = total.memory;
 
-    return true;
-}
+    // Release disk
+    available.disk += disk;
 
-double HardwareManager::deallocateRam(double memory)
-{
-    availableMemory += memory;
+    if (available.disk > available.disk)
+        available.disk = total.disk;
 
-    if (availableMemory > memorySize)
-        availableMemory = memorySize;
-
-    return availableMemory;
-}
-
-double HardwareManager::deallocateDisk(double disk)
-{
-    availableDisk += disk;
-
-    if (availableDisk > diskSize)
-        availableDisk = diskSize;
-
-    return availableDisk;
-}
-
-unsigned int *HardwareManager::allocateCores(int numCores)
-{
-    if (numCores > getAvailableCores())
-        return nullptr;
-
-    int numAllocatedCores = 0;
-    bool allocatedCore;
-    unsigned int *cpuCoreIndex = new unsigned int[numCores];
-    for (int i = 0; i < numCores; i++)
+    // Release marked cores
+    for (int i = 0; i < cores; i++)
     {
-        allocatedCore = false;
-        for (int j = 0; j < numCpuCores && !allocatedCore; j++)
-        {
-            if (freeCoresArrayPtr[j])
-            {
-                cpuCoreIndex[i] = j;
-                freeCoresArrayPtr[j] = false;
-                numAllocatedCores++;
-                allocatedCore = true;
-            }
-        }
+        freeCoresArrayPtr[coreIndex[i]] = true;
     }
 
-    if (numAllocatedCores < numCores)
-    {
-        for (int i = 0; i < numAllocatedCores; i++)
-        {
-            freeCoresArrayPtr[cpuCoreIndex[i]] = true;
-        }
-        cpuCoreIndex = nullptr;
-    }
-    else
-    {
-        int newNumAvailableCores = numAvailableCpuCores - numCores;
-        numAvailableCpuCores = newNumAvailableCores > 0 ? newNumAvailableCores : 0;
-    }
+    int newNumAvailableCores = available.cores + cores;
+    available.cores = newNumAvailableCores > total.cores ? total.cores : newNumAvailableCores;
 
-    return cpuCoreIndex;
-}
-
-int HardwareManager::deallocateCores(int numCores, unsigned int *cpuCoreIndex)
-{
-    for (int i = 0; i < numCores; i++)
-    {
-        freeCoresArrayPtr[cpuCoreIndex[i]] = true;
-    }
-
-    int newNumAvailableCores = numAvailableCpuCores + numCores;
-    numAvailableCpuCores = newNumAvailableCores > numCpuCores ? numCpuCores : newNumAvailableCores;
-
-    return numAvailableCpuCores;
-}
-
-bool *HardwareManager::getFreeCoresArrayPtr() const
-{
-    return freeCoresArrayPtr;
 }

@@ -52,8 +52,8 @@ protected:
     /** Users */
     std::vector<CloudUserInstance *> users;
 
-    cGate *inGate;  // Input gate from DataCentre.
-    cGate *outGate; // Output gate to DataCentre.
+    int localInGateId;
+    int networkInGateId;
 
     /** Vector that contains a collection of structures for monitoring data-centres */
     std::vector<DataCentre *> dataCentresBase;

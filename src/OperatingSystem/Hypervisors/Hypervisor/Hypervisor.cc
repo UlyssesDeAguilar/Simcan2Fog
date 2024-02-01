@@ -70,12 +70,7 @@ void Hypervisor::initialize()
         freeSchedArray[i] = true;
     }
 
-    pHardwareManagerModule = getModuleByPath("^.^.hardwareManager");
-    ;
-    pHardwareManager = check_and_cast<HardwareManager *>(pHardwareManagerModule);
-
-    if (pHardwareManager == nullptr)
-        error("HardwareManager not found!");
+    hardwareManager = check_and_cast<HardwareManager *>(getModuleByPath("^.^.hardwareManager"));
 }
 
 void Hypervisor::finish()
@@ -87,29 +82,21 @@ void Hypervisor::finish()
 
 cGate *Hypervisor::getOutGate(cMessage *msg)
 {
-
-    cGate *outGate;
-
-    // Init...
-    outGate = nullptr;
-
     // If msg arrives from Application gates
     if (msg->arrivedOn("fromApps"))
     {
-        outGate = gate("toApps", msg->getArrivalGate()->getIndex());
+        return gate("toApps", msg->getArrivalGate()->getIndex());
     }
-
     // If msg arrives from CPU scheduler
     else if (msg->arrivedOn("fromCpuScheduler"))
     {
         error("This module cannot receive requests from the CPU system!");
     }
-
     // Msg arrives from an unknown gate
     else
         error("Message received from an unknown gate [%s]", msg->getName());
 
-    return outGate;
+    return nullptr;
 }
 
 void Hypervisor::processSelfMessage(cMessage *msg)
@@ -121,8 +108,6 @@ void Hypervisor::processSelfMessage(cMessage *msg)
     }
 
     delete msg;
-
-    // error ("This module cannot process self messages:%s", msg->getName());
 }
 
 void Hypervisor::processRequestMessage(SIMCAN_Message *sm)
@@ -194,95 +179,6 @@ void Hypervisor::processRequestMessage(SIMCAN_Message *sm)
             sendRequestMessage(sm, toCPUGates[sm->getNextModuleIndex()]);
         }
     }
-
-    //        else
-    //              // I/O operation?
-    //              if ((sm->getOperation () == SM_OPEN_FILE)   ||
-    //                  (sm->getOperation () == SM_CLOSE_FILE)  ||
-    //                  (sm->getOperation () == SM_READ_FILE)   ||
-    //                  (sm->getOperation () == SM_WRITE_FILE)  ||
-    //                  (sm->getOperation () == SM_CREATE_FILE) ||
-    //                  (sm->getOperation () == SM_DELETE_FILE)){
-    //
-    //                      // Remote operation? to NET
-    //                      if (sm->getRemoteOperation()){
-    //
-    //        //                    if (DEBUG_Service_Redirector)
-    //        //                        showDebugMessage ("Local request redirected to NET. %s",
-    //        //                                            sm->contentsToString(DEBUG_MSG_Service_Redirector).c_str());
-    //
-    //                          sendRequestMessage (sm, toNetGate);
-    //                      }
-    //
-    //                      // Local operation? to local FS
-    //                      else{
-    //
-    //        //                    if (DEBUG_Service_Redirector)
-    //        //                        showDebugMessage ("Local request redirected to I/O. %s",
-    //        //                                            sm->contentsToString(DEBUG_MSG_Service_Redirector).c_str());
-    //        //
-    //                          sendRequestMessage (sm, toMemoryGate);
-    //                      }
-    //              }
-    //
-    //              // MPI operation?
-    //              else if ((sm->getOperation () == MPI_SEND) ||
-    //                       (sm->getOperation () == MPI_RECV) ||
-    //                       (sm->getOperation () == MPI_BARRIER_UP)   ||
-    //                       (sm->getOperation () == MPI_BARRIER_DOWN) ||
-    //                       (sm->getOperation () == MPI_BCAST)   ||
-    //                       (sm->getOperation () == MPI_SCATTER) ||
-    //                       (sm->getOperation () == MPI_GATHER)){
-    //
-    //                  sendRequestMessage (sm, toNetGate);
-    //              }
-    //
-    //
-    //
-    //
-    //              // MEM operation?
-    //              else if ((sm->getOperation () == SM_MEM_ALLOCATE) ||
-    //                       (sm->getOperation () == SM_MEM_RELEASE)){
-    //
-    //        //            if (DEBUG_Service_Redirector)
-    //        //                showDebugMessage ("Local request redirected to MEM. %s", sm->contentsToString(DEBUG_MSG_Service_Redirector).c_str());
-    //
-    //                  sendRequestMessage (sm, toMemoryGate);
-    //              }
-    //
-    //
-    //              // Net operation?
-    //              else if ((sm->getOperation () == SM_CREATE_CONNECTION) ||
-    //                      (sm->getOperation () == SM_LISTEN_CONNECTION) ||
-    //                      (sm->getOperation () == SM_SEND_DATA_NET)){
-    //
-    //        //            if (DEBUG_Service_Redirector)
-    //        //                showDebugMessage ("Local request redirected to NET. %s", sm->contentsToString(DEBUG_MSG_Service_Redirector).c_str());
-    //
-    //                  sendRequestMessage (sm, toNetGate);
-    //              }
-
-    //	// Msg cames from Network
-    //	if (sm->getArrivalGate() == fromNetGate){
-    //
-    //		if (DEBUG_Service_Redirector)
-    //			showDebugMessage ("Incomming request from NET... sending to App[%d]. %s",
-    //								sm->getNextModuleIndex(),
-    //								sm->contentsToString(DEBUG_MSG_Service_Redirector).c_str());
-    //
-    //		sendRequestMessage (sm, toAppGates[sm->getNextModuleIndex()]);
-    //	}
-
-    //	// Msg cames from Memory
-    //	else if (sm->getArrivalGate() == fromMemoryGate){
-    //
-    //		if (DEBUG_Service_Redirector)
-    //			showDebugMessage ("Incomming request from OS... sending to App[%d]. %s",
-    //								sm->getNextModuleIndex(),
-    //								sm->contentsToString(DEBUG_MSG_Service_Redirector).c_str());
-    //
-    //		sendRequestMessage (sm, toAppGates[sm->getNextModuleIndex()]);
-    //	}
 }
 
 bool Hypervisor::isInUse()
@@ -297,15 +193,6 @@ bool Hypervisor::isInUse()
     return false;
 }
 
-bool Hypervisor::isActive() const
-{
-    return par("active").boolValue();
-}
-
-void Hypervisor::setActive(bool active)
-{
-    par("active").setBoolValue(active);
-}
 
 void Hypervisor::powerOn(bool active)
 {
@@ -332,38 +219,17 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *sm)
     sendResponseMessage(sm);
 }
 
-int Hypervisor::getAvailableCores()
-{
-    if (!isActive())
-        return 0;
-    return pHardwareManager->getAvailableCores();
-}
-
-int Hypervisor::getNumCores()
-{
-    return pHardwareManager->getNumCores();
-}
-
 cModule *Hypervisor::allocateNewResources(NodeResourceRequest *pResourceRequest)
 {
     unsigned int *cpuCoreIndex;
-    cpuCoreIndex = pHardwareManager->allocateCores(pResourceRequest->getTotalCpus());
 
-    if (cpuCoreIndex == nullptr)
-        return nullptr;
+    // Extract requested resources
+    uint32_t cores = pResourceRequest->getTotalCpus();
+    double memory = pResourceRequest->getTotalMemory();
+    double disk = pResourceRequest->getTotalDiskGb();
 
-    if (!pHardwareManager->allocateRam(pResourceRequest->getTotalMemory()))
-    {
-        pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
+    if (!hardwareManager->tryAllocateResources(cores, memory, disk, &cpuCoreIndex))
         return nullptr;
-    }
-
-    if (!pHardwareManager->allocateDisk(pResourceRequest->getTotalDiskGb()))
-    {
-        pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
-        pHardwareManager->deallocateRam(pResourceRequest->getTotalMemory());
-        return nullptr;
-    }
 
     bool allocatedVm = false;
     int nSchedulerIndex = -1;
@@ -402,101 +268,28 @@ cModule *Hypervisor::allocateNewResources(NodeResourceRequest *pResourceRequest)
     return pVmAppVectorModule;
 }
 
-void Hypervisor::deallocateVmResources(std::string strVmId)
+void Hypervisor::deallocateVmResources(std::string vmId)
 {
-    std::map<std::string, NodeResourceRequest *>::iterator requestIt;
-    NodeResourceRequest *pResourceRequest;
-    std::map<string, int>::iterator schedulerIt;
-    int nSchedulerIndex;
+    // This could be fixed with an approach similar to AppControlBlock
+    NodeResourceRequest *pResourceRequest = getOrNull(mapResourceRequestPerVm, vmId);
+    int nSchedulerIndex = getOrDefault(mapVmScheduler, vmId, -1);
 
-    requestIt = mapResourceRequestPerVm.find(strVmId);
-    schedulerIt = mapVmScheduler.find(strVmId);
-
-    if (requestIt == mapResourceRequestPerVm.end() || schedulerIt == mapVmScheduler.end())
+    // If not found
+    if (pResourceRequest == nullptr || nSchedulerIndex == -1)
         return;
 
-    pResourceRequest = requestIt->second;
-    nSchedulerIndex = schedulerIt->second;
+    CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(pCpuSchedArray[nSchedulerIndex]);
 
-    cModule *pVmSchedulerModule = pCpuSchedArray[nSchedulerIndex];
-    CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(pVmSchedulerModule);
+    // Extract requested resources
+    uint32_t cores = pResourceRequest->getTotalCpus();
+    double memory = pResourceRequest->getTotalMemory();
+    double disk = pResourceRequest->getTotalDiskGb();
+    auto cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
 
-    unsigned int *cpuCoreIndex;
-    cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
-    pHardwareManager->deallocateCores(pResourceRequest->getTotalCpus(), cpuCoreIndex);
-    freeSchedArray[nSchedulerIndex] = true;
-    pHardwareManager->deallocateRam(pResourceRequest->getTotalMemory());
-    pHardwareManager->deallocateDisk(pResourceRequest->getTotalDiskGb());
+    // Free the resources
+    hardwareManager->deallocateResources(cores, memory, disk, cpuCoreIndex);
 
+    // Shutdown scheduler and mark as free
     pVmScheduler->setIsRunning(false);
+    freeSchedArray[nSchedulerIndex] = true;
 }
-
-bool *Hypervisor::getFreeCoresArrayPtr() const
-{
-    return pHardwareManager->getFreeCoresArrayPtr();
-}
-
-// int Hypervisor::executeApp(Application* appType)
-//{
-//     int nInputDataSize, nOutputDataSize, nMIs, nIterations, nTotalTime;
-//     int nReadTime, nWriteTime, nProcTime;
-//     AppParameter* paramInputDataSize, *paramOutputDataSize, *paramMIs, *paramIterations;
-//
-//     nTotalTime = nInputDataSize = nOutputDataSize = nMIs = nIterations = nTotalTime = 0;
-//
-//     //TODO: Cuidado con esto a ver si no peta.
-//     //Esto es un apaño temporal para no ejecutarlo en los datacentres reales
-//     if(appType!=NULL && appType->getAppName().compare("AppDataIntensive")==0)
-//     {
-//         //DatasetInput
-//         paramInputDataSize = appType->getParameterByName("inputDataSize");
-//         paramOutputDataSize = appType->getParameterByName("outputDataSize");
-//         paramMIs = appType->getParameterByName("MIs");
-//         paramIterations = appType->getParameterByName("iterations");
-//
-//         if(paramInputDataSize != nullptr)
-//         {
-//             nInputDataSize = std::stoi(paramInputDataSize->getValue());
-//         }
-//         if(paramOutputDataSize != nullptr)
-//         {
-//             nOutputDataSize = std::stoi(paramOutputDataSize->getValue());
-//         }
-//         if(paramMIs != nullptr)
-//         {
-//             nMIs = std::stoi(paramMIs->getValue());
-//         }
-//         if(paramIterations != nullptr)
-//         {
-//             nIterations = std::stoi(paramIterations->getValue());
-//         }
-//
-////        getParentModule()->getParentModule()->getSubmodule('appsVectors', 0);
-//
-//        cModuleType *moduleType = cModuleType::get(appType->getType().c_str());
-//
-//
-////        cModule *moduleApp = moduleType->create(appType->getAppName(), , , );
-//
-//
-////        //TODO: Esto está hecho a fuego con 1 sola app. Diversificar.
-////        //Leer 10 GB (transmision por red+carga en disco)
-////        nReadTime = nInputDataSize*1024/SPEED_R_DISK;
-////
-////        //Escribir Gb (escritura en disco y envío por red);
-////        nWriteTime = nOutputDataSize*1024/SPEED_W_DISK;
-////
-////        //Procesar 10GB
-////        nProcTime = nMIs/CPU_SPEED;
-////
-////        nTotalTime = (nReadTime+nWriteTime+nProcTime)*nIterations;
-////
-////        EV_INFO << "The total executing, R: " << nReadTime << " | W: " << nWriteTime << " | P: " << nProcTime << " | Total: " << nTotalTime<< endl;
-//    }
-//    else if(appType!=NULL && appType->getAppName().compare("otraApp"))
-//    {
-//
-//    }
-//
-//    return nTotalTime;
-//}

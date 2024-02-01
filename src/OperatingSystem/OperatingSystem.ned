@@ -1,6 +1,8 @@
 package simcan2.OperatingSystem;
 import simcan2.OperatingSystem.Hypervisors.IHypervisor;
 import simcan2.OperatingSystem.CpuSchedulers.CpuSchedulersVector;
+import simcan2.Applications.Base.AppsVector;
+
 
 // Module that simulates the Operating System in a computer.
 //
@@ -12,32 +14,28 @@ module OperatingSystem
         bool staticAppAssignment;										// True if the assignment of application is static or False in another case
         bool isVirtualHardware;											// True if this blade allows virtualization and False in another case
         int maxVMs;														// Maximum number of VMs allocated in this blade (For non-cloud environments, use "1")
+        int maxUsers;
         int numCpuCores;												// Number of CPU cores in the CPU processor
 
-        string hypervisorType;											// Hypervisor type
         string cpuSchedulerType;										// CPU Scheduler type
 
 
-        @display("bgb=287,354");
+        @display("bgb=532.53,430.68002");
     gates:
-        input fromApps[];			// Input gates from the applications vectors       
         input fromCpu;				// Input gate from the CPU schedulers vector
-        
-
-        output toApps[];			// Output gate to the applications vectors       
         output toCpu;				// Output gate to the CPU schedulers vector
 
 
     submodules:
 
         // Hypervisor module
-        hypervisor: <hypervisorType> like IHypervisor {
+        hypervisor: <default("Hypervisor")> like IHypervisor {
 
             parameters:
                 maxVMs = maxVMs;
                 isVirtualHardware = isVirtualHardware;
 
-                @display("p=125,235;i=hypervisor");
+                @display("p=251.23001,181.39001;i=hypervisor");
             gates:
                 fromCpuScheduler[maxVMs];
                 toCpuScheduler[maxVMs];
@@ -54,16 +52,24 @@ module OperatingSystem
                 numCpuCores = numCpuCores;
                 isVirtualHardware = isVirtualHardware;
                 schedulerType = cpuSchedulerType;
-                @display("p=125,96;i=scheduler");
+                @display("p=423.89,181.39001;i=scheduler");
+        }
+
+        // Vector of "users" with their respective apps
+        appsVectors[maxUsers]: AppsVector {
+            parameters:
+                numApps = numApps;
+                staticAppAssignment = staticAppAssignment;
+                @display("p=90.21001,181.39001,c,120;i=user");
         }
 
 
     connections:
 
         // Connections between Applications gate and Hypervisor
-        for i=0..sizeof(fromApps)-1 {
-            fromApps[i] --> ned.IdealChannel --> hypervisor.fromApps[i];
-            hypervisor.toApps[i] --> ned.IdealChannel --> toApps[i];
+        for i=0..maxUsers-1 {
+            appsVectors[i].toOS --> ned.IdealChannel --> hypervisor.fromApps[i];
+            appsVectors[i].fromOS <-- ned.IdealChannel <-- hypervisor.toApps[i];
         }
 
         // Connections between HardwareRedirector and CPU schedulers

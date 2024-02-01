@@ -10,116 +10,58 @@
 class Hypervisor : public cSIMCAN_Core
 {
 
-public:
-   int getAvailableCores();
-   int getNumCores();
-   cModule *allocateNewResources(NodeResourceRequest *pResourceRequest);
-   void deallocateVmResources(std::string strVmId);
-   //        int executeApp(Application* appType);
-   bool *getFreeCoresArrayPtr() const;
-
-   /**
-    * Check if there are VMs running in the machine.
-    * @return True if a VM is running in the machine. False otherwise.
-    */
-   bool isInUse();
-
-   bool isActive() const;
-   void powerOn(bool active);
-
 protected:
-   /** Indicates if this module is able to virtualize hardware */
-   bool isVirtualHardware;
+   HardwareManager *hardwareManager;
+   cMessage *powerMessage;
+   int nPowerOnTime; //<! Time to power on
 
-   /** Maximum number of VMs allocated in this computer */
-   unsigned int maxVMs;
+   // THESE CAN BE EXTRACTED FROM HW MANAGER
+   bool isVirtualHardware; //<! Indicates if this module is able to virtualize hardware
+   unsigned int maxVMs;    //<! Maximum number of VMs allocated in this computer
    //        unsigned int numAllocatedVms;
 
-   int nPowerOnTime;
+   // INSTEAD OF THIS USING BASE + INDEX = ID
+   cGate **fromAppsGates; /** Input gate from Apps. */
+   cGate **toAppsGates;   /** Output gate to Apps. */
+   cGate **fromCPUGates;  /** Input gate from CPU. */
+   cGate **toCPUGates;    /** Output gate to CPU. */
 
-   /** Input gate from Apps. */
-   cGate **fromAppsGates;
-
-   /** Output gate to Apps. */
-   cGate **toAppsGates;
-
-   /** Input gate from CPU. */
-   cGate **fromCPUGates;
-
-   /** Output gate to CPU. */
-   cGate **toCPUGates;
-
-   HardwareManager *pHardwareManager;
-
-   cModule *pHardwareManagerModule;
    cModule **pAppsVectorsArray;
    cModule *pAppsVectors;
    cModule **pCpuSchedArray;
    cModule *pCpuScheds;
-
-   cMessage *powerMessage;
 
    bool *freeSchedArray;
 
    std::map<string, int> mapVmScheduler;
    std::map<std::string, NodeResourceRequest *> mapResourceRequestPerVm;
 
-   //
-   //
-   //                                    /** Input gate from Memory. */
-   //                                    cGate* fromMemoryGate;
-   //
-   //                                    /** Input gate from Net. */
-   //                                    cGate* fromNetGate;
+   void setActive(bool active) { par("active").setBoolValue(active); }
 
-   //                                    /** Input gate to Memory. */
-   //                                    cGate* toMemoryGate;
-   //
-   //                                    /** Input gate to Net. */
-   //                                    cGate* toNetGate;
-
-   /**
-    * Destructor.
-    */
-   ~Hypervisor();
-
-   /**
-    *  Module initialization.
-    */
+   virtual ~Hypervisor();
    virtual void initialize() override;
-
-   /**
-    * Module ending.
-    */
-   void finish() override;
-
-   void setActive(bool active);
-
-private:
-   /**
-    * Get the outGate ID to the module that sent <b>msg</b>
-    * @param msg Arrived message.
-    * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
-    */
+   virtual void finish() override;
    virtual cGate *getOutGate(cMessage *msg) override;
-
-   /**
-    * Process a self message.
-    * @param msg Self message.
-    */
    virtual void processSelfMessage(cMessage *msg) override;
-
-   /**
-    * Process a request message.
-    * @param sm Request message.
-    */
    virtual void processRequestMessage(SIMCAN_Message *sm) override;
+   virtual void processResponseMessage(SIMCAN_Message *sm) override;
+
+public:
+   int getAvailableCores() const { return hardwareManager->getAvailableResources().cores; }
+   int getNumCores() const { return hardwareManager->getTotalResources().cores; }
+   bool *getFreeCoresArrayPtr() const { return hardwareManager->getFreeCoresArrayPtr(); }
+   bool isActive() const { return par("isActive"); }
+
+   // BOTH OF THESE SHOULD BE HIDDEN -- Interfacing via requests!
+   cModule *allocateNewResources(NodeResourceRequest *pResourceRequest);
+   void deallocateVmResources(std::string strVmId);
 
    /**
-    * Process a response message.
-    * @param sm Request message.
+    * Check if there are VMs running in the machine.
+    * @return True if a VM is running in the machine. False otherwise.
     */
-   virtual void processResponseMessage(SIMCAN_Message *sm) override;
+   bool isInUse();
+   void powerOn(bool active);
 };
 
 #endif

@@ -67,10 +67,6 @@ module Blade
                 hypervisorType = hypervisorType;
                 cpuSchedulerType = cpuSchedulerType;
                 @display("p=274,189;i=os");
-
-            gates:
-                fromApps[maxUsers];
-                toApps[maxUsers];
         }
 
         appsVectors[maxUsers]: AppsVector {

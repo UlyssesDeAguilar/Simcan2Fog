@@ -21,7 +21,7 @@ module AppsVector
     submodules:
         appModule[numApps]: UserAppModule {	// Applications launched by the user      
             pid = index;
-            @display("p=121.972496,257.4975,r,100;i=appsSet");
+            @display("p=435.375,250.47499,m,5,1,1;i=appsSet");
         }
 
         appHub: CheckingHubModule {					// Hub that manages messages to be received by the corresponding applicationç
