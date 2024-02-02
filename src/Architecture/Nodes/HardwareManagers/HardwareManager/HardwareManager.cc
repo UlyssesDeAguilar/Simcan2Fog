@@ -12,7 +12,7 @@ void HardwareManager::initialize()
     total.memory = par("memorySize");
     total.disk = par("diskSize");
     total.vms = par("maxVMs");
-    total.users = par("masUsers");
+    total.users = par("maxUsers");
 
     // Init the available specs
     available = total;
@@ -57,12 +57,16 @@ bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &
     // Initialize
     *coreIndex = nullptr;
 
+    // Check availability of vms
+    if (available.vms == 0)
+        return false;
+    
     // Check availability of the resources
     if (memory > available.memory || disk > available.disk || cores > available.cores)
         return false;
 
     // Prepare the index
-    uint32_t *cpuCoreIndex = new unsigned int[cores]{-1};
+    uint32_t *cpuCoreIndex = new uint32_t[cores]{UINT32_MAX};
 
     // Search the free slots
     for (int i = 0, j = 0; i < cores && j < total.cores; i++)
@@ -83,6 +87,7 @@ bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &
     available.cores -= cores;
     available.memory -= memory;
     available.disk -= disk;
+    available.vms--;
 
     // Give back the index
     *coreIndex = cpuCoreIndex;
@@ -92,25 +97,17 @@ bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &
 
 void HardwareManager::deallocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t *coreIndex)
 {
-    // Release memory
+    // Release vm "slot"
+    available.vms++;
+
+    // Release memory, disk, and cores
     available.memory += memory;
-
-    if (available.memory > total.memory)
-        available.memory = total.memory;
-
-    // Release disk
     available.disk += disk;
-
-    if (available.disk > available.disk)
-        available.disk = total.disk;
+    available.cores += cores;
 
     // Release marked cores
     for (int i = 0; i < cores; i++)
     {
         freeCoresArrayPtr[coreIndex[i]] = true;
     }
-
-    int newNumAvailableCores = available.cores + cores;
-    available.cores = newNumAvailableCores > total.cores ? total.cores : newNumAvailableCores;
-
 }

@@ -11,40 +11,29 @@ void EdgeHypervisor::initialize()
     // TODO: Consider moving this functionality to the HW manager
     // Get the parameters of the parent module
     auto parent = getParentModule();
-    hwSpecs.totalCores = parent->par("numCpuCores");
-    hwSpecs.totalMemory = parent->par("memorySize");
-    hwSpecs.disk.total = parent->par("diskSize");
-    hwSpecs.disk.readBandwidth = parent->par("diskReadBandwidth");
-    hwSpecs.disk.writeBandwidth = parent->par("diskWriteBandwidth");
 
     // Initialize the free PID table
     freePids.reserve(maxApps);
     for (int i = 0; i < maxApps; i++)
         freePids.push_back(i);
 
-    // Create the control table
-    appsControl = new AppControlBlock[maxApps];
+    // Allocate the control table to contain app blocks (and fit)
+    appsControl.init(AppControlBlock::initialize);
 
-    // Initialize the App Control Entries
-    // The edge hypervisor doesn't contain VMs per se so the vm id is 0
-    for (int i = 0; i < maxApps; i++)
-        appsControl->initialize(i, 0);
+    // Locate topologically the helper modules
+    DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
+    hardwareManager = check_and_cast<HardwareManager *>(getModuleByPath("^.hwm"));
 
     // Initialize the OsCore
-    DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
-    osCore.setManager(dataManager);
-    osCore.setHypervisor(this);
-    
+    osCore.setUp(this, dataManager, hardwareManager);
+
     // Get the direct pointer to the HardwareManager and the App Vector module
-    hardwareManager = check_and_cast<HardwareManager *>(getModuleByPath("^.hwm"));
     appsVector = getModuleByPath("^.apps");
 }
 
 void EdgeHypervisor::finish()
 {
-    // Release and mark as null
-    delete[] appsControl;
-    appsControl = nullptr;
+    // Now it's empty as we use a std::vector!
 }
 
 cGate *EdgeHypervisor::getOutGate(cMessage *msg)

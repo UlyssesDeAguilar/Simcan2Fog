@@ -1,12 +1,19 @@
 #include "OsCore.h"
-#include "OperatingSystem/Hypervisors/EdgeHypervisor/EdgeHypervisor.h"
+#include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 
 using namespace hypervisor;
+
+void OsCore::setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm)
+{
+    this->hypervisor = h;
+    this->dataManager = dm;
+    this->hardwareManager = hm;
+}
 
 void OsCore::processSyscall(SM_Syscall *request)
 {
     // Get the app context
-    auto appEntry = hypervisor->getControlBlock(request->getVmId(), request->getPid());
+    auto appEntry = hypervisor->getAppControlBlock(request->getPid());
 
     // TODO: Sanity checks -- Zombie requests
 
@@ -31,7 +38,7 @@ void OsCore::processSyscall(SM_Syscall *request)
     case Syscall::READ:
     {
         auto readBytes = callContext.data.bufferSize;
-        simtime_t eta = readBytes / hypervisor->hwSpecs.disk.readBandwidth;
+        simtime_t eta = readBytes / hardwareManager->getDiskSpecs().readBandwidth;
         auto event = new cMessage("IO Complete", AutoEvent::IO_DELAY);
         event->setContextPointer(&appEntry);
         hypervisor->scheduleAt(eta, event);
@@ -40,7 +47,7 @@ void OsCore::processSyscall(SM_Syscall *request)
     case Syscall::WRITE:
     {
         auto writeBytes = callContext.data.bufferSize;
-        simtime_t eta = writeBytes / hypervisor->hwSpecs.disk.writeBandwidth;
+        simtime_t eta = writeBytes / hardwareManager->getDiskSpecs().writeBandwidth;
         auto event = new cMessage("IO Complete", AutoEvent::IO_DELAY);
         event->setContextPointer(&appEntry);
         hypervisor->scheduleAt(eta, event);
@@ -83,10 +90,10 @@ void OsCore::launchApps(SM_UserAPP *request)
             hypervisor->error("Error while querying the application type: %s", appInstance.strAppType.c_str());
 
         // Get new PID
-        uint32_t newPid = hypervisor->newPid(0);
+        uint32_t newPid = hypervisor->takePid();
 
         // Initalize the control block
-        AppControlBlock control = hypervisor->getControlBlock(0, newPid);
+        auto control = hypervisor->getAppControlBlock(newPid);
         control.deploymentIndex = i;
         control.request = request;
 
@@ -110,7 +117,7 @@ void OsCore::handleAppTermination(AppControlBlock &app, bool force)
     auto deploymentIndex = app.deploymentIndex;
 
     // Release the pid
-    hypervisor->releasePid(app.vmId, app.pid);
+    hypervisor->releasePid(app.pid);
 
     // Topologically release the app
     cModule *parent = hypervisor->getApplicationModule(app.vmId, app.pid);

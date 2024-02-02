@@ -10,6 +10,7 @@
 #define SIMCAN_EX_EDGE_HYPERVISOR
 
 #include "OperatingSystem/Hypervisors/common.h"
+#include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/dataClasses/Applications/Application.h"
@@ -22,17 +23,14 @@
  */
 namespace hypervisor
 {
-    class EdgeHypervisor : public cSIMCAN_Core
+    class EdgeHypervisor : public Hypervisor
     {
         // TODO : App timeouts ?
         // TODO : Evaluate if it belongs to a single user ? (It should)
     protected:
-        HardwareManager *hardwareManager; // Currently not used
-        OsCore osCore;                    // The core operating system utilities
 
-        AppControlBlock *appsControl;
+        ControlTable<AppControlBlock> appsControl;
         std::vector<uint32_t> freePids; // Helps keep track of the available "slots" for the apps
-        SystemSpecs hwSpecs;
         uint32_t maxApps;
         uint32_t runningApps;
         cModule *appsVector;
@@ -49,8 +47,6 @@ namespace hypervisor
 
         cModule *getApplicationModule(int vmId, int pid) { return appsVector->getSubmodule("appModule", pid); }
         AppControlBlock &getControlBlock(int vmId, int pid) { return appsControl[vmId * 0 + pid]; }
-
-        friend class OsCore;
     };
 }
 

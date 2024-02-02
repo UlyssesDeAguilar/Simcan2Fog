@@ -66,13 +66,26 @@ public:
    * @brief Gets the total resources of the node
    * @return const Resources&
    */
-  const Resources &getTotalResources() { return this->total; }
+  const Resources &getTotalResources() { return total; }
 
   /**
    * @brief Gets the available resources of the node
    * @return const Resources&
    */
-  const Resources &getAvailableResources() { return this->available; }
+  const Resources &getAvailableResources() { return available; }
+
+  /**
+   * @brief Gets the disk specifications object
+   * @return const DiskSpecs&
+   */
+  const DiskSpecs &getDiskSpecs() { return diskSpecs; }
+
+  /**
+   * @brief Whether it is a node that can virtualize hardware or not
+   * @return true If it's able
+   * @return false In other case
+   */
+  bool isVirtual() { return isVirtualHardware; }
 
   // FIXME
   bool *getFreeCoresArrayPtr() const { return freeCoresArrayPtr; };

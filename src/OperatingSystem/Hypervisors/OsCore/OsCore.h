@@ -6,19 +6,19 @@
 namespace hypervisor
 {
     // Forward declaration
-    class EdgeHypervisor;
+    class Hypervisor;
 
     class OsCore
     {
     private:
-        DataManager *dataManager;      // The global data manager
-        EdgeHypervisor *hypervisor;    // The hypervisor module
-        ApplicationBuilder appBuilder; // The application builder (check maybe allowing inheritance?)
+        DataManager *dataManager;         // The global data manager
+        HardwareManager *hardwareManager; // The hardware manager of the node
+        Hypervisor *hypervisor;       // The hypervisor module
+        ApplicationBuilder appBuilder;    // The application builder (check maybe allowing inheritance?)
 
     public:
         OsCore() { this->hypervisor = nullptr; }
-        void setHypervisor(EdgeHypervisor *hypervisor) { this->hypervisor = hypervisor; }
-        void setManager(DataManager *dataManager) { this->dataManager = dataManager; }
+        void setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm);
         void processSyscall(SM_Syscall *sm);
 
         void launchApps(SM_UserAPP *request);

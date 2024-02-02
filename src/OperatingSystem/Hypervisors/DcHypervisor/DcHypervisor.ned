@@ -1,4 +1,4 @@
-package simcan2.OperatingSystem.Hypervisors.Hypervisor;
+package simcan2.OperatingSystem.Hypervisors.DcHypervisor;
 import simcan2.OperatingSystem.Hypervisors.IHypervisor;
 import simcan2.Core.cSIMCAN_Core;
 
@@ -8,7 +8,7 @@ import simcan2.Core.cSIMCAN_Core;
 //
 // @author Alberto N&uacute;&ntilde;ez Covarrubias
 // @date 2016-05-01
-simple Hypervisor extends cSIMCAN_Core like IHypervisor{
+simple DcHypervisor extends cSIMCAN_Core like IHypervisor{
     
 	parameters:
 	    bool active = default(true);// True if the is working and allocating VMs.

@@ -13,9 +13,11 @@
 #include "Core/DataManager/DataManager.h"
 #include "Applications/Builder/include.h"
 #include "Messages/SM_UserAPP.h"
+#include "Messages/SM_UserVM.h"
 #include "Messages/INET_AppMessage.h"
 #include "Messages/SM_CPU_Message.h"
 #include "OperatingSystem/AppIdLabel/AppIdLabel_m.h"
+#include "Management/dataClasses/NodeResourceRequest.h" // Keep this temporarily for hypervisor VM requests
 
 // Forward declaration
 class SM_Syscall;
@@ -24,8 +26,9 @@ namespace hypervisor
 {
     typedef enum
     {
-        IO_DELAY,
-        APP_TIMEOUT
+        IO_DELAY,    //!< Input/Output delay finished
+        APP_TIMEOUT, //!< Application hit timeout (Maybe more appropiate for a VM?)
+        POWER_ON     //!< Event for powering on the machine
     } AutoEvent;
 
     typedef enum
@@ -78,6 +81,18 @@ namespace hypervisor
     };
 
     /**
+     * @brief Keeps all the necessary control information for the VM
+     */
+    struct VmControlBlock
+    {
+        uint32_t vmId;                //<! The vmId -- It's aligned in virtual environements with the scheduler!
+        tVmState state;               //<! The current state of the VM
+        NodeResourceRequest *request; //<! The request that allocated this VM
+        // SM_UserVM *msg; <-- We'll see if this makes sense
+        cMessage *timeOut; //<! The timeout event
+    };
+
+    /**
      * @brief Keeps all the necessary control information for the app
      */
     struct AppControlBlock
@@ -90,10 +105,10 @@ namespace hypervisor
         int deploymentIndex;               // The index relative for that request
         SM_Syscall *lastRequest;           // Last SYSCALL by the app
 
-        void initialize(uint32_t pid, uint32_t vmId)
+        void initialize(uint32_t pid)
         {
             this->pid = pid;
-            this->vmId = vmId;
+            this->vmId = 0;
             status = tApplicationState::appWaiting;
             request = nullptr;
             lastRequest = nullptr;
@@ -101,11 +116,95 @@ namespace hypervisor
 
         void reset()
         {
+            this->vmId = 0;
             request = nullptr;
             lastRequest = nullptr;
         }
 
         bool isRunning() { return status == tApplicationState::appRunning; }
+    };
+
+    template <class T>
+    class ControlTable
+    {
+        std::vector<std::pair<bool, T>> elements;
+        uint32_t lastId;
+        uint32_t allocatedIds;
+
+    protected:
+        /**
+         * @brief Scans for a free entry
+         * @details It assumes that there's at least one entry
+         * @return uint32_t The first index/id that it's free
+         */
+        uint32_t scanFreeId()
+        {
+            // Filter
+            const auto filter = [](std::pair<bool, T> &e) -> bool
+            { return e.first };
+
+            // Search for a free slot
+            auto beginning = elements.begin();
+            beginning += lastId;
+            
+            auto iter = std::find_if(beginning, elements.end(), filter);
+
+            // Found going forwards
+            if (iter != elements.end())
+            {
+                lastId = iter->second;
+                return lastId;
+            }
+
+            // Found going backwards
+            iter = std::find_if(elements.begin(), beginning, filter);
+            lastId = iter->second;
+            return lastId;
+        }
+
+    public:
+        /**
+         * @brief Initializes the table
+         * @param size      Number of entries
+         * @param init_f    Initializer function which takes the given id
+         */
+        void init(uint32_t size, void (T::*init_f)(uint32_t))
+        {
+            // Reserve memory
+            elements.reserve(size);
+
+            // Construct and give the VM id
+            for (uint32_t i = 0; i < size; i++)
+            {
+                // Default initialize elements
+                auto inserted = elements.emplace_back(true, T());
+
+                // Call init function
+                (inserted.second) * init_f(i);
+            }
+
+            // Save memory
+            elements.shrink_to_fit();
+        }
+
+        uint32_t takeId()
+        {
+            uint32_t id = scanFreeId();
+            elements[id].first = false;
+            allocatedIds++;
+            return id;
+        }
+
+        void releaseId(uint32_t id)
+        {
+            allocatedIds--;
+            elements[id].first = true;
+        }
+
+        uint32_t getAllocatedIds() { return allocatedIds; }
+
+        T &operator[](uint32_t id) { return elements[id].second; }
+        T &at(uint32_t id) {return elements.at(id).second;}
     };
 }
 
