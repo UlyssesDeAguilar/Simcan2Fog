@@ -13,7 +13,7 @@ void OsCore::setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm)
 void OsCore::processSyscall(SM_Syscall *request)
 {
     // Get the app context
-    auto appEntry = hypervisor->getAppControlBlock(request->getPid());
+    auto appEntry = hypervisor->getAppControlBlock(request->getVmId(), request->getPid());
 
     // TODO: Sanity checks -- Zombie requests
 
@@ -31,7 +31,7 @@ void OsCore::processSyscall(SM_Syscall *request)
         label->setPid(appEntry.pid);
         label->setVmId(appEntry.vmId);
         callContext.data.cpuRequest->setControlInfo(label);
-        hypervisor->sendRequestMessage(callContext.data.cpuRequest, hypervisor->gate("toCpuScheduler"));
+        hypervisor->sendRequestMessage(callContext.data.cpuRequest, hypervisor->schedulerGates.outBaseId + appEntry.vmId);
         break;
     }
     // Writing or reading from disk is pretty similar
@@ -71,7 +71,7 @@ void OsCore::processSyscall(SM_Syscall *request)
     }
 }
 
-void OsCore::launchApps(SM_UserAPP *request)
+void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end)
 {
     ApplicationBuilder::Context context;
     std::string userId(request->getUserID());
@@ -79,10 +79,10 @@ void OsCore::launchApps(SM_UserAPP *request)
     // Init the userId context
     context.userId = &userId;
 
-    for (int i = 0; i < request->getAppArraySize(); i++)
+    for (; begin != end; ++begin)
     {
         // Retrieve the app
-        auto appInstance = request->getApp(i);
+        auto &appInstance = *begin;
 
         // Query app
         auto schema = dataManager->searchApp(appInstance.strAppType);
@@ -90,11 +90,11 @@ void OsCore::launchApps(SM_UserAPP *request)
             hypervisor->error("Error while querying the application type: %s", appInstance.strAppType.c_str());
 
         // Get new PID
-        uint32_t newPid = hypervisor->takePid();
+        uint32_t newPid = hypervisor->takePid(vmId);
 
         // Initalize the control block
-        auto control = hypervisor->getAppControlBlock(newPid);
-        control.deploymentIndex = i;
+        auto control = hypervisor->getAppControlBlock(vmId, newPid);
+        control.deploymentIndex = request->getDeploymentIndex(begin);
         control.request = request;
 
         // Load the context
@@ -103,11 +103,11 @@ void OsCore::launchApps(SM_UserAPP *request)
         context.vmId = &appInstance.vmId;
 
         // Locate slot and build
-        cModule *parent = hypervisor->getApplicationModule(0, newPid);
+        cModule *parent = hypervisor->getApplicationModule(vmId, newPid);
         appBuilder.build(parent, context);
 
         // Update status
-        request->changeStateByIndex(i, appRunning);
+        appInstance.eState = appRunning;
     }
 }
 
@@ -117,7 +117,7 @@ void OsCore::handleAppTermination(AppControlBlock &app, bool force)
     auto deploymentIndex = app.deploymentIndex;
 
     // Release the pid
-    hypervisor->releasePid(app.pid);
+    hypervisor->releasePid(app.vmId, app.pid);
 
     // Topologically release the app
     cModule *parent = hypervisor->getApplicationModule(app.vmId, app.pid);

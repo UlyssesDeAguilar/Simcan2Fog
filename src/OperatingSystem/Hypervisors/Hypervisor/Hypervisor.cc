@@ -3,14 +3,34 @@ using namespace hypervisor;
 
 void Hypervisor::initialize(int stage)
 {
-    if (stage == 0)
+    switch (stage)
+    {
+    case INNER_STAGE:
     {
         // Locate topologically the helper modules
         DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
-        hardwareManager = check_and_cast<HardwareManager *>(getModuleByPath("^.hardwareManager"));
+        hardwareManager = locateHardwareManager();
 
         // Initialize the OsCore
         osCore.setUp(this, dataManager, hardwareManager);
+        break;
+    }
+    case LOCAL_STAGE:
+    {
+        // Get from hardware manager the specs of the node
+        auto maxUsers = hardwareManager->getTotalResources().users;
+        auto maxVms = hardwareManager->getTotalResources().vms;
+        maxAppsPerVm = par("maxApps");
+
+        // Create and allocate control tables
+        vmsControl.init(maxVms, &VmControlBlock::initialize);
+        for (auto &vm : vmsControl)
+        {
+            vm.second.apps.init(maxAppsPerVm, &AppControlBlock::initialize);
+        }
+    }
+    default:
+        break;
     }
 }
 
@@ -63,29 +83,16 @@ void Hypervisor::processSelfMessage(cMessage *msg)
 void Hypervisor::processRequestMessage(SIMCAN_Message *msg)
 {
     // It can be either
-    // 1 - An app launch request
-    // 2 - A CPU execution request
-    // 3 - A network request
-    // 4 - An app finished it's execution
+    // 1 - An app launch request   -- From ethernet
+    // 2 - A CPU execution request -- From apps
+    // 3 - A network request       -- From apps
+    // 4 - An app finished it's execution -- From apps/¿user?
 
     switch (msg->getOperation())
     {
     case SM_APP_Req:
     {
-        auto appRequest = (SM_UserAPP *)msg;
-        auto numApps = appRequest->getAppArraySize();
-
-        // If there are not sufficient spaces for the apps
-        if (numApps > freePids.size())
-        {
-            appRequest->setResult(SM_APP_Res_Reject);
-            appRequest->setIsResponse(true);
-            sendResponseMessage(msg);
-            return;
-        }
-
-        // If everthing is alright then launch the Apps
-        osCore.launchApps(appRequest);
+        handleAppRequest(reinterpret_cast<SM_UserAPP *>(msg));
         break;
     }
     case SM_Syscall_Req:
@@ -112,7 +119,7 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *msg)
         // If the batch is complete -> notify the app
         if (cpuRequest->isCompleted())
         {
-            auto appEntry = getAppControlBlock(appId->getPid());
+            auto appEntry = getAppControlBlock(appId->getVmId(), appId->getPid());
             appEntry.lastRequest = nullptr;
             sendResponseMessage(msg);
         }
@@ -126,4 +133,30 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *msg)
     default:
         break;
     }
+}
+
+void Hypervisor::handleAppRequest(SM_UserAPP *sm)
+{
+    // From the "user"/"manager" it's implied that the vmId should be here
+    auto appRequest = sm;
+
+    // For each vm in the request
+    for (auto &vmApps : *sm)
+    {
+        // Attempt recovering the vm "reservation"
+        uint32_t vmId = resolveGlobalVmId(vmApps.element);
+
+        // If found and there's enough space then start working
+        if (vmId != UINT32_MAX && vmApps.size() <= vmsControl[vmId].apps.getFreeIds())
+        {
+            auto control = vmsControl.at(vmId);
+            osCore.launchApps(sm, vmId, vmApps.begin(), vmApps.end());
+        }
+        else
+        {
+            sm->abortAllApps(vmApps.element);
+        }
+    }
+
+    // Send update -> Deployment status?
 }

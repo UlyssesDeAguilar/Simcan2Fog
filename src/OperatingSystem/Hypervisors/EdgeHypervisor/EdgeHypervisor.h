@@ -25,28 +25,13 @@ namespace hypervisor
 {
     class EdgeHypervisor : public Hypervisor
     {
-        // TODO : App timeouts ?
-        // TODO : Evaluate if it belongs to a single user ? (It should)
     protected:
-
-        ControlTable<AppControlBlock> appsControl;
-        std::vector<uint32_t> freePids; // Helps keep track of the available "slots" for the apps
-        uint32_t maxApps;
-        uint32_t runningApps;
         cModule *appsVector;
+        virtual void initialize(int stage) override;
 
-        virtual void initialize() override;
-        virtual void finish() override;
-        virtual cGate *getOutGate(cMessage *msg) override;
-        virtual void processSelfMessage(cMessage *msg) override;
-        virtual void processRequestMessage(SIMCAN_Message *sm) override;
-        virtual void processResponseMessage(SIMCAN_Message *sm) override;
-
-        uint32_t newPid(int vmId);
-        void releasePid(int vmId, int pid) { freePids.push_back(pid); }
-
-        cModule *getApplicationModule(int vmId, int pid) { return appsVector->getSubmodule("appModule", pid); }
-        AppControlBlock &getControlBlock(int vmId, int pid) { return appsControl[vmId * 0 + pid]; }
+        virtual HardwareManager *locateHardwareManager() override { return check_and_cast<HardwareManager *>(getModuleByPath("^.hwm")); }
+        virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) override { return appsVector->getSubmodule("appModule", pid); }
+        virtual void handleAppRequest(SM_UserAPP *sm) override;
     };
 }
 

@@ -11,6 +11,7 @@
 
 #include <omnetpp.h>
 #include "Core/DataManager/DataManager.h"
+#include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "Applications/Builder/include.h"
 #include "Messages/SM_UserAPP.h"
 #include "Messages/SM_UserVM.h"
@@ -81,18 +82,6 @@ namespace hypervisor
     };
 
     /**
-     * @brief Keeps all the necessary control information for the VM
-     */
-    struct VmControlBlock
-    {
-        uint32_t vmId;                //<! The vmId -- It's aligned in virtual environements with the scheduler!
-        tVmState state;               //<! The current state of the VM
-        NodeResourceRequest *request; //<! The request that allocated this VM
-        // SM_UserVM *msg; <-- We'll see if this makes sense
-        cMessage *timeOut; //<! The timeout event
-    };
-
-    /**
      * @brief Keeps all the necessary control information for the app
      */
     struct AppControlBlock
@@ -124,6 +113,26 @@ namespace hypervisor
         bool isRunning() { return status == tApplicationState::appRunning; }
     };
 
+    /**
+     * @brief Keeps all the necessary control information for the VM
+     */
+    struct VmControlBlock
+    {
+        uint32_t vmId;                      //!< The vmId -- It's aligned in virtual environements with the scheduler!
+        ControlTable<AppControlBlock> apps; //!< The apps that are currently executing
+        tVmState state;                     //!< The current state of the VM
+        NodeResourceRequest *request;       //!< The request that allocated this VM
+        // SM_UserVM *msg; <-- We'll see if this makes sense
+        cMessage *timeOut; //!< The timeout event
+
+        void initialize(uint32_t vmId)
+        {
+            this->vmId = vmId;
+            state = tVmState::vmIdle;
+            request = nullptr;
+            timeOut = nullptr;
+        }
+    };
     template <class T>
     class ControlTable
     {
@@ -141,34 +150,36 @@ namespace hypervisor
         {
             // Filter
             const auto filter = [](std::pair<bool, T> &e) -> bool
-            { return e.first };
+            { return e.first; };
 
             // Search for a free slot
             auto beginning = elements.begin();
             beginning += lastId;
-            
+
             auto iter = std::find_if(beginning, elements.end(), filter);
 
             // Found going forwards
             if (iter != elements.end())
             {
-                lastId = iter->second;
+                lastId = iter - beginning;
                 return lastId;
             }
 
             // Found going backwards
             iter = std::find_if(elements.begin(), beginning, filter);
-            lastId = iter->second;
+            lastId = iter - beginning;
             return lastId;
         }
 
     public:
+        typedef void (T::*InitFunc)(uint32_t);
+
         /**
          * @brief Initializes the table
          * @param size      Number of entries
          * @param init_f    Initializer function which takes the given id
          */
-        void init(uint32_t size, void (T::*init_f)(uint32_t))
+        void init(uint32_t size, InitFunc init_f)
         {
             // Reserve memory
             elements.reserve(size);
@@ -177,10 +188,11 @@ namespace hypervisor
             for (uint32_t i = 0; i < size; i++)
             {
                 // Default initialize elements
-                auto inserted = elements.emplace_back(true, T());
+                elements.emplace_back(true, T());
+                auto inserted = elements.back();
 
                 // Call init function
-                (inserted.second) * init_f(i);
+                (inserted.second.*init_f)(i);
             }
 
             // Save memory
@@ -202,9 +214,14 @@ namespace hypervisor
         }
 
         uint32_t getAllocatedIds() { return allocatedIds; }
+        uint32_t getFreeIds() { return elements.size() - allocatedIds; }
 
         T &operator[](uint32_t id) { return elements[id].second; }
-        T &at(uint32_t id) {return elements.at(id).second;}
+        T &at(uint32_t id) { return elements.at(id).second; }
+
+        typedef std::vector<std::pair<bool, T>>::iterator iterator;
+        iterator begin() { return elements.begin(); }
+        iterator end() { return elements.end(); }
     };
 }
 

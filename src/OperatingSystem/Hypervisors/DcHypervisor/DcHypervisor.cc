@@ -27,8 +27,6 @@ void DcHypervisor::initialize()
     { return osModule->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0); };
 
     loadVector(schedulers, osModule, schedulerAccessor);
-
-    hardwareManager = check_and_cast<HardwareManager *>(getModuleByPath("^.^.hardwareManager"));
 }
 
 void DcHypervisor::loadVector(std::vector<cModule *> &v, cModule *osModule, cModule *(*accessor)(cModule *, int))
@@ -81,7 +79,6 @@ void DcHypervisor::processSelfMessage(cMessage *msg)
 
 void DcHypervisor::processRequestMessage(SIMCAN_Message *sm)
 {
-
 }
 
 void DcHypervisor::powerOn(bool active)
@@ -109,14 +106,17 @@ void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
     sendResponseMessage(sm);
 }
 
-cModule *DcHypervisor::allocateNewResources(NodeResourceRequest *pResourceRequest)
+cModule *DcHypervisor::handleVmRequest(const VM_Request &request)
 {
     unsigned int *cpuCoreIndex;
 
+    // Query vm type
+    const VirtualMachine *vm = dataManager->searchVirtualMachine(request.vmType);
+
     // Extract requested resources
-    uint32_t cores = pResourceRequest->getTotalCpus();
-    double memory = pResourceRequest->getTotalMemory();
-    double disk = pResourceRequest->getTotalDiskGb();
+    uint32_t cores = vm->getNumCores();
+    double memory = vm->getMemoryGb();
+    double disk = vm->getDiskGb();
 
     // Attempt allocating needed space
     if (!hardwareManager->tryAllocateResources(cores, memory, disk, &cpuCoreIndex))
@@ -124,16 +124,15 @@ cModule *DcHypervisor::allocateNewResources(NodeResourceRequest *pResourceReques
 
     // Got it, get the vm an id and register it
     uint32_t id = vmsControl.takeId();
-    vmIdMap[pResourceRequest->getVmId()] = id;
+    vmIdMap[request.vmId] = id;
 
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(schedulers[id]);
-    int nManagedCpuCores = pResourceRequest->getTotalCpus();
 
-    bool *isCPU_Idle = new bool[nManagedCpuCores];
-    for (int i = 0; i < nManagedCpuCores; i++)
+    bool *isCPU_Idle = new bool[cores];
+    for (int i = 0; i < cores; i++)
         isCPU_Idle[i] = true;
 
-    pVmScheduler->setManagedCpuCores(nManagedCpuCores);
+    pVmScheduler->setManagedCpuCores(cores);
     pVmScheduler->setCpuCoreIndex(cpuCoreIndex);
     pVmScheduler->setIsCpuIdle(isCPU_Idle);
     pVmScheduler->setIsRunning(true);
@@ -141,7 +140,7 @@ cModule *DcHypervisor::allocateNewResources(NodeResourceRequest *pResourceReques
     return getParentModule()->getSubmodule("appsVectors", id);
 }
 
-void DcHypervisor::deallocateVmResources(std::string vmId)
+void DcHypervisor::deallocateVmResources(const std::string &vmId)
 {
     // This could be fixed with an approach similar to AppControlBlock
     auto id = getOrDefault(vmIdMap, vmId, UINT32_MAX);
