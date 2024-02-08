@@ -2,6 +2,8 @@
 #define _SIMCAN_TYPES_H_
 
 #include <omnetpp.h>
+#include "inet/networklayer/contract/ipv4/Ipv4Address.h"
+#include "inet/networklayer/common/L3Address.h"
 #include <string>
 #include <omnetpp/cpar.h>
 
@@ -176,7 +178,6 @@ enum tApplicationState
 
 std::ostream &operator<<(std::ostream &os, tApplicationState s);
 
-
 /** Typedef of VM states */
 typedef enum
 {
@@ -225,5 +226,59 @@ struct MPI_ProcessAction
 	std::string error;			 /** Error message */
 };
 typedef struct MPI_ProcessAction processAction;
+
+/**
+ * @brief Addresses used by switches/router in Data Centres
+ */
+typedef inet::Ipv4Address LocalAddress;
+
+/**
+ * @brief Addresses that are actually routable
+ */
+typedef inet::L3Address GlobalAddress;
+
+/**
+ * @brief This struct helps with routing and identifying both resources and services
+ */
+struct ServiceURL
+{
+protected:
+	enum State
+	{
+		ONLY_LOCAL,		//!< Only contains a LocalIp (equivalent to a LAN address)
+		ONLY_GLOBAL,	//!< Only contains a GlobalIp (equivalent to valid ethernet address)
+		FULL_URL		//!< Contains both Local and Global Ips separated by an "@" symbol
+	};
+
+	LocalAddress local;
+	GlobalAddress global;
+	short state;
+
+public:
+	friend std::ostream &operator<<(std::ostream &os, const ServiceURL &obj)
+	{
+		// If we have a complete URL
+		if (obj.state & FULL_URL)
+			return os << obj.local << "@" << obj.global;
+
+		// If we have a partial URL == Local/Global Ip
+		if (obj.state & ONLY_GLOBAL)
+			os << obj.global;
+		else
+			os << obj.local;
+
+		return os;
+	}
+
+	/**
+	 * @brief Construct a new Service URL from text
+	 * @details It will be ONLY LOCAL if the address is in ranges 10.0.0.0/8, 172.16.0.0/12 or 192.168.0.0/16
+	 * @param url The url in text format
+	 */
+	ServiceURL(const std::string &url);
+
+	bool isFullUrl() { return state == FULL_URL; }
+	bool hasGlobalIp() { return state == FULL_URL || state == ONLY_GLOBAL; }
+};
 
 #endif /*SIMCANTYPES_H_*/

@@ -68,9 +68,8 @@ void cSIMCAN_Core::finish()
 {
 }
 
-void cSIMCAN_Core::sendRequestMessage(SIMCAN_Message *sm, cGate *gate)
+void cSIMCAN_Core::sendRequestMessage(SIMCAN_Message *sm, int gateId)
 {
-
 	// If trace is empty, add current module and request number
 	if (sm->isTraceEmpty())
 	{
@@ -84,7 +83,7 @@ void cSIMCAN_Core::sendRequestMessage(SIMCAN_Message *sm, cGate *gate)
 				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
 
 	// Send the message!
-	send(sm, gate);
+	send(sm, gateId);
 
 	// Process next request!
 	processCurrentRequestMessage();

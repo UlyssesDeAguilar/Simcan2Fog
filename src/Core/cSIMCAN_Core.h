@@ -23,28 +23,28 @@ using std::vector;
  * @return V The value associated with the key or nullptr
  */
 template <typename K, typename V>
-V* getOrNull(const std::map<K, V> &map, const K &key)
+V *getOrNull(const std::map<K, V> &map, const K &key)
 {
 	auto iter = map.find(key);
 	return iter != map.end() ? &iter->second : nullptr;
 }
 
 template <typename K, typename V>
-const V* getOrNullConst(const std::map<K, V> &map, const K &key)
+const V *getOrNullConst(const std::map<K, V> &map, const K &key)
 {
 	auto iter = map.find(key);
 	return iter != map.end() ? &iter->second : nullptr;
 }
 
 template <typename K, typename V>
-V* getOrNull(const std::map<K, V*> &map, const K &key)
+V *getOrNull(const std::map<K, V *> &map, const K &key)
 {
 	auto iter = map.find(key);
 	return iter != map.end() ? iter->second : nullptr;
 }
 
 template <typename K, typename V>
-V getOrDefault(const std::map<K,V> &map, const K &key, V default_val)
+V getOrDefault(const std::map<K, V> &map, const K &key, V default_val)
 {
 	auto iter = map.find(key);
 	return iter != map.end() ? iter->second : default_val;
@@ -135,7 +135,14 @@ protected:
 	 * @param sm Request message.
 	 * @param gate Gate used to send the message.
 	 */
-	virtual void sendRequestMessage(SIMCAN_Message *sm, cGate *gate);
+	virtual void sendRequestMessage(SIMCAN_Message *sm, cGate *gate) { sendRequestMessage(sm, gate->getId()); }
+
+	/**
+	 * Send a request message to its destination
+	 * @param sm Request message
+	 * @param gateId The gate id that will be used to send the message
+	 */
+	virtual void sendRequestMessage(SIMCAN_Message *sm, int gateId);
 
 	/**
 	 * Send a response message to its destination!
