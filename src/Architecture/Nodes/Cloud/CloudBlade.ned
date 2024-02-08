@@ -36,12 +36,12 @@ module CloudBlade
 
 
         string hardwareManagerType = default("HardwareManager");	// Hardware manager type
-        string hypervisorType = default("Hypervisor");				// Hypervisor type
+        string hypervisorType;                      				// Hypervisor type
         string cpuSchedulerType = default("CpuSchedulerRR");		// CPU Scheduler type
         string cpuCoreType = default("CpuCore");					// Type of the CPU cores
 
         // Forwarding types
-        osModule.hypervisor.typename = hypervisorType;
+        // osModule.hypervisor.typename = hypervisorType;
 
         // Forwarding parameters
         *.numCpuCores = numCpuCores;
@@ -90,8 +90,9 @@ module CloudBlade
                 @display("p=256,144;i=os");
         }
 
-
-    connections:
+	
+	// FIXME: When networkstack module is defined place it in here !
+    connections allowunconnected:
         // Connections between Operating System and CPU
         osModule.toCpu --> ned.IdealChannel --> cpu.fromOs;
         osModule.fromCpu <-- ned.IdealChannel <-- cpu.toOs;

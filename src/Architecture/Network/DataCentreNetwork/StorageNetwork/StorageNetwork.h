@@ -3,62 +3,26 @@
 
 #include "Core/cSIMCAN_Core.h"
 
+/**
+ * TODO: Consider if this element stays 
+ */
+class StorageNetwork : public cSIMCAN_Core
+{
+protected:
+    cGate **inputGates;
+    cGate **outputGates;
+    cGate *fromCommGate;
+    cGate *toCommGate;
 
-class StorageNetwork: public cSIMCAN_Core{
+    virtual void initialize() override;
+    virtual void finish() override;
 
-    protected:
+private:
 
-        cGate** inputGates;
-        cGate** outputGates;
-        cGate* fromCommGate;
-        cGate* toCommGate;
-
-        /**
-         * Destructor.
-         */
-         ~StorageNetwork();
-
-        /**
-         *  Module initialization.
-         */
-         virtual void initialize() override;
-
-        /**
-         * Module ending.
-         */
-         void finish() override;
-
-
-    private:
-
-        /**
-         * Get the outGate ID to the module that sent <b>msg</b>
-         *
-         * @param msg Arrived message.
-         * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
-         */
-         cGate* getOutGate (cMessage *msg);
-
-        /**
-         * Process a self message.
-         *
-         * @param msg Self message.
-         */
-         void processSelfMessage (cMessage *msg);
-
-        /**
-         * Process a request message.
-         *
-         * @param sm Request message.
-         */
-         void processRequestMessage (SIMCAN_Message *sm);
-
-        /**
-         * Process a response message.
-         *
-         * @param sm Request message.
-         */
-         void processResponseMessage (SIMCAN_Message *sm);
+    cGate *getOutGate(cMessage *msg) override;
+    void processSelfMessage(cMessage *msg) override;
+    void processRequestMessage(SIMCAN_Message *sm) override;
+    void processResponseMessage(SIMCAN_Message *sm) override;
 };
 
 #endif

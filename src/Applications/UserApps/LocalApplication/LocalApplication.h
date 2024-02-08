@@ -52,7 +52,7 @@ public:
 	unsigned int getCurrentIteration() const { return currentIteration; }
 	void setCurrentIteration(unsigned int currentIteration) { this->currentIteration = currentIteration; }
 	unsigned int getCurrentRemainingMIs() const { return MIs; }
-	void setCurrentRemainingMIs(unsigned int currentRemainingMIs) { this->MIs = MIs; }
+	void setCurrentRemainingMIs(unsigned int currentRemainingMIs) { this->MIs = currentRemainingMIs; }
 };
 
 #endif

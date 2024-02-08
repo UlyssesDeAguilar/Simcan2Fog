@@ -16,13 +16,7 @@ class SM_UserAPP : public SM_UserAPP_Base
 {
 private:
     void copy(const SM_UserAPP &other);
-    /**
-     * @brief Copies the given App request
-     * @details Watch out, it duplicates the pMsgTimeout for avoiding ownership errors
-     * @param src   Source request
-     * @param dest  Destination request
-     */
-    void copyAppRequest(const APP_Request &src, APP_Request &dest);
+
     int findRequestIndex(const std::string &service, const std::string &vmId);
 
 protected:
@@ -44,13 +38,6 @@ protected:
      * @param app App request
      */
     virtual void setApp(size_t k, const APP_Request &app);
-
-    /**
-     * @brief Copies an instance request, duplicates (obviously) the timeout message also
-     * @details Helper method for dup() operator
-     * @param request The instance request to be duplicated
-     */
-    void copyAndInsertRequest(const APP_Request &request);
 
     /* Extra methods, could be reused for the future*/
     virtual void insertApp(size_t k, const APP_Request &app){};
@@ -88,9 +75,11 @@ public:
 
     virtual SM_UserAPP *dup() const { return new SM_UserAPP(*this); }
     virtual SM_UserAPP *dup(const std::string &vmId) const;
+    
+    typedef typename group_vector<std::string, APP_Request>::iterator iterator;
 
-    auto begin() { return vmAppGroupedVector.begin(); }
-    auto end() { return vmAppGroupedVector.end(); }
+    iterator begin() { return vmAppGroupedVector.begin(); }
+    iterator end() { return vmAppGroupedVector.end(); }
 
     std::ptrdiff_t getDeploymentIndex(const std::vector<APP_Request>::iterator& it) { return std::distance(apps.begin(), it);}
 

@@ -62,7 +62,7 @@ namespace hypervisor
          */
         virtual uint32_t resolveGlobalVmId(const std::string &vmId) = 0;
 
-        // Inherited section
+        // Inherited section -- TODO: Change override fixes warning about hidden initialize() from super class ?
         virtual void initialize(int stage) override;
         virtual int numInitStages() const override { return 2; }
 

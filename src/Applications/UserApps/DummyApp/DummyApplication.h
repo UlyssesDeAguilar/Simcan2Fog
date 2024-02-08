@@ -12,40 +12,18 @@
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @date 2009-03-13
  */
-class DummyApplication: public UserAppBase{
+class DummyApplication : public UserAppBase
+{
+protected:
+	string testParameter;
 
-	protected:
+	virtual void initialize() override;
+	virtual void finish() override;
+	virtual void run() override{};
 
-		/** Test parameter */
-		string testParameter;
-								
-		
-	   /**
-		* Destructor
-		*/
-		~DummyApplication();
-
-	    virtual void initialize() override;
-	    virtual void finish() override;
-		virtual void run() {};
-
-	   /**
-		* Process a self message.
-		* @param msg Self message.
-		*/
-		void processSelfMessage (cMessage *msg);
-
-	   /**
-		* Process a request message.
-		* @param sm Request message.
-		*/
-		void processRequestMessage (SIMCAN_Message *sm);
-
-	   /**
-		* Process a response message.
-		* @param sm Request message.
-		*/
-		void processResponseMessage (SIMCAN_Message *sm);
+	void processSelfMessage(cMessage *msg) override;
+	void processRequestMessage(SIMCAN_Message *sm) override;
+	void processResponseMessage(SIMCAN_Message *sm) override;
 };
 
 #endif

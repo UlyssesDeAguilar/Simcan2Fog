@@ -2,9 +2,6 @@
 
 Define_Module(DummyApplication);
 
-DummyApplication::~DummyApplication(){
-}
-
 void DummyApplication::initialize(){
 
 		// Init the super-class
@@ -16,10 +13,8 @@ void DummyApplication::initialize(){
 }
 
 void DummyApplication::finish(){
-
 	// Finish the super-class
     UserAppBase::finish();
-
 }
 
 void DummyApplication::processSelfMessage (cMessage *msg){

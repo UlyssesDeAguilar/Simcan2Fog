@@ -45,13 +45,6 @@ void SM_UserAPP::copy(const SM_UserAPP &other)
     vmAppGroupedVector = other.vmAppGroupedVector;
 }
 
-void SM_UserAPP::copyAndInsertRequest(const APP_Request &request)
-{
-    APP_Request newRequest;
-    copyAppRequest(request, newRequest);
-    insertApp(request);
-}
-
 SM_UserAPP *SM_UserAPP::dup(const std::string &vmId) const
 {
     int nFinished = 0; // Finished app requests (OK or not)

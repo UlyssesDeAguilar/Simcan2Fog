@@ -13,7 +13,7 @@ public:
      * @brief Construct a new group vector
      * @param rep The representative of the first collection
      */
-    group_vector(const S &rep = S()) { boundraries.push_back(collection(*this, 0, 0, rep)); }
+    group_vector(const S rep = S()) { boundraries.push_back(collection(this, 0, 0, rep)); }
 
     /**
      * @brief Inserts a object into the current active collection
@@ -41,7 +41,7 @@ public:
      */
     void new_collection(const S &rep)
     {
-        boundraries.push_back(collection(*this, boundraries.size(), elements.size(), rep));
+        boundraries.push_back(collection(this, boundraries.size(), elements.size(), rep));
     }
 
     /**
@@ -82,12 +82,12 @@ public:
     class collection
     {
     private:
-        group_vector &parent;
+        group_vector *parent;
 
     protected:
         size_t group_index;
         size_t collection_index;
-        collection(group_vector &parent,
+        collection(group_vector *parent,
                    size_t g_index,
                    size_t c_index,
                    const S &element) : parent(parent),
@@ -101,11 +101,11 @@ public:
         const E &operator[](size_t index) const { return this->operator[](index); }
         const E &at(size_t index) const { return this->at(index); }
 
-        E &operator[](size_t index) { return parent.elements[collection_index + index]; }
+        E &operator[](size_t index) { return parent->elements[collection_index + index]; }
         E &at(size_t index)
         {
             // As this is only positive, the check should only really go for not invading the next collection
-            if (index >= parent.get_collection_size(group_index))
+            if (index >= parent->get_collection_size(group_index))
                 throw std::out_of_range("out of range");
 
             return this[index];
@@ -114,13 +114,16 @@ public:
         typedef typename std::vector<E>::iterator iterator;
         typedef typename std::vector<E>::const_iterator const_iterator;
 
-        size_t size() const { return parent.get_collection_size(group_index); }
+        size_t size() const { return parent->get_collection_size(group_index); }
 
-        iterator begin() { return parent.elements.begin() + collection_index; }
-        iterator end() { return parent.elements.begin() + (collection_index + parent.get_collection_size(group_index)); }
+        iterator begin() { return parent->elements.begin() + collection_index; }
+        iterator end() { return parent->elements.begin() + (collection_index + parent->get_collection_size(group_index)); }
 
-        const_iterator begin() const { return parent.elements.begin() + collection_index; }
-        const_iterator end() const { return parent.elements.begin() + (collection_index + parent.get_collection_size(group_index)); }
+        const_iterator begin() const { return parent->elements.begin() + collection_index; }
+        const_iterator end() const { return parent->elements.begin() + (collection_index + parent->get_collection_size(group_index)); }
+
+        bool operator==(const S & element) const { return this->element == element; }
+        bool operator!=(const S & element) const { return this->element != element; }
 
         friend class group_vector;
     };

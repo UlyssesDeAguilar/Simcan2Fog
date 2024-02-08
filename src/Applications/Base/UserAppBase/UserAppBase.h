@@ -103,7 +103,7 @@ public:
 
 private:
    ICallback *callback;
-   cGate *getOutGate(cMessage *msg);
+   virtual cGate *getOutGate(cMessage *msg) override;
 };
 
 #endif

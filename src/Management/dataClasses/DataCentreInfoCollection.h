@@ -43,45 +43,45 @@ public:
      * Checks if all the datacentres are full.
      * @return
      */
-    virtual bool isCloudFull(int nRequestedCores);
+    virtual bool isCloudFull(int nRequestedCores) override;
 
     /**
      * Insert a new node into the datacentre
      * @param nDatacentre
      * @param pNode
      */
-    virtual void insertNode(int nDataCentre, NodeResourceInfo *pNode);
+    virtual void insertNode(int nDataCentre, NodeResourceInfo *pNode) override;
 
     /**
      * This method handles a VM request
      * @param pVmRequest VM request
      * @return TRUE if this VM is accepted. FALSE i.o.c.
      */
-    virtual bool handleVmRequest(NodeResourceRequest *&pVmRequest);
+    virtual bool handleVmRequest(NodeResourceRequest *&pVmRequest) override;
 
     /**
      * Free a VM request
      * @param strVmId Identifier of the VM
      * @return TRUE if this VM has been released successfully. FALSE i.o.c.
      */
-    virtual bool freeVmRequest(std::string strVmId);
+    virtual bool freeVmRequest(std::string strVmId) override;
 
     /**
      * Get the number of available cores of the whole system (all the datacentres).
      * @return
      */
-    virtual int getTotalAvailableCores();
+    virtual int getTotalAvailableCores() override;
 
     /**
      * Get the total number of cores of the whole system (all the datacentres).
      * @return
      */
-    virtual int getTotalCores();
+    virtual int getTotalCores() override;
 
     /**
      * Print a summary about the datacentre sizes.
      */
-    virtual void printDCSizes();
+    virtual void printDCSizes() override;
 };
 
 #endif /* DATACENTREINFOCOLLECTION_H_ */

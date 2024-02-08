@@ -2,82 +2,83 @@
 
 Define_Module(Switch);
 
-Switch::~Switch(){
-}
-
-void Switch::initialize(){
+void Switch::initialize()
+{
 
     int numGates, i;
 
-        // Init the super-class
-        cSIMCAN_Core::initialize();
+    // Init the super-class
+    cSIMCAN_Core::initialize();
 
-        // Get the number of input and output gates
-        numGates = gateSize ("in");
+    // Get the number of input and output gates
+    numGates = gateSize("in");
 
-        // Init the cGates vector for inputs
-        inputGates = new cGate* [numGates];
-        outputGates = new cGate* [numGates];
+    // Init the cGates vector for inputs
+    inputGates = new cGate *[numGates];
+    outputGates = new cGate *[numGates];
 
-        for (i=0; i<numGates; i++){
-            inputGates [i] = gate ("in", i);
-            outputGates [i] = gate ("out", i);
+    for (i = 0; i < numGates; i++)
+    {
+        inputGates[i] = gate("in", i);
+        outputGates[i] = gate("out", i);
 
-            if (!(outputGates[i]->isConnected())){
-                error ("Gate is not connected");
-            }
+        if (!(outputGates[i]->isConnected()))
+        {
+            error("Gate is not connected");
         }
+    }
 
-        // Get switch type
-        const char *typeChr = par ("type");
-        type = typeChr;
+    // Get switch type
+    const char *typeChr = par("type");
+    type = typeChr;
 }
 
-
-void Switch::finish(){
+void Switch::finish()
+{
 
     // Finish the super-class
     cSIMCAN_Core::finish();
 }
 
+cGate *Switch::getOutGate(cMessage *msg)
+{
 
-cGate* Switch::getOutGate (cMessage *msg){
+    cGate *outGate;
 
-    cGate* outGate;
+    // Init...
+    outGate = nullptr;
 
-        // Init...
-        outGate = nullptr;
+    // If msg arrives
+    if (msg->arrivedOn("in"))
+    {
+        outGate = gate("out", msg->getArrivalGate()->getIndex());
+    }
 
-            // If msg arrives
-            if (msg->arrivedOn("in")){
-                outGate = gate ("out", msg->getArrivalGate()->getIndex());
-            }
+    // Msg arrives from an unknown gate
+    else
+        error("Message received from an unknown gate [%s]", msg->getName());
 
-            // Msg arrives from an unknown gate
-            else
-                error ("Message received from an unknown gate [%s]", msg->getName());
-
-   return outGate;
+    return outGate;
 }
 
-
-void Switch::processSelfMessage (cMessage *msg){
-    error ("This module cannot process self messages:%s", msg->getName());
+void Switch::processSelfMessage(cMessage *msg)
+{
+    error("This module cannot process self messages:%s", msg->getName());
 }
 
-
-void Switch::processRequestMessage (SIMCAN_Message *sm){
+void Switch::processRequestMessage(SIMCAN_Message *sm)
+{
 
     // TODO: Finish switch behaviour!
 
     // Switch is allocated in a rack
-    if (type.compare("rack") == 0){
-
+    if (type.compare("rack") == 0)
+    {
     }
 
     // Switch is allecated in a Board
-    else if (type.compare("board") == 0){
-
+    else if (type.compare("board") == 0)
+    {
     }
 
     // Unknown switch type
@@ -85,11 +86,12 @@ void Switch::processRequestMessage (SIMCAN_Message *sm){
         error("Unknown Switch type: %s", type.c_str());
 }
 
-
-void Switch::processResponseMessage (SIMCAN_Message *sm){
+void Switch::processResponseMessage(SIMCAN_Message *sm)
+{
 
     // Debug (Debug)
-    EV_DEBUG << "(processResponseMessage) Sending response message."<< endl << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+    EV_DEBUG << "(processResponseMessage) Sending response message." << endl
+             << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
 
     sendResponseMessage(sm);
 }

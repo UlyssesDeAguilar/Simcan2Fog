@@ -31,7 +31,7 @@ namespace hypervisor
 
         virtual HardwareManager *locateHardwareManager() override { return check_and_cast<HardwareManager *>(getModuleByPath("^.hwm")); }
         virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) override { return appsVector->getSubmodule("appModule", pid); }
-        virtual void handleAppRequest(SM_UserAPP *sm) override;
+        virtual uint32_t resolveGlobalVmId(const std::string &vmId) override { return 0 ;}
     };
 }
 

@@ -2,10 +2,6 @@
 
 Define_Module(CheckingHubModule);
 
-CheckingHubModule::~CheckingHubModule()
-{
-}
-
 void CheckingHubModule::initialize()
 {
 

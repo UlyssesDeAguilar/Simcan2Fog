@@ -18,7 +18,8 @@ module OperatingSystem
         int numCpuCores;												// Number of CPU cores in the CPU processor
 
         string cpuSchedulerType;										// CPU Scheduler type
-
+		*.maxVMs = maxVMs;
+        *.isVirtualHardware = isVirtualHardware;
 
         @display("bgb=532.53,430.68002");
     gates:
@@ -29,12 +30,8 @@ module OperatingSystem
     submodules:
 
         // Hypervisor module
-        hypervisor: <default("Hypervisor")> like IHypervisor {
-
+        hypervisor: <default("DcHypervisor")> like IHypervisor {
             parameters:
-                maxVMs = maxVMs;
-                isVirtualHardware = isVirtualHardware;
-
                 @display("p=251.23001,181.39001;i=hypervisor");
             gates:
                 fromCpuScheduler[maxVMs];
@@ -50,7 +47,7 @@ module OperatingSystem
                 staticAppAssignment = staticAppAssignment;
                 numSchedulers = maxVMs;
                 numCpuCores = numCpuCores;
-                isVirtualHardware = isVirtualHardware;
+                // isVirtualHardware = isVirtualHardware;
                 schedulerType = cpuSchedulerType;
                 @display("p=423.89,181.39001;i=scheduler");
         }

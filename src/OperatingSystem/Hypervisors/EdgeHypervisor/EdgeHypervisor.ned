@@ -5,7 +5,7 @@ simple EdgeHypervisor extends cSIMCAN_Core
 {    
 	parameters:
 	    int maxApps;
-    	@class (EdgeHypervisor);
+    	@class (hypervisor::EdgeHypervisor);
     	
   	gates:  	    
 		input fromNetwork;		// Input gate from network

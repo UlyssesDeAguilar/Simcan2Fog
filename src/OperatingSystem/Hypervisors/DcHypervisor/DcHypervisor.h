@@ -34,7 +34,6 @@ namespace hypervisor
 
       cModule *handleVmRequest(const VM_Request &request);
       void deallocateVmResources(const std::string &vmId);
-      virtual void handleAppRequest(SM_UserAPP *sm) override;
 
       // Hypervisor inheritance section
       virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) override { return getParentModule()->getSubmodule("appsVectors", vmId)->getSubmodule("appModule", pid); }

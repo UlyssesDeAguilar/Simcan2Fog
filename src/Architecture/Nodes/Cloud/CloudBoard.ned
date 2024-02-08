@@ -30,7 +30,6 @@ module CloudBoard
         }
 
         switch: Switch {
-
             @display("p=59,158");
         }
     connections:

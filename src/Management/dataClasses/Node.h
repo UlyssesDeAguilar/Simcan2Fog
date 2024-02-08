@@ -91,7 +91,7 @@ public:
      * Sets a new amount of unused disk space (in GB).
      * @param remainingDiskGb New amount of unused disk space (in GB).
      */
-    void setRemaininDiskGb(double remainingDiskGb) { this->remainingDiskGB = remainingDiskGB; }
+    void setRemaininDiskGb(double remainingDiskGb) { this->remainingDiskGB = remainingDiskGb; }
 
     /**
      * Gets the unused RAM memory (in GB).
@@ -103,7 +103,7 @@ public:
      * Sets a new amount of unused RAM memory (in GB).
      * @param remainingMemoryGb New amount of unused RAM memory (in GB).
      */
-    void setRemainingMemoryGb(double remainingMemoryGb) { this->remainingMemoryGB = remainingMemoryGB; }
+    void setRemainingMemoryGb(double remainingMemoryGb) { this->remainingMemoryGB = remainingMemoryGb; }
 
     /**
      * Sets a new state for the CPU core at <b>cpuIndex</b> position. If the \a cpuIndex position does not exist, an error is raised.

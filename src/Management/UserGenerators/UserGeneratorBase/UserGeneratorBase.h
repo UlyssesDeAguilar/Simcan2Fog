@@ -66,7 +66,7 @@ protected:
      * Initialize method. Invokes the parsing process to allocate the existing cloud users in the corresponding data structures.
      */
     virtual void initialize() override;
-    virtual void initializeRequestHandlers() {};
+    virtual void initializeRequestHandlers() override {};
 
     /**
      * Get the out Gate to the module that sent <b>msg</b>.

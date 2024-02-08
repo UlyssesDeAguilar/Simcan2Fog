@@ -18,6 +18,9 @@
 
 #include "Core/cSIMCAN_Core.h"
 
+/**
+ * TODO: Fix this to use indexing instead of a gigantic array of cGates
+ */
 class CheckingHubModule : public cSIMCAN_Core
 {
 protected:
@@ -27,50 +30,15 @@ protected:
     cGate **toOutputGates;
     bool staticAppAssignment;
 
-    /**
-     * Destructor.
-     */
-    ~CheckingHubModule();
-
-    /**
-     *  Module initialization.
-     */
     virtual void initialize() override;
-
-    /**
-     * Module ending.
-     */
-    void finish() override;
+    virtual void finish() override;
 
 private:
-    /**
-     * Get the outGate ID to the module that sent <b>msg</b>
-     *
-     * @param msg Arrived message.
-     * @return. Gate Id (out) to module that sent <b>msg</b> or NOT_FOUND if gate not found.
-     */
-    cGate *getOutGate(cMessage *msg);
-
-    /**
-     * Process a self message.
-     *
-     * @param msg Self message.
-     */
-    void processSelfMessage(cMessage *msg);
-
-    /**
-     * Process a request message.
-     *
-     * @param sm Request message.
-     */
-    void processRequestMessage(SIMCAN_Message *sm);
-
-    /**
-     * Process a response message.
-     *
-     * @param sm Request message.
-     */
-    void processResponseMessage(SIMCAN_Message *sm);
+    
+    virtual cGate *getOutGate(cMessage *msg) override;
+    virtual void processSelfMessage(cMessage *msg) override;
+    virtual void processRequestMessage(SIMCAN_Message *sm) override;
+    virtual void processResponseMessage(SIMCAN_Message *sm) override;
 };
 
 #endif

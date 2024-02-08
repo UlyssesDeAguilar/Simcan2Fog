@@ -35,6 +35,10 @@ module Blade
         string hypervisorType = default("Hypervisor");				// Hypervisor type
         string cpuSchedulerType = default("CpuSchedulerRR");		// CPU Scheduler type
         string cpuCoreType = default("CpuCore");					// Type of the CPU cores
+        
+        osModule.hypervisor.typename = hypervisorType;
+        hardwareManager.maxUsers = select(int(isVirtualHardware), maxUsers, maxVMs);
+        osModule.maxUsers = select(int(isVirtualHardware), maxUsers, maxVMs);
 
         @display("bgb=548,431,,black,3;bgi=circuit,t");
         
@@ -53,7 +57,7 @@ module Blade
             parameters:
                 isVirtualHardware = isVirtualHardware;
                 maxVMs = maxVMs;
-                maxUsers = maxUsers;
+                //maxUsers = maxUsers;
                 numCpuCores = numCpuCores;
                 @display("p=76,88;i=hardwareConfig");
         }
@@ -64,26 +68,12 @@ module Blade
                 isVirtualHardware = isVirtualHardware;
                 maxVMs = maxVMs;
                 numCpuCores = numCpuCores;
-                hypervisorType = hypervisorType;
                 cpuSchedulerType = cpuSchedulerType;
                 @display("p=274,189;i=os");
         }
 
-        appsVectors[maxUsers]: AppsVector {
-            parameters:
-                numApps = numApps;
-                staticAppAssignment = staticAppAssignment;
-                @display("p=83,373,r,120;i=user");
-        }
-
 
     connections:
-
-        // Connections between Apps and Operating System
-        for i=0..maxUsers-1 {
-            appsVectors[i].toOS --> ned.IdealChannel --> osModule.fromApps[i];
-            appsVectors[i].fromOS <-- ned.IdealChannel <-- osModule.toApps[i];
-        }
 
         // Connections between Operating System and CPU
         osModule.toCpu --> ned.IdealChannel --> cpu.fromOs;
