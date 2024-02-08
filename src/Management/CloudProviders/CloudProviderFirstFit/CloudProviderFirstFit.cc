@@ -155,11 +155,11 @@ void CloudProviderFirstFit::abortAllApps(SM_UserAPP *userApp, std::string strVmI
   assert((userApp != nullptr));
 
   userApp->abortAllApps(strVmId);
-  cancelAndDeleteAppFinishMsgs(userApp, strVmId);
+  // cancelAndDeleteAppFinishMsgs(userApp, strVmId);
 }
 
 ////Todo: tiene una nota interna. Supongo que se refiere a eliminar el mensaje de otras apps que esten en otro estado.
-void CloudProviderFirstFit::cancelAndDeleteAppFinishMsgs(SM_UserAPP *userApp, std::string strVmId)
+/*void CloudProviderFirstFit::cancelAndDeleteAppFinishMsgs(SM_UserAPP *userApp, std::string strVmId)
 {
   // Terminar este método, para cancelar el resto de eventos si se requiere.
   for (unsigned int nIndex = 0; nIndex < userApp->getAppArraySize(); nIndex++)
@@ -171,7 +171,7 @@ void CloudProviderFirstFit::cancelAndDeleteAppFinishMsgs(SM_UserAPP *userApp, st
       userAppReq.pMsgTimeout = nullptr;
     }
   }
-}
+}*/
 
 void CloudProviderFirstFit::handleInitialStage(cMessage *msg)
 { // ADAA
@@ -197,10 +197,10 @@ void CloudProviderFirstFit::handleManageSubscriptions(cMessage *msg)
   for (int i = 0; i < subscribeQueue.size(); i++)
   {
     userVmSub = subscribeQueue.at(i);
-    strUsername = userVmSub->getUserID();
+    strUsername = userVmSub->getUserId();
 
     dWaitingSub = (simTime().dbl()) - (userVmSub->getDStartSubscriptionTime());
-    dMaxSubtime = userVmSub->getMaxSubscribetime(0);
+    dMaxSubtime = userVmSub->getInstanceRequestTimes(0).maxSubTime.dbl();
 
     if (dWaitingSub > dMaxSubtime)
     {
@@ -269,7 +269,7 @@ void CloudProviderFirstFit::handleSubscriptionTimeout(cMessage *msg)
       //                freeUserVms(strUsername);
 
       dWaitingSub = (simTime().dbl()) - (userVmSub->getDStartSubscriptionTime());
-      dMaxSubTime = userVmSub->getMaxSubscribetime(0);
+      dMaxSubTime = userVmSub->getInstanceRequestTimes(0).maxSubTime.dbl();
 
       subscribeQueue.erase(subscribeQueue.begin() + nIndex);
 
@@ -310,8 +310,8 @@ int CloudProviderFirstFit::searchUserInSubQueue(std::string strUsername, std::st
   // The condition for finding the user
   auto selector = [strUsername, strVmId](SM_UserVM *vm) -> bool
   {
-    return strUsername.compare(vm->getUserID()) == 0 &&
-           (strcmp(vm->getStrVmId(), "") == 0 || strVmId.compare(vm->getStrVmId()) == 0);
+    return strUsername.compare(vm->getUserId()) == 0 &&
+           (strcmp(vm->getVmId(), "") == 0 || strVmId.compare(vm->getVmId()) == 0);
   };
 
   // Attempt the search
@@ -342,7 +342,7 @@ void CloudProviderFirstFit::updateSubsQueue()
     if (userVmSub->getOwner() == this && userVmSub->getResult() != SM_APP_Sub_Accept)
     {
       checkVmUserFit(userVmSub);
-      EV_INFO << "Notifying subscription of user: " << userVmSub->getUserID() << '\n';
+      EV_INFO << "Notifying subscription of user: " << userVmSub->getUserId() << '\n';
     }
   }
 }
@@ -358,10 +358,10 @@ void CloudProviderFirstFit::freeUserVms(std::string strUsername)
     return;
 
   // Mark the user VMs as free
-  for (int i = 0; i < pVmRequest->getVmsArraySize(); i++)
+  for (int i = 0; i < pVmRequest->getVmArraySize(); i++)
   {
-    auto vmRequest = pVmRequest->getVms(i);
-    std::string strVmId = vmRequest.strVmId;
+    auto vmRequest = pVmRequest->getVm(i);
+    std::string strVmId = vmRequest.vmId;
     freeVm(strVmId);
   }
 
@@ -447,7 +447,7 @@ void CloudProviderFirstFit::handleVmRequestFits(SIMCAN_Message *sm)
   assert_msg(userVM_Rq != nullptr, "Wrong userVM_Rq. Null pointer or bad operation code!");
 
   // Log user request
-  userVM_Rq->printUserVM();
+  EV_INFO << userVM_Rq << '\n';
 
   // Check if is a VmRequest or a subscribe
   if (subscribeQueue.size() > 0)
@@ -502,7 +502,7 @@ void CloudProviderFirstFit::notifySubscription(SM_UserVM *userVM_Rq)
 {
   SM_UserVM_Finish *pMsgTimeout;
 
-  EV_INFO << "Notifying request from user: " << userVM_Rq->getUserID() << '\n';
+  EV_INFO << "Notifying request from user: " << userVM_Rq->getUserId() << '\n';
   EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
 
   // Fill the message
@@ -520,7 +520,7 @@ void CloudProviderFirstFit::notifySubscription(SM_UserVM *userVM_Rq)
 }
 void CloudProviderFirstFit::timeoutSubscription(SM_UserVM *userVM_Rq)
 {
-  EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << '\n';
+  EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserId() << '\n';
   EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
 
   userVM_Rq->setTimeoutSubscribeMsg(nullptr);
@@ -541,8 +541,8 @@ void CloudProviderFirstFit::storeVmSubscribe(SM_UserVM *userVM_Rq)
 
   if (userVM_Rq != nullptr)
   {
-    strUserName = userVM_Rq->getUserID();
-    dMaxSubscribeTime = userVM_Rq->getMaxSubscribetime(0);
+    strUserName = userVM_Rq->getUserId();
+    dMaxSubscribeTime = userVM_Rq->getInstanceRequestTimes(0).maxSubTime.dbl();
     EV_INFO << "Subscribing the VM request from user:" << strUserName << " | max sub time: " << dMaxSubscribeTime << '\n';
 
     pMsg = userVM_Rq->getTimeoutSubscribeMsg();
@@ -562,6 +562,7 @@ void CloudProviderFirstFit::storeVmSubscribe(SM_UserVM *userVM_Rq)
   }
 }
 
+/*
 SM_UserAPP_Finish *CloudProviderFirstFit::scheduleAppTimeout(std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime)
 {
   SM_UserAPP_Finish *pMsgFinish = new SM_UserAPP_Finish();
@@ -579,16 +580,16 @@ SM_UserAPP_Finish *CloudProviderFirstFit::scheduleAppTimeout(std::string name, s
   scheduleAt(simTime() + SimTime(totalTime), pMsgFinish);
 
   return pMsgFinish;
-}
+}*/
 
 void CloudProviderFirstFit::clearVMReq(SM_UserVM *&userVM_Rq, int lastId)
 {
   for (int i = 0; i < lastId; i++)
   {
-    auto vmRequest = userVM_Rq->getVms(i);
+    auto vmRequest = userVM_Rq->getVm(i);
     cancelAndDelete(vmRequest.pMsg);
     vmRequest.pMsg = nullptr;
-    datacentreCollection->freeVmRequest(vmRequest.strVmId);
+    datacentreCollection->freeVmRequest(vmRequest.vmId);
   }
 }
 
@@ -636,7 +637,7 @@ void CloudProviderFirstFit::rejectVmRequest(SM_UserVM *userVM_Rq)
 {
   // Create a request_rsp message
 
-  EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserID() << '\n';
+  EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserId() << '\n';
 
   userVM_Rq->setIsResponse(true);
   userVM_Rq->setOperation(SM_VM_Req_Rsp);
@@ -691,7 +692,7 @@ void CloudProviderFirstFit::handleResponseNotifySubcription(SIMCAN_Message *sm)
   if (userVM_Rq == nullptr)
     throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
 
-  nIndex = searchUserInSubQueue(userVM_Rq->getUserID(), userVM_Rq->getStrVmId());
+  nIndex = searchUserInSubQueue(userVM_Rq->getUserId(), userVM_Rq->getVmId());
   if (nIndex != -1)
   {
     EV_TRACE << __func__ << " - User found at position:" << nIndex << '\n';
@@ -699,7 +700,7 @@ void CloudProviderFirstFit::handleResponseNotifySubcription(SIMCAN_Message *sm)
   }
   else
   {
-    EV_TRACE << __func__ << " - User " << userVM_Rq->getUserID() << " not found in queue list" << '\n';
+    EV_TRACE << __func__ << " - User " << userVM_Rq->getUserId() << " not found in queue list" << '\n';
   }
 
   pMsg = userVM_Rq->getTimeoutSubscribeMsg();

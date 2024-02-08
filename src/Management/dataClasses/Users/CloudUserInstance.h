@@ -5,6 +5,7 @@
 #include "Management/dataClasses/VirtualMachines/VmInstanceCollection.h"
 #include "CloudUser.h"
 
+//#include "Messages/VMRequest.h"
 #include "Messages/SM_UserVM.h"
 #include "Messages/SM_UserAPP.h"
 
@@ -34,14 +35,6 @@ struct InstanceTimes
     }
 };
 
-struct InstanceRequestTimes
-{
-    int maxStartTime;        // T1
-    int nRentTime;           // T2
-    int maxSubTime;          // T3
-    int maxSubscriptionTime; // T4
-};
-
 /**
  * Class that represent a modeled user in SIMCAN for cloud environments.
  *
@@ -56,7 +49,7 @@ private:
     int nId;                                             // Numerical id
     std::vector<VmInstanceCollection *> virtualMachines; // Vector of Virtual Machines configured for this user.
     InstanceTimes times;                                 // Times of specific events
-    InstanceRequestTimes requestTimes;                   // Request times or maximum renting times
+    VM_Request::InstanceRequestTimes requestTimes;       // Request times or maximum renting times
     int numFinishedVMs;                                  // Number of finished vm requests
     int numActiveSubscriptions;                          // Number of active subscriptions
 
@@ -170,13 +163,13 @@ public:
      * @brief Set the Rent Times object
      * @param requestTimes The specifics of the renting times
      */
-    void setRentTimes(const InstanceRequestTimes &requestTimes) { this->requestTimes = requestTimes; }
+    void setRentTimes(const VM_Request::InstanceRequestTimes &requestTimes) { this->requestTimes = requestTimes; }
 
     /**
      * @brief Get the Rent Times object
      * @return Constant reference to the Rent Times
      */
-    const InstanceRequestTimes &getRentTimes() { return requestTimes; }
+    const VM_Request::InstanceRequestTimes &getRentTimes() { return requestTimes; }
 
     /**
      * @brief Gets the instance times

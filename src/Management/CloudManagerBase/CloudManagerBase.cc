@@ -113,15 +113,15 @@ int CloudManagerBase::calculateTotalCoresRequested(const SM_UserVM *request)
     int nRet = 0;
     if (request != nullptr)
     {
-        int nRequestedVms = request->getTotalVmsRequests();
+        int nRequestedVms = request->getVmArraySize();
 
         for (int i = 0; i < nRequestedVms; i++)
         {
-            const VM_Request &vmRequest = request->getVms(i);
-            nRet += getTotalCoresByVmType(vmRequest.strVmType);
+            const VM_Request &vmRequest = request->getVm(i);
+            nRet += getTotalCoresByVmType(vmRequest.vmType);
         }
     }
-    EV_DEBUG << "User:" << request->getUserID() << " has requested: " << nRet << " cores\n";
+    EV_DEBUG << "User:" << request->getUserId() << " has requested: " << nRet << " cores\n";
 
     return nRet;
 }
@@ -134,11 +134,11 @@ SM_UserVM_Finish *CloudManagerBase::scheduleVmMsgTimeout(Event eventType, std::s
     // FIXME: msg->setName(); <-- It's good for the GUI !!
     msg->setKind(eventType);
     msg->setUserID(userId.c_str());
-    msg->setStrVmId(request.strVmId.c_str());
-    msg->setStrVmType(request.strVmType.c_str());
+    msg->setStrVmId(request.vmId.c_str());
+    msg->setStrVmType(request.vmType.c_str());
 
     // Select the "true" time out (allows overriding)
-    trueTimeOut = timeOut == 0 ? request.nRentTime_t2 : timeOut;
+    trueTimeOut = timeOut == 0 ? request.times.rentTime.dbl() : timeOut;
 
     // Schedule it
     auto eventTime = simTime() + timeOut;
@@ -156,8 +156,8 @@ SM_UserVM_Finish *CloudManagerBase::scheduleVmMsgTimeout(Event eventType, const 
 
     // FIXME: msg->setName(); <-- It's good for the GUI !!
     msg->setKind(eventType);
-    msg->setUserID(request->getUserID());
-    msg->setStrVmId(request->getStrVmId());
+    msg->setUserID(request->getUserId());
+    msg->setStrVmId(request->getVmId());
 
     // Schedule it
     auto eventTime = simTime() + timeOut;

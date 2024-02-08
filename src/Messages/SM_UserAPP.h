@@ -2,7 +2,7 @@
 #define SM_USERAPP_H_
 
 #include "SM_UserAPP_m.h"
-#include <vector>
+#include "Core/include/GroupVector.hpp"
 #include <algorithm>
 
 /**
@@ -15,9 +15,7 @@
 class SM_UserAPP : public SM_UserAPP_Base
 {
 private:
-    // APP_Request* findRequest(const std::string &service,std::string strIp);
     void copy(const SM_UserAPP &other);
-
     /**
      * @brief Copies the given App request
      * @details Watch out, it duplicates the pMsgTimeout for avoiding ownership errors
@@ -28,7 +26,8 @@ private:
     int findRequestIndex(const std::string &service, const std::string &vmId);
 
 protected:
-    std::vector<APP_Request> apps;
+    group_vector<std::string, APP_Request> vmAppGroupedVector;       //!< Apps stored and grouped by vm in a flat way
+    std::vector<APP_Request> &apps = vmAppGroupedVector.flattened(); //!< Alias for quick access to the flattened version, shall not be modified
 
     /**
      * @brief Sets the Apps Array new size
@@ -36,7 +35,7 @@ protected:
      * For adding new app requests one should use the createNewApp* or addAppRequest methods
      * @param size new size
      */
-    virtual void setAppArraySize(size_t size){};
+    virtual void setAppArraySize(size_t size) { vmAppGroupedVector.reserve(size); }
 
     /**
      * @brief Set the App object in the specified position
@@ -53,6 +52,11 @@ protected:
      */
     void copyAndInsertRequest(const APP_Request &request);
 
+    /* Extra methods, could be reused for the future*/
+    virtual void insertApp(size_t k, const APP_Request &app){};
+    virtual void insertApp(const APP_Request &app){};
+    virtual void eraseApp(size_t k){};
+
 public:
     SM_UserAPP();
     SM_UserAPP(const SM_UserAPP &other);
@@ -60,20 +64,16 @@ public:
 
     SM_UserAPP &operator=(const SM_UserAPP &other);
 
-    void createNewAppRequest(const std::string &service, const std::string &appType, const std::string &ip, const std::string &vmId, double startRentTime);
-
     void increaseFinishedApps() { nFinishedApps++; };
     void decreaseFinishedApps() { nFinishedApps--; };
 
-    size_t getAppArraySize() const { return apps.size(); }
-    APP_Request &getApp(size_t k) { return apps.at(k); }
+    size_t getAppArraySize() const { return vmAppGroupedVector.size(); }
+    APP_Request &getApp(size_t k) { return vmAppGroupedVector.flattened().at(k); }
     const APP_Request &getApp(size_t k) const { return const_cast<SM_UserAPP *>(this)->getApp(k); };
 
     void changeState(const std::string &service, const std::string &vmId, tApplicationState eNewState);
     void changeStateByIndex(int nIndex, tApplicationState eNewState);
 
-    // void setStartTime(const std::string &service, std::string strIp, double dTime);
-    // void setEndTime(const std::string &service, const std::string &vmId, double dTime);
     void abortAllApps(const std::string &vmId);
 
     bool isFinishedOK(const std::string &service, const std::string &vmId);
@@ -89,6 +89,11 @@ public:
     virtual SM_UserAPP *dup() const { return new SM_UserAPP(*this); }
     virtual SM_UserAPP *dup(const std::string &vmId) const;
 
+    auto begin() { return vmAppGroupedVector.begin(); }
+    auto end() { return vmAppGroupedVector.end(); }
+
+    std::ptrdiff_t getDeploymentIndex(const std::vector<APP_Request>::iterator& it) { return std::distance(apps.begin(), it);}
+
     /**
      * @brief Updates the state of each individual app instance
      * #FIXME: Watch out with the possible message leaking!
@@ -96,17 +101,70 @@ public:
      */
     virtual void update(const SM_UserAPP *newData);
 
-    /**
-     * @brief Inserts and application
-     * @param app APP_Request
-     */
-    virtual void insertApp(const APP_Request &app) { apps.emplace_back(app); };
-    
-    /* Extra methods, could be reused for the future*/
-    virtual void insertApp(size_t k, const APP_Request &app){};
-    virtual void eraseApp(size_t k){};
-
     friend std::ostream &operator<<(std::ostream &os, const SM_UserAPP &obj);
+    friend class UserAPPBuilder;
+};
+
+class UserAPPBuilder
+{
+private:
+    SM_UserAPP *app = nullptr;
+    std::map<std::string, std::vector<APP_Request>> prev_map;
+
+public:
+    void newRequest()
+    {
+        if (app)
+            delete app;
+        app = new SM_UserAPP();
+    }
+
+    void createNewAppRequest(const std::string &service, const std::string &appType, const std::string &ip, const std::string &vmId, double startRentTime)
+    {
+        APP_Request appRQ;
+
+        appRQ.startTime = startRentTime;
+        appRQ.finishTime = 0;
+        appRQ.strIp = ip;
+        appRQ.strApp = service;
+        appRQ.strAppType = appType;
+        appRQ.eState = appWaiting;
+        appRQ.vmId = vmId;
+
+        EV_DEBUG << "+RQ(new): App: " << appRQ.strApp << " | status: " << appRQ.eState << " | Ip:" << appRQ.strIp << " | VmId: " << appRQ.vmId << " | startTime: " << appRQ.startTime << " | endTime: " << appRQ.finishTime << '\n';
+
+        // The [] operator creates the std::pair if the element searched by key does not exist
+        prev_map[vmId].push_back(appRQ);
+    }
+
+    SM_UserAPP *finish()
+    {
+        bool first = true;
+
+        // Push data in compact and organized way
+        for (const auto &elem : prev_map)
+        {
+            if (first)
+            {
+                app->vmAppGroupedVector.at(0) = elem.first;
+                first = false;
+            }
+            else
+                app->vmAppGroupedVector.new_collection(elem.first);
+
+            for (const auto &appRequest : elem.second)
+                app->vmAppGroupedVector.emplace_back(appRequest);
+        }
+
+        // Clear the previous map and mark as finished
+        prev_map.clear();
+
+        // Null inner reference
+        auto retApp = app;
+        app = nullptr;
+
+        return retApp;
+    }
 };
 
 #endif /* SM_USERAPP_H_ */

@@ -50,7 +50,7 @@ public:
    * @return true If the resources where allocated
    * @return false If the resources where unable to be allocated
    */
-  bool tryAllocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t **coreIndex);
+  bool tryAllocateResources(const uint32_t &cores, const double &memory, const double &disk, uint32_t **const coreIndex);
 
   /**
    * @brief Deallocates resources

@@ -52,7 +52,7 @@ void HardwareManager::handleMessage(cMessage *msg)
     // TODO - Generated method body
 }
 
-bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &memory, const double &disk, const uint32_t **coreIndex)
+bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &memory, const double &disk, uint32_t **const coreIndex)
 {
     // Initialize
     *coreIndex = nullptr;

@@ -41,17 +41,8 @@ SM_UserAPP &SM_UserAPP::operator=(const SM_UserAPP &other)
 void SM_UserAPP::copy(const SM_UserAPP &other)
 {
     // Copy parameters
-    apps = other.apps;
-}
-
-void SM_UserAPP::copyAppRequest(const APP_Request &src, APP_Request &dest)
-{
-    // Invoking copy constructor
-    dest = src;
-
-    // If present should duplicate, not copy!
-    if (src.pMsgTimeout != nullptr)
-        dest.pMsgTimeout = src.pMsgTimeout->dup();
+    // apps = other.apps;
+    vmAppGroupedVector = other.vmAppGroupedVector;
 }
 
 void SM_UserAPP::copyAndInsertRequest(const APP_Request &request)
@@ -59,24 +50,6 @@ void SM_UserAPP::copyAndInsertRequest(const APP_Request &request)
     APP_Request newRequest;
     copyAppRequest(request, newRequest);
     insertApp(request);
-}
-
-void SM_UserAPP::createNewAppRequest(const std::string &service, const std::string &appType, const std::string &ip, const std::string &vmId, double startRentTime)
-{
-    APP_Request appRQ;
-
-    appRQ.startTime = startRentTime;
-    appRQ.finishTime = 0;
-    appRQ.strIp = ip;
-    appRQ.strApp = service;
-    appRQ.strAppType = appType;
-    appRQ.eState = appWaiting;
-    appRQ.pMsgTimeout = nullptr;
-    appRQ.vmId = vmId;
-
-    EV_DEBUG << "+RQ(new): App: " << appRQ.strApp << " | status: " << appRQ.eState << " | Ip:" << appRQ.strIp << " | VmId: " << appRQ.vmId << " | startTime: " << appRQ.startTime << " | endTime: " << appRQ.finishTime << '\n';
-
-    insertApp(appRQ);
 }
 
 SM_UserAPP *SM_UserAPP::dup(const std::string &vmId) const
@@ -87,18 +60,20 @@ SM_UserAPP *SM_UserAPP::dup(const std::string &vmId) const
     // Copy all context from the base (we will change the nFinishedApps)
     pRet->SM_UserAPP_Base::operator=(*this);
 
-    // Calculate and set the finished apps
-    for (const auto &appReq : apps)
-    {
-        if (vmId == appReq.vmId)
-        {
-            pRet->copyAndInsertRequest(appReq);
+    auto iter = std::find(vmAppGroupedVector.begin(), vmAppGroupedVector.end(), vmId);
 
+    if (iter != vmAppGroupedVector.end())
+    {
+        for (const auto &appReq : *iter)
+        {
+            pRet->vmAppGroupedVector.emplace_back(appReq);
             if (APP_Request::isFinished(appReq))
                 nFinished++;
         }
+        pRet->vmAppGroupedVector.at(0) = vmId;
     }
 
+    // Set the finished apps
     pRet->nFinishedApps = nFinished;
 
     // Return the copy
@@ -117,10 +92,6 @@ void SM_UserAPP::update(const SM_UserAPP *newData)
             if (original.vmId == request.vmId && original.strApp == request.strApp)
             {
                 original.eState = request.eState;
-
-                // FIXME: Will cause memory leak and if attempted to be deleted an exception
-                if (request.pMsgTimeout != nullptr)
-                    original.pMsgTimeout = request.pMsgTimeout;
 
                 // If it went from Waiting/Running to Finished
                 if (!APP_Request::isFinished(original) && APP_Request::isFinished(request))
@@ -162,7 +133,7 @@ void SM_UserAPP::changeState(const std::string &service, const std::string &vmId
 void SM_UserAPP::changeStateByIndex(int nIndex, tApplicationState eNewState)
 {
     auto request = getApp(nIndex);
-    
+
     // If it finished -> record finish time
     if (!APP_Request::isFinished(request) && eNewState == appFinishedOK)
         request.finishTime = simTime().dbl();

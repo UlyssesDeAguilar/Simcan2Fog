@@ -115,7 +115,9 @@ OBJS = \
     $O/Messages/SM_FogIO.o \
     $O/Messages/SM_UserAPP.o \
     $O/Messages/SM_UserVM.o \
+    $O/Messages/VMRequest.o \
     $O/OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.o \
+    $O/OperatingSystem/Hypervisors/DcHypervisor/DcHypervisor.o \
     $O/OperatingSystem/Hypervisors/EdgeHypervisor/EdgeHypervisor.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
     $O/OperatingSystem/Hypervisors/OsCore/OsCore.o \

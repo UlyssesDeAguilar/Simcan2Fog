@@ -18,7 +18,24 @@ struct APP_Request
     double startTime;
     double finishTime;
     tApplicationState eState;
-    SM_UserAPP_Finish *pMsgTimeout;
+    //SM_UserAPP_Finish *pMsgTimeout;
+
+    static bool isFinishedOK(const APP_Request &r) { return r.eState == appFinishedOK; }
+    static bool isFinishedKO(const APP_Request &r) { return r.eState == appFinishedError || r.eState == appFinishedTimeout; }
+    static bool isFinished(const APP_Request &r) { return isFinishedOK(r) || isFinishedKO(r); }
+    friend std::ostream &operator<<(std::ostream &os, const APP_Request &obj);
+};
+
+/**
+ * @brief This is a new model for app requests which is more compact -- will be used in the future
+ */
+struct AppRequest
+{
+    std::string serviceName;    //!< Name of the service being deployed
+    std::string appType;        //!< Name of the instance
+    double startTime;           //!< Start of execution
+    double finishTime;          //!< End of execution
+    tApplicationState state;    //!< State of the application
 
     static bool isFinishedOK(const APP_Request &r) { return r.eState == appFinishedOK; }
     static bool isFinishedKO(const APP_Request &r) { return r.eState == appFinishedError || r.eState == appFinishedTimeout; }

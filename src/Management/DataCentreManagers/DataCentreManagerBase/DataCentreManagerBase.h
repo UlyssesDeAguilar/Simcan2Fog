@@ -6,7 +6,7 @@
 #include "Management/dataClasses/Users/CloudUserInstance.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/parser/DataCentreConfigParser.h"
-#include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
+#include "OperatingSystem/Hypervisors/DcHypervisor/DcHypervisor.h"
 
 class DataCentreApplicationBuilder;
 
@@ -45,7 +45,7 @@ protected:
     cMessage *cpuManageMachinesMessage;
     cMessage *cpuStatusMessage;
 
-    StrMap<Hypervisor> acceptedVMsMap;    // Map of the accepted VMs
+    StrMap<hypervisor::DcHypervisor> acceptedVMsMap;    // Map of the accepted VMs
     StrMap<SM_UserVM> acceptedUsersRqMap; // Map of the accepted users
     StrMap<SM_UserAPP> handlingAppsRqMap; // Map of the accepted applications
 
@@ -58,7 +58,7 @@ protected:
     /** Vector that contains a collection of structures for monitoring data-centres */
     std::vector<DataCentre *> dataCentresBase;
 
-    std::map<int, std::vector<Hypervisor *>> mapHypervisorPerNodes;
+    std::map<int, std::vector<hypervisor::DcHypervisor *>> mapHypervisorPerNodes;
     std::map<std::string, cModule *> mapAppsVectorModulePerVm;
     std::map<std::string, unsigned int *> mapAppsModulePerId;
     std::map<std::string, bool *> mapAppsRunningInVectorModulePerVm;
@@ -91,11 +91,7 @@ protected:
 
     bool checkVmUserFit(SM_UserVM *&userVM_Rq);
 
-    virtual Hypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) = 0;
-
-    // TODO: refactorizar. esta duplicado en provider.
-    NodeResourceRequest *generateNode(std::string strUserName, VM_Request vmRequest);
-    void fillVmFeatures(std::string strVmType, NodeResourceRequest *&pNode);
+    virtual hypervisor::DcHypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) = 0;
 
     void handleUserAppRequest(SIMCAN_Message *sm);
 
@@ -130,14 +126,14 @@ protected:
      * @param pHypervisor Pointer to the machine hypervisor
      * @return True if VM is allocated. Else otherwise.
      */
-    bool allocateVM(NodeResourceRequest *pResourceRequest, Hypervisor *pHypervisor);
+    bool allocateVM(const VM_Request &vm, hypervisor::DcHypervisor *pHypervisor);
 
     void clearVMReq(SM_UserVM *&userVM_Rq, int lastId);
 
     // Helpers
     cModule *getFreeAppModuleInVector(const std::string &vmId);
     cModule *getAppsVectorModulePerVm(const std::string &vmId) { return getOrNull(mapAppsVectorModulePerVm, vmId); }
-    Hypervisor *getNodeHypervisorByVm(const std::string &vmId) { return getOrNull(acceptedVMsMap, vmId); }
+    hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return getOrNull(acceptedVMsMap, vmId); }
     bool *getAppsRunningInVectorModuleByVm(const std::string &vmId) { return getOrNull(mapAppsRunningInVectorModulePerVm, vmId); }
     unsigned int *getAppModuleById(const std::string &appInstance) { return getOrNull(mapAppsModulePerId, appInstance); }
     SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return getOrNull(handlingAppsRqMap, userId); }
@@ -161,7 +157,7 @@ protected:
     void handleManageMachines(cMessage *msg);
     void manageActiveMachines();
 
-    void updateCpuUtilizationTimeForHypervisor(Hypervisor *pHypervisor);
+    void updateCpuUtilizationTimeForHypervisor(hypervisor::DcHypervisor *pHypervisor);
     std::tuple<unsigned int, simtime_t **, simtime_t *> getTimersTupleByHypervisorPath(const std::string &fullPath);
     unsigned int getNumCoresByHypervisorPath(const std::string &fullPath) { return std::get<0>(getTimersTupleByHypervisorPath(fullPath)); }
     simtime_t *getTimerArrayByHypervisorPath(std::string strHypervisorFullPath);

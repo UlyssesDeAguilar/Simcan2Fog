@@ -56,7 +56,7 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *use
     if (userVm == nullptr)
         error("Could not cast SIMCAN_Message to SM_UserVM_Cost (wrong operation code or message class?)");
 
-    pUserInstance = userHashMap.at(userVm->getUserID());
+    pUserInstance = userHashMap.at(userVm->getUserId());
 
     if (pUserInstance == nullptr)
         error("User instance not found!");
@@ -68,7 +68,7 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *use
 
     // Check the response and proceed with the next action
     if (pCloudUser->getPriorityType() == Priority && userVm->getBPriorized())
-        priorizedHashMap[userVm->getUserID()] = true;
+        priorizedHashMap[userVm->getUserId()] = true;
 
     UserGenerator_simple::handleResponseVmAccept(userVm_RAW);
 
@@ -83,7 +83,7 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmReject(SIMCAN_Message *use
     if (userVm != nullptr)
     {
 
-        pUserInstance = userHashMap.at(userVm->getUserID());
+        pUserInstance = userHashMap.at(userVm->getUserId());
 
         if (pUserInstance == nullptr)
             error("User instance not found!");
@@ -95,14 +95,14 @@ CloudUserInstance *UserGeneratorCost::handleResponseVmReject(SIMCAN_Message *use
         {
             EV_INFO << __func__ << " - Response message" << endl;
 
-            userVm->printUserVM();
+            EV_INFO << *userVm << '\n';
 
             // Update the status
-            updateVmUserStatus(userVm->getUserID(), userVm->getStrVmId(), vmFinished);
+            updateVmUserStatus(userVm->getUserId(), userVm->getVmId(), vmFinished);
 
             // Update priorized
             if (userVm->getBPriorized())
-                priorizedHashMap[userVm->getUserID()] = true;
+                priorizedHashMap[userVm->getUserId()] = true;
 
             if (pUserInstance != nullptr)
             {
@@ -256,7 +256,7 @@ void UserGeneratorCost::calculateStatistics()
         double dExecTime = times.initExec.dbl();
         double dWaitTime = times.waitTime.dbl();
 
-        double dMaxSub = userInstance->getRentTimes().maxSubscriptionTime;
+        double dMaxSub = userInstance->getRentTimes().maxSubscriptionTime.dbl();
         if (dMaxSub != 0)
             dMaxSub = dMaxSub / 3600;
 

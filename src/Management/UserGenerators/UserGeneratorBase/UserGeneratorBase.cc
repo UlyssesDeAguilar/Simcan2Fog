@@ -27,7 +27,7 @@ void UserGeneratorBase::initialize()
     timeoutsTemplate =
         {
             .maxStartTime = par("maxStartTime_t1"),
-            .nRentTime = par("nRentTime_t2"),
+            .rentTime = par("nRentTime_t2"),
             .maxSubTime = par("maxSubTime_t3"),
             .maxSubscriptionTime = par("maxSubscriptionTime")};
 
@@ -229,7 +229,7 @@ SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
 
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - UserId: " << userId
              << " | maxStartTime_t1: " << timeoutsTemplate.maxStartTime
-             << " | rentTime_t2: " << timeoutsTemplate.nRentTime
+             << " | rentTime_t2: " << timeoutsTemplate.rentTime
              << " | maxSubTime: " << timeoutsTemplate.maxSubTime
              << " | MaxSubscriptionTime:" << timeoutsTemplate.maxSubscriptionTime << "\n";
 
@@ -241,7 +241,7 @@ SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
 
     // Creation of the message
     auto pUserRet = createVmMessage();
-    pUserRet->setUserID(userId.c_str());
+    pUserRet->setUserId(userId.c_str());
     pUserRet->setIsResponse(false);
     pUserRet->setOperation(SM_VM_Req);
 
@@ -255,11 +255,7 @@ SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
         for (const auto &instance : vmCollection->allInstances())
         {
             std::string instanceId = instance->getVmInstanceId();
-
-            // FIXME: The VM request has an double to int conversion -- Loss of precision (to say the least)!
-            pUserRet->createNewVmRequest(vmType, instanceId,
-                                         timeoutsTemplate.maxStartTime, dRentTime, timeoutsTemplate.maxSubTime,
-                                         timeoutsTemplate.maxSubscriptionTime);
+            pUserRet->createNewVmRequest(vmType, instanceId, timeoutsTemplate);
         }
     }
 

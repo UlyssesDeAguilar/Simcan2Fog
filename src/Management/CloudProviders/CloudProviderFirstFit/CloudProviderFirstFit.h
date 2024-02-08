@@ -85,9 +85,9 @@ protected:
     virtual bool checkVmUserFit(SM_UserVM *&userVM_Rq);
 
 
-    SM_UserAPP_Finish* scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime);
+    // SM_UserAPP_Finish* scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime);
     void clearVMReq (SM_UserVM*& userVM_Rq, int lastId);
-    void cancelAndDeleteAppFinishMsgs(SM_UserAPP* userApp, std::string strVmId);
+    //void cancelAndDeleteAppFinishMsgs(SM_UserAPP* userApp, std::string strVmId);
     //void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);
 
     /**

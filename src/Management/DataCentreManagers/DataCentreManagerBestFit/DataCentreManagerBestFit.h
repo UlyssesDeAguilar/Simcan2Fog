@@ -21,10 +21,10 @@ protected:
     virtual ~DataCentreManagerBestFit() {};
     virtual void initialize() override;
 
-    virtual Hypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
+    virtual hypervisor::DcHypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
     virtual void deallocateVmResources(std::string strVmId) override;
-    virtual void storeNodeInMap(Hypervisor *pHypervisor);
-    virtual void removeNodeFromMap(Hypervisor *pHypervisor);
+    virtual void storeNodeInMap(hypervisor::DcHypervisor *pHypervisor);
+    virtual void removeNodeFromMap(hypervisor::DcHypervisor *pHypervisor);
 };
 
 #endif

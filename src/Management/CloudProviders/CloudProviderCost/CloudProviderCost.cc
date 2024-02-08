@@ -81,12 +81,13 @@ void CloudProviderCost::handleVmRequestFits(SIMCAN_Message *sm)
     if (userVM_Rq == nullptr)
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong userVM_Rq. Null pointer or bad operation code!").c_str());
 
-    auto pCloudUser = dynamic_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserID()));
+    auto pCloudUser = dynamic_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserId()));
 
     if (pCloudUser == nullptr)
         throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] Wrong pCloudUser. Null pointer or wrong cloud user class!").c_str());
 
-    userVM_Rq->printUserVM();
+    EV_INFO << *userVM_Rq << '\n';
+
     // Check if is a VmRequest or a subscribe
     if (subscribeQueue.size() > 0 && pCloudUser->getPriorityType() != Priority)
         rejectVmRequest(userVM_Rq);

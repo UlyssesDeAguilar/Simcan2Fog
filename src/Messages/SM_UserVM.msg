@@ -13,11 +13,11 @@ message SM_UserVM extends SIMCAN_Message{
     
     @customize(true);
    
-    double dStartSubscriptionTime;
-    double dEndSubscriptionTime;     
-    string strVmId;    
-    string userID;			// ID of the user instance
-    VM_Request vms[];    	// List of the Virtual machines
+    double dStartSubscriptionTime;  // Start time of the whole vm deployment subscription (waiting in queue)
+    double dEndSubscriptionTime;    // Finish time of the wait in queue
+    string vmId;                    // Technically used for app timeouts ?
+    string userId;			        // ID of the user instance
+    abstract VM_Request vm[];    	// List of the Virtual machines
 }
 
 cplusplus{{

@@ -5,7 +5,7 @@
 #include "Management/dataClasses/Users/CloudUserInstance.h"
 #include "Management/dataClasses/Users/CloudUserInstanceTrace.h"
 #include "Core/include/GroupVector.hpp"
-#include "Messages/SM_UserVM_m.h"
+#include "Messages/SM_UserVM.h"
 
 #include <fstream>
 
@@ -38,7 +38,7 @@ protected:
     bool shuffleUsers;         // Flag for suffling users
     bool activeCycles;         // ??
 
-    InstanceRequestTimes timeoutsTemplate; // The "maximum" times acceptable by users
+    VM_Request::InstanceRequestTimes timeoutsTemplate; // The "maximum" times acceptable by users
     string strUserTraceFilePath;
 
     int userTraceMaxVms;

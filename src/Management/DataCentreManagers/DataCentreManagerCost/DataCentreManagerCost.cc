@@ -1,8 +1,7 @@
 #include "../DataCentreManagerCost/DataCentreManagerCost.h"
-
 #include "Management/utils/LogUtils.h"
-
 Define_Module(DataCentreManagerCost);
+using namespace hypervisor;
 
 void DataCentreManagerCost::initialize()
 {
@@ -88,14 +87,14 @@ int DataCentreManagerCost::initDataCentreMetadata()
 int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule)
 {
     cModule *pHypervisorModule;
-    Hypervisor *pHypervisor;
+    DcHypervisor *pHypervisor;
     int numCores;
 
     pHypervisorModule = pNodeModule->getSubmodule("osModule")->getSubmodule("hypervisor");
 
     numCores = pNodeModule->par("numCpuCores");
 
-    pHypervisor = check_and_cast<Hypervisor *>(pHypervisorModule);
+    pHypervisor = check_and_cast<DcHypervisor *>(pHypervisorModule);
 
     simtime_t **startTimeArray = new simtime_t *[numCores];
     simtime_t *timerArray = new simtime_t[numCores];
@@ -113,10 +112,10 @@ int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule)
     return numCores;
 }
 
-Hypervisor *DataCentreManagerCost::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
+DcHypervisor *DataCentreManagerCost::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
 {
-    auto pCloudUser = dynamic_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserID()));
-    Hypervisor *pHypervisor = nullptr;
+    auto pCloudUser = dynamic_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserId()));
+    DcHypervisor *pHypervisor = nullptr;
     SM_UserVM_Cost *userVM_Rq_Cost = dynamic_cast<SM_UserVM_Cost *>(userVM_Rq);
 
     if (pCloudUser == nullptr)
@@ -140,17 +139,17 @@ Hypervisor *DataCentreManagerCost::selectNode(SM_UserVM *&userVM_Rq, const VM_Re
     return pHypervisor;
 }
 
-Hypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq, const VM_Request &vmRequest)
+DcHypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq, const VM_Request &vmRequest)
 {
     assert_msg((userVM_Rq != nullptr), "Nullpointer");
 
-    std::string userId = userVM_Rq->getUserID();
-    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.strVmType);
+    std::string userId = userVM_Rq->getUserId();
+    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.vmType);
     int numCoresRequested = pVMBase->getNumCores();
 
     // Search the possible candidate
-    auto hasSufficientCores = [numCoresRequested](auto &e)
-    { return e->first >= numCoresRequested; };
+    auto hasSufficientCores = [numCoresRequested](std::pair<const int, std::vector<DcHypervisor*>> &e) -> bool
+    { return e.first >= numCoresRequested; };
 
     auto hypervisorBucket = std::find_if(mapHypervisorPerNodesReserved.begin(), mapHypervisorPerNodesReserved.end(), hasSufficientCores);
 
@@ -163,20 +162,18 @@ Hypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq
             int numAvailableCores = hypervisor->getAvailableCores();
             if (numAvailableCores >= numCoresRequested)
             {
-                NodeResourceRequest *pResourceRequest = generateNode(userId, vmRequest);
 
                 // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaci�n al map y que sea el hypervisor el que controle a que VM va.
                 // TODO: Finalmente deber�a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
 
-                // FIXME: Possible memory leak!
-                cModule *pVmAppVectorModule = hypervisor->allocateNewResources(pResourceRequest);
+                cModule *pVmAppVectorModule = hypervisor->handleVmRequest(vmRequest);
                 if (pVmAppVectorModule != nullptr)
                 {
                     updateCpuUtilizationTimeForHypervisor(hypervisor);
-                    mapAppsVectorModulePerVm[vmRequest.strVmId] = pVmAppVectorModule;
+                    mapAppsVectorModulePerVm[vmRequest.vmId] = pVmAppVectorModule;
                     int numMaxApps = pVmAppVectorModule->par("numApps");
                     bool *runningAppsArr = new bool[numMaxApps]{false};
-                    mapAppsRunningInVectorModulePerVm[vmRequest.strVmId] = runningAppsArr;
+                    mapAppsRunningInVectorModulePerVm[vmRequest.vmId] = runningAppsArr;
                     userVM_Rq->setBPriorized(true);
                     return hypervisor;
                 }
@@ -190,7 +187,7 @@ Hypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq
 void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg)
 {
     SM_UserAPP *pUserApp;
-    Hypervisor *pHypervisor;
+    DcHypervisor *pHypervisor;
 
     std::string strUsername,
         strVmType,
@@ -276,13 +273,13 @@ void DataCentreManagerCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
         return;
     }
 
-    for (int j = 0; j < userVmRequest->getVmsArraySize(); j++)
+    for (int j = 0; j < userVmRequest->getVmArraySize(); j++)
     {
         // Getting VM and scheduling renting timeout
-        auto vmRequest = userVmRequest->getVms(j);
+        auto vmRequest = userVmRequest->getVm(j);
         // scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
 
-        if (strVmId.compare(vmRequest.strVmId) == 0)
+        if (strVmId.compare(vmRequest.vmId) == 0)
         {
             vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, 3600);
             handleUserAppRequest(sm);

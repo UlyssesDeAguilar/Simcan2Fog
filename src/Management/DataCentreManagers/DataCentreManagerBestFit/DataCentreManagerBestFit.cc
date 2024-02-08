@@ -1,5 +1,6 @@
 #include "DataCentreManagerBestFit.h"
 Define_Module(DataCentreManagerBestFit);
+using namespace hypervisor;
 
 void DataCentreManagerBestFit::initialize()
 {
@@ -7,13 +8,13 @@ void DataCentreManagerBestFit::initialize()
     DataCentreManagerBase::initialize();
 }
 
-Hypervisor *DataCentreManagerBestFit::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
+DcHypervisor *DataCentreManagerBestFit::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
 {
     if (userVM_Rq == nullptr)
         return nullptr;
 
-    auto userId = userVM_Rq->getUserID();
-    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.strVmType);
+    auto userId = userVM_Rq->getUserId();
+    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.vmType);
     int numCoresRequested = pVMBase->getNumCores();
 
     // Search in buckets the available nodes with the needed cores
@@ -39,8 +40,7 @@ Hypervisor *DataCentreManagerBestFit::selectNode(SM_UserVM *&userVM_Rq, const VM
                 continue;
             }
 
-            NodeResourceRequest *resourceRequest = generateNode(userId, vmRequest);
-            if (allocateVM(resourceRequest, hypervisor))
+            if (allocateVM(vmRequest, hypervisor))
             {
                 // As order doesn't matter, swap with last element and then pop back
                 // This is O(1) vs std::vector::erase which is O(N)
@@ -56,7 +56,6 @@ Hypervisor *DataCentreManagerBestFit::selectNode(SM_UserVM *&userVM_Rq, const VM
             else
             {
                 // In case the allocation fails, release resources and return
-                delete resourceRequest;
                 return nullptr;
             }
         }
@@ -68,7 +67,7 @@ Hypervisor *DataCentreManagerBestFit::selectNode(SM_UserVM *&userVM_Rq, const VM
 
 void DataCentreManagerBestFit::deallocateVmResources(std::string strVmId)
 {
-    Hypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
+    DcHypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
 
     if (pHypervisor == nullptr)
         error("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
@@ -83,7 +82,7 @@ void DataCentreManagerBestFit::deallocateVmResources(std::string strVmId)
     manageActiveMachines();
 }
 
-void DataCentreManagerBestFit::storeNodeInMap(Hypervisor *pHypervisor)
+void DataCentreManagerBestFit::storeNodeInMap(DcHypervisor *pHypervisor)
 {
     if (pHypervisor != nullptr)
     {
@@ -91,9 +90,9 @@ void DataCentreManagerBestFit::storeNodeInMap(Hypervisor *pHypervisor)
     }
 }
 
-void DataCentreManagerBestFit::removeNodeFromMap(Hypervisor *pHypervisor)
+void DataCentreManagerBestFit::removeNodeFromMap(DcHypervisor *pHypervisor)
 {
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
+    std::map<int, std::vector<DcHypervisor *>>::iterator itMap;
 
     if (pHypervisor != nullptr)
     {
@@ -101,7 +100,7 @@ void DataCentreManagerBestFit::removeNodeFromMap(Hypervisor *pHypervisor)
 
         if (itMap != mapHypervisorPerNodes.end())
         {
-            std::vector<Hypervisor *> &vectorHypervisor = itMap->second;
+            std::vector<DcHypervisor *> &vectorHypervisor = itMap->second;
             vectorHypervisor.erase(std::remove(vectorHypervisor.begin(), vectorHypervisor.end(), pHypervisor), vectorHypervisor.end());
         }
     }

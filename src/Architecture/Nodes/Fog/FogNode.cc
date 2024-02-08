@@ -152,10 +152,11 @@ void FogNode::processResponseMessage(SIMCAN_Message *sm)
             EV << "Request denied" << endl;
         else
         {
-            VM_Response *vm = response->getResponse(0, 0);
-            response->printUserVM();
+            VM_Response *vm;
+            response->getResponse(0, &vm);
+            EV_INFO << *response << '\n';
 
-            EV << "Request for the vm was succesfull" << vm->strIp << endl;
+            EV << "Request for the vm was succesfull" << vm->ip << endl;
             SM_UserAPP *request = createAppTestRequest(response);
             request->addNewIp(dataCentreIp);
 
@@ -176,10 +177,16 @@ void FogNode::processResponseMessage(SIMCAN_Message *sm)
 /* TEMPORARY SECTION */
 SM_UserVM *FogNode::createVmTestRequest()
 {
+    VM_Request::InstanceRequestTimes times;
     SM_UserVM *request = new SM_UserVM();
 
-    request->setUserID("fog-node-request");
-    request->createNewVmRequest("VM_small", "1", 1000, 50, 10, 10);
+    times.maxStartTime = 1000;
+    times.rentTime = 50;
+    times.maxSubTime = 10;
+    times.maxSubscriptionTime = 10;
+
+    request->setUserId("fog-node-request");
+    request->createNewVmRequest("VM_small", "1", times);
 
     request->setIsResponse(false);
     request->setOperation(SM_VM_Req);
@@ -189,16 +196,21 @@ SM_UserVM *FogNode::createVmTestRequest()
 
 SM_UserAPP *FogNode::createAppTestRequest(SM_UserVM *vm_request)
 {
-    SM_UserAPP *request = new SM_UserAPP();
+    UserAPPBuilder builder;
 
     // Select the given VM -- In this case we only allocated one
-    VM_Response *vm1 = vm_request->getResponse(0, 0);
+    VM_Response *vm1;
+    vm_request->getResponse(0,&vm1);
 
-    request->setUserID("fog-node-request");
-    request->createNewAppRequest(
-        "test 1", "AppDataIntensive", vm1->strIp, // The instance name, the type and the place where to be executed
+    builder.newRequest();
+
+    builder.createNewAppRequest(
+        "test 1", "AppDataIntensive", vm1->ip, // The instance name, the type and the place where to be executed
         "1", vm1->startTime                       // The vm ID and it's start time
     );
+
+    SM_UserAPP *request = builder.finish();
+    request->setUserID("fog-node-request");
 
     request->setIsResponse(false);
     request->setOperation(SM_APP_Req);

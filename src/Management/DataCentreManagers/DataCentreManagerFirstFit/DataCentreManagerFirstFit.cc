@@ -1,6 +1,7 @@
 #include "../DataCentreManagerFirstFit/DataCentreManagerFirstFit.h"
-
 #include "Management/utils/LogUtils.h"
+
+using namespace hypervisor;
 
 Define_Module(DataCentreManagerFirstFit);
 
@@ -10,14 +11,15 @@ void DataCentreManagerFirstFit::initialize()
     DataCentreManagerBase::initialize();
 }
 
-Hypervisor *DataCentreManagerFirstFit::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
+
+DcHypervisor *DataCentreManagerFirstFit::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
 {
     if (userVM_Rq == nullptr)
         return nullptr;
 
-    std::string userId = userVM_Rq->getUserID();
+    std::string userId = userVM_Rq->getUserId();
 
-    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.strVmType);
+    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.vmType);
     int numCoresRequested = pVMBase->getNumCores();
 
     // Find the first node which has the minimum requirements for the VM
@@ -29,7 +31,7 @@ Hypervisor *DataCentreManagerFirstFit::selectNode(SM_UserVM *&userVM_Rq, const V
         auto vectorHypervisor = currentNode->second;
 
         // Filter to get the first hypervisor which has the minimum cores needed
-        auto filter = [numCoresRequested](Hypervisor* &h) -> bool
+        auto filter = [numCoresRequested](DcHypervisor* &h) -> bool
         { return h->getAvailableCores() >= numCoresRequested; };
 
         auto hypervisor = std::find_if(vectorHypervisor.begin(), vectorHypervisor.end(), filter);
@@ -37,8 +39,7 @@ Hypervisor *DataCentreManagerFirstFit::selectNode(SM_UserVM *&userVM_Rq, const V
         // If there's a candidate
         if (hypervisor != vectorHypervisor.end())
         {
-            auto pResourceRequest = generateNode(userId, vmRequest);
-            if (allocateVM(pResourceRequest, *hypervisor))
+            if (allocateVM(vmRequest, *hypervisor))
             {
                 manageActiveMachines();
                 return *hypervisor;
@@ -46,7 +47,6 @@ Hypervisor *DataCentreManagerFirstFit::selectNode(SM_UserVM *&userVM_Rq, const V
             else
             {
                 // Release the generated node request
-                delete pResourceRequest;
                 return nullptr;
             }
         }

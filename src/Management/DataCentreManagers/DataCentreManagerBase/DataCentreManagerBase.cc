@@ -3,6 +3,8 @@
 #include "Management/utils/LogUtils.h"
 #include "Applications/UserApps/LocalApplication/LocalApplication.h"
 
+using namespace hypervisor;
+
 // Define_Module(DataCentreManagerBase);
 
 DataCentreManagerBase::~DataCentreManagerBase()
@@ -159,14 +161,14 @@ int DataCentreManagerBase::storeRackMetadata(cModule *pRackModule)
 int DataCentreManagerBase::storeNodeMetadata(cModule *pNodeModule)
 {
     cModule *pHypervisorModule;
-    Hypervisor *pHypervisor;
+    DcHypervisor *pHypervisor;
     int numCores;
 
     pHypervisorModule = pNodeModule->getSubmodule("osModule")->getSubmodule("hypervisor");
 
     numCores = pNodeModule->par("numCpuCores");
 
-    pHypervisor = check_and_cast<Hypervisor *>(pHypervisorModule);
+    pHypervisor = check_and_cast<DcHypervisor *>(pHypervisorModule);
 
     simtime_t **startTimeArray = new simtime_t *[numCores];
     simtime_t *timerArray = new simtime_t[numCores];
@@ -190,8 +192,8 @@ int DataCentreManagerBase::storeNodeMetadata(cModule *pNodeModule)
 
 int DataCentreManagerBase::getMachinesInUse()
 {
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
-    std::vector<Hypervisor *>::iterator itVector;
+    std::map<int, std::vector<DcHypervisor *>>::iterator itMap;
+    std::vector<DcHypervisor *>::iterator itVector;
     int nMachinesInUse;
 
     nMachinesInUse = 0;
@@ -212,8 +214,8 @@ int DataCentreManagerBase::getMachinesInUse()
 
 int DataCentreManagerBase::getActiveMachines()
 {
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
-    std::vector<Hypervisor *>::iterator itVector;
+    std::map<int, std::vector<DcHypervisor *>>::iterator itMap;
+    std::vector<DcHypervisor *>::iterator itVector;
     int nActiveMachines;
 
     nActiveMachines = 0;
@@ -234,8 +236,8 @@ int DataCentreManagerBase::getActiveMachines()
 
 int DataCentreManagerBase::getActiveOrInUseMachines()
 {
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
-    std::vector<Hypervisor *>::iterator itVector;
+    std::map<int, std::vector<DcHypervisor *>>::iterator itMap;
+    std::vector<DcHypervisor *>::iterator itVector;
     int nActiveOrInUseMachines;
 
     nActiveOrInUseMachines = 0;
@@ -256,10 +258,10 @@ int DataCentreManagerBase::getActiveOrInUseMachines()
 
 void DataCentreManagerBase::setActiveMachines(int nNewActiveMachines)
 {
-    Hypervisor *pHypervisor = nullptr;
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
-    std::map<int, std::vector<Hypervisor *>>::reverse_iterator ritMap;
-    std::vector<Hypervisor *>::iterator itVector;
+    DcHypervisor *pHypervisor = nullptr;
+    std::map<int, std::vector<DcHypervisor *>>::iterator itMap;
+    std::map<int, std::vector<DcHypervisor *>>::reverse_iterator ritMap;
+    std::vector<DcHypervisor *>::iterator itVector;
     int nActiveMachines = getActiveMachines();
 
     if (nNewActiveMachines < nMinActiveMachines)
@@ -269,7 +271,7 @@ void DataCentreManagerBase::setActiveMachines(int nNewActiveMachines)
     {
         for (itMap = mapHypervisorPerNodes.begin(); itMap != mapHypervisorPerNodes.end() && nActiveMachines < nNewActiveMachines; ++itMap)
         {
-            std::vector<Hypervisor *> &vectorHypervisor = itMap->second;
+            std::vector<DcHypervisor *> &vectorHypervisor = itMap->second;
             for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && nActiveMachines < nNewActiveMachines; ++itVector)
             {
                 pHypervisor = *itVector;
@@ -285,7 +287,7 @@ void DataCentreManagerBase::setActiveMachines(int nNewActiveMachines)
     {
         for (ritMap = mapHypervisorPerNodes.rbegin(); ritMap != mapHypervisorPerNodes.rend() && nActiveMachines > nNewActiveMachines; ++ritMap)
         {
-            std::vector<Hypervisor *> &vectorHypervisor = ritMap->second;
+            std::vector<DcHypervisor *> &vectorHypervisor = ritMap->second;
             for (itVector = vectorHypervisor.begin(); itVector != vectorHypervisor.end() && nActiveMachines > nNewActiveMachines; ++itVector)
             {
                 pHypervisor = *itVector;
@@ -301,8 +303,8 @@ void DataCentreManagerBase::setActiveMachines(int nNewActiveMachines)
 
 double DataCentreManagerBase::getCurrentCpuPercentageUsage()
 {
-    std::map<int, std::vector<Hypervisor *>>::iterator itMap;
-    std::vector<Hypervisor *>::iterator itVector;
+    std::map<int, std::vector<DcHypervisor *>>::iterator itMap;
+    std::vector<DcHypervisor *>::iterator itVector;
     int nTotalCores, nUsedCores, nNodeCores;
     double dPercentage = 0.0;
 
@@ -651,7 +653,7 @@ void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request" << '\n';
 
     auto userVM_Rq = check_and_cast<SM_UserVM *>(sm);
-    userVM_Rq->printUserVM();
+    EV_INFO << userVM_Rq << '\n';
 
     // Check if is a VmRequest or a subscribe
     if (checkVmUserFit(userVM_Rq))
@@ -674,7 +676,7 @@ void DataCentreManagerBase::handleVmSubscription(SIMCAN_Message *sm)
 
 void DataCentreManagerBase::rejectVmSubscribe(SM_UserVM *userVM_Rq)
 {
-    EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserID() << '\n';
+    EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserId() << '\n';
     EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
 
     // Fill the message
@@ -689,7 +691,7 @@ void DataCentreManagerBase::rejectVmSubscribe(SM_UserVM *userVM_Rq)
 void DataCentreManagerBase::notifySubscription(SM_UserVM *userVM_Rq)
 {
     SM_UserVM_Finish *pMsgTimeout;
-    EV_INFO << "Notifying request from user: " << userVM_Rq->getUserID() << '\n';
+    EV_INFO << "Notifying request from user: " << userVM_Rq->getUserId() << '\n';
     EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
 
     // Fill the message
@@ -758,13 +760,13 @@ void DataCentreManagerBase::handleAppExecEndSingle(std::string strUsername, std:
 
 void DataCentreManagerBase::acceptVmRequest(SM_UserVM *userVM_Rq)
 {
-    EV_INFO << "Accepting request from user:" << userVM_Rq->getUserID() << '\n';
+    EV_INFO << "Accepting request from user:" << userVM_Rq->getUserId() << '\n';
 
-    //    if(acceptedUsersRqMap.find(userVM_Rq->getUserID()) == acceptedUsersRqMap.end())
+    //    if(acceptedUsersRqMap.find(userVM_Rq->getUserId()) == acceptedUsersRqMap.end())
     //    {
     //        //Accepting new user
-    //        EV_INFO << "Registering new user in the system:" << userVM_Rq->getUserID() << '\n';
-    //        acceptedUsersRqMap[userVM_Rq->getUserID()] = userVM_Rq;
+    //        EV_INFO << "Registering new user in the system:" << userVM_Rq->getUserId() << '\n';
+    //        acceptedUsersRqMap[userVM_Rq->getUserId()] = userVM_Rq;
     //    }
 
     // Fill the message
@@ -781,7 +783,7 @@ void DataCentreManagerBase::rejectVmRequest(SM_UserVM *userVM_Rq)
 {
     // Create a request_rsp message
 
-    EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserID() << '\n';
+    EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserId() << '\n';
 
     userVM_Rq->setIsResponse(true);
     userVM_Rq->setOperation(SM_VM_Req_Rsp);
@@ -796,8 +798,8 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
     assert_msg(userVM_Rq != nullptr, "checkVmUserFit - WARNING!! nullpointer detected\n");
 
     std::string nodeIp, strVmId;
-    int nRequestedVms = userVM_Rq->getTotalVmsRequests();
-    std::string userId = userVM_Rq->getUserID();
+    int nRequestedVms = userVM_Rq->getVmArraySize();
+    std::string userId = userVM_Rq->getUserId();
 
     EV_DEBUG << "checkVmUserFit- Init" << '\n';
     EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << userId << '\n';
@@ -808,12 +810,12 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
 
     if (nTotalRequestedCores > nAvailableCores)
     {
-        EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
+        EV_DEBUG << "checkVmUserFit - There isnt enough space: [" << userVM_Rq->getUserId() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
         return false;
     }
 
     int nTotalCores = getNTotalCores();
-    EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserID() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
+    EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserId() << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
 
     // Process all the VMs
     bool bRet, bAccepted;
@@ -824,13 +826,13 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
         EV_DEBUG << "\ncheckVmUserFit - Trying to handle the VM: " << i << '\n';
 
         // Get the VM request
-        auto vmRequest = userVM_Rq->getVms(i);
+        auto vmRequest = userVM_Rq->getVm(i);
 
-        Hypervisor *hypervisor = selectNode(userVM_Rq, vmRequest);
+        DcHypervisor *hypervisor = selectNode(userVM_Rq, vmRequest);
 
         if (hypervisor != nullptr)
         {
-            acceptedVMsMap[vmRequest.strVmId] = hypervisor;
+            acceptedVMsMap[vmRequest.vmId] = hypervisor;
             nodeIp = hypervisor->getFullPath();
             bAccepted = true;
         }
@@ -850,30 +852,30 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
         }
         else
         {
-            int nRentTime;
+            double rentTime;
             // Getting VM and scheduling renting timeout
-            strVmId = userVM_Rq->getStrVmId();
+            strVmId = userVM_Rq->getVmId();
             if (!strVmId.empty() && userVM_Rq->getOperation() == SM_VM_Sub)
-                nRentTime = 3600;
+                rentTime = 3600;
             else
-                nRentTime = vmRequest.nRentTime_t2;
+                rentTime = vmRequest.times.rentTime.dbl();
 
             // vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.strVmType, nRentTime);
-            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, nRentTime);
+            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, rentTime);
         }
 
-        EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserID() << "Requested: " << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
+        EV_DEBUG << "checkVmUserFit - Updated space#: [" << userVM_Rq->getUserId() << "Requested: " << nTotalRequestedCores << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
     }
 
     if (bRet)
     {
         acceptedUsersRqMap[userId] = userVM_Rq;
         nTotalAvailableCores -= nTotalRequestedCores;
-        EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserID() << '\n';
+        EV_DEBUG << "checkVmUserFit - Reserved space for: " << userVM_Rq->getUserId() << '\n';
     }
     else
     {
-        EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserID() << '\n';
+        EV_DEBUG << "checkVmUserFit - Unable to reserve space for: " << userVM_Rq->getUserId() << '\n';
     }
 
     EV_DEBUG << "checkVmUserFit- End" << '\n';
@@ -900,7 +902,7 @@ void DataCentreManagerBase::abortAllApps(std::string strVmId)
     }
 }
 
-void DataCentreManagerBase::updateCpuUtilizationTimeForHypervisor(Hypervisor *pHypervisor)
+void DataCentreManagerBase::updateCpuUtilizationTimeForHypervisor(DcHypervisor *pHypervisor)
 {
     unsigned int numCores = getNumCoresByHypervisorPath(pHypervisor->getFullPath());
     simtime_t **startTimesArray = getStartTimeByHypervisorPath(pHypervisor->getFullPath());
@@ -924,7 +926,7 @@ void DataCentreManagerBase::updateCpuUtilizationTimeForHypervisor(Hypervisor *pH
 
 void DataCentreManagerBase::deallocateVmResources(std::string strVmId)
 {
-    Hypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
+    DcHypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
 
     if (pHypervisor == nullptr)
         error("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
@@ -940,7 +942,7 @@ void DataCentreManagerBase::deallocateVmResources(std::string strVmId)
 void DataCentreManagerBase::handleExecVmRentTimeout(cMessage *msg)
 {
     SM_UserAPP *pUserApp;
-    Hypervisor *pHypervisor;
+    DcHypervisor *pHypervisor;
 
     std::string strUsername,
         strVmId,
@@ -1085,62 +1087,31 @@ void DataCentreManagerBase::clearVMReq(SM_UserVM *&userVM_Rq, int lastId)
 {
     for (int i = 0; i < lastId; i++)
     {
-        auto vmRequest = userVM_Rq->getVms(i);
+        auto vmRequest = userVM_Rq->getVm(i);
         cancelAndDelete(vmRequest.pMsg);
         vmRequest.pMsg = nullptr;
 
-        deallocateVmResources(vmRequest.strVmId);
+        deallocateVmResources(vmRequest.vmId);
 
         // datacentreCollection->freeVmRequest(vmRequest.strVmId);
     }
 }
 
-bool DataCentreManagerBase::allocateVM(NodeResourceRequest *pResourceRequest, Hypervisor *pHypervisor)
+bool DataCentreManagerBase::allocateVM(const VM_Request &vm, hypervisor::DcHypervisor *pHypervisor)
 {
     // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaci�n al map y que sea el hypervisor el que controle a que VM va.
     // TODO: Finalmente deber�a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
-    cModule *pVmAppVectorModule = pHypervisor->allocateNewResources(pResourceRequest);
+    cModule *pVmAppVectorModule = pHypervisor->handleVmRequest(vm);
     if (pVmAppVectorModule != nullptr)
     {
         updateCpuUtilizationTimeForHypervisor(pHypervisor);
-        mapAppsVectorModulePerVm[pResourceRequest->getVmId()] = pVmAppVectorModule;
+        mapAppsVectorModulePerVm[vm.vmId] = pVmAppVectorModule;
         int numMaxApps = pVmAppVectorModule->par("numApps");
         bool *runningAppsArr = new bool[numMaxApps]{false};
-        mapAppsRunningInVectorModulePerVm[pResourceRequest->getVmId()] = runningAppsArr;
+        mapAppsRunningInVectorModulePerVm[vm.vmId] = runningAppsArr;
         return true;
     }
     return false;
-}
-
-NodeResourceRequest *DataCentreManagerBase::generateNode(std::string strUserName, VM_Request vmRequest)
-{
-    NodeResourceRequest *pNode = new NodeResourceRequest();
-
-    pNode->setUserName(strUserName);
-    pNode->setVmId(vmRequest.strVmId);
-
-    pNode->setMaxStartTimeT1(vmRequest.maxStartTime_t1);
-    pNode->setRentTimeT2(vmRequest.nRentTime_t2);
-    pNode->setMaxSubTimeT3(vmRequest.maxSubTime_t3);
-    pNode->setMaxSubscriptionTimeT4(vmRequest.maxSubscriptionTime_t4);
-    
-    fillVmFeatures(vmRequest.strVmType, pNode);
-
-    return pNode;
-}
-
-void DataCentreManagerBase::fillVmFeatures(std::string strVmType, NodeResourceRequest *&pNode)
-{
-    auto pVmType = dataManager->searchVirtualMachine(strVmType);
-
-    if (pVmType != nullptr)
-    {
-        EV_INFO << "fillVmFeatures - Vm:" << strVmType << " cpus: " << pVmType->getNumCores() << " mem: " << pVmType->getMemoryGb() << '\n';
-
-        pNode->setTotalCpUs(pVmType->getNumCores());
-        pNode->setTotalMemory(pVmType->getMemoryGb());
-        pNode->setTotalDiskGb(pVmType->getDiskGb());
-    }
 }
 
 void DataCentreManagerBase::printFinal()
