@@ -23,14 +23,15 @@ DcHypervisor *DataCentreManagerFirstFit::selectNode(SM_UserVM *&userVM_Rq, const
     int numCoresRequested = pVMBase->getNumCores();
 
     // Find the first node which has the minimum requirements for the VM
-    auto currentNode = mapHypervisorPerNodes.lower_bound(numCoresRequested - 1);
+    auto currentNode = resourceManager->startFromCoreCount(numCoresRequested);
+    auto end = resourceManager->endOfNodeMap();
 
     // And then start to cycle (the next ones are guaranteed to have more cores than the one before)
-    for (; currentNode != mapHypervisorPerNodes.end(); currentNode++)
+    for (; currentNode != end; ++currentNode)
     {
         auto vectorHypervisor = currentNode->second;
 
-        // Filter to get the first hypervisor which has the minimum cores needed
+        // Filter to get the first hypervisor which has the minimum needed
         auto filter = [numCoresRequested](DcHypervisor* &h) -> bool
         { return h->getAvailableCores() >= numCoresRequested; };
 
