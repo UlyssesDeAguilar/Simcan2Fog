@@ -9,8 +9,8 @@ simple Switch extends cSIMCAN_Core{
     
     parameters:
         @class(Switch);
-        string type;			// Type of cloud switch: "rack" or "board"
-        int level;				// Level at which the switch is located
+        //string type;			// Type of cloud switch: "rack" or "board"
+        //int level;				// Level at which the switch is located
         
     gates:
         inout upper;			// Gate for the upper level

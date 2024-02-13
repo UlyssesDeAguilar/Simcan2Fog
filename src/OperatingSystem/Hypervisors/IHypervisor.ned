@@ -12,11 +12,12 @@ package simcan2.OperatingSystem.Hypervisors;
 moduleinterface IHypervisor{
     
 	parameters:
-	    bool active;
+	    bool active = default(true);
 	    bool isVirtualHardware;		// True if this computer allows virtualization and False in another case
 		int maxVMs;					// Maximum number of VMs allocated in this computer 
     
   	gates:  	    
+		inout network;				// Input/Output from/to network (either local or the internet)
         input fromApps[];			// Input gates from Applications 
         input fromCpuScheduler[];	// Input gates from CPU schedulers vector
         

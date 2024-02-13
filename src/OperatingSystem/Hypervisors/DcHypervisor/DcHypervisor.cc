@@ -46,24 +46,8 @@ void DcHypervisor::loadVector(std::vector<cModule *> &v, cModule *osModule, cMod
 
 void DcHypervisor::finish()
 {
-
     // Finish the super-class
     cSIMCAN_Core::finish();
-}
-
-cGate *DcHypervisor::getOutGate(cMessage *msg)
-{
-    int arrivalIndex = msg->getArrivalGate()->getIndex();
-
-    // Only accept incoming requests from the apps vector
-    if (msg->arrivedOn("fromApps"))
-        return gate(appGates.outBaseId + arrivalIndex);
-    else if (msg->arrivedOn("fromCpuScheduler"))
-        error("This module cannot receive requests from the CPU system!");
-    else
-        error("Message received from an unknown gate [%s]", msg->getName());
-
-    return nullptr;
 }
 
 void DcHypervisor::processSelfMessage(cMessage *msg)
@@ -75,10 +59,6 @@ void DcHypervisor::processSelfMessage(cMessage *msg)
     }
 
     delete msg;
-}
-
-void DcHypervisor::processRequestMessage(SIMCAN_Message *sm)
-{
 }
 
 void DcHypervisor::powerOn(bool active)

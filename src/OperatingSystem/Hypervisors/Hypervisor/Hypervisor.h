@@ -17,22 +17,17 @@ namespace hypervisor
             LOCAL_STAGE
         };
 
-        struct GateInfo
-        {
-            int inBaseId;  //!< Base Id of the input vector
-            int outBaseId; //!< Base Id of the output vector
-        };
-
         HardwareManager *hardwareManager; //!< Reference to the hardwareManager
         DataManager *dataManager;
         OsCore osCore;                           //!< The core operating system utilities
-        GateInfo appGates;                       //!< General info for appGates
-        GateInfo schedulerGates;                 //!< General info for schedulerGates
         ControlTable<VmControlBlock> vmsControl; //!< Control table for vms
         uint32_t maxAppsPerVm;                   //!< Max number of vms per vm -> TODO: Check out the values
         std::map<std::string, uint32_t> vmIdMap; //!< Map that translates the general VM Id to the local VM Id
 
-        
+        GateInfo appGates;                       //!< General info for appGates
+        GateInfo schedulerGates;                 //!< General info for schedulerGates
+        GateInfo networkGates;                   //!< General info for network gates 
+
         uint32_t takePid(uint32_t vmId) { return vmsControl[vmId].apps.takeId(); }
         void releasePid(uint32_t vmId, uint32_t pid) { vmsControl[vmId].apps.releaseId(pid); }
 

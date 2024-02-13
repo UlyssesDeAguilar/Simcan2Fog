@@ -30,9 +30,8 @@ import simcan2.Architecture.Network.DataCentreNetwork.*;
 module DataCentre_A
 {
     parameters:
-        int numCmpRacksA;
-        int numCmpRacksB;
-        int numStoRacks = 0;
+        @smlevel(0);
+        int numBlades;
 
         // Configure the main switch
         switch.level = 0;
@@ -58,27 +57,16 @@ module DataCentre_A
         switch: Switch {
             @display("p=441,206");
         }
+
+        blades[numBlades] : CloudBlade {
+            address = index;
+        }
         
-        // Assign addresses continously
-        rackCmp_Rack_A[numCmpRacksA]: CloudRack {
-            address = string(index);
-            @display("p=615,207");
-        }
-
-        rackCmp_Rack_B[numCmpRacksB]: CloudRack {
-            address = string(numCmpRacksA + index);
-            @display("p=441,104");
-        }
-
-        rackSto_Rack_B[numStoRacks]: CloudRack {
-            address = string(numCmpRacksA + numCmpRacksB + index);
-            @display("p=441,309");
-        }
-
     // ---------------------------------------------------------------
     //   Connections section
     // ---------------------------------------------------------------
-    connections:
+    connections allowunconnected:
+
 		// Connect the ethernet wiring to the networkAdapter
         for i=0..sizeof(comm)-1 {
             networkAdapter.ethg++ <--> comm[i];
@@ -91,17 +79,9 @@ module DataCentre_A
 		// Connect the main switch with the Manager
         switch.upper <-->  dcManager.localNetwork;
 		
-		// Interconnect all the racks
-        for i=0..numCmpRacksA-1 {
-            rackCmp_Rack_A[i].comm <--> DataCentreEth40G_channel <--> switch.comm++;
+        // TODO: In the future build dynamically the Racks/Boards
+        // Connect the switch with the blades
+        for i=0..numBlades-1 {
+            switch.comm++ <--> blades[i].comm;
         }
-
-        for i=0..numCmpRacksB-1 {
-            rackCmp_Rack_B[i].comm <--> DataCentreEth40G_channel <--> switch.comm++;
-        }
-
-        for i=0..numStoRacks-1 {
-            rackSto_Rack_B[i].comm <--> DataCentreEth40G_channel <--> switch.comm++;
-        }
-
 }

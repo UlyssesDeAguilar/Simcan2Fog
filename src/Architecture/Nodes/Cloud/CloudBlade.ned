@@ -22,7 +22,7 @@ module CloudBlade
 {
     parameters:
         @labels(node,ethernet-node);
-		string address;												// The address of the Blade inside a Board 
+        int address;                                                // Local Ip
         int numApps = default(5);									// Number of applications in this vector
         bool staticAppAssignment;									// True if the assignment of applications is static or False in another case
         bool isVirtualHardware;										// True if this blade allows virtualization and False in another case
@@ -57,7 +57,7 @@ module CloudBlade
         @display("bgb=521,326,,black,3;bgi=circuit,t");
 
     gates:
-        inout comm; // It's literally unconnected --> should go to NetworkStack ?
+        inout comm;
 
     submodules:
 
@@ -89,12 +89,13 @@ module CloudBlade
                 cpuSchedulerType = cpuSchedulerType;
                 @display("p=256,144;i=os");
         }
-
 	
-	// FIXME: When networkstack module is defined place it in here !
-    connections allowunconnected:
+    connections:
         // Connections between Operating System and CPU
         osModule.toCpu --> ned.IdealChannel --> cpu.fromOs;
         osModule.fromCpu <-- ned.IdealChannel <-- cpu.toOs;
+
+        // In/Out connection of the Operating System with the data centre network
+        osModule.comm <--> comm;
 }
 

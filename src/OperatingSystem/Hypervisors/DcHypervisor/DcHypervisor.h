@@ -23,7 +23,6 @@ namespace hypervisor
       virtual void finish() override;
       virtual cGate *getOutGate(cMessage *msg) override;
       virtual void processSelfMessage(cMessage *msg) override;
-      virtual void processRequestMessage(SIMCAN_Message *sm) override;
       virtual void processResponseMessage(SIMCAN_Message *sm) override;
 
    public:

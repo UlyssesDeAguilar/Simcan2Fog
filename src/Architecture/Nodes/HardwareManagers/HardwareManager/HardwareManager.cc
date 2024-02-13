@@ -18,7 +18,7 @@ void HardwareManager::initialize()
     available = total;
 
     // Init the free core list
-    freeCoresArrayPtr = new bool[total.cores]{true};
+    coresState.resize(total.cores);
 
     // Check consistency (cloud environments)
     if (isVirtualHardware)
@@ -72,12 +72,13 @@ bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &
     for (int i = 0, j = 0; i < cores && j < total.cores; i++)
     {
         // Keep going until we get a free slot
-        while (!freeCoresArrayPtr[j])
+        while (!coresState[j].free)
             j++;
 
         // Register position and mark allocated
         cpuCoreIndex[i] = j;
-        freeCoresArrayPtr[j] = false;
+        coresState[j].free = false;
+        coresState[j].startTime = simTime();
 
         // Jump to next index
         j++;
@@ -108,6 +109,8 @@ void HardwareManager::deallocateResources(const uint32_t &cores, const double &m
     // Release marked cores
     for (int i = 0; i < cores; i++)
     {
-        freeCoresArrayPtr[coreIndex[i]] = true;
+        int index = coreIndex[i];
+        coresState[index].free = true;
+        coresState[index].usageTime += (simTime() - coresState[index].startTime);
     }
 }

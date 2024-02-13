@@ -4,94 +4,70 @@ Define_Module(Switch);
 
 void Switch::initialize()
 {
-
-    int numGates, i;
-
     // Init the super-class
     cSIMCAN_Core::initialize();
 
-    // Get the number of input and output gates
-    numGates = gateSize("in");
+    // Get gates information
+    upper.inBaseId = gateBaseId("upper$i");
+    upper.outBaseId = gateBaseId("upper$o");
+    lower.inBaseId = gateBaseId("comm$i");
+    lower.outBaseId = gateBaseId("comm$o");
 
-    // Init the cGates vector for inputs
-    inputGates = new cGate *[numGates];
-    outputGates = new cGate *[numGates];
-
-    for (i = 0; i < numGates; i++)
-    {
-        inputGates[i] = gate("in", i);
-        outputGates[i] = gate("out", i);
-
-        if (!(outputGates[i]->isConnected()))
-        {
-            error("Gate is not connected");
-        }
-    }
-
-    // Get switch type
-    const char *typeChr = par("type");
-    type = typeChr;
+    // Get level from the parent module
+    // cModule *parent = getParentModule();
+    // const char *l = parent->getProperties()->get("smlevel")->getValue();
+    // level = std::stoi(l);
+    // localIdx = parent->getIndex();
 }
 
 void Switch::finish()
 {
-
     // Finish the super-class
     cSIMCAN_Core::finish();
 }
 
 cGate *Switch::getOutGate(cMessage *msg)
 {
+    cGate *arrivalGate = msg->getArrivalGate();
+    int gateId = arrivalGate->getBaseId();
 
-    cGate *outGate;
+    // Request came from upper
+    if (gateId == upper.inBaseId)
+        return gate(upper.outBaseId);
 
-    // Init...
-    outGate = nullptr;
+    // Request came from lower
+    if (gateId == lower.inBaseId)
+        return gate(lower.outBaseId + arrivalGate->getIndex());
 
-    // If msg arrives
-    if (msg->arrivedOn("in"))
-    {
-        outGate = gate("out", msg->getArrivalGate()->getIndex());
-    }
-
-    // Msg arrives from an unknown gate
-    else
-        error("Message received from an unknown gate [%s]", msg->getName());
-
-    return outGate;
-}
-
-void Switch::processSelfMessage(cMessage *msg)
-{
-    error("This module cannot process self messages:%s", msg->getName());
+    return nullptr;
 }
 
 void Switch::processRequestMessage(SIMCAN_Message *sm)
 {
+    auto routingInfo = check_and_cast<RoutingInfo *>(sm->getControlInfo());
+    auto requestUrl = routingInfo->getUrl();
 
-    // TODO: Finish switch behaviour!
+    // If it hasn't a local ip set up
+    if (~(requestUrl.getState()) & ServiceURL::LOCAL)
+        error("Message doesn't contain at least the LocalIp");
 
-    // Switch is allocated in a rack
-    if (type.compare("rack") == 0)
-    {
-    }
-
-    // Switch is allecated in a Board
-    else if (type.compare("board") == 0)
-    {
-    }
-
-    // Unknown switch type
+    // Retrieve destination address
+    uint32_t address = requestUrl.getLocalAddress().getInt();
+    if (address == DC_MANAGER_LOCAL_ADDR)
+        sendRequestMessage(sm, upper.outBaseId);
     else
-        error("Unknown Switch type: %s", type.c_str());
+        sendRequestMessage(sm, lower.outBaseId + address);
 }
 
 void Switch::processResponseMessage(SIMCAN_Message *sm)
 {
-
     // Debug (Debug)
-    EV_DEBUG << "(processResponseMessage) Sending response message." << endl
-             << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+    if (getEnvir()->isLoggingEnabled())
+    {
+        EV_DEBUG << "(processResponseMessage) Sending response message." << '\n'
+                 << sm->contentsToString(showMessageContents, showMessageTrace) << '\n';
+    }
 
+    // Relay the message
     sendResponseMessage(sm);
 }

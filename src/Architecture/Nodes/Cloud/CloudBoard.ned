@@ -10,13 +10,10 @@ import simcan2.Architecture.Network.DataCentreNetwork.*;
 module CloudBoard
 {
     parameters:
-        string address;			// The address of the Board inside a rack
-        int level;
+        @smlevel(0);
+        int base;
         int numBlades;
         string channelType;
-
-        // Forward the level to the switch
-        switch.level = level;
 
         @display("bgb=262,346");
     gates:
@@ -25,7 +22,6 @@ module CloudBoard
     submodules:
 
         blade[numBlades]: CloudBlade {
-            address = address + "." + string(index);	// Composing the address based on the index
             @display("p=193,158,c,120");
         }
 

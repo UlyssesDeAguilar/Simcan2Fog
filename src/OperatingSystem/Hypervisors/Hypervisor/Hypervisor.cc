@@ -7,6 +7,14 @@ void Hypervisor::initialize(int stage)
     {
     case INNER_STAGE:
     {
+        // Retrieve info from input/output gates
+        appGates.inBaseId = gateBaseId("fromApps");
+        appGates.outBaseId = gateBaseId("toApps");
+        schedulerGates.inBaseId = gateBaseId("fromCpuScheduler");
+        schedulerGates.outBaseId = gateBaseId("toCpuScheduler");
+        networkGates.inBaseId = gateBaseId("network$i");
+        networkGates.outBaseId = gateBaseId("network$o");
+
         // Locate topologically the helper modules
         DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
         hardwareManager = locateHardwareManager();
@@ -41,25 +49,25 @@ void Hypervisor::finish()
 
 cGate *Hypervisor::getOutGate(cMessage *msg)
 {
-    auto sm = check_and_cast<SIMCAN_Message *>(msg);
+    cGate *arrivalGate = msg->getArrivalGate();
+    int baseIndex = arrivalGate->getBaseId();
 
-    switch (sm->getOperation())
-    {
-    case SM_Syscall_Req:
+    // If it came from the network
+    if (networkGates.inBaseId == baseIndex)
+        return gate(networkGates.outBaseId);
+    else if (appGates.inBaseId == baseIndex)
     {
         auto syscall = check_and_cast<SM_Syscall *>(msg);
+        int arrivalIndex = arrivalGate->getIndex();
 
         // This allows the app hub to return the result
-        sm->setNextModuleIndex(syscall->getPid());
+        syscall->setNextModuleIndex(syscall->getPid());
 
-        // return gate() asssociated with syscall->getVmId() )
-        // namely gate("toApps", getVmId())
-        return gate("toApps");
-        break;
+        return gate(appGates.outBaseId + arrivalIndex);
     }
-    default:
-        return nullptr;
-    }
+
+    // Shouldn't accept the request
+    return nullptr;
 }
 
 void Hypervisor::processSelfMessage(cMessage *msg)

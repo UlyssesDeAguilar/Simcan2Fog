@@ -79,8 +79,6 @@ int DataCentreManagerCost::initDataCentreMetadata()
         }
     }
 
-    nTotalCores = nTotalAvailableCores = numTotalCores;
-
     return result;
 }
 
@@ -96,18 +94,8 @@ int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule)
 
     pHypervisor = check_and_cast<DcHypervisor *>(pHypervisorModule);
 
-    simtime_t **startTimeArray = new simtime_t *[numCores];
-    simtime_t *timerArray = new simtime_t[numCores];
-    for (int i = 0; i < numCores; i++)
-    {
-        startTimeArray[i] = nullptr;
-        timerArray[i] = SimTime();
-    }
-
     // Store hypervisor pointers by number of cores
     mapHypervisorPerNodesReserved[numCores].push_back(pHypervisor);
-    // Initialize cpu utilization timers
-    mapCpuUtilizationTimePerHypervisor[pHypervisorModule->getFullPath()] = std::make_tuple(numCores, startTimeArray, timerArray);
 
     return numCores;
 }

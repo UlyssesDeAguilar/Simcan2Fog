@@ -2,6 +2,7 @@
 #define __SIMCAN_2_0_HARDWAREMANAGER_H_
 
 #include <omnetpp.h>
+#include "Architecture/Nodes/NodeResources.h"
 
 using namespace omnetpp;
 
@@ -14,13 +15,11 @@ class HardwareManager : public cSimpleModule
 {
 
 public:
-  struct Resources
+  struct CoreState
   {
-    double memory;  //!< Total RAM  (In GB)
-    double disk;    //!< Disk (In GB)
-    uint32_t cores; //!< Cores of the CPU
-    uint32_t vms;   //!< Number of VMs executed in this computer
-    uint32_t users; //!< Number of users executed in this computer
+    simtime_t usageTime = 0.0; //!< The accumulated usage time
+    simtime_t startTime = 0.0; //!< Start time of current use
+    bool free = false;         //!< If the core itself is free
   };
 
   struct DiskSpecs
@@ -30,10 +29,10 @@ public:
   } diskSpecs;
 
 private:
-  Resources available;     //<! Available HW/SW resources
-  Resources total;         //<! Specifications of the HW/SW resources
-  bool isVirtualHardware;  //<! Indicates if this module is able to virtualize hardware
-  bool *freeCoresArrayPtr; //<! Keeps track of the free cores in the system
+  NodeResources available;           //!< Available HW/SW resources
+  NodeResources total;               //!< Specifications of the HW/SW resources
+  bool isVirtualHardware;            //!< Indicates if this module is able to virtualize hardware
+  std::vector<CoreState> coresState; //!< Keeps track of the state of the cores
 
 protected:
   virtual void initialize() override;
@@ -66,13 +65,13 @@ public:
    * @brief Gets the total resources of the node
    * @return const Resources&
    */
-  const Resources &getTotalResources() { return total; }
+  const NodeResources &getTotalResources() { return total; }
 
   /**
    * @brief Gets the available resources of the node
    * @return const Resources&
    */
-  const Resources &getAvailableResources() { return available; }
+  const NodeResources &getAvailableResources() { return available; }
 
   /**
    * @brief Gets the disk specifications object
@@ -86,9 +85,6 @@ public:
    * @return false In other case
    */
   bool isVirtual() { return isVirtualHardware; }
-
-  // FIXME
-  bool *getFreeCoresArrayPtr() const { return freeCoresArrayPtr; };
 };
 
 #endif

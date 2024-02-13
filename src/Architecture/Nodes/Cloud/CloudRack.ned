@@ -11,14 +11,11 @@ import simcan2.Architecture.Network.DataCentreNetwork.*;
 module CloudRack
 {
     parameters:
-        string address;			// The address of the Rack inside a network 
+        @smlevel(1);
         string channelType;		// Type of the network inside the rack
         int numBoards;			// Number of Boards.
         int bladesPerBoard;		// Number of blades per Board.
-        int level;
 
-        // Forward the level for the switch
-        switch.level = level;
         @display("bgb=286,383");
     gates:
         inout comm;
@@ -27,10 +24,8 @@ module CloudRack
 
         board[numBoards]: CloudBoard {		// Boards
             parameters:
-                address = address + "." + string(index);	// Composing the address based on the index
                 channelType = channelType;
                 numBlades = bladesPerBoard;
-                level = level + 1;
                 @display("p=197,159,c,120");
         }
 

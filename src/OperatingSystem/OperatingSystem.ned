@@ -23,6 +23,7 @@ module OperatingSystem
 
         @display("bgb=532.53,430.68002");
     gates:
+        inout comm;                 // Input gate from network
         input fromCpu;				// Input gate from the CPU schedulers vector
         output toCpu;				// Output gate to the CPU schedulers vector
 
@@ -60,7 +61,6 @@ module OperatingSystem
                 @display("p=90.21001,181.39001,c,120;i=user");
         }
 
-
     connections:
 
         // Connections between Applications gate and Hypervisor
@@ -69,7 +69,7 @@ module OperatingSystem
             appsVectors[i].fromOS <-- ned.IdealChannel <-- hypervisor.toApps[i];
         }
 
-        // Connections between HardwareRedirector and CPU schedulers
+        // Connections between Hypervisor and CPU schedulers
         for i=0..maxVMs-1 {
             hypervisor.toCpuScheduler++ --> ned.IdealChannel --> cpuSchedVector.fromHypervisor++;
             hypervisor.fromCpuScheduler++ <-- ned.IdealChannel <-- cpuSchedVector.toHypervisor++;
@@ -78,4 +78,7 @@ module OperatingSystem
         // Connection between the CPU schedulers vector and the CPU module
         cpuSchedVector.toCpu --> ned.IdealChannel --> toCpu;
         cpuSchedVector.fromCpu <-- ned.IdealChannel <-- fromCpu;
+
+        // Connection in/out from network to hypervisor
+        hypervisor.network <--> comm;
 }
