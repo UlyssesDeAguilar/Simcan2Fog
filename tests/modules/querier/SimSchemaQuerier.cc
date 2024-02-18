@@ -1,6 +1,6 @@
 #include "SimSchemaQuerier.h"
 Define_Module(SimSchemaQuerier);
-
+using namespace simschema;
 #define QUERY_START 1
 
 void SimSchemaQuerier::initialize()

@@ -1,0 +1,85 @@
+%description:
+
+Tests the functionality of the utility struct ServiceURL
+
+It should fail and return the expected URL
+
+%includes:
+#include "OperatingSystem/Hypervisors/common.h"
+
+%activity:
+using namespace hypervisor;
+
+// Create and allocate a control table of 3 vms
+auto vms = ControlTable<VmControlBlock>();
+vms.init(3, &VmControlBlock::initialize);
+
+// Reserve all the table
+uint32_t pid1 = vms.takeId();
+uint32_t pid2 = vms.takeId();
+uint32_t pid3 = vms.takeId();
+
+EV << "The allocated pids: " << pid1 << ' ' << pid2 << ' ' << pid3 << '\n';
+EV << "\nThe table state: \n";
+EV << vms << '\n';
+
+EV << "Release the pid: " << pid2 << '\n';
+vms.releaseId(pid2);
+EV << "\nThe table state: \n";
+EV << vms << '\n';
+
+EV << "Reaccquire the pid: " << pid2 << '\n';
+pid2 = vms.takeId();
+EV << "\nThe table state: \n";
+EV << vms << '\n';
+
+%not-contains: stderr
+ñ
+%contains: stdout
+The allocated pids: 0 1 2
+
+The table state: 
+Allocated ids:     3
+Last allocated id: 2
+Entries:
++ Free entry: false Contents:
+VmId:     0
+----------
++ Free entry: false Contents:
+VmId:     1
+----------
++ Free entry: false Contents:
+VmId:     2
+----------
+
+Release the pid: 1
+
+The table state: 
+Allocated ids:     2
+Last allocated id: 2
+Entries:
++ Free entry: false Contents:
+VmId:     0
+----------
++ Free entry: true Contents:
+VmId:     1
+----------
++ Free entry: false Contents:
+VmId:     2
+----------
+
+Reaccquire the pid: 1
+
+The table state: 
+Allocated ids:     3
+Last allocated id: 1
+Entries:
++ Free entry: false Contents:
+VmId:     0
+----------
++ Free entry: false Contents:
+VmId:     1
+----------
++ Free entry: false Contents:
+VmId:     2
+----------

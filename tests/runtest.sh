@@ -1,22 +1,24 @@
-MAKE="make -j4 MODE=debug"
-if [ ! -d work ];  then mkdir work; fi
-if [ ! -d work/linet ]; then ln -s ../../../inet4/src work/linet; fi
-if [ ! -d work/src ]; then ln -s ../../src/ work/src; fi
-if [ ! -d work/modules ]; then ln -s ../modules work/modules; fi
-NEDPATH=../../../src:.:../../../../inet4/src/:../modules
-EXTRA_INCLUDES="-I../../../src"
-INET_PROJ=./linet/
+# Point to the definitions
+NEDPATH=$SIMCAN_HOME/src:$INET_HOME/src/:../modules:.
+# DNS/*.test simschema/*.test
 
-# Generate the test case files
-opp_test gen -v DNS/*.test
-opp_test gen -v simschema/*.test
+if [ $# -eq 0 ]
+then
+    echo "You must specify test folder/s (or \"all\" for running all tests) as arguments"
+    exit 1
+fi
 
-# Copy the network into simschema
-cp simschema/Unconnected.ned work/simschemamysql
+if [ $1 = "all" ]
+then
+    TARGETS=("DNS" "simschema" "unit")
+else
+    TARGETS="$@"
+fi
 
-# At first it seems like magic. It really is just importing the Simcan2Cloud and INET framework
-(cd work; opp_makemake -f -O ./tests/work/cmp -o testing --deep -KINET4_PROJ=$INET_PROJ -DINET_IMPORT  -I../../src/ -I$\(INET4_PROJ\)/ -L../../lib/ -L$\(INET4_PROJ\)/  -X $INET_PROJ -lINET$\(D\) -lmysqlcppconn; $MAKE) || exit 1
-echo
+for folder in ${TARGETS[@]}
+do
+    ALL="$ALL $folder/*.test"
+done
 
 # Then run the tests
-opp_test run -v DNS/*.test simschema/*.test -p testing_dbg -a "-n $NEDPATH" || exit 1
+opp_test run -v $ALL -p testing_dbg -a "-n $NEDPATH" || exit 1

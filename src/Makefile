@@ -1,28 +1,19 @@
 #
-# OMNeT++/OMNEST Makefile for Simcan2Cloud
+# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)Simcan2Cloud
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lmysqlcppconn -lINET$$\(D\)
+#  opp_makemake --make-lib -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lmysqlcppconn -lINET$$\(D\)
 #
 
 # Name of target to be created (-o option)
-TARGET = Simcan2Cloud$(D)$(EXE_SUFFIX)
+TARGET = $(LIB_PREFIX)Simcan2Cloud$(D)$(A_LIB_SUFFIX)
 TARGET_DIR = .
-
-# User interface (uncomment one) (-u option)
-USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LIBS)
-#USERIF_LIBS = $(CMDENV_LIBS)
-#USERIF_LIBS = $(TKENV_LIBS)
-#USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
 INCLUDE_PATH = -I. -I$(INET4_PROJ)/src
 
 # Additional object and library files to link with
 EXTRA_OBJS =
-
-# Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src  -lmysqlcppconn -lINET$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -65,6 +56,8 @@ OBJS = \
     $O/Management/DataCentreManagers/DataCentreManagerBestFit/DataCentreManagerBestFit.o \
     $O/Management/DataCentreManagers/DataCentreManagerCost/DataCentreManagerCost.o \
     $O/Management/DataCentreManagers/DataCentreManagerFirstFit/DataCentreManagerFirstFit.o \
+    $O/Management/DataCentreManagers/ResourceManager/ResourceManager.o \
+    $O/Management/DataCentreManagers/ResourceManager/VmDeployment.o \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
     $O/Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \
@@ -121,6 +114,7 @@ OBJS = \
     $O/OperatingSystem/Hypervisors/EdgeHypervisor/EdgeHypervisor.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
     $O/OperatingSystem/Hypervisors/OsCore/OsCore.o \
+    $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \
@@ -139,6 +133,7 @@ OBJS = \
 
 # Message files
 MSGFILES = \
+    Architecture/Network/RoutingInfo/RoutingInfo.msg \
     Messages/DNS_Request.msg \
     Messages/INET_AppMessage.msg \
     Messages/SIMCAN_Message.msg \
@@ -181,12 +176,6 @@ endif
 
 include $(CONFIGFILE)
 
-# Simulation kernel and user interface libraries
-OMNETPP_LIBS = $(OPPMAIN_LIB) $(USERIF_LIBS) $(KERNEL_LIBS) $(SYS_LIBS)
-ifneq ($(TOOLCHAIN_NAME),clangc2)
-LIBS += -Wl,-rpath,$(abspath $(INET4_PROJ)/src)
-endif
-
 COPTS = $(CFLAGS) $(IMPORT_DEFINES) -DINET_IMPORT $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
 SMCOPTS =
@@ -220,8 +209,8 @@ endif
 
 $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
 	@$(MKPATH) $O
-	@echo Creating executable: $@
-	$(Q)$(CXX) $(LDFLAGS) -o $O/$(TARGET) $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS)
+	@echo Creating static library: $@
+	$(Q)$(AR) $O/$(TARGET) $(OBJS) $(EXTRA_OBJS)
 
 .PHONY: all clean cleanall depend msgheaders smheaders
 

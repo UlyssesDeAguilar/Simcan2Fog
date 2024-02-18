@@ -1,0 +1,41 @@
+%description:
+
+Tests the functionality of the utility class ControlTable
+
+%includes:
+#include "Core/include/ServiceURL.h"
+
+%activity:
+
+// Case 1 -- Construct a global URL
+EV << "Global url: 1.0.0.0" << '\n';
+auto url = ServiceURL("1.0.0.0");
+EV << url << "\n\n";
+
+// Case 2 -- Construct a local URL
+EV << "Local url: 192.0.0.1" << '\n';
+auto url2 = ServiceURL("#192.0.0.1");
+EV << url2 << "\n\n";
+
+// Case 3 -- Construct a full URL (Local + Global ip)
+EV << "Local url: 192.0.0.1" << '\n';
+auto url3 = ServiceURL("#192.0.0.1@10.0.0.1");
+EV << url3 << "\n\n";
+
+// try{
+//     
+// }catch(const std::invalid_argument &e){
+//     std::cerr << e.what() << std::endl;
+// }
+
+%not-contains: stderr
+ñ
+%contains: stdout
+Global url: 1.0.0.0
+1.0.0.0
+
+Local url: 192.0.0.1
+#192.0.0.1
+
+Local url: 192.0.0.1
+#192.0.0.1@10.0.0.1

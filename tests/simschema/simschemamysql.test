@@ -34,6 +34,7 @@ Search VM with name: VM_4xlarge
 Type:        VM_4xlarge
 Cost (h):    23
 Cores (#):   16
+SCU (#):     16
 Disk (GB):   1000
 Memory (GB): 1000
 
