@@ -1,0 +1,45 @@
+%description:
+Tests the correct behaviour of the Switch implementation
+
+%inifile: omnetpp.ini
+[General]
+network = EchoNet1
+sim-time-limit = 10s
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
+%contains: stdout
+** Event #7  t=0  0% completed  (0% total)   EchoNet1.vec[0] (Echo, id=4)
+Recieved message: SIMCAN_Message at address: 0
+Sending ACK
+** Event #8  t=0  0% completed  (0% total)   EchoNet1.vec[1] (Echo, id=5)
+Recieved message: SIMCAN_Message at address: 1
+Sending ACK
+** Event #9  t=0  0% completed  (0% total)   EchoNet1.vec[2] (Echo, id=6)
+Recieved message: SIMCAN_Message at address: 2
+Sending ACK
+** Event #10  t=0  0% completed  (0% total)   EchoNet1.vec[3] (Echo, id=7)
+Recieved message: SIMCAN_Message at address: 3
+Sending ACK
+** Event #11  t=0  0% completed  (0% total)   EchoNet1.vec[4] (Echo, id=8)
+Recieved message: SIMCAN_Message at address: 4
+Sending ACK
+** Event #12  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+** Event #13  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+** Event #14  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+** Event #15  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+** Event #16  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+** Event #17  t=0  0% completed  (0% total)   EchoNet1.main (Echo, id=2)
+** Event #18  t=0  0% completed  (0% total)   EchoNet1.main (Echo, id=2)
+** Event #19  t=0  0% completed  (0% total)   EchoNet1.main (Echo, id=2)
+** Event #20  t=0  0% completed  (0% total)   EchoNet1.main (Echo, id=2)
+** Event #21  t=0  0% completed  (0% total)   EchoNet1.main (Echo, id=2)
+All acks recieved
+Testing loopback
+** Event #22  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+** Event #23  t=0  0% completed  (0% total)   EchoNet1.main (Echo, id=2)
+Loopback recieved
+** Event #24  t=10  100% completed  (100% total)

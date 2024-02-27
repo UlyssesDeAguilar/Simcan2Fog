@@ -123,11 +123,13 @@ void cSIMCAN_Core::updateMessageTrace(SIMCAN_Message *sm)
 		EV_TRACE << "(updateMessageTrace): Before updating the trace." << endl
 				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
 
+	cGate * selection = getOutGate(sm);
+
 	// If gate==nullptr... This may be the first module, there is no previous gate!
-	if ((getOutGate(sm)) == nullptr)
+	if (selection == nullptr)
 		gateId = SC_UnsetGateID;
 	else
-		gateId = getOutGate(sm)->getId();
+		gateId = selection->getId();
 
 	// Add the current module to trace
 	sm->addModuleToTrace(getId(), gateId, currentRequest);

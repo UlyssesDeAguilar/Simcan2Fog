@@ -9,288 +9,66 @@ void DataCentreManagerCost::initialize()
 
     // Init super-class
     DataCentreManagerBase::initialize();
-
-    // FIXME: Should check this! parseConfig() does no longer exist
-    parseDataCentreConfig();
 }
 
 void DataCentreManagerCost::initializeRequestHandlers()
 {
-    requestHandlers[SM_APP_Req_Resume] = [this](SIMCAN_Message *msg) -> void
-    { return handleExtendVmAndResumeExecution(msg); };
-    requestHandlers[SM_APP_Req_End] = [this](SIMCAN_Message *msg) -> void
-    { return handleEndVmAndAbortExecution(msg); };
 }
 
-int DataCentreManagerCost::parseDataCentreConfig()
+std::pair<uint32_t, size_t> DataCentreManagerCost::selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs)
 {
-    int result;
-    const char *dataCentresConfigChr;
+    std::pair<uint32_t, size_t> selection;
 
-    dataCentresConfigChr = par("dataCentreConfig");
-    DataCentreReservationConfigParser dataCentreParser(dataCentresConfigChr);
-    result = dataCentreParser.parse();
-    if (result == SC_OK)
+    // Recover user and request info
+    auto pCloudUser = check_and_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserId()));
+    SM_UserVM_Cost *userVM_Rq_Cost = check_and_cast<SM_UserVM_Cost *>(userVM_Rq);
+
+    if (checkReservedFirst && pCloudUser->getPriorityType() == Priority)
     {
-        dataCentresBase = dataCentreParser.getResult();
-    }
-    return result;
-}
-
-int DataCentreManagerCost::initDataCentreMetadata()
-{
-    int result = SC_OK;
-    DataCentreReservation *pDataCentreBase = dynamic_cast<DataCentreReservation *>(dataCentresBase[0]);
-    cModule *pRackModule, *pBoardModule, *pNodeModule;
-    int numBoards, numNodes, numCores, numTotalCores = 0;
-    int numReserverNodes = pDataCentreBase->getReservedNodes();
-
-    for (int nRackIndex = 0; nRackIndex < pDataCentreBase->getNumRacks(false); nRackIndex++)
-    {
-        Rack *pRackBase = pDataCentreBase->getRack(nRackIndex, false);
-        // Generate rack name in the data centre
-        string strRackName = "rackCmp_" + pRackBase->getRackInfo()->getName();
-        pRackModule = getParentModule()->getSubmodule(strRackName.c_str(), nRackIndex);
-
-        numBoards = pRackModule->par("numBoards");
-
-        for (int nBoardIndex = 0; nBoardIndex < numBoards; nBoardIndex++)
+        SM_UserVM_Cost *userVM_Rq_Cost = dynamic_cast<SM_UserVM_Cost *>(userVM_Rq);
+        selection = selectNodeReserved(userVM_Rq_Cost, vmSpecs);
+        
+        // If there was an reserved node available, then return
+        if (selection.first != UINT32_MAX)
         {
-            pBoardModule = pRackModule->getSubmodule("board", nBoardIndex);
-            numNodes = pBoardModule->par("numBlades");
-
-            for (int nNodeIndex = 0; nNodeIndex < numNodes; nNodeIndex++)
-            {
-                pNodeModule = pBoardModule->getSubmodule("blade", nNodeIndex);
-
-                if (numReserverNodes > 0)
-                {
-                    storeReservedNodeMetadata(pNodeModule);
-                    numReserverNodes--;
-                    numCores = 0;
-                }
-                else
-                {
-                    numCores = storeNodeMetadata(pNodeModule);
-                }
-
-                numTotalCores += numCores;
-            }
+            userVM_Rq_Cost->setBPriorized(true);
+            return selection;
         }
     }
 
-    return result;
+    // Fallback or user is not of priority type
+    selection = DataCentreManagerFirstFit::selectNode(userVM_Rq, vmSpecs);
+
+    return selection;
 }
 
-int DataCentreManagerCost::storeReservedNodeMetadata(cModule *pNodeModule)
-{
-    cModule *pHypervisorModule;
-    DcHypervisor *pHypervisor;
-    int numCores;
-
-    pHypervisorModule = pNodeModule->getSubmodule("osModule")->getSubmodule("hypervisor");
-
-    numCores = pNodeModule->par("numCpuCores");
-
-    pHypervisor = check_and_cast<DcHypervisor *>(pHypervisorModule);
-
-    // Store hypervisor pointers by number of cores
-    mapHypervisorPerNodesReserved[numCores].push_back(pHypervisor);
-
-    return numCores;
-}
-
-DcHypervisor *DataCentreManagerCost::selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest)
-{
-    auto pCloudUser = dynamic_cast<const CloudUserPriority *>(findUserTypeById(userVM_Rq->getUserId()));
-    DcHypervisor *pHypervisor = nullptr;
-    SM_UserVM_Cost *userVM_Rq_Cost = dynamic_cast<SM_UserVM_Cost *>(userVM_Rq);
-
-    if (pCloudUser == nullptr)
-        error("[%s] Wrong pCloudUser. Null pointer or wrong cloud user class!", LogUtils::prettyFunc(__FILE__, __func__).c_str());
-
-    if (!checkReservedFirst)
-    {
-        pHypervisor = DataCentreManagerFirstFit::selectNode(userVM_Rq, vmRequest);
-    }
-
-    if (pHypervisor == nullptr && pCloudUser->getPriorityType() == Priority)
-    {
-        pHypervisor = selectNodeReserved(userVM_Rq_Cost, vmRequest);
-    }
-
-    if (pHypervisor == nullptr && checkReservedFirst)
-    {
-        pHypervisor = DataCentreManagerFirstFit::selectNode(userVM_Rq, vmRequest);
-    }
-
-    return pHypervisor;
-}
-
-DcHypervisor *DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *&userVM_Rq, const VM_Request &vmRequest)
+std::pair<uint32_t, size_t> DataCentreManagerCost::selectNodeReserved(SM_UserVM_Cost *userVM_Rq, const VirtualMachine &vmSpecs)
 {
     assert_msg((userVM_Rq != nullptr), "Nullpointer");
 
     std::string userId = userVM_Rq->getUserId();
-    auto pVMBase = dataManager->searchVirtualMachine(vmRequest.vmType);
-    int numCoresRequested = pVMBase->getNumCores();
-
-    // Search the possible candidate
-    auto hasSufficientCores = [numCoresRequested](std::pair<const int, std::vector<DcHypervisor*>> &e) -> bool
-    { return e.first >= numCoresRequested; };
-
-    auto hypervisorBucket = std::find_if(mapHypervisorPerNodesReserved.begin(), mapHypervisorPerNodesReserved.end(), hasSufficientCores);
+    int numCoresRequested = vmSpecs.getNumCores();
+    
+    auto bucket = resourceManager->startFromCoreCount(numCoresRequested, true);
+    auto end = resourceManager->endOfNodeMap(true);
 
     // Start checking
-    for (; hypervisorBucket != mapHypervisorPerNodesReserved.end(); ++hypervisorBucket)
+    for (; bucket != end; ++bucket)
     {
-        auto vectorHypervisor = hypervisorBucket->second;
-        for (auto &hypervisor : vectorHypervisor)
-        {
-            int numAvailableCores = hypervisor->getAvailableCores();
-            if (numAvailableCores >= numCoresRequested)
-            {
+        auto vectorHypervisor = bucket->second;
+        const DcResourceManager* rm = resourceManager;
 
-                // TODO: Probablemente sea mejor mover esto al hypervisor. La asignaci�n al map y que sea el hypervisor el que controle a que VM va.
-                // TODO: Finalmente deber�a devolver la IP del nodo y que el mensaje de la App llegue al nodo.
+        // Filter to get the first hypervisor which has at least the minimum needed
+        auto filter = [vmSpecs, rm](const uint32_t &ip) -> bool
+        { return rm->getNodeResources(ip) <= vmSpecs; };
 
-                cModule *pVmAppVectorModule = hypervisor->handleVmRequest(vmRequest);
-                if (pVmAppVectorModule != nullptr)
-                {
-                    updateCpuUtilizationTimeForHypervisor(hypervisor);
-                    mapAppsVectorModulePerVm[vmRequest.vmId] = pVmAppVectorModule;
-                    int numMaxApps = pVmAppVectorModule->par("numApps");
-                    bool *runningAppsArr = new bool[numMaxApps]{false};
-                    mapAppsRunningInVectorModulePerVm[vmRequest.vmId] = runningAppsArr;
-                    userVM_Rq->setBPriorized(true);
-                    return hypervisor;
-                }
-            }
-        }
+        auto iter = std::find_if(vectorHypervisor.begin(), vectorHypervisor.end(), filter);
+        
+        // If there's a candidate, return immediately
+        if (iter != vectorHypervisor.end())
+            return std::pair<uint32_t, size_t>(*iter, iter - vectorHypervisor.begin());
     }
 
-    return nullptr;
-}
-
-void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg)
-{
-    SM_UserAPP *pUserApp;
-    DcHypervisor *pHypervisor;
-
-    std::string strUsername,
-        strVmType,
-        strVmId,
-        strAppName,
-        strIp;
-
-    bool bAlreadyFinished;
-
-    SM_UserVM_Finish *pUserVmFinish;
-
-    std::map<std::string, SM_UserAPP *>::iterator it;
-
-    pUserVmFinish = dynamic_cast<SM_UserVM_Finish *>(msg);
-    if (pUserVmFinish == nullptr)
-        error("%s - Unable to cast msg to SM_UserVM_Finish*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), msg->getName());
-
-    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - INIT" << '\n';
-    strVmId = pUserVmFinish->getStrVmId();
-
-    strUsername = pUserVmFinish->getUserID();
-    EV_INFO << "The rent of the VM [" << strVmId
-            << "] launched by the user " << strUsername
-            << " has finished" << '\n';
-
-    // deallocateVmResources(strVmId);
-
-    pUserApp = getUserAppRequestPerUser(strUsername);
-
-    if (pUserApp == nullptr)
-    {
-        throw omnetpp::cRuntimeError(("[" + LogUtils::prettyFunc(__FILE__, __func__) + "] There is no app request message from the User!").c_str());
-    }
-    //    acceptAppRequest(pUserApp, strVmId);
-
-    // Check the Application status
-
-    EV_INFO << "Last id gate: " << pUserApp->getLastGateId() << '\n';
-    EV_INFO
-        << "Checking the status of the applications which are running over this VM"
-        << '\n';
-
-    // Abort the running applications
-    if (!pUserApp->allAppsFinished(strVmId))
-    {
-        EV_INFO << "Aborting running applications" << '\n';
-        abortAllApps(strVmId);
-        pUserApp->abortAllApps(strVmId);
-    }
-    else
-    {
-        deallocateVmResources(strVmId);
-        strVmType = pUserVmFinish->getStrVmType();
-        nTotalAvailableCores += getTotalCoresByVmType(strVmType);
-    }
-    // Check the result and send it
-    checkAllAppsFinished(pUserApp, strVmId);
-
-    EV_INFO << "Freeing resources..." << '\n';
-}
-
-void DataCentreManagerCost::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
-{
-    auto userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
-    if (userAPP_Rq == nullptr)
-        error("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
-
-    std::string strVmId = userAPP_Rq->getVmId();
-    if (strVmId.empty())
-        return; // Original behavior, Should we warn the user ?
-
-    std::string userId = userAPP_Rq->getUserID();
-    SM_UserVM *userVmRequest = nullptr;
-
-    // Try to find the user and his vm request
-    try
-    {
-        userVmRequest = acceptedUsersRqMap.at(userId);
-    }
-    catch (std::out_of_range const &e)
-    {
-        EV_INFO << "WARNING! [" << LogUtils::prettyFunc(__FILE__, __func__) << "] The user: " << userId << "has not previously registered!!" << '\n';
-        return;
-    }
-
-    for (int j = 0; j < userVmRequest->getVmArraySize(); j++)
-    {
-        // Getting VM and scheduling renting timeout
-        auto vmRequest = userVmRequest->getVm(j);
-        // scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
-
-        if (strVmId.compare(vmRequest.vmId) == 0)
-        {
-            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, 3600);
-            handleUserAppRequest(sm);
-            return;
-        }
-    }
-}
-
-void DataCentreManagerCost::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
-{
-    auto userAPP_Rq = dynamic_cast<SM_UserAPP *>(sm);
-    if (userAPP_Rq == nullptr)
-        error("%s - Unable to cast msg to SM_UserAPP*. Wrong msg name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), sm->getName());
-
-    std::string vmId = userAPP_Rq->getVmId();
-    if (!vmId.empty())
-    {
-        EV_INFO << "Freeing resources..." << '\n';
-
-        // Free the VM resources
-        deallocateVmResources(vmId);
-
-        // Delete ephemeral message
-        delete sm;
-    }
+    // If not found
+    return std::make_pair<>(UINT32_MAX, 0);
 }

@@ -6,7 +6,6 @@
 #include "Management/CloudProviders/CloudProviderBase/CloudProviderBase.h"
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Messages/SM_UserAPP.h"
-#include "Messages/SM_UserAPP_Finish_m.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
 
 #define CPU_SPEED       30000
@@ -85,10 +84,7 @@ protected:
     virtual bool checkVmUserFit(SM_UserVM *&userVM_Rq);
 
 
-    // SM_UserAPP_Finish* scheduleAppTimeout (std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime);
     void clearVMReq (SM_UserVM*& userVM_Rq, int lastId);
-    //void cancelAndDeleteAppFinishMsgs(SM_UserAPP* userApp, std::string strVmId);
-    //void checkAllAppsFinished(SM_UserAPP* pUserApp, std::string strVmId);
 
     /**
      * Update the subscription queue. Analyse the queue in order to find timeouts, and accepting the enqueued VM requests.

@@ -80,5 +80,5 @@ module OperatingSystem
         cpuSchedVector.fromCpu <-- ned.IdealChannel <-- fromCpu;
 
         // Connection in/out from network to hypervisor
-        hypervisor.network <--> comm;
+        hypervisor.networkComm <--> comm;
 }

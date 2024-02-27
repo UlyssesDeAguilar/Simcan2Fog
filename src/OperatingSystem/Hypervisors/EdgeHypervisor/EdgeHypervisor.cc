@@ -6,10 +6,10 @@ void EdgeHypervisor::initialize(int stage)
 {
     switch (stage)
     {
-    case INNER_STAGE:
+    case LOCAL:
         appsVector = getModuleByPath("^.apps");
         break;
-    case LOCAL_STAGE:
+    case NEAR:
         // Initialize the free PID table
     default:
         break;

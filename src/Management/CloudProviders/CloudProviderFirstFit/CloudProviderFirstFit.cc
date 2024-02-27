@@ -562,26 +562,6 @@ void CloudProviderFirstFit::storeVmSubscribe(SM_UserVM *userVM_Rq)
   }
 }
 
-/*
-SM_UserAPP_Finish *CloudProviderFirstFit::scheduleAppTimeout(std::string name, std::string strUserName, std::string strAppName, std::string strVmId, double totalTime)
-{
-  SM_UserAPP_Finish *pMsgFinish = new SM_UserAPP_Finish();
-
-  pMsgFinish->setUserID(strUserName.c_str());
-  pMsgFinish->setStrApp(strAppName.c_str());
-
-  if (!strVmId.empty())
-    pMsgFinish->setStrVmId(strVmId.c_str());
-
-  pMsgFinish->setNTotalTime(totalTime);
-  pMsgFinish->setName(name.c_str());
-
-  EV_INFO << "Scheduling time rental Msg, " << strAppName << " at " << simTime().dbl() + totalTime << "s" << '\n';
-  scheduleAt(simTime() + SimTime(totalTime), pMsgFinish);
-
-  return pMsgFinish;
-}*/
-
 void CloudProviderFirstFit::clearVMReq(SM_UserVM *&userVM_Rq, int lastId)
 {
   for (int i = 0; i < lastId; i++)

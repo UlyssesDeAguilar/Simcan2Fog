@@ -14,9 +14,7 @@
 class DataCentreManagerFirstFit : public DataCentreManagerBase
 {
 protected:
-    ~DataCentreManagerFirstFit() {};
-    virtual void initialize() override;
-    virtual hypervisor::DcHypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
+    virtual std::pair<uint32_t, size_t> selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs) override;
 };
 
 #endif

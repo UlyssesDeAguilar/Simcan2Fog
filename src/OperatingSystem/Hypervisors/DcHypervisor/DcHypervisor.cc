@@ -1,32 +1,48 @@
 #include "DcHypervisor.h"
+#include "Management/DataCentreManagers/ResourceManager/ResourceManager.h"
+
 using namespace hypervisor;
 
 Define_Module(DcHypervisor);
 
-void DcHypervisor::initialize()
+void DcHypervisor::initialize(int stage)
 {
-    // Init the super-class
-    cSIMCAN_Core::initialize();
+    switch (stage)
+    {
+    case LOCAL:
+    {
+        // Init module parameters
+        nPowerOnTime = par("powerOnTime");
+        powerMessage = nullptr;
 
-    // Init module parameters
-    nPowerOnTime = par("powerOnTime");
-    powerMessage = nullptr;
+        // Get base Id for indexing
+        appGates.inBaseId = gateBaseId("fromApps");
+        appGates.outBaseId = gateBaseId("toApps");
 
-    // Get base Id for indexing
-    appGates.inBaseId = gateBaseId("fromApps");
-    appGates.outBaseId = gateBaseId("toApps");
+        // Get base Id for indexing
+        schedulerGates.inBaseId = gateBaseId("fromCpuScheduler");
+        schedulerGates.outBaseId = gateBaseId("toCpuScheduler");
 
-    // Get base Id for indexing
-    schedulerGates.inBaseId = gateBaseId("fromCpuScheduler");
-    schedulerGates.outBaseId = gateBaseId("toCpuScheduler");
+        // Load both apps vector and scheduler vector
+        cModule *osModule = getParentModule();
 
-    // Load both apps vector and scheduler vector
-    cModule *osModule = getParentModule();
+        auto schedulerAccessor = [](cModule *osModule, int i) -> cModule *
+        { return osModule->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0); };
 
-    auto schedulerAccessor = [](cModule *osModule, int i) -> cModule *
-    { return osModule->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0); };
+        loadVector(schedulers, osModule, schedulerAccessor);
+        break;
+    }
+    case BLADE:
+    {
+        // This is the reason why I would like to do this with messages instead
+        resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath("^.^.^.resourceManager"));
+        resourceManager->registerNode(hardwareManager->getIp(), hardwareManager->getAvailableResources());
+    }
+    default:
+        break;
+    }
 
-    loadVector(schedulers, osModule, schedulerAccessor);
+    Hypervisor::initialize(stage);
 }
 
 void DcHypervisor::loadVector(std::vector<cModule *> &v, cModule *osModule, cModule *(*accessor)(cModule *, int))
@@ -86,7 +102,19 @@ void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
     sendResponseMessage(sm);
 }
 
-cModule *DcHypervisor::handleVmRequest(const VM_Request &request)
+// This is the older code for scheduling the timeout, it implies that sucribe operations need special treatment -- Look at user generator!
+// double rentTime;
+//             // Getting VM and scheduling renting timeout
+//             strVmId = userVM_Rq->getVmId();
+//             if (!strVmId.empty() && userVM_Rq->getOperation() == SM_VM_Sub)
+//                 rentTime = 3600;
+//             else
+//                 rentTime = vmRequest.times.rentTime.dbl();
+//
+//             // vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.strVmType, nRentTime);
+//             vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, rentTime);
+
+cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *userId)
 {
     unsigned int *cpuCoreIndex;
 
@@ -104,8 +132,20 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request)
 
     // Got it, get the vm an id and register it
     uint32_t id = vmsControl.takeId();
-    vmIdMap[request.vmId] = id;
+    auto controlBlock = vmsControl[id];
 
+    // Register the global id in map and in the control block
+    vmIdMap[request.vmId] = id;
+    auto iter = vmIdMap.find(request.vmId);
+    controlBlock.globalId = &iter->first;
+    controlBlock.userId = userId;
+
+    // Schedule timeout message
+    cMessage *timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
+    timeOut->setContextPointer(&controlBlock);
+    scheduleAt(simTime() + request.times.rentTime, timeOut);
+
+    // Setup the scheduler
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(schedulers[id]);
 
     bool *isCPU_Idle = new bool[cores];
@@ -118,6 +158,42 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request)
     pVmScheduler->setIsRunning(true);
 
     return getParentModule()->getSubmodule("appsVectors", id);
+}
+
+void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
+{
+    // Create extension offer
+    auto extensionOffer = new SM_VmExtend();
+
+    // Fill in the neccesary details
+    extensionOffer->setVmId(vm.globalId->c_str());
+    extensionOffer->setUserId(vm.userId.c_str());
+
+    // Set as a request and send to the Manager
+    extensionOffer->setIsResponse(false);
+    extensionOffer->setOperation(SM_APP_Req);
+    extensionOffer->setOperation(SM_APP_Res_Timeout);
+    
+    auto localUrl = ServiceURL(DC_MANAGER_LOCAL_ADDR);
+    auto routingInfo = new RoutingInfo();
+    routingInfo->setUrl(localUrl);
+    
+    extensionOffer->setControlInfo(routingInfo);
+
+    /*
+    This would be after the definitive response of the User of abandoning or recovering the vm!
+
+    // Deallocate the vm resources
+    deallocateVmResources(*vm.globalId);
+
+    // For all app entries
+    for (auto &app : vm.apps)
+    {
+        // If the app is active and running, terminate it
+        if (app.first == true && app.second.isRunning())
+            osCore.handleAppTermination(app.second, true);
+    }
+    */
 }
 
 void DcHypervisor::deallocateVmResources(const std::string &vmId)

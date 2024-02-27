@@ -11,11 +11,6 @@ namespace hypervisor
     class Hypervisor : public cSIMCAN_Core
     {
     protected:
-        enum InitStage
-        {
-            INNER_STAGE,
-            LOCAL_STAGE
-        };
 
         HardwareManager *hardwareManager; //!< Reference to the hardwareManager
         DataManager *dataManager;
@@ -24,15 +19,16 @@ namespace hypervisor
         uint32_t maxAppsPerVm;                   //!< Max number of vms per vm -> TODO: Check out the values
         std::map<std::string, uint32_t> vmIdMap; //!< Map that translates the general VM Id to the local VM Id
 
-        GateInfo appGates;                       //!< General info for appGates
-        GateInfo schedulerGates;                 //!< General info for schedulerGates
-        GateInfo networkGates;                   //!< General info for network gates 
+        GateInfo appGates;       //!< General info for appGates
+        GateInfo schedulerGates; //!< General info for schedulerGates
+        GateInfo networkGates;   //!< General info for network gates
 
         uint32_t takePid(uint32_t vmId) { return vmsControl[vmId].apps.takeId(); }
         void releasePid(uint32_t vmId, uint32_t pid) { vmsControl[vmId].apps.releaseId(pid); }
 
         AppControlBlock &getAppControlBlock(uint32_t vmId, uint32_t pid) { return vmsControl[vmId].apps[pid]; }
         virtual void handleAppRequest(SM_UserAPP *sm);
+        virtual void handleVmTimeout(VmControlBlock &vm) { error("Default vm timeout not implemented"); }
 
         // Subclass interface section
 
@@ -43,7 +39,7 @@ namespace hypervisor
          * @return cModule* Pointer to the AppModule module
          */
         virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) = 0;
-        
+
         /**
          * @brief Locates the hardware manager in the simulation topology
          * @return HardwareManager* Pointer to the hardware manager for direct communication
@@ -57,9 +53,8 @@ namespace hypervisor
          */
         virtual uint32_t resolveGlobalVmId(const std::string &vmId) = 0;
 
-        // Inherited section -- TODO: Change override fixes warning about hidden initialize() from super class ?
         virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return 2; }
+        virtual int numInitStages() const override { return NEAR + 1; }
 
         virtual void finish() override;
         virtual cGate *getOutGate(cMessage *msg) override;

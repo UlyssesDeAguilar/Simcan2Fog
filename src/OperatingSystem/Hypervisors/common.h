@@ -12,9 +12,11 @@
 #include <omnetpp.h>
 #include "Core/DataManager/DataManager.h"
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
+#include "Architecture/Network/RoutingInfo/RoutingInfo_m.h"
 #include "Applications/Builder/include.h"
 #include "Messages/SM_UserAPP.h"
 #include "Messages/SM_UserVM.h"
+#include "Messages/SM_VmExtend_m.h"
 #include "Messages/INET_AppMessage.h"
 #include "Messages/SM_CPU_Message.h"
 #include "OperatingSystem/AppIdLabel/AppIdLabel_m.h"
@@ -28,9 +30,9 @@ namespace hypervisor
 {
     typedef enum
     {
-        IO_DELAY,    //!< Input/Output delay finished
-        APP_TIMEOUT, //!< Application hit timeout (Maybe more appropiate for a VM?)
-        POWER_ON     //!< Event for powering on the machine
+        IO_DELAY,   //!< Input/Output delay finished
+        VM_TIMEOUT, //!< A virtual machine reached the maximum renting time
+        POWER_ON    //!< Event for powering on the machine
     } AutoEvent;
 
     typedef enum
@@ -120,21 +122,28 @@ namespace hypervisor
     struct VmControlBlock
     {
         uint32_t vmId;                      //!< The vmId -- It's aligned in virtual environements with the scheduler!
+        std::string userId;                 //!< The current owner of the vm
+        const std::string *globalId;        //!< The unique identifier of the vm in the global context of the simulation
         ControlTable<AppControlBlock> apps; //!< The apps that are currently executing
         tVmState state;                     //!< The current state of the VM
         NodeResourceRequest *request;       //!< The request that allocated this VM
+        // cMessage *timeOut;                  //!< The timeout event
         // SM_UserVM *msg; <-- We'll see if this makes sense
-        cMessage *timeOut; //!< The timeout event
 
         void initialize(uint32_t vmId)
         {
             this->vmId = vmId;
             state = tVmState::vmIdle;
             request = nullptr;
-            timeOut = nullptr;
+            globalId = nullptr;
+        }
+
+        friend std::ostream &operator<<(std::ostream &os, const VmControlBlock &obj)
+        {
+            return os << "VmId:     " << obj.vmId << '\n';
         }
     };
-    
+
 }
 
 // Include the Syscall message after to avoid import loop

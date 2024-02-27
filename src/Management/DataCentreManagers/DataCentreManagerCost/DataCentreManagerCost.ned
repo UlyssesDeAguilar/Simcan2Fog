@@ -4,9 +4,10 @@ import simcan2.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentr
 //
 // Implementation of a Cloud DataCentre Manager
 //
-simple DataCentreManagerCost extends DataCentreManagerFirstFit { 
+simple DataCentreManagerCost extends DataCentreManagerFirstFit 
+{ 
     parameters:    
-    	bool checkReservedFirst = default (false);  
-   @class(DataCentreManagerCost); 
-
+        @class(DataCentreManagerCost);
+        int reservedNodes = default(0);             // The number of reserved nodes
+    	bool checkReservedFirst = default (false);  // Whether to check user priority when allocating vms or not
 }

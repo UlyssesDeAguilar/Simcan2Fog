@@ -34,7 +34,7 @@ module DataCentre_A
         int numBlades;
 
         // Configure the main switch
-        switch.level = 0;
+        // switch.level = 0;
 
         @display("i=data-center;bgb=756,453");
     gates:
@@ -58,7 +58,7 @@ module DataCentre_A
             @display("p=441,206");
         }
 
-        blades[numBlades] : CloudBlade {
+        blade[numBlades] : CloudBlade {
             address = index;
         }
         
@@ -82,6 +82,6 @@ module DataCentre_A
         // TODO: In the future build dynamically the Racks/Boards
         // Connect the switch with the blades
         for i=0..numBlades-1 {
-            switch.comm++ <--> blades[i].comm;
+            switch.comm++ <--> blade[i].comm;
         }
 }

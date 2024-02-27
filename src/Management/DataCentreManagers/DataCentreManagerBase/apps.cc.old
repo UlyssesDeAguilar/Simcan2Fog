@@ -1,3 +1,10 @@
+// Used to contain a boolean array indicating free slots inside a AppsVector -> delegated to hypervisor
+// bool *getAppsRunningInVectorModuleByVm(const std::string &vmId) { return getOrNull(mapAppsRunningInVectorModulePerVm, vmId); }
+
+// Helpers to locate the applications
+// cModule *getFreeAppModuleInVector(const std::string &vmId);
+// cModule *getAppsVectorModulePerVm(const std::string &vmId) { return getOrNull(mapAppsVectorModulePerVm, vmId); }
+
 void DataCentreManagerBase::acceptAppRequest(SM_UserAPP *userAPP_Rq, std::string strVmId)
 {
     EV_INFO << "Sending vm end to the CP:" << userAPP_Rq->getUserID() << '\n';

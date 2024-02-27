@@ -269,15 +269,13 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
 
     if (pUserInstance != nullptr)
     {
-        /** FIXME: Uncomment this!!!
+        // Check if this user finished
         if (allVmsFinished(pUserInstance->getId()))
         {
             EV_INFO << "Set itself finished" << endl;
             finishUser(pUserInstance);
-
             cancelAndDeleteMessages(pUserInstance);
         }
-        */
 
         // Check if all the users have ended
         if (pUserInstance->isFinished() && allUsersFinished())
@@ -303,35 +301,25 @@ void UserGenerator_simple::finishUser(CloudUserInstance *pUserInstance)
 CloudUserInstance *UserGenerator_simple::handleResponseVmAccept(SIMCAN_Message *userVm_RAW)
 {
     CloudUserInstance *pUserInstance;
-    SM_UserVM *userVm = dynamic_cast<SM_UserVM *>(userVm_RAW);
+    SM_UserVM *userVm = check_and_cast<SM_UserVM *>(userVm_RAW);
 
-    if (userVm != nullptr)
-    {
-        EV_INFO << __func__ << " - Response message" << endl;
-        EV_INFO << *userVm << '\n';
+    EV_INFO << __func__ << " - Response message" << endl;
+    EV_INFO << *userVm << '\n';
 
-        // Update the status
-        updateVmUserStatus(userVm->getUserId(), userVm->getVmId(), vmAccepted);
+    // Update the status
+    updateVmUserStatus(userVm->getUserId(), userVm->getVmId(), vmAccepted);
 
-        // Check the response and proceed with the next action
-        pUserInstance = userHashMap.at(userVm->getUserId());
+    // Check the response and proceed with the next action
+    pUserInstance = userHashMap.at(userVm->getUserId());
 
-        if (pUserInstance != nullptr)
-        {
-            emit(responseSignal, pUserInstance->getNId());
-            pUserInstance->getInstanceTimesForUpdate().initExec = simTime();
+    emit(responseSignal, pUserInstance->getNId());
+    pUserInstance->getInstanceTimesForUpdate().initExec = simTime();
 
-            // If the vm-request has been rejected by the cloudprovider
-            // we have to subscribe the service
-            pUserInstance->setSubscribe(false);
-            emit(executeSignal[""], pUserInstance->getNId());
-            submitService(userVm);
-        }
-    }
-    else
-    {
-        error("Could not cast SIMCAN_Message to SM_UserVM (wrong operation code?)");
-    }
+    // If the vm-request has been rejected by the cloudprovider
+    // we have to subscribe the service
+    pUserInstance->setSubscribe(false);
+    emit(executeSignal[""], pUserInstance->getNId());
+    submitService(userVm);
 
     return pUserInstance;
 }
@@ -339,36 +327,26 @@ CloudUserInstance *UserGenerator_simple::handleResponseVmAccept(SIMCAN_Message *
 CloudUserInstance *UserGenerator_simple::handleResponseVmReject(SIMCAN_Message *userVm_RAW)
 {
     CloudUserInstance *pUserInstance = nullptr;
-    SM_UserVM *userVm = dynamic_cast<SM_UserVM *>(userVm_RAW);
+    SM_UserVM *userVm = check_and_cast<SM_UserVM *>(userVm_RAW);
 
-    if (userVm != nullptr)
-    {
-        EV_INFO << __func__ << " - Response message" << endl;
+    EV_INFO << __func__ << " - Response message" << endl;
 
-        EV_INFO << *userVm << '\n';
+    EV_INFO << *userVm << '\n';
 
-        // Update the status
-        updateVmUserStatus(userVm->getUserId(), userVm->getVmId(), vmIdle);
+    // Update the status
+    updateVmUserStatus(userVm->getUserId(), userVm->getVmId(), vmIdle);
 
-        // Check the response and proceed with the next action
-        pUserInstance = userHashMap.at(userVm->getUserId());
+    // Check the response and proceed with the next action
+    pUserInstance = userHashMap.at(userVm->getUserId());
 
-        if (pUserInstance != nullptr)
-        {
-            emit(responseSignal, pUserInstance->getNId());
-            pUserInstance->getInstanceTimesForUpdate().initExec = simTime();
+    emit(responseSignal, pUserInstance->getNId());
+    pUserInstance->getInstanceTimesForUpdate().initExec = simTime();
 
-            // If the vm-request has been rejected by the cloudprovider
-            // we have to subscribe the service
-            pUserInstance->setSubscribe(true);
-            emit(subscribeSignal[""], pUserInstance->getNId());
-            subscribe(userVm);
-        }
-    }
-    else
-    {
-        error("Could not cast SIMCAN_Message to SM_UserVM (wrong operation code?)");
-    }
+    // If the vm-request has been rejected by the cloudprovider
+    // we have to subscribe the service
+    pUserInstance->setSubscribe(true);
+    emit(subscribeSignal[""], pUserInstance->getNId());
+    subscribe(userVm);
 
     return pUserInstance;
 }
@@ -462,54 +440,46 @@ void UserGenerator_simple::updateUserApp(SM_UserAPP *userApp)
 CloudUserInstance *UserGenerator_simple::handleResponseAppTimeout(SIMCAN_Message *msg)
 {
     CloudUserInstance *pUserInstance = nullptr;
-    SM_UserAPP *userApp = dynamic_cast<SM_UserAPP *>(msg);
+    SM_UserAPP *userApp = check_and_cast<SM_UserAPP *>(msg);
     std::string strVmId;
 
-    if (userApp != nullptr)
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
+
+    // Print a debug trace ...
+    strVmId = userApp->getVmId();
+    EV_INFO << *userApp << '\n';
+
+    pUserInstance = userHashMap.at(userApp->getUserID());
+    if (pUserInstance != nullptr)
     {
-        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
+        emit(failSignal[strVmId], pUserInstance->getNId());
 
-        // Print a debug trace ...
-        strVmId = userApp->getVmId();
-        EV_INFO << *userApp << '\n';
-
-        pUserInstance = userHashMap.at(userApp->getUserID());
-        if (pUserInstance != nullptr)
+        if (strVmId.empty()) // Global timeout -- Checked this, never happens! (Not even in the old version)
         {
-            emit(failSignal[strVmId], pUserInstance->getNId());
-
-            if (strVmId.empty()) // Global timeout
-            {
-                if (hasToSubscribeVm(userApp))
-                    recoverVmAndsubscribe(userApp);
-                else
-                    updateVmUserStatus(userApp->getUserID(), "", vmFinished);
-            }
-            else // Individual VM timeout
-            {
-                // The next step is to send a subscription to the cloudprovide
-                // Recover the user instance, and get the VmRequest
-
-                if (hasToSubscribeVm(userApp))
-                {
-                    recoverVmAndsubscribe(userApp, strVmId);
-                    // pUserInstance->setRequestApp(userApp, strVmId);
-                    updateUserApp(userApp);
-                }
-                else
-                {
-                    updateVmUserStatus(userApp->getUserID(), strVmId, vmFinished);
-                }
-            }
-            deleteIfEphemeralMessage(msg);
+            if (hasToSubscribeVm(userApp))
+                recoverVmAndsubscribe(userApp);
+            else
+                updateVmUserStatus(userApp->getUserID(), "", vmFinished);
         }
+        else // Individual VM timeout
+        {
+            // The next step is to send a subscription to the cloudprovide
+            // Recover the user instance, and get the VmRequest
 
-        EV_INFO << __func__ << " - End" << endl;
+            if (hasToSubscribeVm(userApp))
+            {
+                recoverVmAndsubscribe(userApp, strVmId);
+                // pUserInstance->setRequestApp(userApp, strVmId);
+                updateUserApp(userApp);
+            }
+            else
+            {
+                updateVmUserStatus(userApp->getUserID(), strVmId, vmFinished);
+            }
+        }
+        deleteIfEphemeralMessage(msg);
     }
-    else
-    {
-        error("Could not cast SIMCAN_Message to SM_UserAPP (wrong operation code?)");
-    }
+
     // TODO: Mirar cuando eliminar.  delete pUserInstance->getRequestAppMsg();
 
     return pUserInstance;
@@ -705,53 +675,37 @@ SM_UserVM *UserGenerator_simple::sendSingleVMSubscriptionMessage(SM_UserVM *user
     return userVM;
 }
 
-class cCustomNotification : public cObject, noncopyable
-{
-public:
-    SM_UserVM *userVm;
-};
-
 bool UserGenerator_simple::allVmsFinished(std::string strUserId)
 {
     CloudUserInstance *pUserInstance = userHashMap.at(strUserId);
     bool result = true;
-
-    if (pUserInstance != nullptr)
-
-        result = pUserInstance->allVmsFinished();
+    result = pUserInstance->allVmsFinished();
     return result;
 }
 
 void UserGenerator_simple::updateVmUserStatus(std::string strUserId, std::string strVmId, tVmState stateNew)
 {
-    try
+    // Find the instance
+    auto pUserInstance = userHashMap.at(strUserId);
+
+    // Iterate though collections
+    for (int i = 0; i < pUserInstance->getNumberVmCollections(); i++)
     {
-        // Find the instance
-        auto pUserInstance = userHashMap.at(strUserId);
+        auto pVmCollection = pUserInstance->getVmCollection(i);
 
-        // Iterate though collections
-        for (int i = 0; i < pUserInstance->getNumberVmCollections(); i++)
+        for (const auto &instance : pVmCollection->allInstances())
         {
-            auto pVmCollection = pUserInstance->getVmCollection(i);
-
-            for (const auto &instance : pVmCollection->allInstances())
+            if (strVmId.empty() || strVmId.compare(instance->getVmInstanceId()) == 0)
             {
-                if (strVmId.empty() || strVmId.compare(instance->getVmInstanceId()) == 0)
-                {
-                    // FIXME: This check is weird, probably should only use the new state !
-                    tVmState stateOld = instance->getState();
-                    instance->setState(stateNew);
-                    if (stateOld != vmFinished && stateNew == vmFinished)
-                        pUserInstance->addFinishedVMs(1);
-                    else if (stateOld == vmFinished && stateNew != vmFinished)
-                        pUserInstance->addFinishedVMs(-1);
-                }
+                // FIXME: This check is weird, probably should only use the new state !
+                tVmState stateOld = instance->getState();
+                instance->setState(stateNew);
+                if (stateOld != vmFinished && stateNew == vmFinished)
+                    pUserInstance->addFinishedVMs(1);
+                else if (stateOld == vmFinished && stateNew != vmFinished)
+                    pUserInstance->addFinishedVMs(-1);
             }
         }
-    }
-    catch (const std::out_of_range &e)
-    {
-        // FIXME: Originally ignored -- Should we launch at least a warning ?
     }
 }
 
@@ -759,28 +713,15 @@ void UserGenerator_simple::subscribe(SM_UserVM *userVM_Rq)
 {
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Sending Subscribe message" << endl;
 
-    try
-    {
-        // Subscription time monitoring
-        auto pUserInstance = userHashMap.at(userVM_Rq->getUserId());
-        pUserInstance->startSubscription();
+    // Subscription time monitoring
+    auto pUserInstance = userHashMap.at(userVM_Rq->getUserId());
+    pUserInstance->startSubscription();
 
-        if (userVM_Rq != nullptr)
-        {
-            userVM_Rq->setIsResponse(false);
-            userVM_Rq->setOperation(SM_VM_Sub);
-            EV_INFO << *userVM_Rq << '\n';
-            sendRequestMessage(userVM_Rq, toCloudProviderGate);
-        }
-        else
-        {
-            EV_INFO << "Error sending Subscribe message" << endl;
-        }
-    }
-    catch (const std::out_of_range &e)
-    {
-        // FIXME: Originally ignored -- should be do something about it ?
-    }
+    userVM_Rq->setIsResponse(false);
+    userVM_Rq->setOperation(SM_VM_Sub);
+    EV_INFO << *userVM_Rq << '\n';
+    sendRequestMessage(userVM_Rq, toCloudProviderGate);
+
     EV_INFO << "UserGenerator::subscribe - End" << endl;
 }
 
@@ -799,7 +740,10 @@ void UserGenerator_simple::submitService(SM_UserVM *userVm)
         pAppRq = pUserInstance->getRequestAppMsg();
 
         if (pAppRq == nullptr)
+        {
             pAppRq = createAppRequest(userVm);
+            pUserInstance->setRequestApp(pAppRq);
+        }
     }
     else
     {
@@ -823,16 +767,8 @@ void UserGenerator_simple::submitService(SM_UserVM *userVm)
 
 SM_UserAPP *UserGenerator_simple::createAppRequest(SM_UserVM *userVm)
 {
-    // FIXME: int for time variables ??? Even in the message definition it's a double !
-    int nStartRentTime, nPrice, nIndexRes;
-
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
 
-    if (userVm != nullptr)
-    {
-        // FIXME: Warn the simulation ?
-        return nullptr;
-    }
     UserAPPBuilder builder;
     std::string strUserName = userVm->getUserId();
 
@@ -855,13 +791,10 @@ SM_UserAPP *UserGenerator_simple::createAppRequest(SM_UserVM *userVm)
                 auto strAppType = pAppInstance->getAppName();
                 auto strAppInstance = pAppInstance->getAppInstanceId();
 
-                // We select the first option! (There are many offered by cloud/dc)
-                nIndexRes = 0;
                 VM_Response *pRes;
 
                 if (userVm->getResponse(i, &pRes))
                 {
-
                     auto strIp = pRes->ip;
                     auto nStartRentTime = pRes->startTime;
                     auto nPrice = pRes->price;
@@ -888,8 +821,7 @@ SM_UserAPP *UserGenerator_simple::createAppRequest(SM_UserVM *userVm)
                 }
                 else
                 {
-                    EV_INFO << "WARNING! Invalid response in user: "
-                            << userVm->getName() << endl;
+                    error("Error in model: The transactional deployment did not work?");
                 }
             }
         }
@@ -898,7 +830,6 @@ SM_UserAPP *UserGenerator_simple::createAppRequest(SM_UserVM *userVm)
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End" << endl;
 
     auto userApp = builder.finish();
-    pUserInstance->setRequestApp(userApp);
     userApp->setUserID(strUserName.c_str());
 
     return userApp;
@@ -928,6 +859,7 @@ void UserGenerator_simple::printFinal()
 {
     calculateStatistics();
 }
+
 void UserGenerator_simple::calculateStatistics()
 {
     double dTotalSub, dMeanSub, dWaitTime, dNoWaitUsers, dWaitUsers;

@@ -50,6 +50,17 @@ V getOrDefault(const std::map<K, V> &map, const K &key, V default_val)
 	return iter != map.end() ? iter->second : default_val;
 }
 
+enum SimCanInitStages
+{
+	LOCAL,			  //!< Strictly read from parameters given to module
+	NEAR,			  //!< For modules that cooperate closely, pass configuration around
+	BLADE,			  //!< Blade registering in Fog/Node
+	MANAGER,		  //!< Manager final processing of nodes registered
+	DC,				  //!< DataCentre registering in CP DB
+	CP,				  //!< CloudProvider processing Data Centres registrations
+	TOTAL_INIT_STAGES //!< Constant that indicates the total number of init stages
+};
+
 /**
  * @class cSIMCAN_Core cSIMCAN_Core.h "cSIMCAN_Core.h"
  *
@@ -65,34 +76,19 @@ class cSIMCAN_Core : public cSimpleModule
 {
 
 protected:
-	/** Flag used to show module parameters at initialize phase */
-	bool showInitValues;
-
-	/** Flag used to show the content of each processed message in the log */
-	bool showMessageContents;
-
-	/** Show the trace of each message (for deep-debugging purpose only) */
-	bool showMessageTrace;
-
-	/** Show log messages of cSIMCAN_Core (for deep-debugging purpose only) */
-	bool debugSimcanCore;
-
-	/** Incoming messages Queue */
-	cQueue queue;
-
-	/** Latency message */
-	cMessage *latencyMessage;
-
-	/** Current request */
-	reqNum_t currentRequest;
-
-	/**
-	 * Destructor
-	 */
-	virtual ~cSIMCAN_Core();
+	bool showInitValues;	  //!< Flag used to show module parameters at initialize phase 
+	bool showMessageContents; //!< Flag used to show the content of each processed message in the log 
+	bool showMessageTrace;	  //!< Show the trace of each message (for deep-debugging purpose only) 
+	bool debugSimcanCore;	  //!< Show log messages of cSIMCAN_Core (for deep-debugging purpose only) 
+	cQueue queue;			  //!< Incoming messages Queue 
+	cMessage *latencyMessage; //!< Latency message 
+	reqNum_t currentRequest;  //!< Current request 
 
 	virtual void initialize() override;
+	virtual void initialize(int stage) override { if (stage == 0) initialize(); }
+	virtual int numInitStages() const override { return 1; }
 	virtual void finish() override;
+	virtual ~cSIMCAN_Core();
 
 	/**
 	 * @brief This method classifies an incoming message and invokes the corresponding method
@@ -104,7 +100,6 @@ protected:
 	 */
 	virtual void handleMessage(cMessage *msg) override;
 
-protected:
 	/**
 	 * Get the out Gate to the module that sent <b>msg</b>.
 	 * @param msg Arrived message.
@@ -155,26 +150,6 @@ protected:
 	 * @param sm Received message to be updated.
 	 */
 	void updateMessageTrace(SIMCAN_Message *sm);
-
-	template <typename C, typename T>
-	/**
-	 * Parses a T type into a string.
-	 *
-	 * @param x Value to parse.
-	 * @return Parsed value into a string.
-	 */
-	C to_string(T x)
-	{
-
-		typedef typename C::value_type value_type;
-		typedef typename C::traits_type traits_type;
-		typedef typename C::allocator_type allocator_type;
-
-		std::basic_ostringstream<value_type, traits_type, allocator_type> f;
-		f << x;
-
-		return f.str();
-	}
 
 	/**
 	 * Process current request message.

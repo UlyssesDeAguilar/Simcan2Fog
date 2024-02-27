@@ -125,10 +125,10 @@ OBJS = \
     $O/Messages/SM_REST_API_m.o \
     $O/Messages/SM_Syscall_m.o \
     $O/Messages/SM_UserAPP_m.o \
-    $O/Messages/SM_UserAPP_Finish_m.o \
     $O/Messages/SM_UserVM_m.o \
     $O/Messages/SM_UserVM_Cost_m.o \
     $O/Messages/SM_UserVM_Finish_m.o \
+    $O/Messages/SM_VmExtend_m.o \
     $O/OperatingSystem/AppIdLabel/AppIdLabel_m.o
 
 # Message files
@@ -144,10 +144,10 @@ MSGFILES = \
     Messages/SM_REST_API.msg \
     Messages/SM_Syscall.msg \
     Messages/SM_UserAPP.msg \
-    Messages/SM_UserAPP_Finish.msg \
     Messages/SM_UserVM.msg \
     Messages/SM_UserVM_Cost.msg \
     Messages/SM_UserVM_Finish.msg \
+    Messages/SM_VmExtend.msg \
     OperatingSystem/AppIdLabel/AppIdLabel.msg
 
 # SM files

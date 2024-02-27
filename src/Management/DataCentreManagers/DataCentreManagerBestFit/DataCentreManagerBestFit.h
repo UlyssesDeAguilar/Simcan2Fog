@@ -9,22 +9,13 @@
 #include "Messages/SM_UserVM_Cost_m.h"
 #include "Management/utils/LogUtils.h"
 
-// #include "Applications/UserApps/LocalApplication/LocalApplication.h"
-
 /**
  * Module that implementa a data-centre manager for cloud environments
  */
 class DataCentreManagerBestFit : public DataCentreManagerBase
 {
-
 protected:
-    virtual ~DataCentreManagerBestFit() {};
-    virtual void initialize() override;
-
-    virtual hypervisor::DcHypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
-    virtual void deallocateVmResources(std::string strVmId) override;
-    virtual void storeNodeInMap(hypervisor::DcHypervisor *pHypervisor);
-    virtual void removeNodeFromMap(hypervisor::DcHypervisor *pHypervisor);
+    virtual std::pair<uint32_t, size_t> selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs) override;
 };
 
 #endif

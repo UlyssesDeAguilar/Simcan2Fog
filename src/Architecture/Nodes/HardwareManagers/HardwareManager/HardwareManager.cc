@@ -4,6 +4,9 @@ Define_Module(HardwareManager);
 
 void HardwareManager::initialize()
 {
+    // Obtain the node Ip
+    nodeIp = par("address");
+    
     // Obtain the parameters of the module
     isVirtualHardware = par("isVirtualHardware");
 

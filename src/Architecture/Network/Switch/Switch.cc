@@ -39,6 +39,7 @@ cGate *Switch::getOutGate(cMessage *msg)
     if (gateId == lower.inBaseId)
         return gate(lower.outBaseId + arrivalGate->getIndex());
 
+    error("Gate not found");
     return nullptr;
 }
 
@@ -62,7 +63,7 @@ void Switch::processRequestMessage(SIMCAN_Message *sm)
 void Switch::processResponseMessage(SIMCAN_Message *sm)
 {
     // Debug (Debug)
-    if (getEnvir()->isLoggingEnabled())
+    if (getEnvir()->isLoggingEnabled() && debugSimcanCore)
     {
         EV_DEBUG << "(processResponseMessage) Sending response message." << '\n'
                  << sm->contentsToString(showMessageContents, showMessageTrace) << '\n';

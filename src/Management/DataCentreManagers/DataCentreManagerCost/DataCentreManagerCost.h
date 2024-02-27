@@ -3,28 +3,21 @@
 
 #include "../DataCentreManagerFirstFit/DataCentreManagerFirstFit.h"
 #include "Management/dataClasses/Users/CloudUserPriority.h"
-// #include "Applications/UserApps/LocalApplication/LocalApplication.h"
 
 /**
- * Module that implementa a data-centre manager for cloud environments
+ * @brief Module that implements resource allocation based on user priority
+ * @author (v1) Adrian Bernal
+ * @author (v2) Ulysses de Aguilar
  */
 class DataCentreManagerCost : public DataCentreManagerFirstFit
 {
 protected:
     bool checkReservedFirst;
-    std::map<int, std::vector<hypervisor::DcHypervisor *>> mapHypervisorPerNodesReserved;
-
-    ~DataCentreManagerCost() {};
+    
     virtual void initialize() override;
     virtual void initializeRequestHandlers() override;
-    virtual int parseDataCentreConfig() override;
-    virtual int initDataCentreMetadata() override;
-    virtual int storeReservedNodeMetadata(cModule *pNodeModule);
-    virtual hypervisor::DcHypervisor *selectNode(SM_UserVM *&userVM_Rq, const VM_Request &vmRequest) override;
-    virtual hypervisor::DcHypervisor *selectNodeReserved(SM_UserVM_Cost *&userVM_Rq, const VM_Request &vmRequest);
-    virtual void handleExecVmRentTimeout(cMessage *msg) override;
-    virtual void handleExtendVmAndResumeExecution(SIMCAN_Message *sm);
-    virtual void handleEndVmAndAbortExecution(SIMCAN_Message *sm);
+    virtual std::pair<uint32_t, size_t> selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs) override;
+    std::pair<uint32_t, size_t> selectNodeReserved(SM_UserVM_Cost *userVM_Rq, const VirtualMachine &vmSpecs);
 };
 
 #endif

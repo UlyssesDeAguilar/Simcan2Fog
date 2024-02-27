@@ -8,8 +8,8 @@ template <class T>
 class ControlTable
 {
     std::vector<std::pair<bool, T>> elements;
-    uint32_t lastId;
-    uint32_t allocatedIds;
+    uint32_t lastId = 0;
+    uint32_t allocatedIds = 0;
 
 protected:
     /**
@@ -20,14 +20,14 @@ protected:
     uint32_t scanFreeId()
     {
         // Filter
-        const auto filter = [](std::pair<bool, T> &e) -> bool
+        auto filter = [](std::pair<bool, T> &e) -> bool
         { return e.first; };
 
         // Search for a free slot
         auto beginning = elements.begin();
-        beginning += lastId;
+        auto beginSearch = beginning + lastId;
 
-        auto iter = std::find_if(beginning, elements.end(), filter);
+        auto iter = std::find_if(beginSearch, elements.end(), filter);
 
         // Found going forwards
         if (iter != elements.end())
@@ -36,8 +36,8 @@ protected:
             return lastId;
         }
 
-        // Found going backwards
-        iter = std::find_if(elements.begin(), beginning, filter);
+        // Found by looping around the table
+        iter = std::find_if(beginning, beginSearch, filter);
         lastId = iter - beginning;
         return lastId;
     }
@@ -60,10 +60,10 @@ public:
         {
             // Default initialize elements
             elements.emplace_back(true, T());
-            auto inserted = elements.back();
+            T& e = elements.back().second;
 
             // Call init function
-            (inserted.second.*init_f)(i);
+            (e.*init_f)(i);
         }
 
         // Save memory
@@ -93,6 +93,23 @@ public:
     typedef typename std::vector<std::pair<bool, T>>::iterator iterator;
     iterator begin() { return elements.begin(); }
     iterator end() { return elements.end(); }
+
+    friend std::ostream &operator<<(std::ostream &os, const ControlTable &obj)
+    {
+        os << "Allocated ids:     " << obj.allocatedIds << '\n'
+           << "Last allocated id: " << obj.lastId << '\n'
+           << "Entries:\n";
+
+        os << std::boolalpha;
+        for (const auto entry : obj.elements)
+        {
+            os << "+ Free entry: " << entry.first << " Contents:\n"
+                << entry.second << std::string(10, '-') << '\n';
+        }
+        os << std::noboolalpha;
+
+        return os;
+    }
 };
 
 #endif /* SIMCAN_EX_CONTROL_TABLE */

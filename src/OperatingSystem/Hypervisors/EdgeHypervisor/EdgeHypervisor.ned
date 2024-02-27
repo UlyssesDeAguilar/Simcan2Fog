@@ -4,15 +4,16 @@ import simcan2.Core.cSIMCAN_Core;
 simple EdgeHypervisor extends cSIMCAN_Core
 {    
 	parameters:
-	    int maxApps;
     	@class (hypervisor::EdgeHypervisor);
+		bool active;				// If the hypervisor is currently active
+	    bool isVirtualHardware;		// True if this computer allows virtualization and False in another case
+		int maxVMs;					// Maximum number of VMs allocated in this computer 
     	
-  	gates:  	    
-		input fromNetwork;		// Input gate from network
-        input fromApps;			// Input gate from Applications
-        input fromCpuScheduler;	// Input gate from CPU schedulers
+	gates:  	    
+		inout networkComm;			// Input/Output from/to network (either local or the internet)
+        input fromApps[];			// Input gates from Applications 
+        input fromCpuScheduler[];	// Input gates from CPU schedulers vector
         
-		output toNetwork;		// Output gate to network
-        output toApps;			// Output gate to app vector
-        output toCpuScheduler;	// Output gate to scheduler vector
+        output toApps[];			// Output gates to Applications
+        output toCpuScheduler[];	// Output gates to CPU schedulers vector
 }

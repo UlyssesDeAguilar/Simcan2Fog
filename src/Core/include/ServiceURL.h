@@ -19,41 +19,37 @@ struct ServiceURL
 protected:
     LocalAddress local;
     GlobalAddress global;
-    short state;
-
-    void _guard() const
-    {
-        if (!(state & INITIALIZED))
-            throw std::logic_error("Unset Service URL");
-    }
+    uint8_t state;
 
 public:
     enum State
     {
-        LOCAL,          //!< Contains a LocalIp (equivalent to a LAN address)
-        GLOBAL = 2,     //!< Contains a GlobalIp
-        INITIALIZED = 4 //!< Wheter it was initialized or not
+        LOCAL = 1,  //!< Contains a LocalIp (equivalent to a LAN address)
+        GLOBAL = 2, //!< Contains a GlobalIp
     };
 
     friend std::ostream &operator<<(std::ostream &os, const ServiceURL &obj)
     {
         // If we have a complete URL
         if (obj.isFullUrl())
-            return os << "L" << obj.local << "@" << obj.global;
+            return os << "#" << obj.local << "@" << obj.global;
 
         // If we have a partial URL == Local/Global Ip
         if (obj.state & GLOBAL)
             os << obj.global;
         else
-            os << "L" << obj.local;
+            os << "#" << obj.local;
 
         return os;
     }
 
     ServiceURL() { state = 0; }
+    ServiceURL(const uint32_t &addr) : local(addr), state(LOCAL) {}
+    ServiceURL(const uint32_t &addr, const GlobalAddress &global) : local(addr), global(global), state(LOCAL | GLOBAL) {}
 
     /**
      * @brief Construct a new Service URL from text
+     * @throws cRuntimeError If the specified URL is invalid
      * @param url The url in text format
      */
     ServiceURL(const std::string &url)
@@ -67,7 +63,7 @@ public:
         // If not found
         if (npos == std::string::npos)
         {
-            if (url[0] == 'L')
+            if (url[0] == '#')
             {
                 // Attempt parsing
                 local.set(url.c_str() + 1);
@@ -75,13 +71,14 @@ public:
             }
             else
             {
-                global.tryParse(url.c_str());
+                if (!global.tryParse(url.c_str()))
+                    throw inet::cRuntimeError("Invalid Ipv4 address string (global) `%s'", url.c_str());
                 state = GLOBAL;
             }
         }
         else
         {
-            std::string local_str = url.substr(1, npos);
+            std::string local_str = url.substr(1, npos - 1);
 
             // Local address parsing
             local.set(local_str.c_str());
@@ -91,24 +88,15 @@ public:
 
             state |= (LOCAL | GLOBAL);
         }
-
-        // Mark as initialized
-        state |= INITIALIZED;
     }
 
-    bool isFullUrl() const { return ((~state) & (GLOBAL|LOCAL)) == 0;}
+    bool isFullUrl() const { return state == (GLOBAL | LOCAL); }
 
     State getState() const { return static_cast<State>(state); }
 
-    const LocalAddress &getLocalAddress() const
-    {
-        _guard();
-        return local;
-    }
+    const LocalAddress &getLocalAddress() const { return local; }
 
-    const GlobalAddress &getGlobalAddress() const
-    {
-        _guard();
-        return global;
-    }
+    const GlobalAddress &getGlobalAddress() const { return global; }
+
+    void setLocalAddress(const uint32_t address) { local.set(address); }
 };

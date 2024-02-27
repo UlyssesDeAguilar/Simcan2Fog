@@ -26,6 +26,9 @@ SM_PROJ=$SIMCAN_HOME/src
 # Constants for the makefile
 M_CONST=\-KINET4_PROJ\=$INET_PROJ\ \-KSM_PROJ\=$SM_PROJ
 
+# This is for older valgrind debugging -> Ubuntu 22.04 ships with a buggy version with clang v5 DWARF
+#C_OPTS=\-KCXXFLAGS=-gdwarf-4 
+
 # Libs for the proyect
 LIBS=\-lINET\$\(D\)\ \-lSimcan2Cloud\$\(D\)\ \-lmysqlcppconn
 
@@ -42,5 +45,5 @@ opp_test gen -v $ALL
 cp simschema/Unconnected.ned work/simschemamysql
 
 # At first it seems like magic. It really is just importing the Simcan2Cloud and INET framework
-(cd work; opp_makemake -f -O ./tests/work/cmp -o testing --deep $M_CONST -DINET_IMPORT  -I$\(SM_PROJ\)/ -I$\(INET4_PROJ\)/ -L$\(SM_PROJ\)/ -L$\(INET4_PROJ\)/ $LIBS; $MAKE) || exit 1
+(cd work; opp_makemake -f -O ./tests/work/cmp -o testing --deep $M_CONST $C_OPTS -DINET_IMPORT  -I$\(SM_PROJ\)/ -I$\(INET4_PROJ\)/ -L$\(SM_PROJ\)/ -L$\(INET4_PROJ\)/ $LIBS; $MAKE) || exit 1
 echo

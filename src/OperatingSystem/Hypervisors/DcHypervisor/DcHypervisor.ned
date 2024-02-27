@@ -17,6 +17,7 @@ simple DcHypervisor extends cSIMCAN_Core like IHypervisor{
 		int maxVMs;					// Maximum number of VMs allocated in this computer 
     
   	gates:  	    
+        inout networkComm;	        // Input/Output from/to network (either local or the internet)
         input fromApps[];			// Input gates from Applications 
         input fromCpuScheduler[];	// Input gates from CPU schedulers vector
         

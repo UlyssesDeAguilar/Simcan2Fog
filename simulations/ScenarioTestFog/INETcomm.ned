@@ -28,9 +28,6 @@ import inet.node.ethernet.Eth10M;
 network INETComm
 {
     parameters:
-        string appList;
-        string vmList;
-        string slaList;
         string userList;
         string dataCentresList;
         int numControllers = default(2);

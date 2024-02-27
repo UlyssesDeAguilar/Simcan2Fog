@@ -29,6 +29,7 @@ public:
   } diskSpecs;
 
 private:
+  uint32_t nodeIp;                   //!< The node Ip
   NodeResources available;           //!< Available HW/SW resources
   NodeResources total;               //!< Specifications of the HW/SW resources
   bool isVirtualHardware;            //!< Indicates if this module is able to virtualize hardware
@@ -65,19 +66,25 @@ public:
    * @brief Gets the total resources of the node
    * @return const Resources&
    */
-  const NodeResources &getTotalResources() { return total; }
+  const NodeResources &getTotalResources() const { return total; }
 
   /**
    * @brief Gets the available resources of the node
    * @return const Resources&
    */
-  const NodeResources &getAvailableResources() { return available; }
+  const NodeResources &getAvailableResources() const { return available; }
 
   /**
    * @brief Gets the disk specifications object
    * @return const DiskSpecs&
    */
-  const DiskSpecs &getDiskSpecs() { return diskSpecs; }
+  const DiskSpecs &getDiskSpecs() const { return diskSpecs; }
+
+  /**
+   * @brief Get the Ip address
+   * @return uint32_t (Ipv4 address)
+   */
+  const uint32_t getIp() const { return nodeIp; }
 
   /**
    * @brief Whether it is a node that can virtualize hardware or not

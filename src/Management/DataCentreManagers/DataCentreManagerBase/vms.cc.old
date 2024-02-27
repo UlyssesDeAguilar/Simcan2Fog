@@ -59,3 +59,55 @@ void DataCentreManagerBase::handleExecVmRentTimeout(cMessage *msg)
     // Delete the event!
     delete msg;
 }
+
+// En dcManagerCost hace todo exactamente igual expto en el if de la línea 48 donde camibia el cuerpo
+void DataCentreManagerCost::handleExecVmRentTimeout(cMessage *msg)
+{
+    ...
+
+    // Abort the running applications
+    if (!pUserApp->allAppsFinished(strVmId))
+    {
+        EV_INFO << "Aborting running applications" << '\n';
+        abortAllApps(strVmId);
+        pUserApp->abortAllApps(strVmId);
+    }
+    else
+    {
+        deallocateVmResources(strVmId);
+        strVmType = pUserVmFinish->getStrVmType();
+        nTotalAvailableCores += getTotalCoresByVmType(strVmType);
+    }
+    
+    ...
+}
+
+// void DataCentreManagerBase::deallocateVmResources(std::string strVmId)
+// {
+//     DcHypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
+// 
+//     if (pHypervisor == nullptr)
+//         error("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
+// 
+//     pHypervisor->deallocateVmResources(strVmId);
+//     manageActiveMachines();
+// }
+
+// Versión más correcta y completa de BestFit: Reajusta los buckets al hacer deallocate! -> Relevante para el hypervisor/hardwaremanager/resourcemanager
+//
+// void DataCentreManagerBestFit::deallocateVmResources(std::string strVmId)
+// {
+//     DcHypervisor *pHypervisor = getNodeHypervisorByVm(strVmId);
+//
+//     if (pHypervisor == nullptr)
+//         error("%s - Unable to deallocate VM. Wrong VM name [%s]?", LogUtils::prettyFunc(__FILE__, __func__).c_str(), strVmId.c_str());
+//
+//     removeNodeFromMap(pHypervisor);
+//
+//     pHypervisor->deallocateVmResources(strVmId);
+//
+//     storeNodeInMap(pHypervisor);
+//
+//     updateCpuUtilizationTimeForHypervisor(pHypervisor);
+//     manageActiveMachines();
+// }

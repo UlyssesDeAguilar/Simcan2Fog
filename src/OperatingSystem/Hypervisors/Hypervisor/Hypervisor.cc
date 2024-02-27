@@ -5,15 +5,17 @@ void Hypervisor::initialize(int stage)
 {
     switch (stage)
     {
-    case INNER_STAGE:
+    case LOCAL:
     {
+        cSIMCAN_Core::initialize(LOCAL);
+
         // Retrieve info from input/output gates
         appGates.inBaseId = gateBaseId("fromApps");
         appGates.outBaseId = gateBaseId("toApps");
         schedulerGates.inBaseId = gateBaseId("fromCpuScheduler");
         schedulerGates.outBaseId = gateBaseId("toCpuScheduler");
-        networkGates.inBaseId = gateBaseId("network$i");
-        networkGates.outBaseId = gateBaseId("network$o");
+        networkGates.inBaseId = gateBaseId("networkComm$i");
+        networkGates.outBaseId = gateBaseId("networkComm$o");
 
         // Locate topologically the helper modules
         DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
@@ -23,7 +25,7 @@ void Hypervisor::initialize(int stage)
         osCore.setUp(this, dataManager, hardwareManager);
         break;
     }
-    case LOCAL_STAGE:
+    case NEAR:
     {
         // Get from hardware manager the specs of the node
         auto maxUsers = hardwareManager->getTotalResources().users;
@@ -72,13 +74,20 @@ cGate *Hypervisor::getOutGate(cMessage *msg)
 
 void Hypervisor::processSelfMessage(cMessage *msg)
 {
-    auto appEntry = *(AppControlBlock *)msg->getContextPointer();
 
     switch (msg->getKind())
     {
     case AutoEvent::IO_DELAY:
+    {
+        auto &appEntry = *reinterpret_cast<AppControlBlock*>(msg->getContextPointer());
         osCore.handleIOFinish(appEntry);
         break;
+    }
+    case AutoEvent::VM_TIMEOUT:
+    {
+        auto &vmEntry = *reinterpret_cast<VmControlBlock*>(msg->getContextPointer());
+        handleVmTimeout(vmEntry);
+    }
     default:
         error("Unkown auto event of kind: %d", msg->getKind());
         delete msg;

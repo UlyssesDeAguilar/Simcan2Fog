@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include "Core/include/SIMCAN_types.h"
-#include "SM_UserAPP_Finish_m.h"
 
 /**
  * @brief Individual instance app request
@@ -18,7 +17,6 @@ struct APP_Request
     double startTime;
     double finishTime;
     tApplicationState eState;
-    //SM_UserAPP_Finish *pMsgTimeout;
 
     static bool isFinishedOK(const APP_Request &r) { return r.eState == appFinishedOK; }
     static bool isFinishedKO(const APP_Request &r) { return r.eState == appFinishedError || r.eState == appFinishedTimeout; }

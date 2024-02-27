@@ -13,17 +13,6 @@ using namespace omnetpp;
 // Translates to 0xFFFFFFFF, which is 255.255.255.255
 static const uint32_t DC_MANAGER_LOCAL_ADDR = UINT32_MAX;
 
-/**
- * @brief Represents the initialization stages of a DataCentre
- * @details Maybe it would be wise to extend this to all the entities of the model
- */
-enum DcInitStage
-{
-	LOCAL,
-	NETWORK,
-	REGISTER_NODE
-};
-
 /************************* Constants *************************/
 
 // ---------- SIMCAN units, size and lengths ---------- //
