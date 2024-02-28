@@ -1,5 +1,5 @@
 # Point to the definitions
-NEDPATH=$SIMCAN_HOME/src:$INET_HOME/src/:../modules:.
+NEDPATH=$SIMCAN_HOME/src:$INET_HOME/src/:$SIMCAN_HOME/tests/modules/:.
 # DNS/*.test simschema/*.test
 
 if [ $# -eq 0 ]
@@ -10,7 +10,7 @@ fi
 
 if [ $1 = "all" ]
 then
-    TARGETS=("DNS" "simschema" "unit")
+    TARGETS=("DNS" "simschema" "unit" "switch")
 else
     TARGETS="$@"
 fi
