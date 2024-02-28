@@ -1,4 +1,4 @@
-//package simcan2.tests.modules;
+package enpoint;
 
 simple Endpoint
 {
