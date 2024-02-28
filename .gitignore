@@ -48,3 +48,13 @@ src/.tmp*
 simulations/**/.qtenvrc
 simulations/**/results/
 simulations/**/results/*.*
+
+# Executables
+Simcan2Cloud
+Simcan2Cloud_dbg
+
+# GUI files
+.qtenvrc
+
+# VsCode configuration files
+.vscode/
