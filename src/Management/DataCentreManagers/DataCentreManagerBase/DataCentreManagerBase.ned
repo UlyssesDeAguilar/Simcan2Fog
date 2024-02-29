@@ -4,12 +4,11 @@ import simcan2.Management.CloudManagerBase.CloudManagerBase;
 //
 // Implementation of a Cloud DataCentre Manager
 //
-simple DataCentreManagerBase extends CloudManagerBase {   
-   
-       
+simple DataCentreManagerBase extends CloudManagerBase {
     parameters:    
         bool showDataCentreConfig = default (true);			// Show the list of racks and nodes in the initilize stage                	
         string dataCentreConfig = default("");				// Configuration of this Data-Centre
+        string selectionStrategy = default("FirstFit");     // Node selection strategy, one of: FirstFit, BestFit, CostFit
 		int cpuStatusInterval @unit(s)  = default(3600s);   //
         int activeMachinesThreshold = default(0);           //
         bool forecastActiveMachines = default(false);       //

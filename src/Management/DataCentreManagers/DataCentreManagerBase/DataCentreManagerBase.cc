@@ -2,6 +2,7 @@
 
 #include "Management/utils/LogUtils.h"
 #include "Applications/UserApps/LocalApplication/LocalApplication.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
 
 using namespace hypervisor;
 
@@ -15,41 +16,57 @@ DataCentreManagerBase::~DataCentreManagerBase()
     mapAppsModulePerId.clear();
 }
 
-void DataCentreManagerBase::initialize()
+void DataCentreManagerBase::initialize(int stage)
 {
-    // Init super-class
-    CloudManagerBase::initialize();
+    switch (stage)
+    {
+    case LOCAL:
+    {
+        // Init super-class
+        CloudManagerBase::initialize();
 
-    // Link app builder
-    appBuilder = new DataCentreApplicationBuilder();
-    appBuilder->setManager(this);
+        // Link app builder
+        appBuilder = new DataCentreApplicationBuilder(); // FIXME: This will be deprecated soon
+        appBuilder->setManager(this);
 
-    // Locate the ResourceManager
-    resourceManager = check_and_cast<DcResourceManager*>(getModuleByPath("^.resourceManager"));
-    resourceManager->setMinActiveMachines(par("minActiveMachines"));
-    resourceManager->setReservedNodes(par("reservedNodes"));
+        // Get parameters from module
+        showDataCentreConfig = par("showDataCentreConfig");
+        nCpuStatusInterval = par("cpuStatusInterval");
+        nActiveMachinesThreshold = par("activeMachinesThreshold");
+        forecastActiveMachines = par("forecastActiveMachines");
 
-    // FIXME: This one wont be available until INET is all set 
-    // resourceManager->setGlobalAddress();
+        // Get gates
+        networkGates.inBaseId = gate("networkIn")->getId();
+        networkGates.outBaseId = gate("networkOut")->getId();
 
-    // Get parameters from module
-    showDataCentreConfig = par("showDataCentreConfig");
-    nCpuStatusInterval = par("cpuStatusInterval");
-    nActiveMachinesThreshold = par("activeMachinesThreshold");
-    forecastActiveMachines = par("forecastActiveMachines");
-
-    // Get gates
-    networkGates.inBaseId = gate("networkIn")->getId();
-    networkGates.outBaseId = gate("networkOut")->getId();
-
-    localNetworkGates.inBaseId = gateHalf("localNetwork", cGate::INPUT)->getId();
-    localNetworkGates.outBaseId = gateHalf("localNetwork", cGate::OUTPUT)->getId();
-
-    // Create and schedule auto events
-    cpuManageMachinesMessage = new cMessage("MANAGE_MACHINES", MANAGE_MACHINES);
-    cpuStatusMessage = new cMessage("CPU_STATUS", CPU_STATUS);
-    scheduleAt(SimTime(), cpuManageMachinesMessage);
-    scheduleAt(SimTime(), cpuStatusMessage);
+        localNetworkGates.inBaseId = gateHalf("localNetwork", cGate::INPUT)->getId();
+        localNetworkGates.outBaseId = gateHalf("localNetwork", cGate::OUTPUT)->getId();
+        
+        // TODO: Study if these are really neccessary
+        // Create and schedule auto events
+        cpuManageMachinesMessage = new cMessage("MANAGE_MACHINES", MANAGE_MACHINES);
+        cpuStatusMessage = new cMessage("CPU_STATUS", CPU_STATUS);
+        scheduleAt(SimTime(), cpuManageMachinesMessage);
+        scheduleAt(SimTime(), cpuStatusMessage);
+        break;
+    }
+    case NEAR:
+    {
+        // Locate the ResourceManager
+        resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath("^.resourceManager"));
+        resourceManager->setMinActiveMachines(par("minActiveMachines"));
+        resourceManager->setReservedNodes(par("reservedNodes"));
+        break;
+    }
+    case inet::InitStages::INITSTAGE_APPLICATION_LAYER:
+    {
+        // Set the global DC address into the resource manager
+        resourceManager->setGlobalAddress(L3AddressResolver().resolve("^.networkAdapter"));
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void DataCentreManagerBase::finish()
@@ -62,7 +79,6 @@ void DataCentreManagerBase::finish()
     // Print statistics
     printFinal();
 }
-
 
 cGate *DataCentreManagerBase::getOutGate(cMessage *msg)
 {

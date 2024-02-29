@@ -8,6 +8,7 @@
 #include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/parser/DataCentreConfigParser.h"
 #include "OperatingSystem/Hypervisors/DcHypervisor/DcHypervisor.h"
+#include "Management/DataCentreManagers/Selection/Strategies.h"
 
 class DataCentreApplicationBuilder;
 
@@ -30,6 +31,7 @@ protected:
 
     DataCentreApplicationBuilder *appBuilder;
     DcResourceManager *resourceManager;
+    dc::SelectionStrategy *nodeSelectionStrategy;
 
     bool showDataCentreConfig;   /** Show information of DataCentres */
     bool forecastActiveMachines; /** Activate forecasting */
@@ -55,7 +57,8 @@ protected:
     std::map<std::string, unsigned int *> mapAppsModulePerId;
 
     virtual ~DataCentreManagerBase();
-    virtual void initialize() override;
+    virtual void initialize(int stage) override;
+    virtual int numInitStages() const override { return inet::InitStages::INITSTAGE_APPLICATION_LAYER + 1; }
     virtual cGate *getOutGate(cMessage *msg) override;
 
     virtual void initializeSelfHandlers() override;
