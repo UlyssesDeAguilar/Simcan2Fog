@@ -2,20 +2,20 @@ import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.Architecture.Nodes.Fog.FogNode;
 import simcan2.Architecture.Network.Adapter.NetworkAdapter;
-import DcDriver.DcSimplified;
+import DcDriver.SimpleDc;
 import DcDriver.DcDriver;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
 
-network INETComm
+network SimpleDcNetwork
 {
     submodules:
 
         simData : SimData;
         
-        dc_DataCentre: DcSimplified {	
+        dc_DataCentre: SimpleDc {	
             	@display("p=717,62");
         }
 

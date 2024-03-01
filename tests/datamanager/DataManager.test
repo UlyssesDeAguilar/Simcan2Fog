@@ -1,18 +1,24 @@
-%description:
-Tests the correct behaviour of the SimSchemaMySQL implementation
- - Before you run this, don't forget to include the password in S2F_DB_PASSWORD
+%file: TestDataManager.ned
+import simcan2.Core.SimData.SimData;
+import querier.DataManagerQuerier;
+
+network TestDataManager
+{
+    submodules:
+        simData: SimData;
+        q: DataManagerQuerier;
+}
 
 %inifile: omnetpp.ini
 [General]
-network = Unconnected
-sim-time-limit = 10s
+network = TestDataManager
+**.manager.experiment = "Test"
+*.simData.simSchema.typename = "SimSchemaMySQL"
+*.simData.simSchema.hostName = "tcp://127.0.0.1:3306"
 
-*.class = "SimSchemaMySQL"
-*.simschema.hostName = "tcp://127.0.0.1:3306"
-
-%# This section does the actual checking of what we expect
 %not-contains: stdout
 undisposed object:
+
 %not-contains: stdout
 -- check module destructor
 
@@ -55,3 +61,15 @@ Search VMCost with name: VM_4xlarge in SLA Slai0d0c0
 base cost: 0.92 - cost increase: 0 - cost discount: 0 - compensation: 0
 Search VMCost with name:  in SLA 
 VMCost:  SLA:  not found
+Search App with name: AppCPUIntensive
+Name:    AppCPUIntensive
+Type:    LocalApplication
+Package: simcan2.Applications.UserApps.LocalApplication
+Path:    simcan2.Applications.UserApps.LocalApplication.LocalApplication
+Parameters:
+	int MIs = 79200000
+	int inputDataSize (MiB)  = 10MiB
+	string inputFile = "/inputFile_0.dat"
+	int iterations = 5
+	int outputDataSize (MiB)  = 5MiB
+	string outputFile = "/outputFile_0.dat"

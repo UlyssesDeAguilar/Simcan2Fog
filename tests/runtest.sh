@@ -10,7 +10,7 @@ fi
 
 if [ $1 = "all" ]
 then
-    TARGETS=("DNS" "simschema" "unit" "switch")
+    TARGETS=("unit" "simschema" "datamanager" "switch" "DNS" "dc")
 else
     TARGETS="$@"
 fi

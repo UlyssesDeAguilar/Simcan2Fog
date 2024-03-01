@@ -1,8 +1,6 @@
 %description:
 
-Tests the functionality of the utility struct ServiceURL
-
-It should fail and return the expected URL
+Tests the functionality of the template ControlTable with the VmControlBlock
 
 %includes:
 #include "OperatingSystem/Hypervisors/common.h"
