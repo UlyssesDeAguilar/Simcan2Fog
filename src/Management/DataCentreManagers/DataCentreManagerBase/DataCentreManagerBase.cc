@@ -6,7 +6,7 @@
 
 using namespace hypervisor;
 
-// Define_Module(DataCentreManagerBase);
+Define_Module(DataCentreManagerBase);
 
 DataCentreManagerBase::~DataCentreManagerBase()
 {
@@ -56,12 +56,17 @@ void DataCentreManagerBase::initialize(int stage)
         resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath("^.resourceManager"));
         resourceManager->setMinActiveMachines(par("minActiveMachines"));
         resourceManager->setReservedNodes(par("reservedNodes"));
+
+        nodeSelectionStrategy = dc::SelectionStrategy::newStrategy(par("selectionStrategy"), this);
+        if (nodeSelectionStrategy == nullptr)
+            error("Unknown selection strategy");
+        
         break;
     }
     case inet::InitStages::INITSTAGE_APPLICATION_LAYER:
     {
         // Set the global DC address into the resource manager
-        resourceManager->setGlobalAddress(L3AddressResolver().resolve("^.networkAdapter"));
+        resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.networkAdapter")));
         break;
     }
     default:
@@ -285,20 +290,19 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
     // Process all the vms
     for (int i = 0; i < nRequestedVms; i++)
     {
-        uint32_t nodeIp;
-        size_t bucketIndex;
-
         // Retrieve vm and select candidate
-        auto vmRequest = userVM_Rq->getVm(i);
+        VM_Request &vmRequest = userVM_Rq->getVmForUpdate(i);
         auto vmSpecs = dataManager->searchVirtualMachine(vmRequest.vmType);
-
+        if (vmSpecs == nullptr)
+            error("VmType %s not found in virtual machine definitions", vmRequest.vmType.c_str());
+        
         // Select a node to deploy
-        std::tie(nodeIp, bucketIndex) = selectNode(userVM_Rq, *vmSpecs);
+        uint32_t nodeIp = nodeSelectionStrategy->selectNode(userVM_Rq, *vmSpecs);
 
         if (nodeIp != UINT32_MAX)
         {
             // Found, add to the deployment
-            deployment.addNode(nodeIp, bucketIndex, &vmRequest, vmSpecs);
+            deployment.addNode(nodeIp, vmRequest, vmSpecs);
         }
         else
         {

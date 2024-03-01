@@ -3,7 +3,7 @@
 #include "Architecture/Network/RoutingInfo/RoutingInfo_m.h"
 #include "Messages/SM_UserVM.h"
 
-class DcDriver : public omnetpp::cSimpleModule
+class DcDriver : public cSIMCAN_Core
 {
 private:
     GlobalAddress dcAddress;
@@ -11,5 +11,8 @@ private:
 protected:
     virtual void initialize() override;
     virtual void finish() override;
-    virtual void handleMessage(cMessage *msg) override;
+    virtual cGate* getOutGate(cMessage *sm) override;
+    virtual void processRequestMessage(SIMCAN_Message *sm) override;
+    virtual void processResponseMessage(SIMCAN_Message *sm) override;
+    virtual void processSelfMessage(cMessage *msg) override;
 };

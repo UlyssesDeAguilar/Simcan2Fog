@@ -1,8 +1,9 @@
 #ifndef SIMCAN_EX_DC_SELECTION_STRATEGIES
 #define SIMCAN_EX_DC_SELECTION_STRATEGIES
 
-#include "Management/DataCentreManagers/ResourceManager/ResourceManager.h"
-
+class DataCentreManagerBase; // forward declaration
+class SM_UserVM_Cost;        // forward declaration
+class DcResourceManager;     // forward declaration
 namespace dc
 {
     class SelectionStrategy
@@ -16,37 +17,39 @@ namespace dc
             }
         };
 
-        typedef SelectionStrategy *(*Constructor)(DcResourceManager *rm);
-        DcResourceManager *resourceManager;
+        typedef SelectionStrategy *(*Constructor)(DataCentreManagerBase *m);
         const static std::map<const char *, Constructor, cmp_cstr> allocatorMap;
 
     protected:
-        SelectionStrategy(DcResourceManager *rm) : resourceManager(rm) {}
+        DataCentreManagerBase *manager;
+        DcResourceManager *resourceManager;
+        SelectionStrategy(DataCentreManagerBase *m);
 
     public:
-        SelectionStrategy *newStrategy(const char *type, DcResourceManager *rm);
+        static SelectionStrategy *newStrategy(const char *type, DataCentreManagerBase *m);
         virtual uint32_t selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs) = 0;
     };
 
-    class FirstFit : SelectionStrategy
+    class FirstFit : public SelectionStrategy
     {
     public:
-        FirstFit(DcResourceManager *rm) : SelectionStrategy(rm) {}
+        FirstFit(DataCentreManagerBase *m) : SelectionStrategy(m) {}
         virtual uint32_t selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs);
     };
 
-    class BestFit : SelectionStrategy
+    class BestFit : public SelectionStrategy
     {
     public:
-        BestFit(DcResourceManager *rm) : SelectionStrategy(rm) {}
+        BestFit(DataCentreManagerBase *m) : SelectionStrategy(m) {}
         virtual uint32_t selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs);
     };
 
-    class CostFit : FirstFit
+    class CostFit : public FirstFit
     {
     public:
-        CostFit(DcResourceManager *rm) : FirstFit(rm) {}
+        CostFit(DataCentreManagerBase *m) : FirstFit(m) {}
         virtual uint32_t selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs);
+        virtual uint32_t selectNode(SM_UserVM_Cost *userVM_Rq, const VirtualMachine &vmSpecs);
     };
 }
 

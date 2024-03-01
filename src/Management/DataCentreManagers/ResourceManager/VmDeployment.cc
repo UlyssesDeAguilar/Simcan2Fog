@@ -1,6 +1,6 @@
 #include "ResourceManager.h"
 
-void VmDeployment::addNode(const uint32_t &nodeIp, const size_t &bucketIndex, VM_Request *request, const VirtualMachine *vm)
+void VmDeployment::addNode(const uint32_t &nodeIp, VM_Request &request, const VirtualMachine *vm)
 {
     // Update node
     resourceManager->updateNode(nodeIp, vm, true);
@@ -20,7 +20,7 @@ void VmDeployment::rollback()
 
 void VmDeployment::commit()
 {
-    auto templateUrl = ServiceURL((uint32_t)0, resourceManager->globalAddress);
+    ServiceURL templateUrl(0, resourceManager->globalAddress);
 
     for (const auto &allocation : allocations)
     {
@@ -30,7 +30,7 @@ void VmDeployment::commit()
         stream << templateUrl;
 
         // Recover vm request and fill in the data
-        auto response = allocation.request->response;
+        VM_Response &response = allocation.request.response;
         response.state = VM_Response::ACCEPTED;
         response.startTime = simTime().dbl();
         response.ip = stream.str();
@@ -40,7 +40,8 @@ void VmDeployment::commit()
         resourceManager->confirmNodeAllocation(allocation.nodeIp, allocation.vm);
 
         // Really allocate the vm, topologically speaking
-        resourceManager->getHypervisor(allocation.nodeIp)->handleVmRequest(*allocation.request, vmsRequest->getUserId());
+        auto hypervisor = resourceManager->getHypervisor(allocation.nodeIp);
+        hypervisor->handleVmRequest(allocation.request, vmsRequest->getUserId());
     }
 
     // Clear all allocations

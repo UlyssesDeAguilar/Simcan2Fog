@@ -28,7 +28,7 @@ struct NodeResources
 
         // Matches exactly the needs of the vm
         exactMatch &= (cores == vm.getNumCores());
-        exactMatch &= (disk == vm.getMemoryGb());
+        exactMatch &= (disk == vm.getDiskGb());
         exactMatch &= (memory == vm.getMemoryGb());
 
         return exactMatch && hasUserAndVmSpace();
@@ -46,9 +46,9 @@ struct NodeResources
         bool lessOrEqual = true;
 
         // Matches exactly the needs of the vm
-        lessOrEqual &= (cores <= vm.getNumCores());
-        lessOrEqual &= (disk <= vm.getMemoryGb());
-        lessOrEqual &= (memory <= vm.getMemoryGb());
+        lessOrEqual &= (vm.getNumCores() <= cores);
+        lessOrEqual &= (vm.getDiskGb() <= disk);
+        lessOrEqual &= (vm.getMemoryGb() <= memory);
 
         // Must have space for a vm or user
 
@@ -78,8 +78,17 @@ struct NodeResources
         exhausted |= (cores == 0);
         exhausted |= (disk == 0.0);
         exhausted |= (memory == 0.0);
-        
+
         return exhausted || !hasUserAndVmSpace();
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const NodeResources &obj)
+    {
+        return os << "Memory: " << obj.memory << "\n"
+                  << "Disk:   " << obj.disk << "\n"
+                  << "Cores:  " << obj.cores << "\n"
+                  << "Users:  " << obj.users << "\n"
+                  << "Vms:    " << obj.vms << "\n";
     }
 };
 

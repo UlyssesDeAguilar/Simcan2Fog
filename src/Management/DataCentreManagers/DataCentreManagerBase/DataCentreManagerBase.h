@@ -9,6 +9,7 @@
 #include "Management/parser/DataCentreConfigParser.h"
 #include "OperatingSystem/Hypervisors/DcHypervisor/DcHypervisor.h"
 #include "Management/DataCentreManagers/Selection/Strategies.h"
+#include "Management/DataCentreManagers/Selection/Strategies.h"
 
 class DataCentreApplicationBuilder;
 
@@ -89,7 +90,6 @@ protected:
 
     // Helpers
     bool checkVmUserFit(SM_UserVM *&userVM_Rq);
-    virtual std::pair<uint32_t, size_t> selectNode(SM_UserVM *userVM_Rq, const VirtualMachine &vmSpecs) = 0;
 
     // Helpers
     hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return getOrNull(acceptedVMsMap, vmId); }
@@ -104,6 +104,10 @@ protected:
     virtual void printFinal();
 
     friend class DataCentreApplicationBuilder;
+    friend class dc::SelectionStrategy;
+    friend class dc::FirstFit;
+    friend class dc::BestFit;
+    friend class dc::CostFit;
 };
 
 #endif

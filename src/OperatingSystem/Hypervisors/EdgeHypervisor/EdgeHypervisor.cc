@@ -14,4 +14,6 @@ void EdgeHypervisor::initialize(int stage)
     default:
         break;
     }
+
+    Hypervisor::initialize(stage);
 }

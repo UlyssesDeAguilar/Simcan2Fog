@@ -11,7 +11,7 @@ void HardwareManager::initialize()
     isVirtualHardware = par("isVirtualHardware");
 
     // Init the resource specs
-    total.cores = par("numCores");
+    total.cores = par("numCpuCores");
     total.memory = par("memorySize");
     total.disk = par("diskSize");
     total.vms = par("maxVMs");

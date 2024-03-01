@@ -76,16 +76,16 @@ class cSIMCAN_Core : public cSimpleModule
 {
 
 protected:
-	bool showInitValues;	  //!< Flag used to show module parameters at initialize phase 
-	bool showMessageContents; //!< Flag used to show the content of each processed message in the log 
-	bool showMessageTrace;	  //!< Show the trace of each message (for deep-debugging purpose only) 
-	bool debugSimcanCore;	  //!< Show log messages of cSIMCAN_Core (for deep-debugging purpose only) 
-	cQueue queue;			  //!< Incoming messages Queue 
-	cMessage *latencyMessage; //!< Latency message 
-	reqNum_t currentRequest;  //!< Current request 
+	bool showInitValues;		//!< Flag used to show module parameters at initialize phase
+	bool showMessageContents;	//!< Flag used to show the content of each processed message in the log
+	bool showMessageTrace;		//!< Show the trace of each message (for deep-debugging purpose only)
+	bool debugSimcanCore;		//!< Show log messages of cSIMCAN_Core (for deep-debugging purpose only)
+	cQueue queue;				//!< Incoming messages Queue
+	cMessage *latencyMessage{}; //!< Latency message
+	reqNum_t currentRequest;	//!< Current request
 
 	virtual void initialize() override;
-	virtual void initialize(int stage) override { if (stage == 0) initialize(); }
+	virtual void initialize(int stage) override;
 	virtual int numInitStages() const override { return 1; }
 	virtual void finish() override;
 	virtual ~cSIMCAN_Core();

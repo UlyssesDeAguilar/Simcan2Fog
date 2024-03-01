@@ -21,7 +21,6 @@ protected:
 	virtual void finish() override;
 	virtual void run() override{};
 
-	void processSelfMessage(cMessage *msg) override;
 	void processRequestMessage(SIMCAN_Message *sm) override;
 	void processResponseMessage(SIMCAN_Message *sm) override;
 };

@@ -53,11 +53,12 @@ OBJS = \
     $O/Management/CloudProviders/CloudProviderFirstFit/CloudProviderFirstFit.o \
     $O/Management/CloudProviders/CloudProviderFirstFit/NodeResourceInfo.o \
     $O/Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.o \
-    $O/Management/DataCentreManagers/DataCentreManagerBestFit/DataCentreManagerBestFit.o \
-    $O/Management/DataCentreManagers/DataCentreManagerCost/DataCentreManagerCost.o \
-    $O/Management/DataCentreManagers/DataCentreManagerFirstFit/DataCentreManagerFirstFit.o \
     $O/Management/DataCentreManagers/ResourceManager/ResourceManager.o \
     $O/Management/DataCentreManagers/ResourceManager/VmDeployment.o \
+    $O/Management/DataCentreManagers/Selection/BestFit.o \
+    $O/Management/DataCentreManagers/Selection/CostFit.o \
+    $O/Management/DataCentreManagers/Selection/FirstFit.o \
+    $O/Management/DataCentreManagers/Selection/SelectionStrategy.o \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
     $O/Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \

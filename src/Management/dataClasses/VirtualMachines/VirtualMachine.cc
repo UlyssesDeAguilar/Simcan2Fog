@@ -18,5 +18,5 @@ std::ostream &operator<<(std::ostream &os, const VirtualMachine &obj)
               << "Cores (#):   " << obj.numCores << "\n"
               << "SCU (#):     " << obj.scu << "\n"
               << "Disk (GB):   " << obj.diskGB << "\n"
-              << "Memory (GB): " << obj.diskGB << "\n";
+              << "Memory (GB): " << obj.memoryGB << "\n";
 }

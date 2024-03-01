@@ -37,6 +37,7 @@ void DcHypervisor::initialize(int stage)
         // This is the reason why I would like to do this with messages instead
         resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath("^.^.^.resourceManager"));
         resourceManager->registerNode(hardwareManager->getIp(), hardwareManager->getAvailableResources());
+        break;
     }
     default:
         break;
@@ -116,6 +117,8 @@ void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
 
 cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *userId)
 {
+    Enter_Method_Silent("DcHypervisor, handling vm request...");
+    
     unsigned int *cpuCoreIndex;
 
     // Query vm type
@@ -173,11 +176,11 @@ void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
     extensionOffer->setIsResponse(false);
     extensionOffer->setOperation(SM_APP_Req);
     extensionOffer->setOperation(SM_APP_Res_Timeout);
-    
+
     auto localUrl = ServiceURL(DC_MANAGER_LOCAL_ADDR);
     auto routingInfo = new RoutingInfo();
     routingInfo->setUrl(localUrl);
-    
+
     extensionOffer->setControlInfo(routingInfo);
 
     /*

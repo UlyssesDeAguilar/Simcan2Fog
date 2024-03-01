@@ -7,8 +7,6 @@ void Hypervisor::initialize(int stage)
     {
     case LOCAL:
     {
-        cSIMCAN_Core::initialize(LOCAL);
-
         // Retrieve info from input/output gates
         appGates.inBaseId = gateBaseId("fromApps");
         appGates.outBaseId = gateBaseId("toApps");
@@ -18,7 +16,7 @@ void Hypervisor::initialize(int stage)
         networkGates.outBaseId = gateBaseId("networkComm$o");
 
         // Locate topologically the helper modules
-        DataManager *dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
+        dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
         hardwareManager = locateHardwareManager();
 
         // Initialize the OsCore
@@ -42,6 +40,8 @@ void Hypervisor::initialize(int stage)
     default:
         break;
     }
+
+    cSIMCAN_Core::initialize(stage);
 }
 
 void Hypervisor::finish()

@@ -5,5 +5,5 @@ package simcan2.Management.DataCentreManagers.ResourceManager;
 // 
 simple DcResourceManager{
     parameters:
-        @class(DcResourceManager)
+        @class(DcResourceManager);
 }

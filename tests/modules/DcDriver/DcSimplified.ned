@@ -12,8 +12,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
-
-package simcan2.simulations.ScenarioTestFog;
+package DcDriver;
 
 import simcan2.Architecture.Nodes.Cloud.CloudBlade;
 import simcan2.Architecture.Network.Switch.Switch;
@@ -26,14 +25,14 @@ module SimpleDc
     parameters:
         @smlevel(0);
         int numBlades;
-
+        manager.minActiveNodes = numBlades;
         @display("i=data-center;bgb=756,453");
     gates:
         inout comm[];
 
     submodules:
-        dcManager: DataCentreManagerFirstFit;
-        resourceManager: ResourceManager;
+        dcManager: DataCentreManagerBase;
+        resourceManager: DcResourceManager;
 
         switch: Switch;
         networkAdapter: NetworkAdapter;

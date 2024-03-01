@@ -6,6 +6,12 @@ cSIMCAN_Core::~cSIMCAN_Core()
 	cancelAndDelete(latencyMessage);
 }
 
+void cSIMCAN_Core::initialize(int stage)
+{
+	if (stage == 0)
+		initialize();
+}
+
 void cSIMCAN_Core::initialize()
 {
 	// Init common attributes
@@ -123,7 +129,7 @@ void cSIMCAN_Core::updateMessageTrace(SIMCAN_Message *sm)
 		EV_TRACE << "(updateMessageTrace): Before updating the trace." << endl
 				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
 
-	cGate * selection = getOutGate(sm);
+	cGate *selection = getOutGate(sm);
 
 	// If gate==nullptr... This may be the first module, there is no previous gate!
 	if (selection == nullptr)

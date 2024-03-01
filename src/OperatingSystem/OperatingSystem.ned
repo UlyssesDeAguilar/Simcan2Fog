@@ -13,6 +13,7 @@ module OperatingSystem
     parameters:
         bool staticAppAssignment;										// True if the assignment of application is static or False in another case
         bool isVirtualHardware;											// True if this blade allows virtualization and False in another case
+        int numApps = default(5);										// Number of applications in all vectors
         int maxVMs;														// Maximum number of VMs allocated in this blade (For non-cloud environments, use "1")
         int maxUsers;
         int numCpuCores;												// Number of CPU cores in the CPU processor
@@ -20,7 +21,7 @@ module OperatingSystem
         string cpuSchedulerType;										// CPU Scheduler type
 		*.maxVMs = maxVMs;
         *.isVirtualHardware = isVirtualHardware;
-
+        hypervisor.maxApps = numApps;
         @display("bgb=532.53,430.68002");
     gates:
         inout comm;                 // Input gate from network
@@ -56,6 +57,7 @@ module OperatingSystem
         // Vector of "users" with their respective apps
         appsVectors[maxUsers]: AppsVector {
             parameters:
+                vmId = index;
                 numApps = numApps;
                 staticAppAssignment = staticAppAssignment;
                 @display("p=90.21001,181.39001,c,120;i=user");
@@ -65,8 +67,8 @@ module OperatingSystem
 
         // Connections between Applications gate and Hypervisor
         for i=0..maxUsers-1 {
-            appsVectors[i].toOS --> ned.IdealChannel --> hypervisor.fromApps[i];
-            appsVectors[i].fromOS <-- ned.IdealChannel <-- hypervisor.toApps[i];
+            appsVectors[i].toOS --> ned.IdealChannel --> hypervisor.fromApps++;
+            appsVectors[i].fromOS <-- ned.IdealChannel <-- hypervisor.toApps++;
         }
 
         // Connections between Hypervisor and CPU schedulers

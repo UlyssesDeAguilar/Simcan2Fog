@@ -6,11 +6,33 @@ Tests the correct behaviour and lifetime of vm requests
 [General]
 network = SimpleDcNetwork
 sim-time-limit = 10s
+cmdenv-log-prefix = "(%t):[%l] %m  "
 **.netAdapter1.debug = true
+**.networkAdapter.**.cmdenv-log-level = off
+**.netAdapter1.**.cmdenv-log-level = off
+**.router_bb.**.cmdenv-log-level = off
 
 # DataCenter settings
 *.dc_DataCentre.numBlades = 4
-*.dc_DataCentre.manager = 
+*.dc_DataCentre.dcManager.minActiveMachines = 4
+
+# Blades settings
+*.dc_DataCentre.blade[*].staticAppAssignment = false
+*.dc_DataCentre.blade[*].isVirtualHardware = true
+*.dc_DataCentre.blade[*].maxUsers = 24
+*.dc_DataCentre.blade[*].maxVMs = 24
+*.dc_DataCentre.blade[*].numCpuCores = 24
+*.dc_DataCentre.blade[*].memorySize = 256GB
+*.dc_DataCentre.blade[*].diskSize = 500GB
+*.dc_DataCentre.blade[*].diskReadBandwidth = 500Mbps
+*.dc_DataCentre.blade[*].diskWriteBandwidth = 500Mbps
+
+# CPU
+*.dc_DataCentre.blade[*].cpu.cpuCore[*].speed = 60000
+*.dc_DataCentre.blade[*].cpu.cpuCore[*].tick = 60s
+
+# Apps
+*.dc_DataCentre.blade[*].osModule.appsVectors[*].appModule[*].userAppName = "DummyApplication"
 
 # SimSchema settings
 *.simData.simSchema.typename = "SimSchemaMySQL"
@@ -32,6 +54,9 @@ sim-time-limit = 10s
                                 <interface hosts='dc_DataCentre.networkAdapter' names='eth0' address='10.0.0.100'/> \
 								<interface hosts='**' address='10.x.x.x' netmask='255.x.x.x'/> \
                              </config>")
+
+# Driver configuration
+*.driver.dcAddress = "10.0.0.100"
 
 %# This section does the actual checking of what we expect
 %not-contains: stdout

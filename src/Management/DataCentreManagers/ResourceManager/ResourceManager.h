@@ -30,12 +30,12 @@ protected:
 
     using CoreHypervisorsMap = std::map<uint32_t, std::vector<uint32_t>>; //!< Pair of available cores / ip
 
-    uint32_t totalCores;         //!< Total cpus in the datacentre
-    uint32_t availableCores;     //!< Cpus available in the datacentre
-    uint32_t machinesInUse;      //!< Nodes in use
-    uint32_t activeMachines;     //!< Active nodes (powered on)
-    uint32_t minActiveMachines;  //!< Minimum required active nodes
-    uint32_t reservedNodes;      //!< Number of reserved nodes
+    uint32_t totalCores{};         //!< Total cpus in the datacentre
+    uint32_t availableCores{};     //!< Cpus available in the datacentre
+    uint32_t machinesInUse{};      //!< Nodes in use
+    uint32_t activeMachines{};     //!< Active nodes (powered on)
+    uint32_t minActiveMachines{};  //!< Minimum required active nodes
+    uint32_t reservedNodes{};      //!< Number of reserved nodes
     GlobalAddress globalAddress; //!< Global L3 address
 
     CoreHypervisorsMap coresHypervisor;
@@ -125,11 +125,11 @@ private:
     struct VmAllocation
     {
         uint32_t nodeIp;
-        VM_Request *request;
+        VM_Request &request;
         const VirtualMachine *vm;
 
         VmAllocation(uint32_t nodeIp,
-                     VM_Request *request,
+                     VM_Request &request,
                      const VirtualMachine *vm) : nodeIp(nodeIp),
                                                  request(request),
                                                  vm(vm) {}
@@ -146,11 +146,10 @@ public:
      * @brief Adds a node to the deployment
      *
      * @param nodeIp The node ip
-     * @param bucketIndex The bucket index of the node (relating to cores <>--> nodes map)
      * @param request The request chosen to be deployed inside the node
      * @param vm The "template" that contains the needs of the vm
      */
-    void addNode(const uint32_t &nodeIp, const size_t &bucketIndex, VM_Request *request, const VirtualMachine *vm);
+    void addNode(const uint32_t &nodeIp, VM_Request &request, const VirtualMachine *vm);
 
     /**
      * @brief Rolls back the node allocations

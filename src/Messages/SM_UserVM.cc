@@ -53,7 +53,7 @@ void SM_UserVM::createNewVmRequest(const std::string &type, const std::string &i
 {
   // Fill the request
   vmRequests.emplace_back();
-  VM_Request vmReq = vmRequests.back();
+  VM_Request &vmReq = vmRequests.back();
   vmReq.vmId = instanceId;
   vmReq.vmType = type;
   vmReq.times = times;

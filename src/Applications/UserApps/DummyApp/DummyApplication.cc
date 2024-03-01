@@ -17,10 +17,6 @@ void DummyApplication::finish(){
     UserAppBase::finish();
 }
 
-void DummyApplication::processSelfMessage (cMessage *msg){
-    error ("This module cannot process self messages");
-}
-
 void DummyApplication::processRequestMessage (SIMCAN_Message *sm){
     error ("This module cannot process request messages:%s", sm->contentsToString(showMessageContents, showMessageTrace).c_str());
 }

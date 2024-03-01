@@ -1,6 +1,7 @@
 package DcDriver;
+import simcan2.Core.cSIMCAN_Core;
 
-simple DcDriver{
+simple DcDriver extends cSIMCAN_Core{
     parameters:
         @class(DcDriver);
         string dcAddress;

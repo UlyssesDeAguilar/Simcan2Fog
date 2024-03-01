@@ -32,7 +32,7 @@ void UserAppBase::initialize()
 
     // Get the vmId from the AppArray
     cModule *appVector = appModule->getParentModule();
-    vmId = appModule->par("vmId");
+    vmId = appVector->par("vmId");
 
     // Init cGates
     inGate = gate("in");

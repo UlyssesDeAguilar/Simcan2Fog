@@ -1,24 +1,31 @@
+#include "Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
+#include "Management/DataCentreManagers/ResourceManager/ResourceManager.h"
 #include "Strategies.h"
+
 using namespace dc;
 
-// Allocator map setup
-const std::map<const char *, SelectionStrategy::Constructor, SelectionStrategy::cmp_cstr> 
-SelectionStrategy::allocatorMap =
-{
-    {"FirstFit", [](DcResourceManager *rm) -> SelectionStrategy * { new FirstFit(rm); }},
-    {"BestFit", [](DcResourceManager *rm) -> SelectionStrategy * { new BestFit(rm); }},
-    {"CostFit", [](DcResourceManager *rm) -> SelectionStrategy * { new CostFit(rm); }}
-};
+SelectionStrategy::SelectionStrategy(DataCentreManagerBase *m) : manager(m), resourceManager(m->resourceManager) {}
 
-SelectionStrategy *SelectionStrategy::newStrategy(const char *type, DcResourceManager *rm)
+// Allocator map setup
+const std::map<const char *, SelectionStrategy::Constructor, SelectionStrategy::cmp_cstr>
+    SelectionStrategy::allocatorMap =
+        {
+            {"FirstFit", [](DataCentreManagerBase *m) -> SelectionStrategy *
+             { return new FirstFit(m); }},
+            {"BestFit", [](DataCentreManagerBase *m) -> SelectionStrategy *
+             { return new BestFit(m); }},
+            {"CostFit", [](DataCentreManagerBase *m) -> SelectionStrategy *
+             { return new CostFit(m); }}};
+
+SelectionStrategy *SelectionStrategy::newStrategy(const char *type, DataCentreManagerBase *m)
 {
     // Try to find the type
     auto iter = allocatorMap.find(type);
-    
+
     // If not found
     if (iter == allocatorMap.end())
         return nullptr;
-    
+
     // If found construct
-    return iter->second(rm);
+    return iter->second(m);
 }

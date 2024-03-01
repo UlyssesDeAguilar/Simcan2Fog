@@ -11,13 +11,15 @@ void DcResourceManager::initialize(int stage)
     {
         // Reserve the necessary control data
         int numBlades = getParentModule()->par("numBlades");
-        nodes.reserve(numBlades);
+        nodes.resize(numBlades);
         break;
     }
     case MANAGER:
     {
         // Initialize buckets and reservations
         initBucketsAndReservations();
+        // Mark all cores as available
+        availableCores = totalCores;
         break;
     }
     default:
@@ -71,10 +73,10 @@ void DcResourceManager::initBucketsAndReservations()
 
     // Sanity checks
     if (reservedCounter < this->reservedNodes)
-        error("Unable to reserve %d nodes because there are %d total or active nodes", this->reservedNodes, reservedCounter);
+        error("Unable to reserve %d nodes because there are %d total or active nodes", this->reservedNodes, nodes.size());
 
     if (this->activeMachines < this->minActiveMachines)
-        error("Unable to activate the minimum %d required nodes because there are %d total nodes", this->minActiveMachines, reservedCounter);
+        error("Unable to activate the minimum %d required nodes because there are %d total nodes", this->minActiveMachines, nodes.size());
 }
 
 void DcResourceManager::setActiveMachines(uint32_t activeMachines)
@@ -134,7 +136,7 @@ void DcResourceManager::deactivateNode(uint32_t nodeIp)
 
 hypervisor::DcHypervisor *const DcResourceManager::getHypervisor(uint32_t nodeIp)
 {
-    cModule *blade = getParentModule()->getSubmodule("blades", nodeIp);
+    cModule *blade = getParentModule()->getSubmodule("blade", nodeIp);
     cModule *hypervisor = blade->getSubmodule("osModule")->getSubmodule("hypervisor");
     return check_and_cast<hypervisor::DcHypervisor *>(hypervisor);
 }

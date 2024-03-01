@@ -32,13 +32,13 @@ public:
     {
         // If we have a complete URL
         if (obj.isFullUrl())
-            return os << "#" << obj.local << "@" << obj.global;
+            return os << "#" << obj.local.str(false) << "@" << obj.global;
 
         // If we have a partial URL == Local/Global Ip
         if (obj.state & GLOBAL)
             os << obj.global;
         else
-            os << "#" << obj.local;
+            os << "#" << obj.local.str(false);
 
         return os;
     }

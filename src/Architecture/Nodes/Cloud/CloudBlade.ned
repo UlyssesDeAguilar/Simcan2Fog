@@ -2,6 +2,7 @@ package simcan2.Architecture.Nodes.Cloud;
 import simcan2.Architecture.Nodes.HardwareManagers.HardwareManager.HardwareManager;
 import simcan2.Architecture.Nodes.HardwareManagers.IHardwareManager;
 import simcan2.OperatingSystem.OperatingSystem;
+import simcan2.OperatingSystem.Hypervisors.DcHypervisor.DcHypervisor;
 import simcan2.Architecture.Cpu.CpuProcessor.CpuProcessor;
 
 //
@@ -23,7 +24,6 @@ module CloudBlade
     parameters:
         @labels(node,ethernet-node);
         int address;                                                // Local Ip
-        int numApps = default(5);									// Number of applications in this vector
         bool staticAppAssignment;									// True if the assignment of applications is static or False in another case
         bool isVirtualHardware;										// True if this blade allows virtualization and False in another case
         int maxUsers;												// Maximum number of users allowed to launch applications (For cloud environments, maxUsers=maxVMs)
@@ -36,7 +36,7 @@ module CloudBlade
 
 
         string hardwareManagerType = default("HardwareManager");	// Hardware manager type
-        string hypervisorType;                      				// Hypervisor type
+        string hypervisorType = default("DcHypervisor");            // Hypervisor type
         string cpuSchedulerType = default("CpuSchedulerRR");		// CPU Scheduler type
         string cpuCoreType = default("CpuCore");					// Type of the CPU cores
 
@@ -47,6 +47,7 @@ module CloudBlade
         *.numCpuCores = numCpuCores;
         *.maxVMs = maxVMs;
         *.isVirtualHardware = isVirtualHardware;
+        hardwareManager.address = address;
 
         // Select function selects value from a list given an index (starts at 0)
         // Converting a boolean gives us 0/1 for false/true
