@@ -28,15 +28,28 @@ protected:
         bool inUse() const { return state == (ACTIVE | IN_USE); }
     };
 
+    struct Signal
+    {
+        simsignal_t maxRam;   //!< Emmited on init stage. Maximum amount of RAM
+        simsignal_t maxDisk;  //!< Emmited on init stage. Maximum amount of Disk space
+        simsignal_t maxCores; //!< Emmited on init stage. Maximum amount of cores
+        simsignal_t maxVms;   //!< Emmited on init stage. Maximum amount of VMs
+
+        simsignal_t allocatedCores; //!< Signal id for the event of cores being allocated
+        simsignal_t allocatedRam;   //!< Signal id for the event of RAM being allocated
+        simsignal_t allocatedDisk;  //!< Signal id for the event of Disk space being allocated
+        simsignal_t allocatedVms;   //!< Signal id for the event of VMs being allocated
+    } signals;
+
     using CoreHypervisorsMap = std::map<uint32_t, std::vector<uint32_t>>; //!< Pair of available cores / ip
 
-    uint32_t totalCores{};         //!< Total cpus in the datacentre
-    uint32_t availableCores{};     //!< Cpus available in the datacentre
-    uint32_t machinesInUse{};      //!< Nodes in use
-    uint32_t activeMachines{};     //!< Active nodes (powered on)
-    uint32_t minActiveMachines{};  //!< Minimum required active nodes
-    uint32_t reservedNodes{};      //!< Number of reserved nodes
-    GlobalAddress globalAddress; //!< Global L3 address
+    uint32_t totalCores{};        //!< Total cpus in the datacentre
+    uint32_t availableCores{};    //!< Cpus available in the datacentre
+    uint32_t machinesInUse{};     //!< Nodes in use
+    uint32_t activeMachines{};    //!< Active nodes (powered on)
+    uint32_t minActiveMachines{}; //!< Minimum required active nodes
+    uint32_t reservedNodes{};     //!< Number of reserved nodes
+    GlobalAddress globalAddress;  //!< Global L3 address
 
     CoreHypervisorsMap coresHypervisor;
     CoreHypervisorsMap reservedCoresHypervisor;

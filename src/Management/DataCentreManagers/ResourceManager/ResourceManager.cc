@@ -9,6 +9,17 @@ void DcResourceManager::initialize(int stage)
     {
     case LOCAL:
     {
+        // Register the signals for statistical recording
+        signals.maxCores = registerSignal("maxCores");
+        signals.maxRam = registerSignal("maxRam");
+        signals.maxDisk = registerSignal("maxDisk");
+        signals.maxVms = registerSignal("maxVms");
+        
+        signals.allocatedCores = registerSignal("allocatedCores");
+        signals.allocatedRam = registerSignal("allocatedRam");
+        signals.allocatedDisk = registerSignal("allocatedDisk");
+        signals.allocatedVms = registerSignal("allocatedVms");
+
         // Reserve the necessary control data
         int numBlades = getParentModule()->par("numBlades");
         nodes.resize(numBlades);
@@ -54,8 +65,18 @@ void DcResourceManager::initBucketsAndReservations()
     this->machinesInUse = 0;
     uint32_t reservedCounter = 0;
 
+    // For statistics
+    double maxRam = 0.0;
+    double maxDisk = 0.0;
+    uint64_t maxVMs = 0;
+
     for (auto &node : nodes)
     {
+        // Accumulate
+        maxRam += node.availableResources.memory;
+        maxDisk += node.availableResources.disk;
+        maxVMs += node.availableResources.vms;
+
         // Activate the node
         if (this->activeMachines < this->minActiveMachines)
             activateNode(node.ip);
@@ -77,6 +98,12 @@ void DcResourceManager::initBucketsAndReservations()
 
     if (this->activeMachines < this->minActiveMachines)
         error("Unable to activate the minimum %d required nodes because there are %d total nodes", this->minActiveMachines, nodes.size());
+
+    // Emit the overall registered resources
+    emit(signals.maxCores, totalCores);
+    emit(signals.maxDisk, maxDisk);
+    emit(signals.maxRam, maxRam);
+    emit(signals.maxVms, maxVMs);
 }
 
 void DcResourceManager::setActiveMachines(uint32_t activeMachines)
@@ -143,8 +170,16 @@ hypervisor::DcHypervisor *const DcResourceManager::getHypervisor(uint32_t nodeIp
 
 void DcResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualMachine *vmTemplate)
 {
-    // TODO: Statistics update!
     this->availableCores -= vmTemplate->getNumCores();
+
+    // Emit statistical signals -- Heuristic for considering if there may be a listening configuration
+    if (mayHaveListeners(signals.allocatedVms))
+    {
+        emit(signals.allocatedVms, 1);
+        emit(signals.allocatedCores, vmTemplate->getNumCores());
+        emit(signals.allocatedRam, vmTemplate->getMemoryGb());
+        emit(signals.allocatedDisk, vmTemplate->getDiskGb());
+    }
 
     // Mark node in use and increment machinesInUse (if previously not set)
     if ((nodes[ip].state & Node::IN_USE) == 0)
@@ -160,8 +195,16 @@ void DcResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualM
 
 void DcResourceManager::confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool inUse)
 {
-    // TODO: Statistics update!
     this->availableCores += vmTemplate->getNumCores();
+
+    // Emit statistical signals -- Heuristic for considering if there may be a listening configuration
+    if (mayHaveListeners(signals.allocatedVms))
+    {
+        emit(signals.allocatedVms, -1);
+        emit(signals.allocatedCores, -vmTemplate->getNumCores());
+        emit(signals.allocatedRam, -vmTemplate->getMemoryGb());
+        emit(signals.allocatedDisk, -vmTemplate->getDiskGb());
+    }
 
     // If no longer in use
     if (!inUse)
