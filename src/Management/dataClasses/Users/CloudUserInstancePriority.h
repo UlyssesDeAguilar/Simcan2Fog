@@ -20,7 +20,7 @@
 
 class CloudUserInstancePriority: public CloudUserInstance {
     public:
-        CloudUserInstancePriority(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
+        CloudUserInstancePriority(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
         virtual ~CloudUserInstancePriority();
     bool isBCredit() const;
     void setBCredit(bool bCredit);
