@@ -16,6 +16,8 @@
 #include "UserGeneratorCost.h"
 #include "Management/utils/LogUtils.h"
 
+using namespace omnetpp;
+
 Define_Module(UserGeneratorCost);
 
 void UserGeneratorCost::initialize()
@@ -48,174 +50,12 @@ void UserGeneratorCost::initializeHashMaps()
     }
 }
 
-CloudUserInstance *UserGeneratorCost::handleResponseVmAccept(SIMCAN_Message *userVm_RAW)
-{
-    CloudUserInstance *pUserInstance = nullptr;
-    SM_UserVM_Cost *userVm = dynamic_cast<SM_UserVM_Cost *>(userVm_RAW);
-
-    if (userVm == nullptr)
-        error("Could not cast SIMCAN_Message to SM_UserVM_Cost (wrong operation code or message class?)");
-
-    pUserInstance = userHashMap.at(userVm->getUserId());
-
-    if (pUserInstance == nullptr)
-        error("User instance not found!");
-
-    auto pCloudUser = dataManager->searchUser(pUserInstance->getType());
-
-    if (pCloudUser == nullptr)
-        error("Could not cast CloudUser* to CloudUserPriority* (wrong user id, user type or user class?)");
-
-    // Check the response and proceed with the next action
-    if (pCloudUser->getPriorityType() == Priority && userVm->getBPriorized())
-        priorizedHashMap[userVm->getUserId()] = true;
-
-    UserGenerator_simple::handleResponseVmAccept(userVm_RAW);
-
-    return pUserInstance;
-}
-
-CloudUserInstance *UserGeneratorCost::handleResponseVmReject(SIMCAN_Message *userVm_RAW)
-{
-    CloudUserInstance *pUserInstance = nullptr;
-    SM_UserVM_Cost *userVm = dynamic_cast<SM_UserVM_Cost *>(userVm_RAW);
-
-    if (userVm != nullptr)
-    {
-
-        pUserInstance = userHashMap.at(userVm->getUserId());
-
-        if (pUserInstance == nullptr)
-            error("User instance not found!");
-
-        auto pCloudUser = dynamic_cast<const CloudUserPriority *>(dataManager->searchUser(pUserInstance->getType()));
-
-        // Check the response and proceed with the next action
-        if (pCloudUser != nullptr && pCloudUser->getPriorityType() == Priority)
-        {
-            EV_INFO << __func__ << " - Response message" << endl;
-
-            EV_INFO << *userVm << '\n';
-
-            // Update the status
-            updateVmUserStatus(userVm->getUserId(), userVm->getVmId(), vmFinished);
-
-            // Update priorized
-            if (userVm->getBPriorized())
-                priorizedHashMap[userVm->getUserId()] = true;
-
-            if (pUserInstance != nullptr)
-            {
-                emit(responseSignal, pUserInstance->getNId());
-                pUserInstance->getInstanceTimesForUpdate().initExec = simTime();
-                pUserInstance->setTimeoutMaxSubscribed();
-            }
-        }
-        else
-        {
-            UserGenerator_simple::handleResponseVmReject(userVm_RAW);
-        }
-    }
-    else
-    {
-        error("Could not cast SIMCAN_Message to SM_UserVM (wrong operation code or message class?)");
-    }
-
-    return pUserInstance;
-}
-
-CloudUserInstance *UserGeneratorCost::handleResponseAppTimeout(SIMCAN_Message *msg)
-{
-    CloudUserInstance *pUserInstance = nullptr;
-    SM_UserAPP *userApp = dynamic_cast<SM_UserAPP *>(msg);
-    std::string strVmId;
-
-    if (userApp != nullptr)
-    {
-        EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Init" << endl;
-
-        // Print a debug trace ...
-        strVmId = userApp->getVmId();
-        EV_INFO << *userApp << '\n';
-
-        pUserInstance = userHashMap.at(userApp->getUserID());
-        if (pUserInstance != nullptr)
-        {
-            emit(failSignal[strVmId], pUserInstance->getNId());
-
-            if (strVmId.compare("") != 0) // Individual VM timeout
-            {
-                // The next step is to send a subscription to the cloudprovider
-                // Recover the user instance, and get the VmRequest
-
-                if (hasToExtendVm(userApp))
-                {
-                    resumeExecution(userApp);
-                    // pUserInstance->setRequestApp(userApp, strVmId);
-                    // updateUserApp(userApp);
-                } // TODO: Comprobar si ha terminado y hacer cancelAndDeleteMessages (pUserInstace)
-                else
-                {
-                    updateUserApp(userApp);
-                    updateVmUserStatus(userApp->getUserID(), strVmId, vmFinished);
-                    endExecution(userApp);
-                }
-            }
-        }
-
-        EV_INFO << __func__ << " - End" << endl;
-    }
-    else
-    {
-        error("Could not cast SIMCAN_Message to SM_UserAPP (wrong operation code?)");
-    }
-    // TODO: Mirar cuando eliminar.  delete pUserInstance->getRequestAppMsg();
-
-    return pUserInstance;
-}
-
-bool UserGeneratorCost::hasToExtendVm(SM_UserAPP *userApp)
-{
-    double dRandom;
-    CloudUserInstancePriority *pUserInstance;
-
-    pUserInstance = dynamic_cast<CloudUserInstancePriority *>(userHashMap.at(userApp->getUserID()));
-
-    if (pUserInstance == nullptr)
-        error("User instance not found or could not cast CloudUserInstance to CloudUserInstancePriority!");
-
-    if (pUserInstance->isBCredit())
-        pUserInstance->setBCredit(offerAcceptanceDistribution->doubleValue() <= 0.9);
-
-    return pUserInstance->isBCredit();
-}
-
-void UserGeneratorCost::resumeExecution(SM_UserAPP *userApp)
-{
-    extensionTimeHashMap.at(userApp->getVmId())++;
-
-    EV_INFO << "Sending extend VM rent and resume Apps to the cloud provider" << endl;
-    userApp->setIsResponse(false);
-    userApp->setOperation(SM_APP_Req_Resume);
-    userApp->setResult(0);
-    sendRequestMessage(userApp, toCloudProviderGate);
-}
-
-void UserGeneratorCost::endExecution(SM_UserAPP *userApp)
-{
-    EV_INFO << "Sending end VM rent and abort Apps to the cloud provider" << endl;
-    userApp->setIsResponse(false);
-    userApp->setOperation(SM_APP_Req_End);
-    userApp->setResult(0);
-    sendRequestMessage(userApp, toCloudProviderGate);
-}
-
 SM_UserVM *UserGeneratorCost::createVmMessage()
 {
     return new SM_UserVM_Cost();
 }
 
-CloudUserInstance *UserGeneratorCost::createCloudUserInstance(CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
+CloudUserInstance *UserGeneratorCost::createCloudUserInstance(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances)
 {
     return new CloudUserInstancePriority(ptrUser, totalUserInstance, userNumber, currentInstanceIndex, totalUserInstances);
 }
@@ -225,7 +65,7 @@ CloudUser *UserGeneratorCost::createUserTraceType()
     return new CloudUserPriority("UserTrace", 0, Regular, strUserTraceSla);
 }
 
-void UserGeneratorCost::calculateStatistics()
+void UserGeneratorCost::finish()
 {
     double dTotalSub, dMeanSub, dNoWaitUsers, dWaitUsers;
     double dUserCost, dTotalCost, dMeanCost, dBaseCost, dRentingBaseCost, dOfferCost, dTotalOfferCost;
@@ -252,7 +92,7 @@ void UserGeneratorCost::calculateStatistics()
         // Retrieve times and convert them from seconds into hours
         auto times = userInstance->getInstanceTimesForUpdate().convertToSeconds();
         double dInitTime = times.arrival2Cloud.dbl();
-        double dEndTime = times.endTime.dbl();
+        // double dEndTime = times.endTime.dbl(); FIXME: Again not used
         double dExecTime = times.initExec.dbl();
         double dWaitTime = times.waitTime.dbl();
 
@@ -266,7 +106,6 @@ void UserGeneratorCost::calculateStatistics()
 
         bool bPriorized = priorizedHashMap.at(userInstance->getId());
         auto pSla = dataManager->searchSla(pCloudUser->getSla());
-        auto pUserVM_Rq = userInstance->getRequestVmMsg();
 
         if (bSubscribed)
         {
