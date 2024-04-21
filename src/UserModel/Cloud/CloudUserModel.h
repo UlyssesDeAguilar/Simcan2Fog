@@ -6,8 +6,7 @@
 class CloudUserModel : public BaseUserModel
 {
 protected:
-    void handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
-    void handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserInstance &userInstance);
+    virtual void handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance) override;
 
     // Helpers
     bool decidesToRescueVm(SM_UserAPP *appRequest, CloudUserInstance &userInstance);

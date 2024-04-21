@@ -115,6 +115,9 @@ OBJS = \
     $O/OperatingSystem/Hypervisors/EdgeHypervisor/EdgeHypervisor.o \
     $O/OperatingSystem/Hypervisors/Hypervisor/Hypervisor.o \
     $O/OperatingSystem/Hypervisors/OsCore/OsCore.o \
+    $O/UserModel/Base/BaseUserModel.o \
+    $O/UserModel/Cloud/CloudUserModel.o \
+    $O/UserModel/Edge/EdgeUserModelDriver.o \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \

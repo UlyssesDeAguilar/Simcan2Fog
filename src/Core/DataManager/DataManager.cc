@@ -1,7 +1,8 @@
 #include "DataManager.h"
 
+using namespace omnetpp;
+
 Define_Module(DataManager);
-using omnetpp::cModule;
 
 void DataManager::initialize()
 {

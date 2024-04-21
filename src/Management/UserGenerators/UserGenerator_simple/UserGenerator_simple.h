@@ -64,8 +64,6 @@ protected:
 
     void initializeHashMaps();
 
-    virtual void execute(CloudUserInstance *pUserInstance, SM_UserVM *userVm);
-
     virtual void finishUser(CloudUserInstance *pUserInstance);
 
     DataManager *getDataManager() { return dataManager; }

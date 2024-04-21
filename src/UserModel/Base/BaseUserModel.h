@@ -10,9 +10,9 @@ class BaseUserModel
 protected:
     UserGenerator_simple &driver; //!< Reference to the driver of the simulation
 
-    void handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
-    void handleResponseSubscription(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
-    void handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserInstance &userInstance);
+    virtual void handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
+    virtual void handleResponseSubscription(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
+    virtual void handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserInstance &userInstance);
 
     // Helpers
     void deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
@@ -25,6 +25,7 @@ protected:
 public:
     friend class UserGenerator_simple;
     BaseUserModel(UserGenerator_simple &driver) : driver(driver) {}
+    virtual ~BaseUserModel() = default;
 };
 
 #endif

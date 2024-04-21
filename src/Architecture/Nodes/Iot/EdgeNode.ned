@@ -1,4 +1,6 @@
 package simcan2.Architecture.Nodes.Iot;
+
+import simcan2.Architecture.Nodes.HardwareManagers.HardwareManager.HardwareManager;
 import simcan2.Architecture.Cpu.CpuProcessor.CpuProcessor;
 import simcan2.OperatingSystem.Hypervisors.EdgeHypervisor.EdgeHypervisor;
 import simcan2.OperatingSystem.CpuSchedulers.ICpuScheduler;
@@ -15,18 +17,25 @@ module EdgeNode
         // Hardware specs
         int numCpuCores = default(4);                        // The cores of the CPU equipped in this node
         double memorySize @unit(GB) = default(16GB);
-        double diskSize @unit(GB) = default(500GB);
+       	double diskSize @unit(GB) = default(500GB);
         double diskReadBandwidth @unit(Mbps) = default(800Mbps);
         double diskWriteBandwidth @unit(Mbps) = default(800Mbps);
         
         // Propagating values to submodules + configuration
         *.numCpuCores = numCpuCores;
         *.staticAppAssignment = staticAppAssignment;
+        *.isVirtualHardware = false;
+        
         apps.numApps = maxApps;
         cpu.cpuCoreType = "CpuCore";
-        scheduler.isVirtualHardware = false;
+        
+        hwm.memorySize = memorySize;
+        hwm.diskSize = diskSize;        
         
         @display("bgb=463,275");
+    gates:
+        inout comm;
+        
     submodules:
         na: NetworkAdapter {
             @display("p=220,221");
@@ -34,6 +43,10 @@ module EdgeNode
         
         hy: EdgeHypervisor {
             @display("p=220,127");
+        }
+
+        hwm: HardwareManager {
+            address = 0;
         }
         
         cpu: CpuProcessor {
@@ -50,18 +63,17 @@ module EdgeNode
 
     connections:
         // Connect hypervisor to scheduler
-        hy.toCpuScheduler --> scheduler.fromHypervisor;
-        hy.fromCpuScheduler <-- scheduler.toHypervisor;
+        hy.toCpuScheduler++ --> scheduler.fromHypervisor;
+        hy.fromCpuScheduler++ <-- scheduler.toHypervisor;
 
         // Enable network comms
-        hy.toNetwork --> na.moduleIn;
-        hy.fromNetwork <-- na.moduleOut;
+        hy.networkComm <--> comm;
 
         // Connect CPU - Scheduler
         scheduler.toHub --> cpu.fromOs;
         scheduler.fromHub <-- cpu.toOs;
 
         // Connect apps to hypervisor
-        hy.toApps --> apps.fromOS;
-        hy.fromApps <-- apps.toOS;
+        hy.toApps++ --> apps.fromOS;
+        hy.fromApps++ <-- apps.toOS;
 }
