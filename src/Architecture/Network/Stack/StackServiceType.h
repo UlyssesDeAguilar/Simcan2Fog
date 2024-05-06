@@ -1,0 +1,11 @@
+#ifndef SIMCAN_EX_STACK_SERVICE_TYPE_H
+#define SIMCAN_EX_STACK_SERVICE_TYPE_H
+
+enum StackServiceType {
+    HTTP_CLIENT = 0,
+    HTTP_PROXY = 1,
+    DNS_RESOLVER = 2,
+    NUM_SERVICES 
+};
+
+#endif /*SIMCAN_EX_STACK_SERVICE_TYPE_H*/

@@ -37,6 +37,9 @@ OBJS = \
     $O/Architecture/Network/DNS/Service/DNS_Service.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
+    $O/Architecture/Network/Stack/HttpBaseService.o \
+    $O/Architecture/Network/Stack/HttpClientService.o \
+    $O/Architecture/Network/Stack/StackMultiplexer.o \
     $O/Architecture/Network/Switch/Switch.o \
     $O/Architecture/Nodes/Fog/FogNode.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \
@@ -119,6 +122,7 @@ OBJS = \
     $O/UserModel/Cloud/CloudUserModel.o \
     $O/UserModel/Edge/EdgeUserModelDriver.o \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
+    $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \
@@ -138,6 +142,7 @@ OBJS = \
 # Message files
 MSGFILES = \
     Architecture/Network/RoutingInfo/RoutingInfo.msg \
+    Architecture/Network/Stack/NetworkIOEvent.msg \
     Messages/DNS_Request.msg \
     Messages/INET_AppMessage.msg \
     Messages/SIMCAN_Message.msg \

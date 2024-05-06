@@ -42,23 +42,31 @@ namespace hypervisor
         EXEC,      // Execute / Calculate
         OPEN_CLI,  // Open client socket : PORT/IP
         OPEN_SERV, // Open server socket : PORT/DOMAIN/SERVICE_NAME
+        RESOLVE,   // Resolve a fully qualified DNS domain name
         SEND,      // Send through socket
         RECV,      // Recieve through socket
         EXIT,      // Finish the process
     } Syscall;
 
+    typedef enum
+    {
+        OK,
+        ERROR
+    } SyscallResult;
+
     // TODO: Consider if making the pointers smart pointers!
     struct CallContext
     {
         Syscall opCode;
+        SyscallResult result;
         union Context
         {
             double bufferSize;          // Either for read or write
             SM_CPU_Message *cpuRequest; // For CPU requests
-            struct NetIO
+            struct NetIO // For network I/O
             {
-                INET_AppMessage *packet; // For network I/O
-                int fd;                  // For network I/O
+                int fd;                  // Real socket id when going to the service                  
+                INET_AppMessage *packet; // Payload to be sent
             };
         } data;
     };

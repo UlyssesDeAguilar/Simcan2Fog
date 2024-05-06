@@ -9,7 +9,6 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "Architecture/Network/DNS/common.h"
 
-
 /**
  * @brief Class that provides the DNS service
  * It relies on the XML dump from the Ipv4Configurator
@@ -33,8 +32,8 @@ namespace dns
         void processXMLInterface(cXMLElement *elem);
         bool filterHostByName(std::string hostName);
 
-    protected:
-        typedef DNS_Request *(DNS_Service::*Handler_t)(const DNS_Request *);
+    public:
+        typedef void (DNS_Service::*Handler_t)(const DNS_Request *, DNS_Request *);
         UdpSocket socket;
 
         // Debug utility
@@ -53,10 +52,10 @@ namespace dns
         // Logic
         virtual void handleMessageWhenUp(cMessage *msg) override { socket.processMessage(msg); }
         DNS_Request *selectAndExecHandler(const DNS_Request *request);
-        DNS_Request *handleInsert(const DNS_Request *request);
-        DNS_Request *handleQuery(const DNS_Request *request);
-        DNS_Request *handleDelete(const DNS_Request *request);
-        DNS_Request *handleNotImplemented(const DNS_Request *request);
+        void handleInsert(const DNS_Request *request, DNS_Request *response);
+        void handleQuery(const DNS_Request *request, DNS_Request *response);
+        void handleDelete(const DNS_Request *request, DNS_Request *response);
+        void handleNotImplemented(const DNS_Request *request, DNS_Request *response);
 
         // Socket callbacks
         virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;

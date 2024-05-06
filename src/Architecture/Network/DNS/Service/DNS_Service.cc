@@ -7,7 +7,7 @@ std::set<std::string> DNS_Service::prefixSet = {"dc", "fg", "ed", "cloudProvider
 void DNS_Service::initialize(int stage)
 {
     // This layer could be initialized earlier, maybe in INITSTAGE_TRANSPORT_LAYER
-    if (stage == (INITSTAGE_LAST+1) && isMain)
+    if (stage == (INITSTAGE_LAST + 1) && isMain)
     {
         // Retrieve and open the dump file from Ipv4Configurator
         auto *root = getEnvir()->getXMLDocument(config_file);
@@ -130,9 +130,9 @@ void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet)
 
     // Retrieve IP:Port from sender
     L3Address remoteAddress = packet->getTag<L3AddressInd>()->getSrcAddress();
-    //int remotePort = packet->getTag<L4PortInd>()->getSrcPort();
+    // int remotePort = packet->getTag<L4PortInd>()->getSrcPort();
     int remotePort = DNS_PORT;
-    
+
     // Process and package response
     auto response = selectAndExecHandler(request);
     auto responsePacket = new Packet("DNS_Request", Ptr<DNS_Request>(response));
@@ -146,9 +146,10 @@ void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet)
 
 void DNS_Service::socketErrorArrived(UdpSocket *socket, Indication *indication) {}
 
-DNS_Request *DNS_Service::selectAndExecHandler(const DNS_Request *request)
+DNS_Request * DNS_Service::selectAndExecHandler(const DNS_Request *request)
 {
     Handler_t handler;
+    auto response = new DNS_Request(*request);
 
     switch (request->getOperationCode())
     {
@@ -166,12 +167,12 @@ DNS_Request *DNS_Service::selectAndExecHandler(const DNS_Request *request)
         break;
     }
 
-    return (this->*handler)(request);
+    (this->*handler)(request, response);
+    return response;
 }
 
-DNS_Request *DNS_Service::handleQuery(const DNS_Request *request)
+void DNS_Service::handleQuery(const DNS_Request *request, DNS_Request *response)
 {
-    auto response = new DNS_Request(*request);
     auto questionCount = request->getQuestionArraySize();
 
     // If there are no questions --> Error
@@ -179,7 +180,7 @@ DNS_Request *DNS_Service::handleQuery(const DNS_Request *request)
     {
         EV_INFO << "Query with 0 questions" << endl;
         response->setReturnCode(ReturnCode::FORMERR);
-        return response;
+        return;
     }
 
     for (int i = 0; i < questionCount; i++)
@@ -202,19 +203,18 @@ DNS_Request *DNS_Service::handleQuery(const DNS_Request *request)
     // Indicate everything went OK
     response->setReturnCode(ReturnCode::NOERROR);
 
-    return response;
+    return;
 }
 
-DNS_Request *DNS_Service::handleInsert(const DNS_Request *request)
+void DNS_Service::handleInsert(const DNS_Request *request, DNS_Request *response)
 {
-    auto response = new DNS_Request(*request);
     auto recordCount = request->getRecordArraySize();
 
     // If there are no records --> Error
     if (recordCount == 0)
     {
         response->setReturnCode(ReturnCode::FORMERR);
-        return response;
+        return;
     }
 
     // FIXME : Check overrides?
@@ -227,19 +227,18 @@ DNS_Request *DNS_Service::handleInsert(const DNS_Request *request)
     // Indicate everything went OK
     response->setReturnCode(ReturnCode::NOERROR);
 
-    return response;
+    return;
 }
 
-DNS_Request *DNS_Service::handleDelete(const DNS_Request *request)
+void DNS_Service::handleDelete(const DNS_Request *request, DNS_Request *response)
 {
-    auto response = new DNS_Request(*request);
     auto recordCount = request->getRecordArraySize();
 
     // If there are no records --> Error
     if (recordCount == 0)
     {
         response->setReturnCode(ReturnCode::FORMERR);
-        return response;
+        return;
     }
 
     for (int i = 0; i < recordCount; i++)
@@ -257,15 +256,14 @@ DNS_Request *DNS_Service::handleDelete(const DNS_Request *request)
     // Indicate everything went OK
     response->setReturnCode(ReturnCode::NOERROR);
 
-    return response;
+    return;
 }
 
-DNS_Request *DNS_Service::handleNotImplemented(const DNS_Request *request)
+void DNS_Service::handleNotImplemented(const DNS_Request *request, DNS_Request *response)
 {
-    auto response = new DNS_Request(*request);
     // Select the not implemented response
     response->setReturnCode(ReturnCode::NOTIMP);
-    return response;
+    return;
 }
 
 void DNS_Service::printRecords()
