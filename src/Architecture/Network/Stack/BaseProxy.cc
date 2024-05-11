@@ -28,7 +28,7 @@ void BaseProxy::processRequest(omnetpp::cMessage *msg)
         ServiceEntry newEntry;
         newEntry.pid = command->getPid();
         newEntry.vmId = command->getVmId();
-        // newEntry.ip = command->getIp() ? FIXME
+        newEntry.ip = command->getIp();
 
         auto &servicePool = findOrRegisterService(serviceName, command->getRips());
         servicePool.insert(newEntry);
@@ -40,7 +40,7 @@ void BaseProxy::processRequest(omnetpp::cMessage *msg)
         ServiceEntry oldEntry;
         oldEntry.pid = command->getPid();
         oldEntry.vmId = command->getVmId();
-        // newEntry.ip = command->getIp() ? FIXME
+        oldEntry.ip = command->getIp();
 
         removeFromPool(serviceName, oldEntry);
         break;

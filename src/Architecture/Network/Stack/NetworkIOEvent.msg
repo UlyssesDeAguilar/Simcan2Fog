@@ -8,6 +8,7 @@ enum EventType
     SOCKET_CLOSED = 1;
     SOCKET_FAILURE = 2;
     SOCKET_ESTABLISHED = 3;
+    SOCKET_DATA_ARRIVED = 4;
 };
 
 enum Command
@@ -28,6 +29,7 @@ enum Command
 message Event{
     uint32_t vmId;   // For the hypervisor
     uint32_t pid;
+    uint32_t ip;
     
     uint32_t rips;                      // Ip/Socket Register 
     uint16_t type @enum(EventType);     // Type of the event

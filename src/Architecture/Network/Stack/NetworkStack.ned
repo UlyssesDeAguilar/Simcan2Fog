@@ -19,7 +19,7 @@ parameters:
     @display("i=device/card");     // We have to make an icon (default is a PC)
     numApps = 4;
     app[0].typename = "HttpClientService";
-    app[1].typename = "HttpProxy";
+    app[1].typename = "HttpProxyService";
     app[2].typename = "DNS_Resolver";
     app[3].typename = "DNS_Service";
 gates:

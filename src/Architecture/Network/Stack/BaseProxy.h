@@ -24,15 +24,11 @@ struct ServiceEntry
     uint32_t pid{};        //!< Process Id
     uint32_t vmId{};       //!< VM Id
     uint32_t ip{};         //!< Ip of the node that host the service
-    uint8_t available = 1; //!< If the node is available
+    bool available = true; //!< If the node is available
 
     friend bool operator<(const ServiceEntry &a, const ServiceEntry &b)
     {
-        return ((a.pid - b.pid) + (a.vmId - b.vmId) << 1 + (a.ip - b.ip) << 2) > 0;
-    }
-    friend bool operator==(const ServiceEntry &a, const ServiceEntry &b)
-    {
-        return ((a.pid - b.pid) + (a.vmId - b.vmId) + (a.ip - b.ip)) == 0;
+        return ((a.pid - b.pid) + ((a.vmId - b.vmId) << 1) + ((a.ip - b.ip) << 2)) > 0;
     }
 };
 
@@ -55,6 +51,7 @@ protected:
 
 public:
     // Child classes should let the parent implementation run first
+    ServicePoolMap &getServicePoolMap() { return servicePoolMap; }
     virtual void processRequest(omnetpp::cMessage *msg) override;
 };
 

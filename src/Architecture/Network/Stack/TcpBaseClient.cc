@@ -3,6 +3,8 @@
 using namespace omnetpp;
 using namespace inet;
 
+Define_Module(TcpBaseClient);
+
 void TcpBaseClient::initialize(int stage)
 {
     if (stage == INITSTAGE_APPLICATION_LAYER)
@@ -30,6 +32,8 @@ void TcpBaseClient::finish()
 
 void TcpBaseClient::processRequest(cMessage *msg)
 {
+    Enter_Method_Silent();
+
     auto command = check_and_cast<networkio::Event *>(msg);
 
     switch (command->getCommand())
@@ -46,10 +50,10 @@ void TcpBaseClient::processRequest(cMessage *msg)
 
         // Find/Create the reference
         auto reference = findOrCreateReference(command->getPid(), command->getVmId());
-        reference.references++;
+        reference->references++;
 
         // Bind the reference
-        socketReferenceMap[sockId] = &reference;
+        socketReferenceMap[sockId] = reference;
         socketMap.addSocket(newSocket);
 
         // Connect to the requested ip/port
@@ -67,7 +71,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
         // Encapsulate the message
         auto chunk = makeShared<INET_AppMessage>(command->getPackageForUpdate());
         auto packet = new Packet("Adapter Packet", chunk);
-        
+
         // Send the package
         socket->send(packet);
 
@@ -75,21 +79,17 @@ void TcpBaseClient::processRequest(cMessage *msg)
     }
     case networkio::SOCKET_CLOSE:
     {
-        // Find the socket
+        // Find the socket and close it
         auto socket = socketMap.getSocketById(command->getRips());
-
-        // Remove and unbind the socket
-        removeSocketFromReference(command->getPid(), command->getVmId());
-        socketMap.removeSocket(socket);
-
-        // Delete the socket
-        delete socket;
+        socket->close();
         break;
     }
     default:
         error("Unkown command");
         break;
     }
+
+    delete command;
 }
 
 void TcpBaseClient::handleStartOperation(LifecycleOperation *operation)
@@ -141,18 +141,22 @@ void TcpBaseClient::socketFailure(inet::TcpSocket *socket, int code)
 
 void TcpBaseClient::socketClosed(inet::TcpSocket *socket)
 {
-    // Create the event
-    auto event = new networkio::Event();
+    // Recover context
+    auto iter = socketReferenceMap.find(socket->getSocketId());
 
-    // Prepare the event
-    auto reference = socketReferenceMap.at(socket->getSocketId());
-    event->setType(networkio::SOCKET_CLOSED);
-    event->setRips(socket->getSocketId());
-    event->setVmId(reference->vmId);
-    event->setPid(reference->pid);
+    // Remove and unbind the socket
+    if (iter != socketReferenceMap.end())
+    {
+        auto reference = iter->second;
+        socketReferenceMap.erase(iter);
+        removeSocketFromReference(reference->pid, reference->vmId);
+        socketMap.removeSocket(socket);
+    }
+    else
+        error("Error closing socket on TcpBaseClient");
 
-    // Send the event
-    multiplexer->processResponse(event);
+    // Delete the socket
+    delete socket;
 }
 
 void TcpBaseClient::socketEstablished(inet::TcpSocket *socket)
@@ -199,17 +203,18 @@ void TcpBaseClient::socketDataArrived(TcpSocket *socket, Packet *packet, bool ur
     auto reference = iter->second;
     auto event = new networkio::Event();
 
+    event->setType(networkio::SOCKET_DATA_ARRIVED);
     event->setVmId(reference->vmId);
     event->setPid(reference->pid);
     event->setRips(socketId);
     event->setPackage(sm);
 
-    multiplexer->processResponse(sm);
+    multiplexer->processResponse(event);
 
     delete packet;
 }
 
-TcpBaseClient::VmReference &TcpBaseClient::findOrCreateReference(uint32_t pid, uint32_t vmId)
+TcpBaseClient::VmReference *TcpBaseClient::findOrCreateReference(uint32_t pid, uint32_t vmId)
 {
     // Build the key
     VmReferenceKey key;
@@ -220,13 +225,13 @@ TcpBaseClient::VmReference &TcpBaseClient::findOrCreateReference(uint32_t pid, u
     auto iter = vmReferences.find(key);
     if (iter != vmReferences.end())
     {
-        return iter->second;
+        return &iter->second;
     }
     else
     {
         vmReferences[key].pid = pid;
         vmReferences[key].vmId = vmId;
-        return vmReferences[key];
+        return &vmReferences[key];
     }
 }
 

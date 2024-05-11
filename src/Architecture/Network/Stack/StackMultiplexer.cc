@@ -7,7 +7,7 @@ Define_Module(StackMultiplexer);
 void StackMultiplexer::initialize()
 {
     // Get the out gate id
-    outGateId = gateHalf("eth_comm", cGate::OUTPUT)->getId();
+    outGateId = gateHalf("comm", cGate::OUTPUT)->getId();
 
     // Locate and get references to the services
     services[StackServiceType::HTTP_CLIENT] = check_and_cast<StackService *>(getModuleByPath("^.app[0]"));
@@ -19,6 +19,8 @@ void StackMultiplexer::finish() {}
 
 void StackMultiplexer::handleMessage(omnetpp::cMessage *msg)
 {
+    // Drop ownership -- delegation to the services
+    drop(msg);
     // Recover recuested service
     int16_t serviceType = msg->getKind();
     // Sanity check
@@ -29,6 +31,8 @@ void StackMultiplexer::handleMessage(omnetpp::cMessage *msg)
 
 void StackMultiplexer::processResponse(omnetpp::cMessage *msg)
 {
+    Enter_Method_Silent();
+    take(msg);
     // Relay the response
     send(msg, outGateId);
 }

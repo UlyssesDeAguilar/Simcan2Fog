@@ -65,7 +65,7 @@ protected:
     virtual void handleCrashOperation(inet::LifecycleOperation *operation) override;
 
     // Helper functions
-    VmReference &findOrCreateReference(uint32_t pid, uint32_t vmId);
+    VmReference *findOrCreateReference(uint32_t pid, uint32_t vmId);
     void removeSocketFromReference(uint32_t pid, uint32_t vmId);
 
 public:

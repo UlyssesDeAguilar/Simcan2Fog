@@ -22,7 +22,7 @@ void DNS_Resolver::handleStartOperation(LifecycleOperation *operation)
     // Configure the socket
     mainSocket.setOutputGate(gate("socketOut"));
     responseSocket.setOutputGate(gate("socketOut"));
-    responseSocket.bind(DNS_PORT);
+    responseSocket.bind(0);
     mainSocket.setCallback(this);
     responseSocket.setCallback(this);
 }
@@ -31,6 +31,7 @@ void DNS_Resolver::handleStopOperation(LifecycleOperation *operation)
 {
     error("Currently stopping is not supported");
 }
+
 void DNS_Resolver::handleCrashOperation(LifecycleOperation *operation)
 {
     error("Currently stopping is not supported");

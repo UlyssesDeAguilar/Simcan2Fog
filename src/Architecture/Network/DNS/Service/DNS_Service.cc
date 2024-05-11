@@ -30,9 +30,9 @@ void DNS_Service::initialize(int stage)
     }
     else if (stage == INITSTAGE_LOCAL)
     {
-        isMain = getParentModule()->par("isMain");
-        debug = getParentModule()->par("debug");
-        config_file = getParentModule()->par("ipDump");
+        isMain = false;    // getParentModule()->par("isMain");
+        debug = false;     // getParentModule()->par("debug");
+        config_file = "a"; // getParentModule()->par("ipDump");
     }
     ApplicationBase::initialize(stage);
 }
@@ -146,7 +146,7 @@ void DNS_Service::socketDataArrived(UdpSocket *socket, Packet *packet)
 
 void DNS_Service::socketErrorArrived(UdpSocket *socket, Indication *indication) {}
 
-DNS_Request * DNS_Service::selectAndExecHandler(const DNS_Request *request)
+DNS_Request *DNS_Service::selectAndExecHandler(const DNS_Request *request)
 {
     Handler_t handler;
     auto response = new DNS_Request(*request);

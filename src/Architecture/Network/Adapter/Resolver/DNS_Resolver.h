@@ -7,6 +7,7 @@
 #include "inet/common/socket/SocketMap.h"
 #include "Architecture/Network/DNS/common.h"
 #include "Messages/SM_ResolverRequest_m.h"
+#include "Architecture/Network/Stack/StackMultiplexer.h"
 
 using namespace inet;
 using namespace dns;
@@ -32,7 +33,7 @@ struct RequestState
     }
 };
 
-class DNS_Resolver : public ApplicationBase, UdpSocket::ICallback
+class DNS_Resolver : public ApplicationBase, public UdpSocket::ICallback, public StackService
 {
 private:
 protected:
@@ -72,5 +73,8 @@ protected:
     virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;
     virtual void socketErrorArrived(UdpSocket *socket, Indication *indication) override;
     virtual void socketClosed(UdpSocket *socket) override;
+
+public:
+    virtual void processRequest(omnetpp::cMessage *msg) override {};
 };
 #endif
