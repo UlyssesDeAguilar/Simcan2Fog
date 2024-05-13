@@ -11,16 +11,15 @@
 #include <map>
 using namespace omnetpp;
 
-
 /**
  * @class SIMCAN_Message SIMCAN_Message.h "SIMCAN_Message.h"
  *
- * 
+ *
  * @details Class that represents a SIMCAN_Message.
- * 
- * Updated by Ulysses de Aguilar Gudmundsson based upon the work made by 
+ *
+ * Updated by Ulysses de Aguilar Gudmundsson based upon the work made by
  * Pablo Cerro Cañizares and Alberto Nuñez Covarrubias
- * 
+ *
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @version 3.0
  * @date 24-09-2023
@@ -30,7 +29,7 @@ class SIMCAN_Message : public SIMCAN_Message_Base
 private:
 	/**
 	 * @brief Base for copying operations (constructor, dup, assignment operator, etc)
-	 * @param other 
+	 * @param other
 	 */
 	void copy(const SIMCAN_Message &other);
 
@@ -38,9 +37,10 @@ protected:
 	typedef std::stack<inet::L3Address> IpStack;
 	typedef std::vector<std::pair<std::string, std::vector<TraceComponent>>> TraceVector;
 
-	cMessage *parentRequest; // Pointer to parent request message or NULL if has no parent
-	TraceVector trace;		 // Message trace
-	IpStack *ipStack;		 // Stack that keeps trace of the IPs (SimCan2CloudEX)
+	cMessage *parentRequest;	//!< Pointer to parent request message or NULL if has no parent
+	TraceVector trace;			//!< Message trace
+	IpStack *ipStack;			//!< Stack that keeps trace of the IPs (SimCan2CloudEX) FIXME: Outdated mechanism
+
 public:
 	/**
 	 * Destructor.
@@ -95,7 +95,7 @@ public:
 	/**
 	 * Empty method
 	 */
-	virtual void setTrace(size_t k, const TraceComponent &trace_var){};
+	virtual void setTrace(size_t k, const TraceComponent &trace_var) {};
 
 	/**
 	 * Add a module to message trace
@@ -228,10 +228,10 @@ public:
 	 * @return kth node trace
 	 */
 	std::vector<TraceComponent> getNodeTrace(int k);
-	
-	virtual void insertTrace(const TraceComponent& trace) {};
-	virtual void insertTrace(size_t k, const TraceComponent& trace) {};
-    virtual void eraseTrace(size_t k) {};
+
+	virtual void insertTrace(const TraceComponent &trace) {};
+	virtual void insertTrace(size_t k, const TraceComponent &trace) {};
+	virtual void eraseTrace(size_t k) {};
 };
 
 #endif

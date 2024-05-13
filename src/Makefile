@@ -37,6 +37,10 @@ OBJS = \
     $O/Architecture/Network/DNS/Service/DNS_Service.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
+    $O/Architecture/Network/MessageQueue/MessageQueueManager.o \
+    $O/Architecture/Network/MessageQueue/Internals/SinkDelegate.o \
+    $O/Architecture/Network/MessageQueue/Internals/SourceDelegate.o \
+    $O/Architecture/Network/MessageQueue/Services/PushService.o \
     $O/Architecture/Network/Stack/BaseProxy.o \
     $O/Architecture/Network/Stack/HttpProxyService.o \
     $O/Architecture/Network/Stack/StackMultiplexer.o \
