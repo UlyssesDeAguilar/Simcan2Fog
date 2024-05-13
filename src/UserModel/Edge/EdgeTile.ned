@@ -5,6 +5,9 @@ import inet.physicallayer.apskradio.packetlevel.ApskScalarRadioMedium;
 import inet.physicallayer.ieee802154.bitlevel.Ieee802154UwbIrRadioMedium;
 import inet.physicallayer.ieee802154.packetlevel.Ieee802154NarrowbandScalarRadioMedium;
 
+// Wired comms
+import inet.node.ethernet.Eth10M;
+
 // Architectural components from SimCan2Fog models
 import simcan2.Architecture.Nodes.Iot.EdgeNode;
 import inet.node.inet.Router;
@@ -45,8 +48,8 @@ module EdgeTile
         }
 
     connections:
-        device.comm <--> router.ethg++;
-        user.ethg++ <--> router.ethg++;
+        device.comm <--> Eth10M <--> router.ethg++;
+        user.ethg++ <--> Eth10M <-->router.ethg++;
         
         router.ethg++ <--> ethernet;
 }

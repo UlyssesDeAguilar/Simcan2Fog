@@ -63,9 +63,9 @@ namespace hypervisor
         {
             double bufferSize;          // Either for read or write
             SM_CPU_Message *cpuRequest; // For CPU requests
-            struct NetIO // For network I/O
+            struct NetIO                // For network I/O
             {
-                int fd;                  // Real socket id when going to the service                  
+                int fd;                  // Real socket id when going to the service
                 INET_AppMessage *packet; // Payload to be sent
             };
         } data;
@@ -134,15 +134,13 @@ namespace hypervisor
         const std::string *globalId;        //!< The unique identifier of the vm in the global context of the simulation
         ControlTable<AppControlBlock> apps; //!< The apps that are currently executing
         tVmState state;                     //!< The current state of the VM
-        NodeResourceRequest *request;       //!< The request that allocated this VM
-        // cMessage *timeOut;                  //!< The timeout event
-        // SM_UserVM *msg; <-- We'll see if this makes sense
+        const VirtualMachine *vmType;       //!< The virtual machine type
 
         void initialize(uint32_t vmId)
         {
             this->vmId = vmId;
             state = tVmState::vmIdle;
-            request = nullptr;
+            vmType = nullptr;
             globalId = nullptr;
         }
 

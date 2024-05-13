@@ -93,7 +93,7 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
         uint32_t newPid = hypervisor->takePid(vmId);
 
         // Initalize the control block
-        auto control = hypervisor->getAppControlBlock(vmId, newPid);
+        AppControlBlock &control = hypervisor->getAppControlBlock(vmId, newPid);
         control.deploymentIndex = request->getDeploymentIndex(begin);
         control.request = request;
 

@@ -7,6 +7,9 @@ Define_Module(DcHypervisor);
 
 void DcHypervisor::initialize(int stage)
 {
+    // Let the parent setup initialize first
+    Hypervisor::initialize(stage);
+
     switch (stage)
     {
     case LOCAL:
@@ -14,14 +17,6 @@ void DcHypervisor::initialize(int stage)
         // Init module parameters
         nPowerOnTime = par("powerOnTime");
         powerMessage = nullptr;
-
-        // Get base Id for indexing
-        appGates.inBaseId = gateBaseId("fromApps");
-        appGates.outBaseId = gateBaseId("toApps");
-
-        // Get base Id for indexing
-        schedulerGates.inBaseId = gateBaseId("fromCpuScheduler");
-        schedulerGates.outBaseId = gateBaseId("toCpuScheduler");
 
         // Load both apps vector and scheduler vector
         cModule *osModule = getParentModule();
@@ -42,8 +37,6 @@ void DcHypervisor::initialize(int stage)
     default:
         break;
     }
-
-    Hypervisor::initialize(stage);
 }
 
 void DcHypervisor::loadVector(std::vector<cModule *> &v, cModule *osModule, cModule *(*accessor)(cModule *, int))
@@ -135,13 +128,14 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
 
     // Got it, get the vm an id and register it
     uint32_t id = vmsControl.takeId();
-    auto controlBlock = vmsControl[id];
+    VmControlBlock& controlBlock = vmsControl[id];
 
     // Register the global id in map and in the control block
     vmIdMap[request.vmId] = id;
     auto iter = vmIdMap.find(request.vmId);
     controlBlock.globalId = &iter->first;
     controlBlock.userId = userId;
+    controlBlock.vmType = vm;
 
     // Schedule timeout message
     cMessage *timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
@@ -210,12 +204,12 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
 
     // Recover scheduler and original request
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(schedulers[id]);
-    auto resourceRequest = vmsControl[id].request;
+    const VirtualMachine *vm = vmsControl[id].vmType;
 
     // Extract requested resources
-    uint32_t cores = resourceRequest->getTotalCpus();
-    double memory = resourceRequest->getTotalMemory();
-    double disk = resourceRequest->getTotalDiskGb();
+    uint32_t cores = vm->getNumCores();
+    double memory = vm->getMemoryGb();
+    double disk = vm->getDiskGb();
     auto cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
 
     // Free the resources

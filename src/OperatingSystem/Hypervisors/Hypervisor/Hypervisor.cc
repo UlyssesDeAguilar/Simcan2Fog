@@ -10,8 +10,10 @@ void Hypervisor::initialize(int stage)
         // Retrieve info from input/output gates
         appGates.inBaseId = gateBaseId("fromApps");
         appGates.outBaseId = gateBaseId("toApps");
+
         schedulerGates.inBaseId = gateBaseId("fromCpuScheduler");
         schedulerGates.outBaseId = gateBaseId("toCpuScheduler");
+        
         networkGates.inBaseId = gateBaseId("networkComm$i");
         networkGates.outBaseId = gateBaseId("networkComm$o");
 
