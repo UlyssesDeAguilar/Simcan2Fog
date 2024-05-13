@@ -26,15 +26,17 @@ using namespace omnetpp;
 class QueuePullClient : public cSimpleModule
 {
 private:
-  const char *parentTopic;
+  std::string parentTopic;
+  SIMCAN_Message *signal;
   Packet *ackTemplate;
 
 protected:
   virtual void initialize() override;
+  virtual void finish() override { delete signal; delete ackTemplate; }
   virtual void handleMessage(cMessage *msg) override;
 
 public:
-  const char *getParentTopic() { return parentTopic; }
+  const char *getParentTopic() { return parentTopic.c_str(); }
 };
 
 #endif

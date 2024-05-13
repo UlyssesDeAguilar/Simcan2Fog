@@ -43,14 +43,14 @@ module MessageQueue extends StandardHost
         // Job publishing service
         pushServer: TcpServerApp {
             listener.localPort = 8444;
-            listener.serverConnectionModuleType = "PushServer";
+            listener.serverConnectionModuleType = "simcan2.Architecture.Network.MessageQueue.PushServer";
             @display("p=785.2,79.299995");
         }
 
 		// Job consumtion service
         pullServer: TcpServerApp {
             listener.localPort = 8443;
-            listener.serverConnectionModuleType = "PullServer";
+            listener.serverConnectionModuleType = "simcan2.Architecture.Network.MessageQueue.PullServer";
             @display("p=652.6,78");
         }
 

@@ -24,7 +24,7 @@ void QueuePushClient::initialize()
     const char *parentTopic = getParentModule()->par("nodeTopic");
 
     // If it was empty then use the auto unique strategy of the QueuePushClient
-    parentTopic = parentTopic ? parentTopic : getTopicFromPullClient();
+    this->parentTopic = *parentTopic ? parentTopic : getTopicFromPullClient();
 }
 
 const char *QueuePushClient::getTopicFromPullClient(){
@@ -37,7 +37,7 @@ void QueuePushClient::handleMessage(cMessage *msg)
     // Check that it's a SIMCAN message
     auto sm = check_and_cast<SIMCAN_Message*>(msg);
     // Set the return topic
-    sm->setSourceTopic(parentTopic);
+    sm->setReturnTopic(parentTopic);
     // Wrap into a packet
     auto packet = new Packet("Queue Push Client Request", makeShared<INET_AppMessage>(sm));
     // Send to the socket

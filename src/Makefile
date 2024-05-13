@@ -40,6 +40,7 @@ OBJS = \
     $O/Architecture/Network/MessageQueue/MessageQueueManager.o \
     $O/Architecture/Network/MessageQueue/Internals/SinkDelegate.o \
     $O/Architecture/Network/MessageQueue/Internals/SourceDelegate.o \
+    $O/Architecture/Network/MessageQueue/Services/PullService.o \
     $O/Architecture/Network/MessageQueue/Services/PushService.o \
     $O/Architecture/Network/Stack/BaseProxy.o \
     $O/Architecture/Network/Stack/HttpProxyService.o \
@@ -47,6 +48,8 @@ OBJS = \
     $O/Architecture/Network/Stack/TcpBaseClient.o \
     $O/Architecture/Network/Stack/TcpBaseProxy.o \
     $O/Architecture/Network/Stack/TcpBaseProxyThread.o \
+    $O/Architecture/Network/Stack/Queue/QueuePullClient.o \
+    $O/Architecture/Network/Stack/Queue/QueuePushClient.o \
     $O/Architecture/Network/Switch/Switch.o \
     $O/Architecture/Nodes/Fog/FogNode.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \

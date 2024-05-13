@@ -28,8 +28,9 @@ void MessageQueueManager::publishToTopic(const std::string &topic, inet::Packet 
 
     if (iter != map.end())
     {
-        EV_INFO << "Packet published to topic" << topic << "\n";
+        EV_INFO << "Packet published to topic: " << topic << "\n";
         int queueIndex = iter->second;
+        take(packet);
         cGate * destination = getParentModule()->getSubmodule("queues", queueIndex)->gate("in");
         sendDirect(packet, destination);
     }
@@ -47,7 +48,7 @@ SinkDelegate * MessageQueueManager::registerOrBindTopic(const std::string &topic
         error("For the time being the binding of topics is 1 to 1");
     
     // Build the topic queue
-    cModuleType *moduleType = cModuleType::get("SMQueue");
+    cModuleType *moduleType = cModuleType::get("simcan2.Architecture.Network.MessageQueue.SMQueue");
     cModule *submodule = getParentModule()->getSubmodule("queues", 0);
 
     // If nullptr then it means there's no queues yet

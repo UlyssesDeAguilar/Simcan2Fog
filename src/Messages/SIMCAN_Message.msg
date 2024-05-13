@@ -49,7 +49,7 @@ message SIMCAN_Message extends cPacket{
     unsigned int operation = SM_NullOperation;			// Operation type
     bool isResponse = false;							// Is a response message?
     bool remoteOperation = false;						// Is a remote operation?	
-	string sourceTopic;									// On which topic the request is pushed
+	string destinationTopic;							// On which topic the request is pushed
 	string returnTopic;									// On which topic the return of the request should be pushed
 
     int connectionId = SM_UnsetValue;					// Connection ID (Used in remote communication between nodes)

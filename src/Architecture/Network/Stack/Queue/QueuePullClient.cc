@@ -13,6 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
+#include <string>
 #include "QueuePullClient.h"
 
 Define_Module(QueuePullClient);
@@ -23,11 +24,11 @@ void QueuePullClient::initialize()
     const char *parentTopic = getParentModule()->par("nodeTopic");
 
     // If it was empty then fill in with the module Id
-    parentTopic = parentTopic ? parentTopic : opp_string("" + getId()).c_str();
+    this->parentTopic = *parentTopic ? parentTopic : std::to_string(getId()).c_str();
 
     // Prepare the ack template
-    auto signal = new SIMCAN_Message();
-    signal->setSourceTopic(parentTopic);
+    signal = new SIMCAN_Message();
+    signal->setDestinationTopic(this->parentTopic.c_str());
     signal->setOperation(SM_QueueAck);
     ackTemplate = new Packet("Queue Pull Client Request", makeShared<INET_AppMessage>(signal));
 
@@ -49,6 +50,7 @@ void QueuePullClient::handleMessage(cMessage *msg)
     auto payload = const_cast<SIMCAN_Message*>(check_and_cast<const INET_AppMessage *>(packet->peekData().get())->getAppMessage());
 
     // Send to the module
+    take(payload);
     send(payload, gate("queueOut"));
 
     // Send ACK, next message will come after (if there is one)

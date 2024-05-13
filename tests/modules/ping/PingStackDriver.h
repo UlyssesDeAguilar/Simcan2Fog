@@ -11,7 +11,6 @@ private:
     const char *serverAddress; //!< Address of the server (ipv4)
     int numPings;              //!< Number of pings to send
     bool server;               //!< If it's on server mode
-    int sockId;                //!< Socket id
     networkio::Event *mt{};    //!< Message template
     SM_REST_API *package{};    //!< Data to be sent
 protected:

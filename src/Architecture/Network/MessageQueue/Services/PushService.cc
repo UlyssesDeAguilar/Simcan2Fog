@@ -19,7 +19,7 @@ Define_Module(PushService);
 
 void PushService::initialize()
 {
-    manager = check_and_cast<MessageQueueManager *>(getParentModule()->getSubmodule("manager"));
+    manager = check_and_cast<MessageQueueManager *>(getModuleByPath("^.^.^.manager"));
 }
 
 void PushService::handleMessage(cMessage *msg)
@@ -28,7 +28,6 @@ void PushService::handleMessage(cMessage *msg)
     auto packet = check_and_cast<Packet *>(msg);
     auto payload = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
     // Recover the destination topic
-    const char *topic = payload->getAppMessage()->getSourceTopic();
-    EV_TRACE << "Push service recieved incoming packet for topic: " << topic <<"\n";
+    const char *topic = payload->getAppMessage()->getDestinationTopic();
     manager->publishToTopic(topic, packet);
 }

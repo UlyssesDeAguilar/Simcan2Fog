@@ -20,7 +20,8 @@ Define_Module(PullService);
 
 void PullService::initialize()
 {
-    manager = check_and_cast<MessageQueueManager *>(getParentModule()->getSubmodule("manager"));
+    delegateInId = gate("delegateIn")->getId();
+    manager = check_and_cast<MessageQueueManager *>(getModuleByPath("^.^.^.manager"));
 }
 
 void PullService::handleMessage(cMessage *msg)
@@ -30,12 +31,12 @@ void PullService::handleMessage(cMessage *msg)
     auto payload = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
     
     // Recover the destination topic
-    const char *topic = payload->getAppMessage()->getSourceTopic();
-    EV_TRACE << "Pull service received message for topic: " << topic << "\n";
+    const char *topic = payload->getAppMessage()->getDestinationTopic();
 
-    if (msg->getArrivalGate()->getId() == directInId)
+    if (msg->getArrivalGate()->getId() == delegateInId)
     {
         // Came in from the delegate, forward to endpoint
+        EV_INFO << "Dispatching message for topic: " << topic << "\n";
         send(msg, gate("out"));
     }
     else
@@ -48,8 +49,11 @@ void PullService::handleMessage(cMessage *msg)
         else
         {
             // Initialize the topic and tell the delegate we're ready
+            EV_INFO << "Binding/Registering for topic: " << topic << "\n";
             delegate = manager->registerOrBindTopic(topic, gate("delegateIn"));
             delegate->enableClientReady();
+            topicEstablished = true;
         }
+        delete msg;
     }
 }

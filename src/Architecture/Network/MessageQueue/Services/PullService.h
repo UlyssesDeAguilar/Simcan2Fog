@@ -31,7 +31,7 @@ protected:
   MessageQueueManager *manager{}; //!< Reference of the Queue Manager
   SinkDelegate *delegate{};       //!< Reference to the Sink Delegate
   bool topicEstablished = false;  //!< If the topic was established
-  int directInId;                 //!< Id for the communication with the delegate
+  int delegateInId;               //!< Id for the communication with the delegate
   virtual void initialize();
   virtual void handleMessage(cMessage *msg);
 };

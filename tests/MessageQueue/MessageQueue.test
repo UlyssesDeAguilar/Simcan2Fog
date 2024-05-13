@@ -1,0 +1,32 @@
+%description:
+
+Tests the MessageQueue remote services
+
+%inifile: omnetpp.ini
+
+[General]
+network = MQNetwork
+sim-time-limit = 30s
+
+# Enable logging of the important bits
+*.client.cmdenv-log-level = trace
+*.server.cmdenv-log-level = trace
+*.queue.manager.cmdenv-log-level = trace
+*.queue.pullServer.**.pullService.cmdenv-log-level = trace
+*.queue.pushServer.**.pushService.cmdenv-log-level = trace
+*.queue.queues[*].**.pushService.cmdenv-log-level = trace
+**.cmdenv-log-level = off
+cmdenv-log-prefix = "[ %m ] : "
+
+# *.configurator.dumpConfig = "ips.xml" Will be necessary for DNS
+*.configurator.config = xml("<config> \
+                                <interface hosts='queue' address='24.24.24.24'/> \
+                                <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
+                             </config>")
+
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor

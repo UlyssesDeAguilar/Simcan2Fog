@@ -66,6 +66,7 @@ void SinkDelegate::scheduleCollectionTimer()
 void SinkDelegate::collectPacket()
 {
     auto packet = provider->popPacket(inputGate->getPathStartGate());
+    take(packet);
     EV_INFO << "Collecting packet " << packet->getName() << ".\n";
     numProcessedPackets++;
     processedTotalLength += packet->getDataLength();
