@@ -23,12 +23,4 @@ static const char * tPriorityTypeLabel[] = {
     "Priority"
 };
 
-
-/***** Operations ******/
-static const int SM_APP_Req_Resume= 506;
-static const int SM_APP_Req_End= 507;
-
-/***** Results ******/
-static const int SM_APP_Res_Timeout_Running= 10008;
-
 #endif /* MANAGEMENT_DATACLASSES_SIMCAN2_TYPES_H_ */
