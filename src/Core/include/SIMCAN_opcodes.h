@@ -61,7 +61,16 @@ static const int SM_APP_Sub_Reject = 10008;
 static const int SM_APP_Sub_Timeout = 10004;
 static const int SM_APP_Res_Accept = 10005;
 static const int SM_APP_Res_Reject = 10006;
-static const int SM_APP_Res_Timeout = 10007;
+
+/* VM Rescue related*/
+constexpr int SM_ExtensionOffer = 400;
+constexpr int SM_ExtensionOffer_Accept = 10007;
+constexpr int SM_ExtensionOffer_Reject = 10008;
+
+//static const int SM_APP_Res_Timeout = 10007;
+//static const int SM_APP_Req_Resume= 506;
+//static const int SM_APP_Req_End= 507;
+
 
 // -------------------- CPU Operations -------------------- //
 

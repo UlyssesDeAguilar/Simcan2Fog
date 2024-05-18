@@ -16,17 +16,21 @@
 #ifndef SIMCAN_EX_QUEUEPUSHCLIENT_H_
 #define SIMCAN_EX_QUEUEPUSHCLIENT_H_
 
-#include "Architecture/Network/Stack/Queue/QueuePullClient.h"
+#include <omnetpp.h>
 
+#include "Core/cSIMCAN_Core.h"
+#include "inet/common/packet/Packet.h"
+#include "Messages/INET_AppMessage.h"
+#include "Messages/SIMCAN_Message.h"
 using namespace omnetpp;
 
 class QueuePushClient : public cSimpleModule
 {
 private:
   const char *parentTopic;
-  const char *getTopicFromPullClient();
 protected:
-  virtual void initialize() override;
+  virtual void initialize(int stage) override;
+  virtual int numInitStages() const override { return SimCanInitStages::NEAR + 1; }
   virtual void handleMessage(cMessage *msg) override;
 };
 

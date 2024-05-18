@@ -225,7 +225,10 @@ void UserGenerator_simple::scheduleNextReqGenMessage()
 
 void UserGenerator_simple::processRequestMessage(SIMCAN_Message *sm)
 {
-    error("This module cannot process request messages:%s", sm->contentsToString(true, false).c_str());
+    // For the time being it must be a SM_VmExtend
+    auto request = check_and_cast<SM_VmExtend *>(sm);
+    CloudUserInstance *userInstance = userHashMap.at(request->getUserId());
+    model->handleVmExtendRequest(request, *userInstance);
 }
 
 void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
@@ -272,7 +275,7 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
 
     // Check if all the users have ended
     if (userInstance->isFinished() && allUsersFinished())
-        sendRequestMessage(new SM_CloudProvider_Control(), toCloudProviderGate);
+        sendRequestMessage(new SM_CloudProvider_Control(), toCloudProviderGate);    // FIXME: Currently ignored by everyone
 }
 
 void UserGenerator_simple::finishUser(CloudUserInstance *pUserInstance)

@@ -12,7 +12,6 @@
 #include "OperatingSystem/Hypervisors/common.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
-#include "Management/dataClasses/NodeResourceRequest.h"
 #include "Management/dataClasses/Applications/Application.h"
 #include "Core/cSIMCAN_Core.h"
 #include "OperatingSystem/Hypervisors/OsCore/OsCore.h"

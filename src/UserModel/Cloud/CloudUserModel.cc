@@ -39,7 +39,7 @@ void CloudUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInst
     }
 }
 
-bool CloudUserModel::decidesToRescueVm(SM_UserAPP *appRequest, CloudUserInstance &userInstance)
+bool CloudUserModel::decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance)
 {
     auto driverCost = reinterpret_cast<UserGeneratorCost *>(&driver);
     auto userPriorityInstance = reinterpret_cast<CloudUserInstancePriority &>(userInstance);

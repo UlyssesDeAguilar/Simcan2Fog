@@ -18,14 +18,21 @@
 
 Define_Module(QueuePullClient);
 
-void QueuePullClient::initialize()
+void QueuePullClient::initialize(int stage)
 {
     // Retrieve the topic from the parent
-    const char *parentTopic = getParentModule()->par("nodeTopic");
+    cPar &parameter = getParentModule()->par("nodeTopic");
+    const char *parentTopic = parameter;
 
     // If it was empty then fill in with the module Id
-    this->parentTopic = *parentTopic ? parentTopic : std::to_string(getId()).c_str();
+    if (*parentTopic == '\0')
+    {
+        parameter.setStringValue(std::to_string(getId()).c_str());
+        parentTopic = parameter;
+    }
 
+    this->parentTopic = parentTopic;
+    
     // Prepare the ack template
     signal = new SIMCAN_Message();
     signal->setDestinationTopic(this->parentTopic.c_str());
@@ -47,7 +54,7 @@ void QueuePullClient::handleMessage(cMessage *msg)
 
     // We recieved a package from the queue, we must unwrap it
     auto packet = check_and_cast<Packet *>(msg);
-    auto payload = const_cast<SIMCAN_Message*>(check_and_cast<const INET_AppMessage *>(packet->peekData().get())->getAppMessage());
+    auto payload = const_cast<SIMCAN_Message *>(check_and_cast<const INET_AppMessage *>(packet->peekData().get())->getAppMessage());
 
     // Send to the module
     take(payload);

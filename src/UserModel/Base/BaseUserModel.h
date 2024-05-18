@@ -10,13 +10,14 @@ class BaseUserModel
 protected:
     UserGenerator_simple &driver; //!< Reference to the driver of the simulation
 
+    virtual void handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance);
     virtual void handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
     virtual void handleResponseSubscription(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
     virtual void handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserInstance &userInstance);
 
     // Helpers
     void deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
-    bool decidesToRescueVm(SM_UserAPP *appRequest, CloudUserInstance &userInstance);
+    virtual bool decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance);
     void updateVmsStatus(CloudUserInstance &userInstance, const std::string &vmId, tVmState stateNew);
 
     // FIX ME: Not a priority, but really should check the "ephemeral" messages

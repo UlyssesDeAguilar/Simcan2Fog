@@ -4,6 +4,7 @@
 #include "Applications/UserApps/LocalApplication/LocalApplication.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
+using namespace inet;
 using namespace hypervisor;
 
 Define_Module(DataCentreManagerBase);
@@ -25,10 +26,6 @@ void DataCentreManagerBase::initialize(int stage)
         // Init super-class
         CloudManagerBase::initialize();
 
-        // Link app builder
-        appBuilder = new DataCentreApplicationBuilder(); // FIXME: This will be deprecated soon
-        appBuilder->setManager(this);
-
         // Get parameters from module
         showDataCentreConfig = par("showDataCentreConfig");
         nCpuStatusInterval = par("cpuStatusInterval");
@@ -41,7 +38,7 @@ void DataCentreManagerBase::initialize(int stage)
 
         localNetworkGates.inBaseId = gateHalf("localNetwork", cGate::INPUT)->getId();
         localNetworkGates.outBaseId = gateHalf("localNetwork", cGate::OUTPUT)->getId();
-        
+
         // TODO: Study if these are really neccessary
         // Create and schedule auto events
         cpuManageMachinesMessage = new cMessage("MANAGE_MACHINES", MANAGE_MACHINES);
@@ -60,13 +57,22 @@ void DataCentreManagerBase::initialize(int stage)
         nodeSelectionStrategy = dc::SelectionStrategy::newStrategy(par("selectionStrategy"), this);
         if (nodeSelectionStrategy == nullptr)
             error("Unknown selection strategy");
-        
+
         break;
     }
     case inet::InitStages::INITSTAGE_APPLICATION_LAYER:
     {
         // Set the global DC address into the resource manager
         resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.networkAdapter")));
+
+        // Prepare the event message template for cloud provider
+        const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
+        eventTemplate.setNodeTopic(topic);
+        eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+
+        // Allow for init
+        Packet *packet = buildUpdateEvent();
+        sendDelayed(packet, 1, gate("eventOut"));
         break;
     }
     default:
@@ -79,10 +85,14 @@ void DataCentreManagerBase::finish()
     // Delete the events
     cancelAndDelete(cpuManageMachinesMessage);
     cancelAndDelete(cpuStatusMessage);
-    delete appBuilder;
 
     // Print statistics
     printFinal();
+}
+
+Packet *DataCentreManagerBase::buildUpdateEvent()
+{
+    return new Packet("Update Event", makeShared<NodeEvent>(eventTemplate));
 }
 
 cGate *DataCentreManagerBase::getOutGate(cMessage *msg)
@@ -124,11 +134,9 @@ void DataCentreManagerBase::initializeRequestHandlers()
     requestHandlers[SM_VM_Sub] = [this](SIMCAN_Message *msg) -> void
     { return handleVmSubscription(msg); };
 
-    requestHandlers[SM_APP_Req_Resume] = [this](SIMCAN_Message *msg) -> void
-    { return handleExtendVmAndResumeExecution(msg); };
-
-    requestHandlers[SM_APP_Req_End] = [this](SIMCAN_Message *msg) -> void
-    { return handleEndVmAndAbortExecution(msg); };
+    // This one is special, it comes from the hypervisors
+    requestHandlers[SM_ExtensionOffer] = [this](SIMCAN_Message *msg) -> void
+    { return handleVmRentTimeout(msg); };
 }
 
 void DataCentreManagerBase::initializeResponseHandlers()
@@ -138,9 +146,11 @@ void DataCentreManagerBase::initializeResponseHandlers()
     auto forwardResponse = [this](SIMCAN_Message *msg) -> void
     { sendResponseMessage(msg); };
 
-    // Intercept the vm timeout
-    responseHandlers[SM_APP_Res_Timeout] = [this](SIMCAN_Message *msg) -> void
-    { handleVmRentTimeout(msg); };
+    responseHandlers[SM_ExtensionOffer_Accept] = [this](SIMCAN_Message *msg) -> void
+    { return handleExtendVmAndResumeExecution(msg); };
+
+    responseHandlers[SM_ExtensionOffer_Reject] = [this](SIMCAN_Message *msg) -> void
+    { return handleEndVmAndAbortExecution(msg); };
 }
 
 void DataCentreManagerBase::handleCpuStatus(cMessage *msg)
@@ -221,6 +231,11 @@ void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
     {
         EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserId() << '\n';
         userVM_Rq->setResult(SM_VM_Res_Reject);
+
+        // Update the cloud provider to "uncommit" the resources
+        eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+        Packet *packet = buildUpdateEvent();
+        send(packet, gate("eventOut"));
     }
 
     // Set response and operation type
@@ -250,6 +265,11 @@ void DataCentreManagerBase::handleVmSubscription(SIMCAN_Message *sm)
         EV_INFO << "Notifying timeout from user:" << userVM_Rq->getUserId() << '\n';
         EV_INFO << "Last id gate: " << userVM_Rq->getLastGateId() << '\n';
         userVM_Rq->setResult(SM_APP_Sub_Reject);
+
+        // Update the cloud provider to "uncommit" the resources
+        eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+        Packet *packet = buildUpdateEvent();
+        send(packet, gate("eventOut"));
     }
 
     // Set response and operation type
@@ -271,16 +291,16 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
 
     // Before starting the process, it is neccesary to check if the
     int nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
-    int nAvailableCores = getNTotalAvailableCores();
+    int nAvailableCores = resourceManager->getAvailableCores();
 
     if (nTotalRequestedCores > nAvailableCores)
     {
         EV_DEBUG << "checkVmUserFit - There isn't enough space: [" << userVM_Rq->getUserId() << nTotalRequestedCores
-                 << " vs Available [" << nAvailableCores << "/" << getNTotalCores() << "]" << '\n';
+                 << " vs Available [" << nAvailableCores << "/" << resourceManager->getTotalCores() << "]" << '\n';
         return false;
     }
 
-    int nTotalCores = getNTotalCores();
+    int nTotalCores = resourceManager->getTotalCores();
     EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserId() << nTotalRequestedCores
              << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
 
@@ -295,7 +315,7 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
         auto vmSpecs = dataManager->searchVirtualMachine(vmRequest.vmType);
         if (vmSpecs == nullptr)
             error("VmType %s not found in virtual machine definitions", vmRequest.vmType.c_str());
-        
+
         // Select a node to deploy
         uint32_t nodeIp = nodeSelectionStrategy->selectNode(userVM_Rq, *vmSpecs);
 
@@ -322,62 +342,34 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
 
 void DataCentreManagerBase::handleVmRentTimeout(SIMCAN_Message *sm)
 {
-    // TODO: Ledgure the suspension status
+    // Cast and recover the context for the deployment
+    auto extensionOffer = check_and_cast<SM_VmExtend *>(sm);
+    SM_UserVM *originalRequest = acceptedUsersRqMap.at(extensionOffer->getUserId());
+
+    // Send back to the corresponding user the extension request
+    extensionOffer->setDestinationTopic(originalRequest->getReturnTopic());
+    sendRequestMessage(extensionOffer, gate("networkOut"));
 }
 
 void DataCentreManagerBase::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
 {
-    auto userAPP_Rq = check_and_cast<SM_UserAPP *>(sm);
-
-    std::string strVmId = userAPP_Rq->getVmId();
-    if (strVmId.empty())
-        return; // Original behavior, Should we warn the user ?
-
-    std::string userId = userAPP_Rq->getUserID();
-
-    // FIXME: This mechanism is very unreliable and slow
-    // The vm should be held in a suspended state until confirmation from user arrives
-    // Only then the vm is reactivated or released completely
-    // -> This also fixes the subscribe queue from the Cloud Provider!
-
-    /*
-    // Try to find the user and his vm request
-    SM_UserVM *userVmRequest = acceptedUsersRqMap.at(userId);
-
-    for (int j = 0; j < userVmRequest->getVmArraySize(); j++)
-    {
-        // Getting VM and scheduling renting timeout
-        auto vmRequest = userVmRequest->getVm(j);
-        // scheduleRentingTimeout(EXEC_VM_RENT_TIMEOUT, strUsername, vmRequest.strVmId, vmRequest.nRentTime_t2);
-
-        if (strVmId.compare(vmRequest.vmId) == 0)
-        {
-            vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, 3600);
-            handleUserAppRequest(sm);
-            return;
-        }
-    }
-    */
+    auto response = check_and_cast<SM_VmExtend *>(sm);
+    EV << "User: " << response->getUserId() << " accepted the extension of vm: "
+       << response->getVmId() << " for " << response->getExtensionTime() << "\n";
+    // TODO: Reenable the vm
 }
 
 void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
 {
-    // This method is pretty much correct
-    // Maybe we should correct the design (messages/protocol)
-    // To just convey the necessary info: the vmId!
+    auto response = check_and_cast<SM_VmExtend *>(sm);
+    EV << "User: " << response->getUserId() << " decided to not extend vm " << response->getVmId() << ". Freeing resources\n";
 
-    auto userAPP_Rq = check_and_cast<SM_UserAPP *>(sm);
-    std::string vmId = userAPP_Rq->getVmId();
-    if (!vmId.empty())
-    {
-        EV_INFO << "Freeing resources..." << '\n';
+    // TODO: Release the vm and applications from the hypervisor
 
-        // Free the VM resources
-        // deallocateVmResources(vmId);
-
-        // Delete ephemeral message
-        delete sm;
-    }
+    // Notifiy the Cloud provider that the resources were finally freed
+    eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+    Packet *packet = buildUpdateEvent();
+    send(packet, gate("eventOut"));
 }
 
 void DataCentreManagerBase::printFinal()

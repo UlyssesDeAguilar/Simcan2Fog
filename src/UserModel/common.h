@@ -4,6 +4,7 @@
 #include "Core/cSIMCAN_Core.h"
 #include "Messages/SM_UserVM.h"
 #include "Messages/SM_UserAPP.h"
+#include "Messages/SM_VmExtend_m.h"
 #include "Management/dataClasses/Users/CloudUserInstance.h"
 #include "Management/dataClasses/Users/CloudUserInstancePriority.h"
 

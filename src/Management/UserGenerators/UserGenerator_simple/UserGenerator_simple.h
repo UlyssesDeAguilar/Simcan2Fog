@@ -5,6 +5,7 @@
 #include "UserModel/Cloud/CloudUserModel.h"
 #include "Messages/SM_UserVM.h"
 #include "Messages/SM_UserAPP.h"
+#include "Messages/SM_VmExtend_m.h"
 #include "Messages/SM_CloudProvider_Control_m.h"
 #include <algorithm>
 #include <memory>
@@ -60,7 +61,7 @@ protected:
     virtual void initializeSignals();
 
     virtual void initializeSelfHandlers() override;
-    virtual void initializeResponseHandlers() override {};
+    virtual void initializeResponseHandlers() override{};
 
     void initializeHashMaps();
 

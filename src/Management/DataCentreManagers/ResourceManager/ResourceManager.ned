@@ -5,6 +5,7 @@ package simcan2.Management.DataCentreManagers.ResourceManager;
 // 
 simple DcResourceManager{
     parameters:
+        @display("i=block/cogwheel");
         @class(DcResourceManager);
         
         // Signals emmited from the model

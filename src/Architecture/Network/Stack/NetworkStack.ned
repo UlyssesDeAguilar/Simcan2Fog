@@ -4,6 +4,7 @@ import simcan2.Architecture.Network.Stack.StackMultiplexer;
 import simcan2.Architecture.Network.Stack.Queue.QueuePullClient;
 import simcan2.Architecture.Network.Stack.Queue.QueuePushClient;
 import inet.applications.tcpapp.TcpClientSocketIo;
+import inet.applications.udpapp.UdpSocketIo;
 import inet.node.inet.StandardHost;
 
 // This is the main network technology stack for hypervisors.
@@ -20,7 +21,7 @@ module NetworkStack extends StandardHost
     parameters:
         @display("i=device/card;bgb=1255.1174,837.4274");     	// We have to make an icon (default is a PC)
         string nodeTopic = default(""); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment  
-
+        bool hasCloudEvents = default(false);	// Wheter the module sends events to the cloud provider
         numApps = 4;
         app[0].typename = "HttpClientService";
         app[1].typename = "HttpProxyService";
@@ -30,6 +31,7 @@ module NetworkStack extends StandardHost
         input queueIn;
         output queueOut;
         inout eth_comm;
+        input eventsIn @loose;	// If hasCloudEvents is true this should be connected!
 
     submodules:
         sm: StackMultiplexer {
@@ -51,12 +53,18 @@ module NetworkStack extends StandardHost
         pullClient: QueuePullClient {
             @display("p=960.27747,69.615");
         }
-    
+
         pushClient: QueuePushClient {
             @display("p=662,71");
         }
-    
-    connections:
+
+        eventsSocket: UdpSocketIo if hasCloudEvents {
+            destAddress = "1.1.1.1";
+            destPort = 8446;
+            @display("p=579,70");
+        }
+
+    connections allowunconnected:
         // Bidirectional ethernet comms
         eth_comm <--> sm.comm;
 
@@ -66,6 +74,9 @@ module NetworkStack extends StandardHost
 
         pushSocket.socketIn <-- at.out++;
         pushSocket.socketOut --> at.in++;
+
+        eventsSocket.socketIn <-- at.out++ if hasCloudEvents;
+        eventsSocket.socketOut --> at.in++ if hasCloudEvents;
 
         // Connect clients to their sockets
         pullClient.netOut --> pullSocket.trafficIn;
@@ -77,4 +88,7 @@ module NetworkStack extends StandardHost
         // Incoming and outgoing from SMQ
         pullClient.queueOut --> queueOut;
         queueIn --> pushClient.queueIn;
+
+        // Outgoing to the cloud provider
+        eventsIn --> eventsSocket.trafficIn;
 }

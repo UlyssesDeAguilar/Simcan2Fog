@@ -24,7 +24,6 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/Applications/Base/UserAppBase/UserAppBase.o \
     $O/Applications/Builder/ApplicationBuilder.o \
-    $O/Applications/Builder/DC/DataCentreApplicationBuilder.o \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
@@ -61,10 +60,7 @@ OBJS = \
     $O/Core/SimSchema/MySQL/SimSchemaMySQL.o \
     $O/Core/include/internal_types.o \
     $O/Management/CloudManagerBase/CloudManagerBase.o \
-    $O/Management/CloudProviders/CloudProviderBase/CloudProviderBase.o \
-    $O/Management/CloudProviders/CloudProviderCost/CloudProviderCost.o \
-    $O/Management/CloudProviders/CloudProviderFirstFit/CloudProviderFirstFit.o \
-    $O/Management/CloudProviders/CloudProviderFirstFit/NodeResourceInfo.o \
+    $O/Management/CloudProvider/CloudProvider.o \
     $O/Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.o \
     $O/Management/DataCentreManagers/ResourceManager/ResourceManager.o \
     $O/Management/DataCentreManagers/ResourceManager/VmDeployment.o \
@@ -75,18 +71,6 @@ OBJS = \
     $O/Management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
     $O/Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
     $O/Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \
-    $O/Management/dataClasses/DataCentre.o \
-    $O/Management/dataClasses/DataCentre_CpuType.o \
-    $O/Management/dataClasses/DataCentreInfoCollection.o \
-    $O/Management/dataClasses/DataCentreInfoCollectionReservation.o \
-    $O/Management/dataClasses/DataCentreReservation.o \
-    $O/Management/dataClasses/Node.o \
-    $O/Management/dataClasses/NodeInfo.o \
-    $O/Management/dataClasses/NodeResourceRequest.o \
-    $O/Management/dataClasses/NodeUserInfo_.o \
-    $O/Management/dataClasses/Rack.o \
-    $O/Management/dataClasses/RackInfo.o \
-    $O/Management/dataClasses/RackInstances.o \
     $O/Management/dataClasses/Applications/AppInstance.o \
     $O/Management/dataClasses/Applications/AppInstanceCollection.o \
     $O/Management/dataClasses/Applications/Application.o \
@@ -104,15 +88,6 @@ OBJS = \
     $O/Management/dataClasses/VirtualMachines/VirtualMachine.o \
     $O/Management/dataClasses/VirtualMachines/VmInstance.o \
     $O/Management/dataClasses/VirtualMachines/VmInstanceCollection.o \
-    $O/Management/parser/AppListParser.o \
-    $O/Management/parser/DataCentreConfigParser.o \
-    $O/Management/parser/DataCentreListParser.o \
-    $O/Management/parser/DataCentreReservationConfigParser.o \
-    $O/Management/parser/DataCentreReservationListParser.o \
-    $O/Management/parser/SlaListParser.o \
-    $O/Management/parser/UserListParser.o \
-    $O/Management/parser/UserPriorityListParser.o \
-    $O/Management/parser/VmListParser.o \
     $O/Management/utils/LogUtils.o \
     $O/Messages/AppRequest.o \
     $O/Messages/DNS_Request.o \
@@ -133,6 +108,7 @@ OBJS = \
     $O/UserModel/Edge/EdgeUserModelDriver.o \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
+    $O/Management/CloudProvider/NodeEvent_m.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \
@@ -145,7 +121,6 @@ OBJS = \
     $O/Messages/SM_UserAPP_m.o \
     $O/Messages/SM_UserVM_m.o \
     $O/Messages/SM_UserVM_Cost_m.o \
-    $O/Messages/SM_UserVM_Finish_m.o \
     $O/Messages/SM_VmExtend_m.o \
     $O/OperatingSystem/AppIdLabel/AppIdLabel_m.o
 
@@ -153,6 +128,7 @@ OBJS = \
 MSGFILES = \
     Architecture/Network/RoutingInfo/RoutingInfo.msg \
     Architecture/Network/Stack/NetworkIOEvent.msg \
+    Management/CloudProvider/NodeEvent.msg \
     Messages/DNS_Request.msg \
     Messages/INET_AppMessage.msg \
     Messages/SIMCAN_Message.msg \
@@ -165,7 +141,6 @@ MSGFILES = \
     Messages/SM_UserAPP.msg \
     Messages/SM_UserVM.msg \
     Messages/SM_UserVM_Cost.msg \
-    Messages/SM_UserVM_Finish.msg \
     Messages/SM_VmExtend.msg \
     OperatingSystem/AppIdLabel/AppIdLabel.msg
 

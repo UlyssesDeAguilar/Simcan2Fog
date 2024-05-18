@@ -1,17 +1,14 @@
 #ifndef __SIMCAN_2_0_DATACENTREMANAGERBASE_H_
 #define __SIMCAN_2_0_DATACENTREMANAGERBASE_H_
 
-#include "Applications/Builder/include.h"
-#include "Management/DataCentreManagers/ResourceManager/ResourceManager.h"
+#include "inet/common/packet/Packet.h"
+#include "Messages/SM_VmExtend_m.h"
 #include "Management/CloudManagerBase/CloudManagerBase.h"
+#include "Management/CloudProvider/NodeEvent_m.h"
 #include "Management/dataClasses/Users/CloudUserInstance.h"
-#include "Management/dataClasses/NodeResourceRequest.h"
-#include "Management/parser/DataCentreConfigParser.h"
+#include "Management/DataCentreManagers/ResourceManager/ResourceManager.h"
 #include "OperatingSystem/Hypervisors/DcHypervisor/DcHypervisor.h"
 #include "Management/DataCentreManagers/Selection/Strategies.h"
-#include "Management/DataCentreManagers/Selection/Strategies.h"
-
-class DataCentreApplicationBuilder;
 
 /**
  * @brief Module that implements a data centre manager
@@ -21,19 +18,14 @@ class DataCentreApplicationBuilder;
  */
 class DataCentreManagerBase : public CloudManagerBase
 {
-
-public:
-    int getNTotalAvailableCores() const { return resourceManager->getAvailableCores(); }
-    int getNTotalCores() const { return resourceManager->getTotalCores(); }
-
 protected:
     template <class T>
     using StrMap = std::map<std::string, T *>;
 
-    DataCentreApplicationBuilder *appBuilder;
+    NodeEvent eventTemplate;
+
     DcResourceManager *resourceManager;
     dc::SelectionStrategy *nodeSelectionStrategy;
-
     bool showDataCentreConfig;   /** Show information of DataCentres */
     bool forecastActiveMachines; /** Activate forecasting */
 
@@ -50,9 +42,6 @@ protected:
 
     GateInfo networkGates;
     GateInfo localNetworkGates;
-
-    /** Vector that contains a collection of structures for monitoring data-centres */
-    std::vector<DataCentre *> dataCentresBase;
 
     std::map<std::string, cModule *> mapAppsVectorModulePerVm;
     std::map<std::string, unsigned int *> mapAppsModulePerId;
@@ -92,6 +81,7 @@ protected:
     bool checkVmUserFit(SM_UserVM *&userVM_Rq);
 
     // Helpers
+    inet::Packet * buildUpdateEvent();
     hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return getOrNull(acceptedVMsMap, vmId); }
     unsigned int *getAppModuleById(const std::string &appInstance) { return getOrNull(mapAppsModulePerId, appInstance); }
     SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return getOrNull(handlingAppsRqMap, userId); }
@@ -103,7 +93,6 @@ protected:
     virtual void finish() override;
     virtual void printFinal();
 
-    friend class DataCentreApplicationBuilder;
     friend class dc::SelectionStrategy;
     friend class dc::FirstFit;
     friend class dc::BestFit;

@@ -24,6 +24,8 @@ import inet.node.inet.StandardHost;
 
 module MessageQueue extends StandardHost
 {
+    parameters:
+        @display("i=smq");
     submodules:
         // The main manager, creates and resolves queues for services
         manager: MessageQueueManager {

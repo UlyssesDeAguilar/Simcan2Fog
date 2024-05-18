@@ -18,6 +18,7 @@
 
 #include <omnetpp.h>
 
+#include "Core/cSIMCAN_Core.h"
 #include "inet/common/packet/Packet.h"
 #include "Messages/INET_AppMessage.h"
 #include "Messages/SIMCAN_Message.h"
@@ -31,12 +32,10 @@ private:
   Packet *ackTemplate;
 
 protected:
-  virtual void initialize() override;
+  virtual void initialize(int stage) override;
+  virtual int numInitStages() const override { return SimCanInitStages::LOCAL + 1; }
   virtual void finish() override { delete signal; delete ackTemplate; }
   virtual void handleMessage(cMessage *msg) override;
-
-public:
-  const char *getParentTopic() { return parentTopic.c_str(); }
 };
 
 #endif

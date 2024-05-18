@@ -13,7 +13,7 @@
 #include "Core/DataManager/DataManager.h"
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "Architecture/Network/RoutingInfo/RoutingInfo_m.h"
-#include "Applications/Builder/include.h"
+#include "Applications/Builder/ApplicationBuilder.h"
 #include "Messages/SM_UserAPP.h"
 #include "Messages/SM_UserVM.h"
 #include "Messages/SM_VmExtend_m.h"
@@ -21,7 +21,6 @@
 #include "Messages/SM_CPU_Message.h"
 #include "OperatingSystem/AppIdLabel/AppIdLabel_m.h"
 #include "OperatingSystem/Hypervisors/ControlTable/ControlTable.hpp"
-#include "Management/dataClasses/NodeResourceRequest.h" // Keep this temporarily for hypervisor VM requests
 
 // Forward declaration
 class SM_Syscall;

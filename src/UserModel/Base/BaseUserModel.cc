@@ -98,33 +98,40 @@ void BaseUserModel::handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserIn
         driver.emit(driver.okSignal[vmId], userInstance.getNId());
     }
     else
+        driver.error("Unexpected return result on Applications: UserBaseModel");
+}
+
+void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance)
+{
+    // Individual VM timeout -> Rescue or not rescue?
+    driver.emit(driver.failSignal[extensionOffer->getVmId()], userInstance.getNId());
+
+    auto response = extensionOffer->dup();
+    response->setIsResponse(false);
+    response->setResult(0);
+
+    if (!decidesToRescueVm(extensionOffer, userInstance))
     {
-        // Individual VM timeout -> Rescue or not rescue?
-        driver.emit(driver.failSignal[vmId], userInstance.getNId());
-
-        appRequest->setIsResponse(false);
-        appRequest->setResult(0);
-
-        if (!decidesToRescueVm(appRequest, userInstance))
-        {
-            // Update the app status
-            userInstance.getRequestAppMsg()->update(appRequest);
-            updateVmsStatus(userInstance, vmId, vmFinished);
-
-            appRequest->setOperation(SM_APP_Req_End);
-            driver.sendRequestMessage(appRequest, driver.toCloudProviderGate);
-        }
-        else
-        {
-            // Decided to recover the vm and suscribe
-            driver.extensionTimeHashMap.at(appRequest->getVmId())++;
-            appRequest->setOperation(SM_APP_Req_Resume);
-        }
-
-        driver.sendRequestMessage(appRequest, driver.toCloudProviderGate);
+        // Update the vms status
+        updateVmsStatus(userInstance, extensionOffer->getVmId(), vmFinished);
+        response->setResult(SM_ExtensionOffer_Reject);
+        response->setAccepted(false);
+    }
+    else
+    {
+        // Decided to recover the vm and suscribe
+        driver.extensionTimeHashMap.at(extensionOffer->getVmId())++;
+        response->setResult(SM_ExtensionOffer_Accept);
+        response->setAccepted(true);
+        response->setExtensionTime(3600);   // FIXME: Original Simcan2Cloud Behavior -- It's parameterizable
     }
 
-    // deleteIfEphemeralMessage(msg); Update of the executions of a given vm request + apps or timeout
+    // Send the response to the endpoint
+    response->setIsResponse(true);
+    response->setDestinationTopic(extensionOffer->getReturnTopic());
+    driver.sendRequestMessage(response, driver.toCloudProviderGate);
+    
+    delete extensionOffer;
 }
 
 void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
@@ -200,7 +207,7 @@ void BaseUserModel::updateVmsStatus(CloudUserInstance &userInstance, const std::
     }
 }
 
-bool BaseUserModel::decidesToRescueVm(SM_UserAPP *appRequest, CloudUserInstance &userInstance)
+bool BaseUserModel::decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance)
 {
     return ((double)rand() / (RAND_MAX)) <= driver.offerAcceptanceRate;
 }

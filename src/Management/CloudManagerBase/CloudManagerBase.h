@@ -10,16 +10,6 @@
 #include <algorithm>
 #include <functional>
 
-// #define INITIAL_STAGE "INITIAL_STAGE"
-// #define EXEC_APP_END "EXEC_APP_END"
-// #define EXEC_VM_RENT_TIMEOUT "EXEC_VM_RENT_TIMEOUT"
-// #define EXEC_APP_END_SINGLE "EXEC_APP_END_SINGLE"
-// #define EXEC_APP_END_SINGLE_TIMEOUT "EXEC_APP_END_SINGLE_TIMEOUT"
-// #define MANAGE_SUBSCRIBTIONS "MANAGE_SUBSCRIBTIONS"
-// #define USER_SUBSCRIPTION_TIMEOUT "SUBSCRIPTION_TIMEOUT"
-// #define SIMCAN_MESSAGE "SIMCAN_Message"
-// #define CPU_STATUS "CPU_STATUS"
-// #define MANAGE_MACHINES "MANAGE_MACHINES"
 #define FORECASTING_DIMENSION 1
 
 /**
@@ -93,27 +83,6 @@ protected:
    * @return Total number of cores requested by the user.
    */
   int calculateTotalCoresRequested(const SM_UserVM *vmRequest);
-
-  /**
-   * @brief Creates and schedules a timeout message for a vm request message
-   * 
-   * @param eventType Type of event (tipically EXEC_VM_RENT_TIMEOUT)
-   * @param userId   Owner of the request
-   * @param request  vm request
-   * @param timeOut  If different than 0, override renting time of vm request (T2)
-   * @return SM_UserVM_Finish* Scheduled message
-   */
-  SM_UserVM_Finish *scheduleVmMsgTimeout(Event eventType, std::string &userId, VM_Request &request, double timeOut = 0.0);
-
-  /**
-   * @brief Creates and schedules a timeout message for a given request
-   * @details It's used for user subscription timeouts
-   * @param eventType Type of event (tipically USER_SUBSCRIPTION_TIMEOUT)
-   * @param request   VM request from user
-   * @param timeOut   Time out for the event
-   * @return SM_UserVM_Finish* Scheduled message
-   */
-  SM_UserVM_Finish *scheduleVmMsgTimeout(Event eventType, const SM_UserVM * request, double timeOut);
 
   /**
    * @brief Finds the user type by it's id

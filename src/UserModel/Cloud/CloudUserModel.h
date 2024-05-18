@@ -9,7 +9,7 @@ protected:
     virtual void handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance) override;
 
     // Helpers
-    bool decidesToRescueVm(SM_UserAPP *appRequest, CloudUserInstance &userInstance);
+    virtual bool decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance) override;
 public:
     CloudUserModel(UserGenerator_simple &driver) : BaseUserModel(driver) {}
 };

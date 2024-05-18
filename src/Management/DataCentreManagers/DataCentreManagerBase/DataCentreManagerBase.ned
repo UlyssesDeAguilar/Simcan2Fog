@@ -6,7 +6,8 @@ import simcan2.Management.CloudManagerBase.CloudManagerBase;
 //
 simple DataCentreManagerBase extends CloudManagerBase {
     parameters:    
-        @class(DataCentreManagerBase); 
+        @class(DataCentreManagerBase);
+        @display("i=block/classifier");
         bool showDataCentreConfig = default (true);			// Show the list of racks and nodes in the initialize stage  # DEPRECATED              	
         string dataCentreConfig = default("");				// Configuration of this Data-Centre
         string selectionStrategy = default("FirstFit");     // Node selection strategy, one of: FirstFit, BestFit, CostFit
@@ -19,5 +20,6 @@ simple DataCentreManagerBase extends CloudManagerBase {
     gates:
         input networkIn;
         output networkOut;
+        output eventOut;
         inout localNetwork;
 }

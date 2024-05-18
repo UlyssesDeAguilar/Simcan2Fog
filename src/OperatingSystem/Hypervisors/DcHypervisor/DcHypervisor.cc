@@ -96,18 +96,6 @@ void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
     sendResponseMessage(sm);
 }
 
-// This is the older code for scheduling the timeout, it implies that sucribe operations need special treatment -- Look at user generator!
-// double rentTime;
-//             // Getting VM and scheduling renting timeout
-//             strVmId = userVM_Rq->getVmId();
-//             if (!strVmId.empty() && userVM_Rq->getOperation() == SM_VM_Sub)
-//                 rentTime = 3600;
-//             else
-//                 rentTime = vmRequest.times.rentTime.dbl();
-//
-//             // vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, strUserName, vmRequest.strVmId, vmRequest.strVmType, nRentTime);
-//             vmRequest.pMsg = scheduleVmMsgTimeout(EXEC_VM_RENT_TIMEOUT, userId, vmRequest, rentTime);
-
 cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *userId)
 {
     Enter_Method_Silent("DcHypervisor, handling vm request...");
@@ -168,29 +156,14 @@ void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
 
     // Set as a request and send to the Manager
     extensionOffer->setIsResponse(false);
-    extensionOffer->setOperation(SM_APP_Req);
-    extensionOffer->setOperation(SM_APP_Res_Timeout);
+    extensionOffer->setOperation(SM_ExtensionOffer);
 
+    // Send to the manager
     auto localUrl = ServiceURL(DC_MANAGER_LOCAL_ADDR);
     auto routingInfo = new RoutingInfo();
     routingInfo->setUrl(localUrl);
-
     extensionOffer->setControlInfo(routingInfo);
-
-    /*
-    This would be after the definitive response of the User of abandoning or recovering the vm!
-
-    // Deallocate the vm resources
-    deallocateVmResources(*vm.globalId);
-
-    // For all app entries
-    for (auto &app : vm.apps)
-    {
-        // If the app is active and running, terminate it
-        if (app.first == true && app.second.isRunning())
-            osCore.handleAppTermination(app.second, true);
-    }
-    */
+    sendRequestMessage(extensionOffer, networkGates.outBaseId);
 }
 
 void DcHypervisor::deallocateVmResources(const std::string &vmId)
@@ -201,6 +174,14 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
     // If not found
     if (id == UINT32_MAX)
         return;
+    
+    // Force app termination
+    for (auto &app : vmsControl[id].apps)
+    {
+        // If the app is active and running, terminate it
+        if (app.first == true && app.second.isRunning())
+            osCore.handleAppTermination(app.second, true);
+    }
 
     // Recover scheduler and original request
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(schedulers[id]);
