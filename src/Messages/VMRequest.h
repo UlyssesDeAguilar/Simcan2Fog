@@ -2,7 +2,6 @@
 #define _VM_REQUEST
 
 #include "Core/include/SIMCAN_types.h"
-#include "SM_UserVM_Finish_m.h"
 
 struct VM_Response
 {
@@ -42,10 +41,8 @@ public:
     std::string vmId;
     VM_Response response;
 
-    SM_UserVM_Finish *pMsg;
-
     bool operator==(const VM_Request &other) { return this->vmId == other.vmId; }
     friend std::ostream& operator<<(std::ostream &os, const VM_Request &obj);
 };
 
-#endif /* _VM_REQUEST */
+#endif /*_VM_REQUEST */

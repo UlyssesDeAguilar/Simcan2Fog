@@ -17,7 +17,7 @@ private:
      void copy(const SM_UserVM &other);
 
 public:
-     SM_UserVM(const char *name = "SM_UserVM", short kind = 0);
+     SM_UserVM(const char *name = "SM_UserVM", short kind = 0) : SM_UserVM_Base(name, kind) {}
      SM_UserVM(const SM_UserVM &other) : SM_UserVM_Base(other) { copy(other); }
 
      SM_UserVM &operator=(const SM_UserVM &other);
@@ -56,9 +56,6 @@ public:
 
      VM_Request::InstanceRequestTimes &getInstanceRequestTimes(int index) { return vmRequests.at(index).times; }
 
-     SM_UserVM_Finish *getTimeoutSubscribeMsg() { return pMsgTimeoutSub; }
-     void setTimeoutSubscribeMsg(SM_UserVM_Finish *pMsg) { this->pMsgTimeoutSub = pMsg; }
-
      virtual void insertVm(const VM_Request &vm) override { vmRequests.push_back(vm); }
      virtual void setVmArraySize(size_t size) override { vmRequests.resize(size); }
      virtual size_t getVmArraySize() const override { return vmRequests.size(); }
@@ -68,9 +65,8 @@ public:
 
 private:
      virtual void setVm(size_t k, const VM_Request &vm) override {}
-     virtual void insertVm(size_t k, const VM_Request &vm) override{};
-     virtual void eraseVm(size_t k) override{};
-     SM_UserVM_Finish *pMsgTimeoutSub;
+     virtual void insertVm(size_t k, const VM_Request &vm) override {};
+     virtual void eraseVm(size_t k) override {};
 };
 
 #endif /* SM_USERVM_H_ */

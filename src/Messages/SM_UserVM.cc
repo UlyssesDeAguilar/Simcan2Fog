@@ -9,11 +9,6 @@
 #include "Management/utils/LogUtils.h"
 #include <algorithm>
 
-SM_UserVM::SM_UserVM(const char *name, short kind) : SM_UserVM_Base(name, kind)
-{
-  this->pMsgTimeoutSub = nullptr;
-}
-
 void SM_UserVM::copy(const SM_UserVM &other)
 {
   // Base info already copied from superclass!
