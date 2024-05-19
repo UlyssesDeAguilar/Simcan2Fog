@@ -4,6 +4,7 @@
 #include <vector>
 #include <iterator>
 #include <limits>
+#include <algorithm>
 
 template <class S, class E>
 class group_vector
@@ -122,8 +123,8 @@ public:
         const_iterator begin() const { return parent->elements.begin() + collection_index; }
         const_iterator end() const { return parent->elements.begin() + (collection_index + parent->get_collection_size(group_index)); }
 
-        bool operator==(const S & element) const { return this->element == element; }
-        bool operator!=(const S & element) const { return this->element != element; }
+        bool operator==(const S &element) const { return this->element == element; }
+        bool operator!=(const S &element) const { return this->element != element; }
 
         friend class group_vector;
     };
@@ -137,6 +138,12 @@ public:
 
     const_iterator begin() const { return boundraries.begin(); }
     const_iterator end() const { return boundraries.end(); }
+
+    iterator find(const S &key)
+    {
+        return std::find_if(boundraries.begin(), boundraries.end(), [key](const collection &c)
+                            { return c.element == key; });
+    }
 
 private:
     std::vector<E> elements;             // Flat vector to store all elements of type E

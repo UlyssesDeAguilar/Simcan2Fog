@@ -90,5 +90,5 @@ module NetworkStack extends StandardHost
         queueIn --> pushClient.queueIn;
 
         // Outgoing to the cloud provider
-        eventsIn --> eventsSocket.trafficIn;
+        eventsIn --> eventsSocket.trafficIn if hasCloudEvents;
 }

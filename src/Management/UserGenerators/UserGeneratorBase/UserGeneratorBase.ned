@@ -1,10 +1,11 @@
 package simcan2.Management.UserGenerators.UserGeneratorBase;
 import simcan2.Management.CloudManagerBase.CloudManagerBase;
+import simcan2.Management.UserGenerators.IUserGenerator;
 
 //
 // Base module for User generators. This module parses and manages cloud users.
 //
-simple UserGeneratorBase extends CloudManagerBase{
+simple UserGeneratorBase extends CloudManagerBase like IUserGenerator{
           
     parameters:
         bool showUserInstances = default (true);						// Show parsed user instances

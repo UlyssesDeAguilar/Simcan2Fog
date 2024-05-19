@@ -78,6 +78,8 @@ public:
      * @return Size of the collection of APP instances.
      */
     int getAppCollectionSize(int nIndex) { return applications.at(nIndex)->getNumInstances(); }
+    
+    AppInstanceCollection *getAppCollection(int index) { return applications.at(index); }
 
     /**
      * @brief Provides a convenient representation of the App Collections for range loops

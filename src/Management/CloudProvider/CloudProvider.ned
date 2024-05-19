@@ -25,6 +25,7 @@ module CloudProvider extends StandardHost
         listenerSocket: UdpSocketIo {
             @display("p=997,93");
             localPort = 8446;
+            destPort = 0;
         }
 
         pushSocket: TcpClientSocketIo {
@@ -70,6 +71,6 @@ module CloudProvider extends StandardHost
         cpService.queueOut --> pushClient.queueIn;
 
         // Incoming updates from nodes
-        listenerSocket.socketOut --> cpService.listener;
+        listenerSocket.trafficOut --> cpService.listener;
 }
 

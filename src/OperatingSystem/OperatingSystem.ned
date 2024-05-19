@@ -27,7 +27,8 @@ module OperatingSystem
         inout comm;                 // Input gate from network
         input fromCpu;				// Input gate from the CPU schedulers vector
         output toCpu;				// Output gate to the CPU schedulers vector
-
+		input fromDisk;
+		output toDisk;
 
     submodules:
 
@@ -80,7 +81,11 @@ module OperatingSystem
         // Connection between the CPU schedulers vector and the CPU module
         cpuSchedVector.toCpu --> ned.IdealChannel --> toCpu;
         cpuSchedVector.fromCpu <-- ned.IdealChannel <-- fromCpu;
-
+		
+		// Connections to the disk manager
+		hypervisor.toDisk --> toDisk;
+		fromDisk --> hypervisor.fromDisk;
+		
         // Connection in/out from network to hypervisor
         hypervisor.networkComm <--> comm;
 }

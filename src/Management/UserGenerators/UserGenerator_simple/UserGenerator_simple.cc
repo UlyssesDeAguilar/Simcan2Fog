@@ -165,6 +165,7 @@ void UserGenerator_simple::handleUserReqGenMessage(cMessage *msg)
     {
         // Send user to cloud provider
         // emit(requestSignal, pUserInstance->getId());
+        userVm->setDestinationTopic("CloudProvider");
         sendRequestMessage(userVm, toCloudProviderGate);
 
         initTime = simTime() - m_dInitSim;
@@ -256,7 +257,7 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
     case SM_APP_Req:
     {
         auto request = check_and_cast<SM_UserAPP *>(sm);
-        userInstance = userHashMap.at(request->getUserID());
+        userInstance = userHashMap.at(request->getUserId());
         model->handleResponseAppRequest(request, *userInstance);
         break;
     }
@@ -275,7 +276,7 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
 
     // Check if all the users have ended
     if (userInstance->isFinished() && allUsersFinished())
-        sendRequestMessage(new SM_CloudProvider_Control(), toCloudProviderGate);    // FIXME: Currently ignored by everyone
+        endSimulation();    // FIXME: Brute Force
 }
 
 void UserGenerator_simple::finishUser(CloudUserInstance *pUserInstance)

@@ -6,11 +6,11 @@ Register_Class(SM_UserAPP);
 SM_UserAPP::SM_UserAPP() : SM_UserAPP_Base("SM_UserAPP", 0)
 {
     vmId = nullptr;
-    userID = nullptr;
+    userId = nullptr;
     nFinishedApps = 0;
 }
 
-void SM_UserAPP::setApp(size_t k, const APP_Request &app)
+void SM_UserAPP::setApp(size_t k, const AppRequest &app)
 {
     if (k > apps.size())
         throw cRuntimeError(
@@ -21,7 +21,7 @@ void SM_UserAPP::setApp(size_t k, const APP_Request &app)
 
 SM_UserAPP::~SM_UserAPP()
 {
-    // FIXME Consider maybe the message included in APP_Request ?
+    // FIXME Consider maybe the message included in AppRequest ?
 }
 
 SM_UserAPP::SM_UserAPP(const SM_UserAPP &other) : SM_UserAPP_Base(other)
@@ -60,7 +60,7 @@ SM_UserAPP *SM_UserAPP::dup(const std::string &vmId) const
         for (const auto &appReq : *iter)
         {
             pRet->vmAppGroupedVector.emplace_back(appReq);
-            if (APP_Request::isFinished(appReq))
+            if (AppRequest::isFinished(appReq))
                 nFinished++;
         }
         pRet->vmAppGroupedVector.at(0) = vmId;
@@ -81,13 +81,13 @@ void SM_UserAPP::update(const SM_UserAPP *newData)
         // Linear search
         for (auto &original : apps)
         {
-            // Match the request <- TODO: Maybe implement and == operator for APP_Request
-            if (original.vmId == request.vmId && original.strApp == request.strApp)
+            // Match the request <- TODO: Maybe implement and == operator for AppRequest
+            if (original.serviceName == request.serviceName)
             {
-                original.eState = request.eState;
+                original.state = request.state;
 
                 // If it went from Waiting/Running to Finished
-                if (!APP_Request::isFinished(original) && APP_Request::isFinished(request))
+                if (!AppRequest::isFinished(original) && AppRequest::isFinished(request))
                     newFinishedApps++;
             }
         }
@@ -99,9 +99,9 @@ void SM_UserAPP::update(const SM_UserAPP *newData)
 
 int SM_UserAPP::findRequestIndex(const std::string &service, const std::string &vmId)
 {
-    auto selector = [service, vmId](APP_Request appRq) -> bool
+    auto selector = [service, vmId](AppRequest appRq) -> bool
     {
-        return appRq.strApp == service && vmId == appRq.vmId;
+        return appRq.serviceName == service && vmId == appRq.serviceName;
     };
 
     auto iter = std::find_if(apps.begin(), apps.end(), selector);
@@ -128,40 +128,43 @@ void SM_UserAPP::changeStateByIndex(int nIndex, tApplicationState eNewState)
     auto request = getApp(nIndex);
 
     // If it finished -> record finish time
-    if (!APP_Request::isFinished(request) && eNewState == appFinishedOK)
+    if (!AppRequest::isFinished(request) && eNewState == appFinishedOK)
         request.finishTime = simTime().dbl();
 
     // Update
-    request.eState = eNewState;
+    request.state = eNewState;
 }
 
 bool SM_UserAPP::allAppsFinishedOK(const std::string &vmId)
 {
-    auto predicate = [vmId](const APP_Request &appRq) -> bool
+    auto collection = vmAppGroupedVector.find(vmId);
+    auto predicate = [vmId](const AppRequest &appRq) -> bool
     {
-        return appRq.vmId == vmId && appRq.eState == appFinishedOK;
+        return appRq.state == appFinishedOK;
     };
 
-    return std::all_of(apps.begin(), apps.end(), predicate);
+    return std::all_of(collection->begin(), collection->end(), predicate);
 }
 
 bool SM_UserAPP::isFinishedOK(const std::string &service, const std::string &vmId)
 {
     int nIndex = findRequestIndex(service, vmId);
-    return nIndex != -1 && APP_Request::isFinishedOK(apps[nIndex]);
+    return nIndex != -1 && AppRequest::isFinishedOK(apps[nIndex]);
 }
 
 bool SM_UserAPP::isFinishedKO(const std::string &service, const std::string &vmId)
 {
     int nIndex = findRequestIndex(service, vmId);
-    return nIndex != -1 && APP_Request::isFinishedKO(apps[nIndex]);
+    return nIndex != -1 && AppRequest::isFinishedKO(apps[nIndex]);
 }
 
 bool SM_UserAPP::allAppsFinished(const std::string &vmId)
 {
-    for (const auto &request : apps)
+    auto collection = vmAppGroupedVector.find(vmId);
+
+    for (const auto &request : *collection)
     {
-        if (request.vmId == vmId && !APP_Request::isFinished(request))
+        if (!AppRequest::isFinished(request))
             return false;
     }
 
@@ -173,22 +176,18 @@ void SM_UserAPP::abortAllApps(const std::string &vmId)
     // Selection criteria
     // 1 - Is associated with the vm
     // 2 - It didn't finish execution
-    auto selected = [vmId](const APP_Request &appRq) -> bool
-    {
-        return appRq.vmId == vmId &&
-               !(APP_Request::isFinished(appRq));
-    };
+    auto collection = vmAppGroupedVector.find(vmId);
 
     int i = 0;
-    for (auto &appRq : apps)
+    for (auto &appRq : *collection)
     {
-        if (selected(appRq))
+        if (!AppRequest::isFinished(appRq))
         {
-            appRq.eState = appFinishedTimeout;
+            appRq.state = appFinishedTimeout;
             appRq.finishTime = simTime().dbl();
 
             EV_INFO << LogUtils::prettyFunc(__FILE__, __func__)
-                    << " - Application[" << i << "] " << appRq.strApp
+                    << " - Application[" << i << "] " << appRq.serviceName
                     << " in VM " << vmId
                     << " has been aborted by timeout" << '\n';
             increaseFinishedApps();
@@ -200,7 +199,7 @@ void SM_UserAPP::abortAllApps(const std::string &vmId)
 std::ostream &operator<<(std::ostream &os, const SM_UserAPP &obj)
 {
     // Print Message
-    os << "User received: " << obj.userID << '\n';
+    os << "User received: " << obj.userId << '\n';
     os << "Associated VM: " << obj.vmId << '\n';
     // EV_INFO << "Finished: " << this->getNFinishedApps() <<'\n';
     // EV_INFO << "All: " << this->allAppsFinished() <<'\n';

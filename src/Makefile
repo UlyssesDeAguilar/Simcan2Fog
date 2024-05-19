@@ -27,6 +27,7 @@ OBJS = \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
+    $O/Architecture/Disk/DiskManager.o \
     $O/Architecture/Network/Adapter/Message/MessageAdapter.o \
     $O/Architecture/Network/Adapter/Message/Managers/BaseManager.o \
     $O/Architecture/Network/Adapter/Message/Managers/RequestManager.o \
@@ -50,7 +51,6 @@ OBJS = \
     $O/Architecture/Network/Stack/Queue/QueuePullClient.o \
     $O/Architecture/Network/Stack/Queue/QueuePushClient.o \
     $O/Architecture/Network/Switch/Switch.o \
-    $O/Architecture/Nodes/Fog/FogNode.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \
     $O/Architecture/Nodes/Iot/IotController.o \
     $O/Architecture/Nodes/Iot/IotSensor.o \

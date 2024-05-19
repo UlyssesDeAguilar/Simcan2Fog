@@ -12,6 +12,7 @@ using namespace omnetpp;
 
 // Translates to 0xFFFFFFFF, which is 255.255.255.255
 static const uint32_t DC_MANAGER_LOCAL_ADDR = UINT32_MAX;
+static const uint32_t DC_NETWORK_STACK = UINT32_MAX - 1;
 
 /************************* Constants *************************/
 
@@ -188,6 +189,7 @@ typedef enum
 	vmIdle,
 	vmAccepted,
 	vmRunning,
+	vmSuspended,
 	vmFinished
 } tVmState;
 

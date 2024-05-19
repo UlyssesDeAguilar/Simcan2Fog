@@ -4,6 +4,7 @@
 #include "OperatingSystem/Hypervisors/common.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
 #include "OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.h"
+#include "Architecture/Disk/DiskManager.h"
 
 class DcResourceManager; // Forward declaration
 namespace hypervisor
@@ -15,6 +16,8 @@ namespace hypervisor
 
    protected:
       DcResourceManager *resourceManager; //!< Resource manager of the datacentre
+      DiskManager *diskManager;           //!< The disk manager
+      ServiceURL localUrl;                //!< The url which identifies this hypervisor
       cMessage *powerMessage;             //!< Power on event
       int nPowerOnTime;                   //!< Time to power on (in seconds)
       std::vector<cModule *> schedulers;  //!< Vector that contains the managed schedulers
@@ -33,6 +36,7 @@ namespace hypervisor
       bool isActive() const { return par("isActive"); }
 
       cModule *handleVmRequest(const VM_Request &request, const char *userId);
+      void extendVm(const std::string &vmId, int extensionTime);
       void deallocateVmResources(const std::string &vmId);
       virtual void handleVmTimeout(VmControlBlock &vm) override;
 

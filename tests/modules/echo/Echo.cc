@@ -5,6 +5,7 @@ Define_Module(Echo);
 void Echo::initialize()
 {
     ip = par("ip");
+    localUrl.setLocalAddress(ip);
     recv = par("recvMode");
     targetIp = par("baseIp");
     addressRange = par("addressRange");
@@ -35,7 +36,8 @@ void Echo::processSelfMessage(cMessage *msg)
     {
         ServiceURL url(targetIp++);
         auto info = new RoutingInfo();
-        info->setUrl(url);
+        info->setDestinationUrl(url);
+        info->setSourceUrl(localUrl);
         auto dup = base->dup();
         dup->setControlInfo(info);
         sendRequestMessage(dup, gateHalf("comm", cGate::OUTPUT));
@@ -48,6 +50,9 @@ void Echo::processRequestMessage(SIMCAN_Message *sm)
     {
         EV << "Recieved message: " << sm->getName() << " at address: " << ip << "\n";
         EV << "Sending ACK" << '\n';
+        auto info = check_and_cast<RoutingInfo *>(sm->getContextPointer());
+        info->setDestinationUrl(info->getSourceUrl());
+        info->setSourceUrl(localUrl);
         sm->setIsResponse(true);
         sendResponseMessage(sm);
     }
@@ -71,7 +76,8 @@ void Echo::processResponseMessage(SIMCAN_Message *sm)
 
         ServiceURL url(DC_MANAGER_LOCAL_ADDR);
         auto info = new RoutingInfo();
-        info->setUrl(url);
+        info->setDestinationUrl(url);
+        info->setSourceUrl(localUrl);
         auto dup = base->dup();
         dup->setControlInfo(info);
         sendRequestMessage(dup, gateHalf("comm", cGate::OUTPUT));

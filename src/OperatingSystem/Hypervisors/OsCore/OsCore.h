@@ -17,15 +17,14 @@ namespace hypervisor
         ApplicationBuilder appBuilder;    // The application builder (check maybe allowing inheritance?)
 
     public:
-        typedef std::vector<APP_Request>::iterator app_iterator;
+        typedef std::vector<AppRequest>::iterator app_iterator;
 
         OsCore() { this->hypervisor = nullptr; }
         void setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm);
         void processSyscall(SM_Syscall *sm);
 
-        void launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end);
+        void launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end, const std::string &globalVmId);
         void handleAppTermination(AppControlBlock &app, bool force);
-        void handleIOFinish(AppControlBlock &app);
         // void handleSendRequest(AppControlBlock &app, bool completed);
         // void handleBindAndListen(AppControlBlock &app);
     };

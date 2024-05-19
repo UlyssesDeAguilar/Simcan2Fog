@@ -103,11 +103,3 @@ void LocalApplication::returnWrite(simtime_t timeElapsed)
 	// Add time
 	total_service_IO += timeElapsed;
 }
-
-// TODO: LOOK THIS UP
-// void LocalApplication::sendEndResponse()
-// {
-// 	// Log (INFO)
-// 	EV_INFO << "App execution ended" << '\n';
-// 	pDataCentreManager->handleAppExecEndSingle(userInstance, vmInstance, appInstance, getIndex());
-// }

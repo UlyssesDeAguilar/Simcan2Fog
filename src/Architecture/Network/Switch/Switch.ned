@@ -1,12 +1,10 @@
 package simcan2.Architecture.Network.Switch;
-import simcan2.Core.cSIMCAN_Core;
 
 //
 // General switch, it assumes an address syntax of "x.x.x.x"  -> Transformed into a LocalAddress
 // The level parameter indicates at which level it is located
 //
-simple Switch extends cSIMCAN_Core{
-    
+simple Switch{
     parameters:
         @class(Switch);
         @display("i=abstract/switch");
@@ -14,7 +12,8 @@ simple Switch extends cSIMCAN_Core{
         //int level;				// Level at which the switch is located
         
     gates:
-        inout upper;			// Gate for the upper level
+        inout manager;			// Gate for the manager
+        inout netStack;         // Gate for the network stack
         inout comm[];			// Communication gates    
 }
 

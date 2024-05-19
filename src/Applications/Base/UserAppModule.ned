@@ -10,16 +10,17 @@ module UserAppModule
     parameters:
         int pid = default(-1);                					// PID of the application (within the vector)
         string userAppName = default("DummyApplication");		// Name of the application
+        volatile bool defaultInitialized = default(true);
         @display("bgb=221,131");
     gates:
         input fromHub;			// Input gate from ModuleHub
         output toHub;			// Output gate to ModuleHub
 
     submodules:
-        app: <userAppName> like IUserApp {	// Application
+        app: <userAppName> like IUserApp if defaultInitialized {	// Application
             @display("p=110,53;i=app");
         }
     connections:
-        fromHub --> app.in;
-        toHub <-- app.out;
+        fromHub --> app.in if defaultInitialized;
+        toHub <-- app.out if defaultInitialized;
 }

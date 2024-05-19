@@ -356,7 +356,9 @@ void DataCentreManagerBase::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
     auto response = check_and_cast<SM_VmExtend *>(sm);
     EV << "User: " << response->getUserId() << " accepted the extension of vm: "
        << response->getVmId() << " for " << response->getExtensionTime() << "\n";
-    // TODO: Reenable the vm
+
+    auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
+    resourceManager->resumeVm(routingInfo->getSourceUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
 }
 
 void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
@@ -364,7 +366,8 @@ void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
     auto response = check_and_cast<SM_VmExtend *>(sm);
     EV << "User: " << response->getUserId() << " decided to not extend vm " << response->getVmId() << ". Freeing resources\n";
 
-    // TODO: Release the vm and applications from the hypervisor
+    auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
+    resourceManager->deallocateVm(routingInfo->getSourceUrl().getLocalAddress().getInt(), response->getVmId());
 
     // Notifiy the Cloud provider that the resources were finally freed
     eventTemplate.setAvailableCores(resourceManager->getAvailableCores());

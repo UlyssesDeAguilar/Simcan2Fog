@@ -25,12 +25,15 @@ void DcHypervisor::initialize(int stage)
         { return osModule->getSubmodule("cpuSchedVector")->getSubmodule("cpuScheduler", 0); };
 
         loadVector(schedulers, osModule, schedulerAccessor);
+
+        diskManager = check_and_cast<DiskManager*>(osModule->getParentModule()->getSubmodule("disk"));
         break;
     }
     case BLADE:
     {
         // This is the reason why I would like to do this with messages instead
         resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath("^.^.^.resourceManager"));
+        localUrl.setLocalAddress(hardwareManager->getIp());
         resourceManager->registerNode(hardwareManager->getIp(), hardwareManager->getAvailableResources());
         break;
     }
@@ -99,7 +102,7 @@ void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
 cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *userId)
 {
     Enter_Method_Silent("DcHypervisor, handling vm request...");
-    
+
     unsigned int *cpuCoreIndex;
 
     // Query vm type
@@ -116,7 +119,7 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
 
     // Got it, get the vm an id and register it
     uint32_t id = vmsControl.takeId();
-    VmControlBlock& controlBlock = vmsControl[id];
+    VmControlBlock &controlBlock = vmsControl[id];
 
     // Register the global id in map and in the control block
     vmIdMap[request.vmId] = id;
@@ -126,9 +129,9 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
     controlBlock.vmType = vm;
 
     // Schedule timeout message
-    cMessage *timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
-    timeOut->setContextPointer(&controlBlock);
-    scheduleAt(simTime() + request.times.rentTime, timeOut);
+    controlBlock.timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
+    controlBlock.timeOut->setContextPointer(&controlBlock);
+    scheduleAt(simTime() + request.times.rentTime, controlBlock.timeOut);
 
     // Setup the scheduler
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(schedulers[id]);
@@ -147,6 +150,9 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
 
 void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
 {
+    // Set vm as suspended, this will force to hold requests/responses for the vm
+    vm.state = vmSuspended;
+
     // Create extension offer
     auto extensionOffer = new SM_VmExtend();
 
@@ -159,33 +165,80 @@ void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
     extensionOffer->setOperation(SM_ExtensionOffer);
 
     // Send to the manager
-    auto localUrl = ServiceURL(DC_MANAGER_LOCAL_ADDR);
     auto routingInfo = new RoutingInfo();
-    routingInfo->setUrl(localUrl);
+    routingInfo->setDestinationUrl(ServiceURL(DC_MANAGER_LOCAL_ADDR));
+    routingInfo->setSourceUrl(localUrl);
     extensionOffer->setControlInfo(routingInfo);
     sendRequestMessage(extensionOffer, networkGates.outBaseId);
 }
 
-void DcHypervisor::deallocateVmResources(const std::string &vmId)
+void DcHypervisor::extendVm(const std::string &vmId, int extensionTime)
 {
+    Enter_Method_Silent();
+
     // This could be fixed with an approach similar to AppControlBlock
     auto id = getOrDefault(vmIdMap, vmId, UINT32_MAX);
 
     // If not found
     if (id == UINT32_MAX)
+    {
+        error("Extending vm for an unkown global id, check ServiceURL");
         return;
-    
+    }
+
+    VmControlBlock &block = vmsControl.at(id);
+    block.state = vmRunning;
+
+    // Dispatch all holded requests/responses
+    for (const auto &request : block.callBuffer)
+    {
+        if (request->isResponse())
+            sendResponseMessage(request);
+        else
+            osCore.processSyscall(request);
+    }
+
+    // Flush the buffer
+    block.callBuffer.clear();
+
+    // Reschedule the timer
+    scheduleAt(simTime() + extensionTime, block.timeOut);
+}
+
+void DcHypervisor::deallocateVmResources(const std::string &vmId)
+{
+    Enter_Method_Silent();
+
+    // This could be fixed with an approach similar to AppControlBlock
+    auto id = getOrDefault(vmIdMap, vmId, UINT32_MAX);
+
+    // If not found
+    if (id == UINT32_MAX)
+    {
+        error("Deallocating vm for an unkown global id, check ServiceURL");
+        return;
+    }
+
+    // Delete the timer
+    VmControlBlock &block = vmsControl.at(id);
+    cancelAndDelete(block.timeOut);
+
     // Force app termination
-    for (auto &app : vmsControl[id].apps)
+    for (auto &app : block.apps)
     {
         // If the app is active and running, terminate it
         if (app.first == true && app.second.isRunning())
             osCore.handleAppTermination(app.second, true);
     }
 
+    // Flush buffer with requests/responses
+    for (const auto &request : block.callBuffer)
+        delete request;
+    block.callBuffer.clear();
+
     // Recover scheduler and original request
     CpuSchedulerRR *pVmScheduler = check_and_cast<CpuSchedulerRR *>(schedulers[id]);
-    const VirtualMachine *vm = vmsControl[id].vmType;
+    const VirtualMachine *vm = block.vmType;
 
     // Extract requested resources
     uint32_t cores = vm->getNumCores();
@@ -193,12 +246,17 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
     double disk = vm->getDiskGb();
     auto cpuCoreIndex = pVmScheduler->getCpuCoreIndex();
 
+    // Shutdown scheduler
+    pVmScheduler->setIsRunning(false);
+    diskManager->stopVmQueue(block.vmId);
+    
     // Free the resources
     hardwareManager->deallocateResources(cores, memory, disk, cpuCoreIndex);
 
-    // Shutdown scheduler
-    pVmScheduler->setIsRunning(false);
-
     // Release VM
     vmsControl.releaseId(id);
+
+    // Notify the resource manager
+    bool idleNode = hardwareManager->getTotalResources().vms == hardwareManager->getAvailableResources().vms;
+    resourceManager->confirmNodeDeallocation(hardwareManager->getIp(), vm, idleNode);
 }

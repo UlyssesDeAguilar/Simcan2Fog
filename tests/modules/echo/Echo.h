@@ -8,12 +8,13 @@ using namespace inet;
 class Echo : public cSIMCAN_Core
 {
 private:
-    bool recv;        //!< Recieve or Send mode
-    int ip;           //!< Ip of the node
-    int targetIp;     //!< Initial target IP address
-    int addressRange; //!< Address range to test (sequential range based on base IP)
+    bool recv;           //!< Recieve or Send mode
+    int ip;              //!< Ip of the node
+    int targetIp;        //!< Initial target IP address
+    ServiceURL localUrl; //!< The resource identifier for the node
+    int addressRange;    //!< Address range to test (sequential range based on base IP)
     int numAcks;
-    SIMCAN_Message * base; //!< Message template
+    SIMCAN_Message *base; //!< Message template
 
 protected:
     virtual void initialize() override;

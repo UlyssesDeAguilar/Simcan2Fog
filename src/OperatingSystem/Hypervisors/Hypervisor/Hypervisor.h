@@ -11,9 +11,8 @@ namespace hypervisor
     class Hypervisor : public cSIMCAN_Core
     {
     protected:
-
-        HardwareManager *hardwareManager; //!< Reference to the hardwareManager
-        DataManager *dataManager;
+        HardwareManager *hardwareManager;        //!< Reference to the hardwareManager
+        DataManager *dataManager;                //!< Reference to the dataManager
         OsCore osCore;                           //!< The core operating system utilities
         ControlTable<VmControlBlock> vmsControl; //!< Control table for vms
         uint32_t maxAppsPerVm;                   //!< Max number of vms per vm -> TODO: Check out the values

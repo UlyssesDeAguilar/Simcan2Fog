@@ -15,11 +15,8 @@ void OsCore::processSyscall(SM_Syscall *request)
     // Get the app context
     auto appEntry = hypervisor->getAppControlBlock(request->getVmId(), request->getPid());
 
-    // TODO: Sanity checks -- Zombie requests
-
     // Register the incoming request and get the context
-    appEntry.lastRequest = request;
-    auto callContext = request->getContext();
+    const CallContext& callContext = request->getContext();
 
     // Select the appropiate handler or actions
     switch (callContext.opCode)
@@ -31,26 +28,19 @@ void OsCore::processSyscall(SM_Syscall *request)
         label->setPid(appEntry.pid);
         label->setVmId(appEntry.vmId);
         callContext.data.cpuRequest->setControlInfo(label);
+        callContext.data.cpuRequest->setContextPointer(request);
         hypervisor->sendRequestMessage(callContext.data.cpuRequest, hypervisor->schedulerGates.outBaseId + appEntry.vmId);
         break;
     }
-    // Writing or reading from disk is pretty similar
+    // Writing or reading from disk
     case Syscall::READ:
-    {
-        auto readBytes = callContext.data.bufferSize;
-        simtime_t eta = readBytes / hardwareManager->getDiskSpecs().readBandwidth;
-        auto event = new cMessage("IO Complete", AutoEvent::IO_DELAY);
-        event->setContextPointer(&appEntry);
-        hypervisor->scheduleAt(eta, event);
-        break;
-    }
     case Syscall::WRITE:
     {
-        auto writeBytes = callContext.data.bufferSize;
-        simtime_t eta = writeBytes / hardwareManager->getDiskSpecs().writeBandwidth;
-        auto event = new cMessage("IO Complete", AutoEvent::IO_DELAY);
-        event->setContextPointer(&appEntry);
-        hypervisor->scheduleAt(eta, event);
+        auto label = new AppIdLabel();
+        label->setPid(appEntry.pid);
+        label->setVmId(appEntry.vmId);
+        callContext.data.cpuRequest->setControlInfo(label);
+        hypervisor->sendRequestMessage(request, hypervisor->gate("toDisk"));
         break;
     }
     // TODO: Networking
@@ -71,10 +61,10 @@ void OsCore::processSyscall(SM_Syscall *request)
     }
 }
 
-void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end)
+void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end, const std::string &globalVmId)
 {
     ApplicationBuilder::Context context;
-    std::string userId(request->getUserID());
+    std::string userId(request->getUserId());
 
     // Init the userId context
     context.userId = &userId;
@@ -85,9 +75,9 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
         auto &appInstance = *begin;
 
         // Query app
-        auto schema = dataManager->searchApp(appInstance.strAppType);
+        auto schema = dataManager->searchApp(appInstance.appType);
         if (schema == nullptr)
-            hypervisor->error("Error while querying the application type: %s", appInstance.strAppType.c_str());
+            hypervisor->error("Error while querying the application type: %s", appInstance.appType.c_str());
 
         // Get new PID
         uint32_t newPid = hypervisor->takePid(vmId);
@@ -99,15 +89,15 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
 
         // Load the context
         context.schema = schema;
-        context.appId = &appInstance.strApp;
-        context.vmId = &appInstance.vmId;
+        context.appId = &appInstance.serviceName;
+        context.vmId = &globalVmId;
 
         // Locate slot and build
         cModule *parent = hypervisor->getApplicationModule(vmId, newPid);
         appBuilder.build(parent, context);
 
         // Update status
-        appInstance.eState = appRunning;
+        appInstance.state = appRunning;
     }
 }
 
@@ -138,18 +128,4 @@ void OsCore::handleAppTermination(AppControlBlock &app, bool force)
 
     // Reset the control block
     app.reset();
-}
-
-void OsCore::handleIOFinish(AppControlBlock &app)
-{
-    // Get the original request
-    auto request = app.lastRequest;
-
-    // Set all OK
-    request->setResult(SC_OK);
-    request->setIsResponse(true);
-
-    // Send back to app and clear the request from control block
-    hypervisor->sendResponseMessage(request);
-    app.lastRequest = nullptr;
 }

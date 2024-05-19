@@ -18,7 +18,7 @@ network SimpleNetworkScenario {
 
         router: Router;
         configurator: Ipv4NetworkConfigurator;
-    connections:
+    connections allowunconnected:
         client.comm <--> ns1.eth_comm;
         server.comm <--> ns2.eth_comm;
 

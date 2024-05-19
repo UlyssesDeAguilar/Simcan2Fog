@@ -14,7 +14,7 @@ void DcResourceManager::initialize(int stage)
         signals.maxRam = registerSignal("maxRam");
         signals.maxDisk = registerSignal("maxDisk");
         signals.maxVms = registerSignal("maxVms");
-        
+
         signals.allocatedCores = registerSignal("allocatedCores");
         signals.allocatedRam = registerSignal("allocatedRam");
         signals.allocatedDisk = registerSignal("allocatedDisk");
@@ -193,7 +193,7 @@ void DcResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualM
         nodes[ip].state |= Node::MAXED_OUT;
 }
 
-void DcResourceManager::confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool inUse)
+void DcResourceManager::confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool idleNode)
 {
     this->availableCores += vmTemplate->getNumCores();
 
@@ -207,7 +207,7 @@ void DcResourceManager::confirmNodeDeallocation(const uint32_t &ip, const Virtua
     }
 
     // If no longer in use
-    if (!inUse)
+    if (idleNode)
     {
         nodes[ip].state &= ~(Node::IN_USE);
         machinesInUse--;

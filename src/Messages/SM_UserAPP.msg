@@ -4,21 +4,19 @@ cplusplus {{
 #include "AppRequest.h"
 }}
 
-struct APP_Request { @existingClass; }
+struct AppRequest { @existingClass; }
 
 ///
 /// SIMCAN Message for User requests
 ///
 message SM_UserAPP extends SIMCAN_Message{
-    
     @customize(true);
-    
-    string appId;    
+    //string ip;        -- RoutingInfo
     string vmId;    
-    string userID;		// ID of the user instance
-    abstract APP_Request app[];  // List of applications
-    int nFinishedApps;	// Number of finished applications.  
-    bool finished; 	// If the cloudprovide has already notified the user
+    string userId;		         // ID of the user instance
+    abstract AppRequest app[];   // List of applications
+    int nFinishedApps;	         // Number of finished applications.  
+    bool finished; 	             // If the cloudprovide has already notified the user
 }
 
 cplusplus{{

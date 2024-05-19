@@ -7,5 +7,6 @@ class ServiceURL { @existingClass; }
 
 class RoutingInfo extends cObject
 {
-    ServiceURL url;
+    ServiceURL sourceUrl;
+    ServiceURL destinationUrl;
 }

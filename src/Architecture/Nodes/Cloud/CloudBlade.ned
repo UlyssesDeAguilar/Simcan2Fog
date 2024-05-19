@@ -1,4 +1,5 @@
 package simcan2.Architecture.Nodes.Cloud;
+import simcan2.Architecture.Disk.IDiskManager;
 import simcan2.Architecture.Nodes.HardwareManagers.HardwareManager.HardwareManager;
 import simcan2.Architecture.Nodes.HardwareManagers.IHardwareManager;
 import simcan2.OperatingSystem.OperatingSystem;
@@ -55,7 +56,7 @@ module CloudBlade
         hardwareManager.maxUsers = select(int(isVirtualHardware), maxUsers, maxVMs);
         osModule.maxUsers = select(int(isVirtualHardware), maxUsers, maxVMs);
 
-        @display("bgb=521,326,,black,3;bgi=circuit,t");
+        @display("bgb=521,326,,black,3;i=device/device");
 
     gates:
         inout comm;
@@ -67,7 +68,7 @@ module CloudBlade
                 // numCpuCores = numCpuCores;
                 cpuCoreType = cpuCoreType;
                 staticAppAssignment = staticAppAssignment;
-                @display("p=416,144;i=cpu");
+                @display("p=417,125;i=cpu");
         }
 
         hardwareManager: <hardwareManagerType> like IHardwareManager {
@@ -78,7 +79,7 @@ module CloudBlade
                 // numCpuCores = numCpuCores;
                 memorySize = memorySize;
                 diskSize = diskSize;
-                @display("p=84,144;i=hardwareConfig");
+                @display("p=85,125;i=hardwareConfig");
         }
 
         osModule: OperatingSystem {
@@ -88,13 +89,20 @@ module CloudBlade
                 // maxVMs = maxVMs;
                 // numCpuCores = numCpuCores;
                 cpuSchedulerType = cpuSchedulerType;
-                @display("p=256,144;i=os");
+                @display("p=257,125;i=os");
         }
-	
+
+        disk: <default("DiskManager")> like IDiskManager {
+            @display("p=259,262;is=vl");
+        }
     connections:
-        // Connections between Operating System and CPU
+        // Connections between OS and CPU
         osModule.toCpu --> ned.IdealChannel --> cpu.fromOs;
         osModule.fromCpu <-- ned.IdealChannel <-- cpu.toOs;
+
+        // Connections between OS and Disk
+        osModule.toDisk --> disk.diskIn;
+        osModule.fromDisk <-- disk.diskOut;
 
         // In/Out connection of the Operating System with the data centre network
         osModule.comm <--> comm;

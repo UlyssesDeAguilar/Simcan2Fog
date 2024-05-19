@@ -36,6 +36,6 @@ module CloudBoard
         }
 
 		// Connections between the board and the switch
-        comm <--> switch.upper;
+        comm <--> switch.manager;
 }
 

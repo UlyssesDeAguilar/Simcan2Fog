@@ -32,16 +32,16 @@ module DataCentre
 
     submodules:
         dcManager: DataCentreManagerBase {
-            @display("p=169,138");
+            @display("p=181,94");
         }
         resourceManager: DcResourceManager {
-            @display("p=168,44");
+            @display("p=75,47");
         }
         switch: Switch {
             @display("p=288,138");
         }
         stack: NetworkStack {
-
+			hasCloudEvents = true;
             @display("p=71,137");
         }
         // Blades of the Datacentre
@@ -60,9 +60,11 @@ module DataCentre
         // Connections between Data-Centre manager and Data-centre outside
         dcManager.networkOut --> stack.queueIn;
         dcManager.networkIn <-- stack.queueOut;
+		dcManager.eventOut --> stack.eventsIn;
 
 		// Connect the main switch with the Manager
-        switch.upper <--> dcManager.localNetwork;
+        switch.manager <--> dcManager.localNetwork;
+        switch.netStack <--> stack.eth_comm;
 
         for i=0..numBlades-1 {
             switch.comm++ <--> blade[i].comm;

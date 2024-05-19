@@ -41,7 +41,7 @@ void BaseUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInsta
         // Subscribe to cloud provider
         vmRequest->setIsResponse(false);
         vmRequest->setOperation(SM_VM_Sub);
-
+        vmRequest->setDestinationTopic("CloudProvider");
         driver.sendRequestMessage(vmRequest, driver.toCloudProviderGate);
     }
 }
@@ -123,66 +123,66 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
         driver.extensionTimeHashMap.at(extensionOffer->getVmId())++;
         response->setResult(SM_ExtensionOffer_Accept);
         response->setAccepted(true);
-        response->setExtensionTime(3600);   // FIXME: Original Simcan2Cloud Behavior -- It's parameterizable
+        response->setExtensionTime(3600); // FIXME: Original Simcan2Cloud Behavior -- It's parameterizable
     }
 
     // Send the response to the endpoint
     response->setIsResponse(true);
     response->setDestinationTopic(extensionOffer->getReturnTopic());
     driver.sendRequestMessage(response, driver.toCloudProviderGate);
-    
+
     delete extensionOffer;
 }
 
 void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {
-    UserAPPBuilder builder;
+    UserAppBuilder builder;
 
+    /*
+        Bear in mind that the CloudUserInstance checks that for each app collection there's an vmInstance 
+     */
     for (int i = 0; i < vmRequest->getVmArraySize(); i++)
     {
         auto vmRq = vmRequest->getVm(i);
+        VM_Response *vmAllocation;
 
+        if (!vmRequest->getResponse(i, &vmAllocation))
+            driver.error("Error in model: The transactional deployment did not work?");
+
+        int appsForVm = userInstance.getAppCollectionSize(i);
+        if (appsForVm > 5)
+            driver.error("EINVAL");
+                
         // Send each app to each VM
-        for (int k = 0; k < userInstance.getNumberVmCollections(); k++)
+        for (int j = 0; j < appsForVm; j++)
         {
-            int pAppColSize = userInstance.getAppCollectionSize(k);
+            auto pAppInstance = userInstance.getAppCollection(i)->getInstance(j);
+            auto type = pAppInstance->getAppName();
+            auto instanceId = pAppInstance->getAppInstanceId();
 
-            for (int j = 0; j < pAppColSize; j++)
+            // auto nPrice = pRes->price;
+
+            // Check if T2 <T3
+            if (driver.bMaxStartTime_t1_active && userInstance.getRentTimes().maxStartTime < vmAllocation->startTime)
             {
-                VM_Response *vmAllocation;
-                auto pAppInstance = userInstance.getAppInstance(j);
-                auto strAppType = pAppInstance->getAppName();
-                auto strAppInstance = pAppInstance->getAppInstanceId();
-
-                if (!vmRequest->getResponse(i, &vmAllocation))
-                    driver.error("Error in model: The transactional deployment did not work?");
-
-                // auto nPrice = pRes->price;
-
-                // Check if T2 <T3
-                if (driver.bMaxStartTime_t1_active && userInstance.getRentTimes().maxStartTime < vmAllocation->startTime)
-                {
-                    EV_INFO << "The maximum start rent time provided by the cloudprovider is greater than the maximum required by the user: "
-                            << userInstance.getRentTimes().maxStartTime << " < " << vmAllocation->startTime << '\n';
-                }
-                else
-                {
-                    builder.createNewAppRequest(strAppInstance + vmRq.vmId, strAppType, vmAllocation->ip, vmRq.vmId, vmAllocation->startTime);
-                }
+                EV_INFO << "The maximum start rent time provided by the cloudprovider is greater than the maximum required by the user: "
+                        << userInstance.getRentTimes().maxStartTime << " < " << vmAllocation->startTime << '\n';
+            }
+            else
+            {
+                builder.createNewAppRequest(instanceId + vmRq.vmId, type, vmAllocation->ip, vmRq.vmId, vmAllocation->startTime);
             }
         }
     }
 
     // Finish building the deployment
-    auto userApp = builder.finish();
+    auto appRequests = builder.finish(vmRequest->getUserId(), vmRequest->getReturnTopic());
 
-    // Prepare the message
-    userApp->setUserID(vmRequest->getUserId());
-    userApp->setIsResponse(false);
-    userApp->setOperation(SM_APP_Req);
+    // For each different "ServiceURL" we deploy the vms we requested
+    for (auto request : *appRequests)
+        driver.sendRequestMessage(request, driver.toCloudProviderGate);
 
-    // Send to cloud provider
-    driver.sendRequestMessage(userApp, driver.toCloudProviderGate);
+    delete appRequests;
 }
 
 void BaseUserModel::updateVmsStatus(CloudUserInstance &userInstance, const std::string &vmId, tVmState stateNew)

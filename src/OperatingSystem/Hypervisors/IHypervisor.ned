@@ -18,9 +18,11 @@ moduleinterface IHypervisor{
     
   	gates:  	    
 		inout networkComm;			// Input/Output from/to network (either local or the internet)
+		input fromDisk;
         input fromApps[];			// Input gates from Applications 
         input fromCpuScheduler[];	// Input gates from CPU schedulers vector
         
         output toApps[];			// Output gates to Applications
         output toCpuScheduler[];	// Output gates to CPU schedulers vector
+        output toDisk;
 }

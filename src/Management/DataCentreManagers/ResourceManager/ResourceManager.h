@@ -67,11 +67,9 @@ protected:
      */
     hypervisor::DcHypervisor *const getHypervisor(uint32_t nodeIp);
 
+    void updateNode(uint32_t nodeIp, const VirtualMachine *vm, bool allocate);
     void activateNode(uint32_t nodeIp);
     void deactivateNode(uint32_t nodeIp);
-
-    void updateNode(uint32_t nodeIp, const VirtualMachine *vm, bool allocate);
-
     NodeResources &getNodeResources(const uint32_t &ip) { return nodes[ip].availableResources; }
 
     /**
@@ -86,8 +84,6 @@ protected:
      * @param vmTemplate The characteristics of the vm allocated inside
      */
     void confirmNodeAllocation(const uint32_t &ip, const VirtualMachine *vmTemplate);
-
-    void confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool inUse);
 
 public:
     typedef CoreHypervisorsMap::iterator iterator;
@@ -106,6 +102,11 @@ public:
     void setGlobalAddress(const GlobalAddress &a) { globalAddress = a; }
     void setMinActiveMachines(uint32_t minimum) { minActiveMachines = minimum; }
     void setReservedNodes(uint32_t nodes) { reservedNodes = nodes; }
+
+    void resumeVm(uint32_t ip, const char *vmId, int extensionTime) { getHypervisor(ip)->extendVm(std::string(vmId), extensionTime); }
+    void deallocateVm(uint32_t ip, const char *vmId) { getHypervisor(ip)->deallocateVmResources(std::string(vmId)); }
+    void confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool idleNode);
+
 
     /**
      * @brief Scans through the nodes and activates or deactivates them to match the objective count

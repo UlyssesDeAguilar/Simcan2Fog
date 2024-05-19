@@ -39,7 +39,7 @@ module CloudRack
         }
 
 		// Connections between the rack and the switch
-        comm <--> switch.upper;
+        comm <--> switch.manager;
 }
 
 
