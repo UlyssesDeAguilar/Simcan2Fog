@@ -19,6 +19,7 @@ Define_Module(MessageQueueManager);
 
 void MessageQueueManager::initialize()
 {
+    WATCH_MAP(this->map);
 }
 
 void MessageQueueManager::publishToTopic(const std::string &topic, inet::Packet *packet)
@@ -49,13 +50,12 @@ SinkDelegate * MessageQueueManager::registerOrBindTopic(const std::string &topic
     
     // Build the topic queue
     cModuleType *moduleType = cModuleType::get("simcan2.Architecture.Network.MessageQueue.SMQueue");
-    cModule *submodule = getParentModule()->getSubmodule("queues", 0);
-
+    /*cModule *submodule = getParentModule()->getSubmodule("queues", 0);
     // If nullptr then it means there's no queues yet
-    int submoduleIndex = submodule == nullptr ? 0 : submodule->getVectorSize();
+    int submoduleIndex = submodule == nullptr ? 0 : submodule->getVectorSize();*/
 
     // Create inside the vector
-    auto connection = moduleType->create("queues", getParentModule(), submoduleIndex + 1, submoduleIndex);
+    auto connection = moduleType->create("queues", getParentModule(), queueCount + 1, queueCount);
     
     // Finish initializing and building inside
     connection->finalizeParameters();
@@ -67,8 +67,9 @@ SinkDelegate * MessageQueueManager::registerOrBindTopic(const std::string &topic
     delegate->setDestinationGate(inputGate);
 
     // Register the topic
-    map[topic] = submoduleIndex;
-
+    map[topic] = queueCount;
+    queueCount++;
+    
     // Return the reference
     return delegate;
 }

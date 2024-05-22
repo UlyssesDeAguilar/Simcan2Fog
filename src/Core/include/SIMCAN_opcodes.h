@@ -36,21 +36,11 @@ static const int SM_Syscall_Req = 800;
 
 // -------------------- User Generator -------------------- //
 
-/** VM request */
+/** Requests */
 static const int SM_VM_Req = 500;
-
-/** VM request (response) */
-static const int SM_VM_Req_Rsp = 501;
-
 static const int SM_VM_Sub = 502;
-
 static const int SM_VM_Notify = 503;
-
-/** Applications submit request */
 static const int SM_APP_Req = 504;
-
-/** Applications submit request (response) */
-static const int SM_APP_Rsp = 505;
 
 // TODO: PD: No tengo NPI de donde se ponen los resultados de las operaciones, las pongo aqui.
 // Y despues ya las movemos ...

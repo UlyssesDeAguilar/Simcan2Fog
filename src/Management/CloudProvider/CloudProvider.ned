@@ -3,7 +3,8 @@ package simcan2.Management.CloudProvider;
 import simcan2.Architecture.Network.Stack.Queue.QueuePullClient;
 import simcan2.Architecture.Network.Stack.Queue.QueuePushClient;
 import inet.applications.tcpapp.TcpClientSocketIo;
-import inet.applications.udpapp.UdpSocketIo;
+//import inet.applications.udpapp.UdpSocketIo;
+import simcan2.Architecture.Network.Stack.Listener.UdpListener;
 import inet.node.inet.StandardHost;
 
 // Handles the dispatching of user requests
@@ -22,10 +23,9 @@ module CloudProvider extends StandardHost
             @display("p=998,33");
         }
 
-        listenerSocket: UdpSocketIo {
+        listenerSocket: UdpListener {
             @display("p=997,93");
             localPort = 8446;
-            destPort = 0;
         }
 
         pushSocket: TcpClientSocketIo {
@@ -48,7 +48,7 @@ module CloudProvider extends StandardHost
             @display("p=630,30");
         }
 
-    connections allowunconnected:
+    connections:
         // Connect sockets to transport layer
         pullSocket.socketIn <-- at.out++;
         pullSocket.socketOut --> at.in++;

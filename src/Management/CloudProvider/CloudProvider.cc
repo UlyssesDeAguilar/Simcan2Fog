@@ -73,6 +73,7 @@ void CloudProvider::handleNodeUpdate(Packet *update)
 
   // As the invariants have changed, check the queue to see if a deployment is now possible
   attemptDispatching();
+  delete update;
 }
 
 void CloudProvider::handleVmRequest(SM_UserVM *request)
@@ -101,7 +102,8 @@ void CloudProvider::handleVmRequest(SM_UserVM *request)
   }
 
   // Forward to corresponding topic
-  EV << "Request by user: " << request->getUserId() << " dispatched to node topic: " << destinationTopic << "\n";
+  EV << "Request by user: " << request->getUserId() << " dispatched to node topic: " << *destinationTopic << "\n";
+  request->setAutoSourceTopic(false);
   request->setDestinationTopic(destinationTopic->c_str());
   send(request, "queueOut");
 }
@@ -111,7 +113,7 @@ void CloudProvider::handleVmSubscription(SM_UserVM *sm)
   SimTime currentTime = simTime();
 
   // Schedule it
-  double dMaxSubscribeTime = sm->getInstanceRequestTimes(0).maxSubTime.dbl();
+  double dMaxSubscribeTime = sm->getInstanceRequestTimes(0).maxSubTime;
   auto event = new cMessage("Subscribe queue timeout");
   event->setContextPointer(sm);
   scheduleAt(currentTime + dMaxSubscribeTime, event);
@@ -190,7 +192,7 @@ void CloudProvider::rejectVmRequest(SM_UserVM *userVM_Rq)
   EV_INFO << "Rejecting VM request from user:" << userVM_Rq->getUserId() << '\n';
 
   userVM_Rq->setIsResponse(true);
-  userVM_Rq->setOperation(SM_VM_Req_Rsp);
+  userVM_Rq->setOperation(SM_VM_Req);
   userVM_Rq->setResult(SM_VM_Res_Reject);
   userVM_Rq->setDestinationTopic(userVM_Rq->getReturnTopic());
   send(userVM_Rq, "queueOut");
@@ -211,6 +213,7 @@ void CloudProvider::attemptDispatching()
     {
       queue.pop_front();
       cancelAndDelete(element.timeOut);
+      element.request->setAutoSourceTopic(false);
       element.request->setDestinationTopic(topic->c_str());
       send(element.request, "queueOut");
     }

@@ -48,6 +48,7 @@ OBJS = \
     $O/Architecture/Network/Stack/TcpBaseClient.o \
     $O/Architecture/Network/Stack/TcpBaseProxy.o \
     $O/Architecture/Network/Stack/TcpBaseProxyThread.o \
+    $O/Architecture/Network/Stack/Listener/UdpListener.o \
     $O/Architecture/Network/Stack/Queue/QueuePullClient.o \
     $O/Architecture/Network/Stack/Queue/QueuePushClient.o \
     $O/Architecture/Network/Switch/Switch.o \

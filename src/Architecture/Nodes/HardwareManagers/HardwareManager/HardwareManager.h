@@ -17,9 +17,9 @@ class HardwareManager : public cSimpleModule
 public:
   struct CoreState
   {
-    simtime_t usageTime = 0.0; //!< The accumulated usage time
-    simtime_t startTime = 0.0; //!< Start time of current use
-    bool free = false;         //!< If the core itself is free
+    int64_t usageTime = 0; //!< The accumulated usage time (seconds)
+    int64_t startTime = 0; //!< Start time of current use (seconds)
+    bool free = false;     //!< If the core itself is free
   };
 
   struct DiskSpecs

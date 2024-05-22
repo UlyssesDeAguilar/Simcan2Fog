@@ -63,10 +63,11 @@ void DataCentreManagerBase::initialize(int stage)
     case inet::InitStages::INITSTAGE_APPLICATION_LAYER:
     {
         // Set the global DC address into the resource manager
-        resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.networkAdapter")));
+        resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.stack")));
 
         // Prepare the event message template for cloud provider
         const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
+        eventTemplate.setChunkLength(inet::B(20));
         eventTemplate.setNodeTopic(topic);
         eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
 
@@ -240,9 +241,10 @@ void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
 
     // Set response and operation type
     userVM_Rq->setIsResponse(true);
-    userVM_Rq->setOperation(SM_VM_Req_Rsp);
-
+    userVM_Rq->setOperation(SM_VM_Req);
+    
     // Send response
+    userVM_Rq->setDestinationTopic(userVM_Rq->getReturnTopic());
     sendResponseMessage(sm);
 }
 
@@ -277,6 +279,7 @@ void DataCentreManagerBase::handleVmSubscription(SIMCAN_Message *sm)
     userVM_Rq->setOperation(SM_VM_Notify);
 
     // Send the response
+    userVM_Rq->setDestinationTopic(userVM_Rq->getReturnTopic());
     sendResponseMessage(userVM_Rq);
 }
 

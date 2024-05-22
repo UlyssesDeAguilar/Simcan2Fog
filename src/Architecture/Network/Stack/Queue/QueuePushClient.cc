@@ -34,8 +34,14 @@ void QueuePushClient::handleMessage(cMessage *msg)
 {
     // Check that it's a SIMCAN message
     auto sm = check_and_cast<SIMCAN_Message *>(msg);
-    // Set the return topic
-    sm->setReturnTopic(parentTopic);
+    EV << "Pushing message: " << msg->getClassName() << " to topic: " << sm->getDestinationTopic() << "\n";
+
+    // Set the return topic if specified, otherwise reset to default settings
+    if (sm->getAutoSourceTopic())
+        sm->setReturnTopic(parentTopic);
+    else
+        sm->setAutoSourceTopic(true);
+
     // Wrap into a packet
     auto packet = new Packet("Queue Push Client Request", makeShared<INET_AppMessage>(sm));
     // Send to the socket

@@ -18,6 +18,19 @@
 
 Define_Module(QueuePullClient);
 
+QueuePullClient::QueuePullClient() 
+{
+    signal = new SIMCAN_Message();
+    signal->setOperation(SM_QueueAck);
+    ackTemplate = new Packet("Queue Pull Client Request", makeShared<INET_AppMessage>(signal));
+}
+
+QueuePullClient::~QueuePullClient() 
+{
+    delete ackTemplate;
+    delete signal;
+}
+
 void QueuePullClient::initialize(int stage)
 {
     // Retrieve the topic from the parent
@@ -32,12 +45,9 @@ void QueuePullClient::initialize(int stage)
     }
 
     this->parentTopic = parentTopic;
-    
+
     // Prepare the ack template
-    signal = new SIMCAN_Message();
-    signal->setDestinationTopic(this->parentTopic.c_str());
-    signal->setOperation(SM_QueueAck);
-    ackTemplate = new Packet("Queue Pull Client Request", makeShared<INET_AppMessage>(signal));
+    signal->setDestinationTopic(parentTopic);
 
     // Schedule auto init
     scheduleAt(simTime(), ackTemplate->dup());

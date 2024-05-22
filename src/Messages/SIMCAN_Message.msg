@@ -49,6 +49,7 @@ message SIMCAN_Message extends cPacket{
     unsigned int operation = SM_NullOperation;			// Operation type
     bool isResponse = false;							// Is a response message?
     bool remoteOperation = false;						// Is a remote operation?	
+	bool autoSourceTopic = true;						// If set to true the push client will override the message SourceTopic
 	string destinationTopic;							// On which topic the request is pushed
 	string returnTopic;									// On which topic the return of the request should be pushed
 

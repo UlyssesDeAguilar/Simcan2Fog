@@ -159,7 +159,7 @@ void UserGeneratorBase::generateUserArrivalTimes()
         {
             // Set init and arrival time!
             lastTime = getNextTime(userInstance, lastTime);
-            auto times = userInstance->getInstanceTimesForUpdate();
+            InstanceTimes &times = userInstance->getInstanceTimesForUpdate();
             times.initTime = lastTime;
             times.arrival2Cloud = lastTime;
         }

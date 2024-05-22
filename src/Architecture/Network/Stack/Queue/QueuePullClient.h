@@ -34,8 +34,11 @@ private:
 protected:
   virtual void initialize(int stage) override;
   virtual int numInitStages() const override { return SimCanInitStages::LOCAL + 1; }
-  virtual void finish() override { delete signal; delete ackTemplate; }
   virtual void handleMessage(cMessage *msg) override;
+
+public:
+  QueuePullClient();
+  virtual ~QueuePullClient();
 };
 
 #endif

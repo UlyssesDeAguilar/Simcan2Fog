@@ -96,7 +96,7 @@ void UserGeneratorCost::finish()
         double dExecTime = times.initExec.dbl();
         double dWaitTime = times.waitTime.dbl();
 
-        double dMaxSub = userInstance->getRentTimes().maxSubscriptionTime.dbl();
+        double dMaxSub = userInstance->getRentTimes().maxSubscriptionTime;
         if (dMaxSub != 0)
             dMaxSub = dMaxSub / 3600;
 

@@ -30,10 +30,10 @@ public:
      */
     struct InstanceRequestTimes
     {
-        simtime_t maxStartTime;        // T1
-        simtime_t rentTime;            // T2
-        simtime_t maxSubTime;          // T3
-        simtime_t maxSubscriptionTime; // T4
+        double maxStartTime;        // T1
+        double rentTime;            // T2
+        double maxSubTime;          // T3
+        double maxSubscriptionTime; // T4
     };
 
     InstanceRequestTimes times;

@@ -25,6 +25,7 @@ class MessageQueueManager : public cSimpleModule
 protected:
   using QueueMap = std::map<std::string, int>;
   QueueMap map;
+  uint32_t queueCount{};
 
   virtual void initialize();
   virtual void handleMessage(cMessage *msg) { error("This module doesn't handle messages"); }

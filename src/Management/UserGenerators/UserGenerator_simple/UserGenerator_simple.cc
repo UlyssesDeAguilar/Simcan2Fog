@@ -355,7 +355,7 @@ void UserGenerator_simple::finish()
     for (const auto &userInstance : userInstances)
     {
         bool bUserAcceptOffer = false;
-        dMaxSub = divideIfNotZero(userInstance->getRentTimes().maxSubscriptionTime.dbl(), 3600);
+        dMaxSub = divideIfNotZero(userInstance->getRentTimes().maxSubscriptionTime, 3600);
 
         auto times = userInstance->getInstanceTimes();
         double dInitTime = divideIfNotZero(times.arrival2Cloud.dbl(), 3600);
