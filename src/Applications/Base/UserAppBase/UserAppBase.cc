@@ -38,11 +38,18 @@ void UserAppBase::initialize()
     inGate = gate("in");
     outGate = gate("out");
 
+    // Schedule start
+    scheduleExecStart();
+    
     // Check connections
     if (!outGate->getNextGate()->isConnected())
         error("outGate is not connected");
+}
 
+void UserAppBase::scheduleExecStart()
+{
     // Schedule waiting time to execute
+    EV_DEBUG << "App module: " << getClassName() << " will start executing in " << startDelay << " seconds from now\n";
     event = new cMessage("EXECUTION START", Event::EXEC_START);
     scheduleAt(simTime() + startDelay, event);
 }

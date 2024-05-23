@@ -115,12 +115,7 @@ protected:
      * Returns the next cloud user to be processed
      */
     virtual CloudUserInstance *getNextUser();
-
-    /**
-     * Checks if all the VMs of a user are in finished state
-     */
-    virtual bool allVmsFinished(std::string strUserId);
-
+    
     /**
      *  This is exactly the overloaded < operator
      */

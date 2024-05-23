@@ -174,13 +174,14 @@ void DataCentreManagerBase::handleManageMachines(cMessage *msg)
     int activeMachines = resourceManager->getActiveMachines();
     int activeOrInUseMachines = resourceManager->getActiveOrInUseMachines();
 
-    EV_FATAL << "#___machinesInUse#" << strName << " " << simTime().dbl() << " " << machinesInUse << '\n';
-    EV_FATAL << "#___activeMachines#" << strName << " " << simTime().dbl() << " " << activeMachines << '\n';
-    EV_FATAL << "#___activeOrInUseMachines#" << strName << " " << simTime().dbl() << " " << activeOrInUseMachines << '\n';
+    SimTime currentTime = simTime();
+    EV_FATAL << "#___machinesInUse#" << strName << " " << currentTime << " " << machinesInUse << '\n';
+    EV_FATAL << "#___activeMachines#" << strName << " " << currentTime << " " << activeMachines << '\n';
+    EV_FATAL << "#___activeOrInUseMachines#" << strName << " " << currentTime << " " << activeOrInUseMachines << '\n';
 
     // If not finished, reuse the same message MANAGE_MACHINES
     if (!bFinished)
-        scheduleAt(simTime() + SimTime(nCpuStatusInterval, SIMTIME_S), msg);
+        scheduleAt(currentTime + SimTime(nCpuStatusInterval, SIMTIME_S), msg);
 
     if (forecastActiveMachines)
     {

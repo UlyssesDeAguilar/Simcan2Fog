@@ -56,7 +56,7 @@ protected:
    bool isDistributedApp;    //!< Is a distributed application?
    bool debugUserAppBase;    //!< Show log messages of UserAppBase (for deep-debugging purpose only)
 
-   cMessage *event; //!< Message reserved for auto events
+   cMessage *event{}; //!< Message reserved for auto events
    cGate *inGate;   /**< Input gate from OS. */
    cGate *outGate;  /**< Output gate to OS. */
 
@@ -76,9 +76,9 @@ protected:
    virtual void processRequestMessage(SIMCAN_Message *msg) override{};
    virtual void processResponseMessage(SIMCAN_Message *msg) override;
    virtual void sendRequestMessage(SIMCAN_Message *msg, cGate *outGate) override;
+   virtual void scheduleExecStart();
 
    virtual void run() = 0;
-
    void execute(double MIs);
    void execute(simtime_t cpuTime);
    void read(double bytes){};

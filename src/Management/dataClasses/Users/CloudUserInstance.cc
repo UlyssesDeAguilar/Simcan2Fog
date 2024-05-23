@@ -64,7 +64,7 @@ int CloudUserInstance::getNumVms(std::string vmType, const CloudUser *user)
     int numVms = 0;
 
     for (const auto &vm: user->allVMs())
-        if (vm->getVmBase()->getType().compare(type) == 0)
+        if (vm->getVmBase()->getType() == vmType)
             numVms += vm->getNumInstances();
 
     return numVms;

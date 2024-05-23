@@ -25,9 +25,11 @@ cModule *ApplicationBuilder::searchAndCreate(cModule *parent, const Context &con
     cModuleType *moduleType = cModuleType::get(schema->getFullPath().c_str());
 
     // Reserve the necessary space (if needed)
-    if ((bool) parent->par("defaultInitialized") == true)
+    if ((bool) parent->par("defaultInitialized"))
+    {
         deleteApp(parent);
-
+        parent->par("defaultInitialized").setBoolValue(false);
+    }
     // Create and return app
     return moduleType->create("app", parent);
 }

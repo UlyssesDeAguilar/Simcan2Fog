@@ -267,7 +267,7 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
     }
 
     // Check if this user finished
-    if (allVmsFinished(userInstance->getId()))
+    if (userInstance->allVmsFinished())
     {
         EV_INFO << "Set itself finished" << '\n';
         finishUser(userInstance);
@@ -308,14 +308,6 @@ void UserGenerator_simple::cancelAndDeleteMessages(CloudUserInstance *pUserInsta
     }
     if (pSubscribeVmMessage)
         cancelAndDelete(pSubscribeVmMessage);
-}
-
-bool UserGenerator_simple::allVmsFinished(std::string strUserId)
-{
-    CloudUserInstance *pUserInstance = userHashMap.at(strUserId);
-    bool result = true;
-    result = pUserInstance->allVmsFinished();
-    return result;
 }
 
 bool UserGenerator_simple::allUsersFinished()

@@ -139,26 +139,30 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
     UserAppBuilder builder;
 
     /*
-        Bear in mind that the CloudUserInstance checks that for each app collection there's an vmInstance 
+      Bear in mind that the CloudUserInstance checks that for each app collection there's an vmInstance
+      It's entirely possible that there aren't enough app collections, so they are the limiting factor here
      */
-    for (int i = 0; i < vmRequest->getVmArraySize(); i++)
+    for (int i = 0; i < userInstance.getNumberAppCollections(); i++)
     {
-        auto vmRq = vmRequest->getVm(i);
-        VM_Response *vmAllocation;
+        AppInstanceCollection *appCollection = userInstance.getAppCollection(i);
+        const VM_Request &vmRq = vmRequest->getVm(i);
 
+        VM_Response *vmAllocation;
         if (!vmRequest->getResponse(i, &vmAllocation))
             driver.error("Error in model: The transactional deployment did not work?");
 
         int appsForVm = userInstance.getAppCollectionSize(i);
+
+        // FIXME: This is a bit of a magic number, but it has to do with Simcan2Cloud design limitations
         if (appsForVm > 5)
             driver.error("EINVAL");
-                
+
         // Send each app to each VM
         for (int j = 0; j < appsForVm; j++)
         {
-            auto pAppInstance = userInstance.getAppCollection(i)->getInstance(j);
-            auto type = pAppInstance->getAppName();
-            auto instanceId = pAppInstance->getAppInstanceId();
+            auto pAppInstance = appCollection->getInstance(j);
+            const std::string &type = pAppInstance->getAppName();
+            const std::string & instanceId = pAppInstance->getAppInstanceId();
 
             // auto nPrice = pRes->price;
 
@@ -176,7 +180,7 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
     }
 
     // Finish building the deployment
-    auto appRequests = builder.finish(vmRequest->getUserId(), vmRequest->getReturnTopic());
+    std::vector<SM_UserAPP *> *appRequests = builder.finish(vmRequest->getUserId(), vmRequest->getReturnTopic());
 
     // For each different "ServiceURL" we deploy the vms we requested
     for (auto request : *appRequests)
