@@ -76,6 +76,8 @@ void LocalApplication::run()
 		{
 			currentIteration++;
 			pc = 0;
+			// Recursive call to restart event lifecycle
+			run();
 		}
 		else
 			_exit();

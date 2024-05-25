@@ -60,7 +60,7 @@ public:
         {
             // Default initialize elements
             elements.emplace_back(true, T());
-            T& e = elements.back().second;
+            T &e = elements.back().second;
 
             // Call init function
             (e.*init_f)(i);
@@ -104,11 +104,18 @@ public:
         for (const auto entry : obj.elements)
         {
             os << "+ Free entry: " << entry.first << " Contents:\n"
-                << entry.second << std::string(10, '-') << '\n';
+               << entry.second << std::string(10, '-') << '\n';
         }
         os << std::noboolalpha;
 
         return os;
+    }
+
+    void clear()
+    {
+        lastId = 0;
+        allocatedIds = 0;
+        elements.clear();
     }
 };
 

@@ -61,6 +61,7 @@ namespace hypervisor
         virtual void processRequestMessage(SIMCAN_Message *sm) override;
         virtual void processResponseMessage(SIMCAN_Message *sm) override;
 
+    public:
         // The OsCore must be able to query the context
         friend class OsCore;
     };

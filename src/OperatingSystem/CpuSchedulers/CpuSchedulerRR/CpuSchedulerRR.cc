@@ -235,14 +235,13 @@ void CpuSchedulerRR::processResponseMessage(SIMCAN_Message *sm)
         // Current computing block has not been completely executed
         EV_INFO << "Request CPU not completed... Pushing to queue." << endl;
         SM_CPU_Message *sm_cpu_status = sm_cpu->dup();
+        sm_cpu_status->setControlInfo(sm_cpu->getControlInfo()->dup());
         sm_cpu_status->setIsResponse(true);
         sendResponseMessage(sm_cpu_status);
 
         sm_cpu->setIsResponse(false);
         requestsQueue.insert(sm_cpu);
     }
-
-    // Current block has been completely executed
     else
     {
         EV_INFO << "Request CPU completed. Sending it back to the application." << endl;

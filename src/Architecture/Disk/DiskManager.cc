@@ -25,11 +25,14 @@ void DiskManager::initialize(int stage)
     {
     case LOCAL:
     {
+        diskSpecs.readBandwidth = par("diskReadBandwidth");
+        diskSpecs.writeBandwidth = par("diskWriteBandwidth");
+        break;
+    }
+    case NEAR:
+    {
         auto hwm = check_and_cast<HardwareManager *>(getParentModule()->getSubmodule("hardwareManager"));
-
         queueTable.resize(hwm->getTotalResources().vms);
-        specs = hwm->getDiskSpecs();
-
         for (auto &entry : queueTable)
             entry.ioFinished.setContextPointer(&entry);
         break;
@@ -61,8 +64,7 @@ void DiskManager::handleMessage(cMessage *msg)
     else
     {
         auto request = check_and_cast<SM_Syscall *>(msg);
-        auto appId = check_and_cast<AppIdLabel *>(request->getControlInfo());
-        DiskQueue &entry = queueTable.at(appId->getVmId());
+        DiskQueue &entry = queueTable.at(request->getVmId());
         entry.queue.insert(request);
 
         if (entry.queue.getLength() == 1)
@@ -75,14 +77,14 @@ void DiskManager::scheduleIo(DiskQueue &entry)
     if (entry.queue.getLength() > 0)
     {
         auto head = reinterpret_cast<SM_Syscall *>(entry.queue.front());
-        simtime_t eta;
+        double eta{};
 
         if (head->getContext().opCode == Syscall::READ)
-            eta = head->getContext().data.bufferSize / specs.readBandwidth;
+            eta = head->getContext().data.bufferSize / diskSpecs.readBandwidth;
         else
-            eta = head->getContext().data.bufferSize / specs.writeBandwidth;
+            eta = head->getContext().data.bufferSize / diskSpecs.writeBandwidth;
 
-        scheduleAt(eta, &entry.ioFinished);
+        scheduleAt(simTime() + eta, &entry.ioFinished);
     }
 }
 

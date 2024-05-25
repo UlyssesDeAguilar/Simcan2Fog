@@ -220,19 +220,19 @@ void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
 {
     EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Handle VM_Request" << '\n';
 
-    auto userVM_Rq = check_and_cast<SM_UserVM *>(sm);
-    EV_INFO << userVM_Rq << '\n';
+    auto request = check_and_cast<SM_UserVM *>(sm);
+    EV_INFO << request << '\n';
 
     // Check if is a VmRequest or a subscribe
-    if (checkVmUserFit(userVM_Rq))
+    if (checkVmUserFit(request))
     {
-        EV_INFO << "Accepting request from user:" << userVM_Rq->getUserId() << '\n';
-        userVM_Rq->setResult(SM_VM_Res_Accept);
+        EV_INFO << "Accepting request from user:" << request->getUserId() << '\n';
+        request->setResult(SM_VM_Res_Accept);
     }
     else
     {
-        EV_INFO << "Reject VM request from user:" << userVM_Rq->getUserId() << '\n';
-        userVM_Rq->setResult(SM_VM_Res_Reject);
+        EV_INFO << "Reject VM request from user:" << request->getUserId() << '\n';
+        request->setResult(SM_VM_Res_Reject);
 
         // Update the cloud provider to "uncommit" the resources
         eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
@@ -241,11 +241,11 @@ void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
     }
 
     // Set response and operation type
-    userVM_Rq->setIsResponse(true);
-    userVM_Rq->setOperation(SM_VM_Req);
+    request->setIsResponse(true);
+    request->setOperation(SM_VM_Req);
     
     // Send response
-    userVM_Rq->setDestinationTopic(userVM_Rq->getReturnTopic());
+    request->setDestinationTopic(request->getReturnTopic());
     sendResponseMessage(sm);
 }
 
@@ -337,7 +337,7 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
     }
 
     // Store request as accepted -- In case of renting extenion this will be useful !
-    acceptedUsersRqMap[userId] = userVM_Rq;
+    acceptedUsersRqMap[userId] = userVM_Rq->getReturnTopic();
     deployment.commit();
 
     // The deployment was allocated successfully
@@ -348,10 +348,8 @@ void DataCentreManagerBase::handleVmRentTimeout(SIMCAN_Message *sm)
 {
     // Cast and recover the context for the deployment
     auto extensionOffer = check_and_cast<SM_VmExtend *>(sm);
-    SM_UserVM *originalRequest = acceptedUsersRqMap.at(extensionOffer->getUserId());
-
     // Send back to the corresponding user the extension request
-    extensionOffer->setDestinationTopic(originalRequest->getReturnTopic());
+    extensionOffer->setDestinationTopic(acceptedUsersRqMap.at(extensionOffer->getUserId()).c_str());
     sendRequestMessage(extensionOffer, gate("networkOut"));
 }
 

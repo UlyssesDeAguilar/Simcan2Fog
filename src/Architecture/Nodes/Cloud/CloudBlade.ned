@@ -49,6 +49,8 @@ module CloudBlade
         *.maxVMs = maxVMs;
         *.isVirtualHardware = isVirtualHardware;
         hardwareManager.address = address;
+        disk.diskReadBandwidth = diskReadBandwidth;
+        disk.diskWriteBandwidth = diskWriteBandwidth;
 
         // Select function selects value from a list given an index (starts at 0)
         // Converting a boolean gives us 0/1 for false/true

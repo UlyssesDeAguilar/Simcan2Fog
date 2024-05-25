@@ -26,7 +26,7 @@ void DcHypervisor::initialize(int stage)
 
         loadVector(schedulers, osModule, schedulerAccessor);
 
-        diskManager = check_and_cast<DiskManager*>(osModule->getParentModule()->getSubmodule("disk"));
+        diskManager = check_and_cast<DiskManager *>(osModule->getParentModule()->getSubmodule("disk"));
         break;
     }
     case BLADE:
@@ -63,7 +63,7 @@ void DcHypervisor::finish()
     cSIMCAN_Core::finish();
 }
 
-void DcHypervisor::processSelfMessage(cMessage *msg)
+/**void DcHypervisor::processSelfMessage(cMessage *msg)
 {
     if (!strcmp(msg->getName(), "POWERON_MACHINE"))
     {
@@ -72,12 +72,13 @@ void DcHypervisor::processSelfMessage(cMessage *msg)
     }
 
     delete msg;
-}
+}*/
 
 void DcHypervisor::powerOn(bool active)
 {
     Enter_Method_Silent();
-    if (active)
+    setActive(active);
+    /*if (active)
     {
         powerMessage = new cMessage("POWERON_MACHINE");
         scheduleAt(simTime() + SimTime(nPowerOnTime, SIMTIME_S), powerMessage);
@@ -85,10 +86,10 @@ void DcHypervisor::powerOn(bool active)
     else
     {
         setActive(active);
-    }
+    }*/
 }
 
-void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
+/*void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
 {
 
     // Debug (Debug)
@@ -97,7 +98,7 @@ void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
 
     // Send back the message
     sendResponseMessage(sm);
-}
+}*/
 
 cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *userId)
 {
@@ -127,10 +128,14 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
     controlBlock.globalId = &iter->first;
     controlBlock.userId = userId;
     controlBlock.vmType = vm;
+    controlBlock.state = vmRunning;
 
-    // Schedule timeout message
-    controlBlock.timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
-    controlBlock.timeOut->setContextPointer(&controlBlock);
+    // Schedule timeout message -- if it is the first time it's scheduled
+    if (!controlBlock.timeOut)
+    {
+        controlBlock.timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
+        controlBlock.timeOut->setContextPointer(&controlBlock);
+    }
     scheduleAt(simTime() + request.times.rentTime, controlBlock.timeOut);
 
     // Setup the scheduler
@@ -249,7 +254,7 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
     // Shutdown scheduler
     pVmScheduler->setIsRunning(false);
     diskManager->stopVmQueue(block.vmId);
-    
+
     // Free the resources
     hardwareManager->deallocateResources(cores, memory, disk, cpuCoreIndex);
 

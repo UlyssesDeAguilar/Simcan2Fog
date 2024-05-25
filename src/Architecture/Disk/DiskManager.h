@@ -30,10 +30,15 @@ protected:
     cMessage ioFinished;
     cQueue queue;
   };
-  std::vector<DiskQueue> queueTable;
-  HardwareManager::DiskSpecs specs;
+  struct DiskSpecs
+  {
+    double readBandwidth;  //!< In Mbit/s
+    double writeBandwidth; //!< In Mbit/s
+  } diskSpecs;
 
-  virtual int numInitStages() const override { return LOCAL + 1; }
+  std::vector<DiskQueue> queueTable;
+
+  virtual int numInitStages() const override { return NEAR + 1; }
   virtual void initialize(int stage) override;
   virtual void finish() override;
   virtual void handleMessage(cMessage *msg) override;

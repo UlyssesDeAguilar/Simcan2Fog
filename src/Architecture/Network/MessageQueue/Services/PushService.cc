@@ -26,8 +26,32 @@ void PushService::handleMessage(cMessage *msg)
 {
     // Recover the payload
     auto packet = check_and_cast<Packet *>(msg);
-    auto payload = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
-    // Recover the destination topic
-    const char *topic = payload->getAppMessage()->getDestinationTopic();
-    manager->publishToTopic(topic, packet);
+
+    // Watch out, we might have a secuence chunk (because of TCP transmissions)
+    auto sequence = dynamic_cast<const SequenceChunk *>(packet->peekData().get());
+    if (sequence)
+    {
+        const std::deque<inet::Ptr<const inet::Chunk>> &chunks = sequence->getChunks();
+        if (chunks.size() == 0)
+            error("Unexpected sequence length");
+
+        // Each chunk represents a packet (which were merged for sending)
+        for (const auto &chunk : chunks)
+        {
+            auto m = dynamic_pointer_cast<const INET_AppMessage>(chunk);
+            auto p = new Packet(packet->getName(), m);
+            const char *topic = m->getAppMessage()->getDestinationTopic();
+            manager->publishToTopic(topic, p);
+        }
+
+        // Delete the parent packet
+        delete packet;
+    }
+    else
+    {
+        auto payload = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
+        // Recover the destination topic
+        const char *topic = payload->getAppMessage()->getDestinationTopic();
+        manager->publishToTopic(topic, packet);
+    }
 }

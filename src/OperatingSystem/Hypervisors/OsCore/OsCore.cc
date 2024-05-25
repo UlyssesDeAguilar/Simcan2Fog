@@ -29,6 +29,7 @@ void OsCore::processSyscall(SM_Syscall *request)
         label->setVmId(appEntry.vmId);
         callContext.data.cpuRequest->setControlInfo(label);
         callContext.data.cpuRequest->setContextPointer(request);
+        hypervisor->take(callContext.data.cpuRequest);
         hypervisor->sendRequestMessage(callContext.data.cpuRequest, hypervisor->schedulerGates.outBaseId + appEntry.vmId);
         break;
     }
@@ -36,10 +37,6 @@ void OsCore::processSyscall(SM_Syscall *request)
     case Syscall::READ:
     case Syscall::WRITE:
     {
-        auto label = new AppIdLabel();
-        label->setPid(appEntry.pid);
-        label->setVmId(appEntry.vmId);
-        callContext.data.cpuRequest->setControlInfo(label);
         hypervisor->sendRequestMessage(request, hypervisor->gate("toDisk"));
         break;
     }

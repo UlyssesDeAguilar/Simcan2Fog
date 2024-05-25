@@ -49,11 +49,26 @@ void Hypervisor::initialize(int stage)
 void Hypervisor::finish()
 {
     // Now it's empty as we use a std::vector!
+    for (auto & entry : vmsControl)
+    {
+        if (entry.first){
+            VmControlBlock& control = entry.second;
+            cancelAndDelete(control.timeOut);                
+        }
+    }
+
+    // Reset the control tables
+    vmsControl.clear();
 }
 
 cGate *Hypervisor::getOutGate(cMessage *msg)
 {
     cGate *arrivalGate = msg->getArrivalGate();
+
+    // This bit of selection is due to trace handling when we send a request
+    if (arrivalGate == nullptr)
+        return nullptr;
+
     int baseIndex = arrivalGate->getBaseId();
 
     // If it came from the network
@@ -83,6 +98,7 @@ void Hypervisor::processSelfMessage(cMessage *msg)
     {
         auto &vmEntry = *reinterpret_cast<VmControlBlock *>(msg->getContextPointer());
         handleVmTimeout(vmEntry);
+        break;
     }
     default:
         error("Unkown auto event of kind: %d", msg->getKind());
@@ -111,10 +127,11 @@ void Hypervisor::processRequestMessage(SIMCAN_Message *msg)
         auto sysCall = check_and_cast<SM_Syscall *>(msg);
         VmControlBlock &vmControl = vmsControl.at(sysCall->getVmId());
 
-        if (vmControl.state == vmRunning)
-            osCore.processSyscall(sysCall);
-        else
+        if (vmControl.state == vmSuspended)
             vmControl.callBuffer.push_back(sysCall);
+        else
+            osCore.processSyscall(sysCall);
+
         break;
     }
     // Add the network packages !
@@ -128,20 +145,19 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *msg)
     // Mostly it will be:
     // 1 - CPU status update (including finish)
     // 2 - Disk finished IO
-    auto appId = check_and_cast<AppIdLabel *>(msg->getControlInfo());
-    VmControlBlock &vmControl = vmsControl.at(appId->getVmId());
-
     switch (msg->getOperation())
     {
     case SM_ExecCpu:
     {
+        auto appId = check_and_cast<AppIdLabel *>(msg->getControlInfo());
+        VmControlBlock &vmControl = vmsControl.at(appId->getVmId());
         auto cpuRequest = check_and_cast<SM_CPU_Message *>(msg);
-
         // If the batch is complete -> notify the app
         if (cpuRequest->isCompleted())
         {
+            drop(cpuRequest);
             auto originalRequest = reinterpret_cast<SM_Syscall *>(cpuRequest->getContextPointer());
-
+            originalRequest->setIsResponse(true);
             if (vmControl.state == vmSuspended)
                 vmControl.callBuffer.push_back(originalRequest);
             else
@@ -157,6 +173,8 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *msg)
     default:
     {
         auto response = check_and_cast<SM_Syscall *>(msg);
+        response->setIsResponse(true);
+        VmControlBlock &vmControl = vmsControl.at(response->getVmId());
         // Assuming disk io finished
         if (vmControl.state == vmSuspended)
             vmControl.callBuffer.push_back(response);
@@ -179,7 +197,7 @@ void Hypervisor::handleAppRequest(SM_UserAPP *sm)
         // If found and there's enough space then start working
         if (vmId != UINT32_MAX && vmApps.size() <= vmsControl[vmId].apps.getFreeIds())
         {
-            auto control = vmsControl.at(vmId);
+            VmControlBlock &control = vmsControl.at(vmId);
             osCore.launchApps(sm, vmId, vmApps.begin(), vmApps.end(), vmApps.element);
         }
         else

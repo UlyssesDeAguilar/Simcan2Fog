@@ -19,14 +19,10 @@ public:
   {
     int64_t usageTime = 0; //!< The accumulated usage time (seconds)
     int64_t startTime = 0; //!< Start time of current use (seconds)
-    bool free = false;     //!< If the core itself is free
+    bool free = true;      //!< If the core itself is free (on start it is)
   };
 
-  struct DiskSpecs
-  {
-    double readBandwidth;  //!< In Mbit/s
-    double writeBandwidth; //!< In Mbit/s
-  } diskSpecs;
+  
 
 private:
   uint32_t nodeIp;                   //!< The node Ip
@@ -73,12 +69,6 @@ public:
    * @return const Resources&
    */
   const NodeResources &getAvailableResources() const { return available; }
-
-  /**
-   * @brief Gets the disk specifications object
-   * @return const DiskSpecs&
-   */
-  const DiskSpecs &getDiskSpecs() const { return diskSpecs; }
 
   /**
    * @brief Get the Ip address

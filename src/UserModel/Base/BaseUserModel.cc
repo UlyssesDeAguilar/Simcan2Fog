@@ -106,7 +106,9 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     // Individual VM timeout -> Rescue or not rescue?
     driver.emit(driver.failSignal[extensionOffer->getVmId()], userInstance.getNId());
 
-    auto response = extensionOffer->dup();
+    SM_VmExtend * response = extensionOffer->dup();
+    auto routingInfo = check_and_cast<RoutingInfo*>(extensionOffer->getControlInfo());
+
     response->setIsResponse(false);
     response->setResult(0);
 
@@ -126,7 +128,13 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
         response->setExtensionTime(3600); // FIXME: Original Simcan2Cloud Behavior -- It's parameterizable
     }
 
+    // Note that control info objects are not cloned across cMessage's
+    auto newRoutingInfo = new RoutingInfo();
+    newRoutingInfo->setDestinationUrl(routingInfo->getSourceUrl());
+    newRoutingInfo->setSourceUrl(ServiceURL(0));
+
     // Send the response to the endpoint
+    response->setControlInfo(newRoutingInfo);
     response->setIsResponse(true);
     response->setDestinationTopic(extensionOffer->getReturnTopic());
     driver.sendRequestMessage(response, driver.toCloudProviderGate);

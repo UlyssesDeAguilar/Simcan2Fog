@@ -27,8 +27,7 @@ namespace hypervisor
       virtual void initialize(int stage) override;
       virtual int numInitStages() const override { return BLADE + 1; }
       virtual void finish() override;
-      virtual void processSelfMessage(cMessage *msg) override;
-      virtual void processResponseMessage(SIMCAN_Message *sm) override;
+      //virtual void processResponseMessage(SIMCAN_Message *sm) override;
 
    public:
       int getAvailableCores() const { return hardwareManager->getAvailableResources().cores; }

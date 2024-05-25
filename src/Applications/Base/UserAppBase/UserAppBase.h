@@ -81,8 +81,8 @@ protected:
    virtual void run() = 0;
    void execute(double MIs);
    void execute(simtime_t cpuTime);
-   void read(double bytes){};
-   void write(double bytes){};
+   void read(double bytes);
+   void write(double bytes);
    // void open_socket()
    // void open_socket()
    // void send()

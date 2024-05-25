@@ -37,7 +37,7 @@ protected:
     int nLastMachinesInUseForecasting;
 
     StrMap<hypervisor::DcHypervisor> acceptedVMsMap; // Map of the accepted VMs
-    StrMap<SM_UserVM> acceptedUsersRqMap;            // Map of the accepted users
+    opp_string_map acceptedUsersRqMap;            // Map of the accepted users (keeps the topic to return messages)
     StrMap<SM_UserAPP> handlingAppsRqMap;            // Map of the accepted applications
 
     GateInfo networkGates;

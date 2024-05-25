@@ -72,17 +72,17 @@ bool HardwareManager::tryAllocateResources(const uint32_t &cores, const double &
     uint32_t *cpuCoreIndex = new uint32_t[cores]{UINT32_MAX};
 
     // Search the free slots
-    for (int i = 0, j = 0; i < cores && j < total.cores; j++)
+    for (int i = 0, j = 0; j < cores && i < total.cores; i++)
     {
         // Keep going until we get a free slot
-        if (coresState[j].free)
+        if (coresState[i].free)
         {
             // Register position and mark allocated
-            cpuCoreIndex[i] = j;
-            coresState[j].free = false;
-            coresState[j].startTime = simTime().inUnit(SIMTIME_S);
+            cpuCoreIndex[j] = i;
+            coresState[i].free = false;
+            coresState[i].startTime = simTime().inUnit(SIMTIME_S);
             // Jump to next index
-            i++;
+            j++;
         }
     }
 

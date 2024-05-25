@@ -40,7 +40,7 @@ void UserAppBase::initialize()
 
     // Schedule start
     scheduleExecStart();
-    
+
     // Check connections
     if (!outGate->getNextGate()->isConnected())
         error("outGate is not connected");
@@ -176,6 +176,38 @@ void UserAppBase::execute(simtime_t cpuTime)
     if (debugUserAppBase)
         EV_TRACE << "(SIMCAN_request_cpuTime): Message ready to perform a CPU request." << '\n'
                  << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << '\n';
+
+    // Send the request to the Operating System
+    sendRequestMessage(syscall, outGate);
+}
+
+void UserAppBase::read(double bytes) 
+{
+    // Prepare the system call
+    SM_Syscall *syscall = new SM_Syscall();
+
+    // Set PID and Context
+    syscall->setPid(pid);
+    syscall->setVmId(vmId);
+    syscall->setContext({.opCode = READ, .data.bufferSize = bytes});
+
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending read call: " << bytes << "B" << "\n";
+
+    // Send the request to the Operating System
+    sendRequestMessage(syscall, outGate);
+}
+
+void UserAppBase::write(double bytes) 
+{
+    // Prepare the system call
+    SM_Syscall *syscall = new SM_Syscall();
+
+    // Set PID and Context
+    syscall->setPid(pid);
+    syscall->setVmId(vmId);
+    syscall->setContext({.opCode = WRITE, .data.bufferSize = bytes});
+
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending write call: " << bytes << "B" << "\n";
 
     // Send the request to the Operating System
     sendRequestMessage(syscall, outGate);
