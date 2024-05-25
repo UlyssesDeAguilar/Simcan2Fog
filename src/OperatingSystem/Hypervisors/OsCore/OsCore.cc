@@ -51,7 +51,10 @@ void OsCore::processSyscall(SM_Syscall *request)
         break;
     // Gracefully exit
     case Syscall::EXIT:
-        handleAppTermination(appEntry, false);
+        handleAppTermination(appEntry, appFinishedOK);
+        break;
+    case Syscall::ABORT:
+        handleAppTermination(appEntry, appFinishedError);
         break;
     default:
         hypervisor->error("Undefined system call operation code");
@@ -98,7 +101,7 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
     }
 }
 
-void OsCore::handleAppTermination(AppControlBlock &app, bool force)
+void OsCore::handleAppTermination(AppControlBlock &app, tApplicationState exitStatus)
 {
     auto userRequest = app.request;
     auto deploymentIndex = app.deploymentIndex;
@@ -111,17 +114,27 @@ void OsCore::handleAppTermination(AppControlBlock &app, bool force)
     appBuilder.deleteApp(parent);
 
     // Mark exit status and increase the count of finished apps.
-    if (force)
-        app.status = tApplicationState::appFinishedTimeout;
-    else
-        app.status = tApplicationState::appFinishedOK;
-
+    app.status = exitStatus;
     userRequest->changeStateByIndex(deploymentIndex, app.status);
     userRequest->increaseFinishedApps();
 
     // If all apps finished
     if (userRequest->allAppsFinished())
-        hypervisor->sendResponseMessage(userRequest);
+    {
+        auto update = userRequest->dup();
+        auto routingInfo = new RoutingInfo();
+
+        // Internal routing
+        routingInfo->setDestinationUrl(ServiceURL(DC_MANAGER_LOCAL_ADDR));
+        routingInfo->setSourceUrl(ServiceURL(hypervisor->hardwareManager->getIp()));
+        update->setControlInfo(routingInfo);
+
+        // Global routing
+        update->setDestinationTopic(userRequest->getReturnTopic());
+        update->setResult(SM_APP_Res_Accept);
+        update->setIsResponse(true);
+        hypervisor->sendResponseMessage(update);
+    }
 
     // Reset the control block
     app.reset();

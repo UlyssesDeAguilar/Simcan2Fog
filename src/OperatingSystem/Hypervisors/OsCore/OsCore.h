@@ -24,7 +24,7 @@ namespace hypervisor
         void processSyscall(SM_Syscall *sm);
 
         void launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end, const std::string &globalVmId);
-        void handleAppTermination(AppControlBlock &app, bool force);
+        void handleAppTermination(AppControlBlock &app, tApplicationState exitStatus);
         // void handleSendRequest(AppControlBlock &app, bool completed);
         // void handleBindAndListen(AppControlBlock &app);
     };

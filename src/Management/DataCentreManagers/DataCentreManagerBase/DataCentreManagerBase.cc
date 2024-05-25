@@ -122,8 +122,6 @@ void DataCentreManagerBase::initializeSelfHandlers()
 
 void DataCentreManagerBase::initializeRequestHandlers()
 {
-    // TODO: Select the incoming traffic
-    // Forward the request to the Hypervisor
     auto forwardRequest = [this](SIMCAN_Message *msg) -> void
     { sendRequestMessage(msg, localNetworkGates.outBaseId); };
 
@@ -142,10 +140,10 @@ void DataCentreManagerBase::initializeRequestHandlers()
 
 void DataCentreManagerBase::initializeResponseHandlers()
 {
-    // TODO: Select the outgoing traffic
-    // Forward the responses from the Hypervisor
     auto forwardResponse = [this](SIMCAN_Message *msg) -> void
     { sendResponseMessage(msg); };
+
+    responseHandlers[SM_APP_Res_Accept] = forwardResponse;
 
     responseHandlers[SM_ExtensionOffer_Accept] = [this](SIMCAN_Message *msg) -> void
     { return handleExtendVmAndResumeExecution(msg); };
@@ -243,7 +241,7 @@ void DataCentreManagerBase::handleVmRequestFits(SIMCAN_Message *sm)
     // Set response and operation type
     request->setIsResponse(true);
     request->setOperation(SM_VM_Req);
-    
+
     // Send response
     request->setDestinationTopic(request->getReturnTopic());
     sendResponseMessage(sm);

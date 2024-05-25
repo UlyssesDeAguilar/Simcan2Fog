@@ -145,10 +145,7 @@ void UserAppBase::execute(double MIs)
     sm_cpu->setMisToExecute(MIs);
     sm_cpu->updateLength();
 
-    // Debug (Trace)
-    if (debugUserAppBase)
-        EV_TRACE << "(SIMCAN_request_cpu): Message ready to perform a CPU request." << '\n'
-                 << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << '\n';
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending cpu request \n";
 
     // Send the request to the Operating System
     sendRequestMessage(syscall, outGate);
@@ -172,10 +169,7 @@ void UserAppBase::execute(simtime_t cpuTime)
     sm_cpu->setCpuTime(cpuTime);
     sm_cpu->updateLength();
 
-    // Debug (Trace)
-    if (debugUserAppBase)
-        EV_TRACE << "(SIMCAN_request_cpuTime): Message ready to perform a CPU request." << '\n'
-                 << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << '\n';
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending cpu request \n";
 
     // Send the request to the Operating System
     sendRequestMessage(syscall, outGate);
@@ -213,27 +207,33 @@ void UserAppBase::write(double bytes)
     sendRequestMessage(syscall, outGate);
 }
 
-void UserAppBase::abort()
+void UserAppBase::_exit()
 {
     // Prepare the system call
     SM_Syscall *syscall = new SM_Syscall();
-    SM_CPU_Message *sm_cpu = new SM_CPU_Message();
 
     // Set PID and Context
     syscall->setPid(pid);
     syscall->setVmId(vmId);
-    syscall->setContext({.opCode = EXEC, .data.cpuRequest = sm_cpu});
+    syscall->setContext({.opCode = EXIT, .data.bufferSize = 0});
 
-    // Prepare the abort request
-    sm_cpu->setOperation(SM_AbortCpu);
-    sm_cpu->setAppInstance(appInstance.c_str());
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated sucessfully\n";
 
-    // sm_cpu->setNextModuleIndex(nextModuleIndex);
+    // Send the request to the Operating System
+    sendRequestMessage(syscall, outGate);
+}
 
-    // Debug (Trace)
-    if (debugUserAppBase)
-        EV_TRACE << "(SIMCAN_request_cpu): Message ready to abort a CPU request." << '\n'
-                 << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << '\n';
+void UserAppBase::abort()
+{
+    // Prepare the system call
+    SM_Syscall *syscall = new SM_Syscall();
+
+    // Set PID and Context
+    syscall->setPid(pid);
+    syscall->setVmId(vmId);
+    syscall->setContext({.opCode = ABORT, .data.bufferSize = 0});
+
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated sucessfully\n";
 
     // Send the request to the Operating System
     sendRequestMessage(syscall, outGate);

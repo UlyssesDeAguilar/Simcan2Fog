@@ -88,7 +88,7 @@ protected:
    // void send()
    // void recv()
    void abort();
-   void _exit(){};
+   void _exit();
 
 public:
    class ICallback

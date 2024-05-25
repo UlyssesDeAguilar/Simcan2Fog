@@ -89,17 +89,6 @@ void DcHypervisor::powerOn(bool active)
     }*/
 }
 
-/*void DcHypervisor::processResponseMessage(SIMCAN_Message *sm)
-{
-
-    // Debug (Debug)
-    EV_DEBUG << "(processResponseMessage) Sending response message." << endl
-             << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
-
-    // Send back the message
-    sendResponseMessage(sm);
-}*/
-
 cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *userId)
 {
     Enter_Method_Silent("DcHypervisor, handling vm request...");
@@ -130,7 +119,7 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
     controlBlock.vmType = vm;
     controlBlock.state = vmRunning;
 
-    // Schedule timeout message -- if it is the first time it's scheduled
+    // Schedule timeout message
     if (!controlBlock.timeOut)
     {
         controlBlock.timeOut = new cMessage("VM timeout", AutoEvent::VM_TIMEOUT);
@@ -233,7 +222,7 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
     {
         // If the app is active and running, terminate it
         if (app.first == true && app.second.isRunning())
-            osCore.handleAppTermination(app.second, true);
+            osCore.handleAppTermination(app.second, appFinishedTimeout);
     }
 
     // Flush buffer with requests/responses

@@ -45,7 +45,8 @@ namespace hypervisor
         RESOLVE,   // Resolve a fully qualified DNS domain name
         SEND,      // Send through socket
         RECV,      // Recieve through socket
-        EXIT,      // Finish the process
+        EXIT,      // Finish the process (gracefully)
+        ABORT      // Finish the process (abruptly)
     } Syscall;
 
     typedef enum
