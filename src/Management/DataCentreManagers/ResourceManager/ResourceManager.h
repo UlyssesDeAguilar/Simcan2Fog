@@ -20,7 +20,6 @@ protected:
         };
 
         NodeResources availableResources; //!< Current available resources
-        size_t bucketIndex;               //!< The position of the node in the current bucket it is in
         uint32_t ip;                      //!< Ip of the node, must be unique -- Acts as an id of the Blade (hypervisor)
         uint16_t state;                   //!< The actual state of the vm
 

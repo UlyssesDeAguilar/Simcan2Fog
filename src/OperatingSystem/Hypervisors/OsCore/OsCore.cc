@@ -16,7 +16,7 @@ void OsCore::processSyscall(SM_Syscall *request)
     auto appEntry = hypervisor->getAppControlBlock(request->getVmId(), request->getPid());
 
     // Register the incoming request and get the context
-    const CallContext& callContext = request->getContext();
+    const CallContext &callContext = request->getContext();
 
     // Select the appropiate handler or actions
     switch (callContext.opCode)
@@ -52,9 +52,11 @@ void OsCore::processSyscall(SM_Syscall *request)
     // Gracefully exit
     case Syscall::EXIT:
         handleAppTermination(appEntry, appFinishedOK);
+        delete request;
         break;
     case Syscall::ABORT:
         handleAppTermination(appEntry, appFinishedError);
+        delete request;
         break;
     default:
         hypervisor->error("Undefined system call operation code");
@@ -84,8 +86,9 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
 
         // Initalize the control block
         AppControlBlock &control = hypervisor->getAppControlBlock(vmId, newPid);
+        VmControlBlock &vmControl = hypervisor->vmsControl[vmId];
         control.deploymentIndex = request->getDeploymentIndex(begin);
-        control.request = request;
+        vmControl.request = request;
 
         // Load the context
         context.schema = schema;
@@ -103,7 +106,9 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
 
 void OsCore::handleAppTermination(AppControlBlock &app, tApplicationState exitStatus)
 {
-    auto userRequest = app.request;
+    VmControlBlock &vmControl = hypervisor->vmsControl[app.vmId];
+    SM_UserAPP * userRequest = vmControl.request;
+
     auto deploymentIndex = app.deploymentIndex;
 
     // Release the pid
@@ -132,8 +137,13 @@ void OsCore::handleAppTermination(AppControlBlock &app, tApplicationState exitSt
         // Global routing
         update->setDestinationTopic(userRequest->getReturnTopic());
         update->setResult(SM_APP_Res_Accept);
+        update->setVmId(vmControl.globalId->c_str());
         update->setIsResponse(true);
         hypervisor->sendResponseMessage(update);
+
+        // Bookkeeping, release the message
+        vmControl.request = nullptr;
+        delete userRequest;
     }
 
     // Reset the control block

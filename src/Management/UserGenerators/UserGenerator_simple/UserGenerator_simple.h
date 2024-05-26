@@ -47,7 +47,6 @@ protected:
 
     // Keeps track of how many times a VM has been extended it's renting time
     std::map<std::string, int> extensionTimeHashMap;
-
     std::unique_ptr<BaseUserModel> model;
 
     /**
@@ -64,8 +63,6 @@ protected:
     virtual void initializeResponseHandlers() override{};
 
     void initializeHashMaps();
-
-    virtual void finishUser(CloudUserInstance *pUserInstance);
 
     DataManager *getDataManager() { return dataManager; }
 

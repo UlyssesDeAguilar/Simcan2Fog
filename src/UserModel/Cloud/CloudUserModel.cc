@@ -22,14 +22,14 @@ void CloudUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInst
         if (pCloudUser->getPriorityType() == Priority)
         {
             // Update the status -- In contrast to the BaseUser this ends the "cycle of requests"
-            updateVmsStatus(userInstance, vmRequest->getVmId(), vmFinished);
+            userInstance.updateVmInstanceStatus(vmRequest->getVmId(), vmFinished);
 
             // Update priorized
             if (vmRequestCost->getBPriorized())
                 driverCost->priorizedHashMap[vmRequest->getUserId()] = true;
 
             driver.emit(driver.responseSignal, userInstance.getNId());
-            userInstance.getInstanceTimesForUpdate().initExec = simTime();
+            userInstance.startExecution();
             userInstance.setTimeoutMaxSubscribed();
         }
         else

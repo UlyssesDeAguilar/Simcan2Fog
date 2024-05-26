@@ -88,7 +88,6 @@ OBJS = \
     $O/Management/dataClasses/Users/UserVmReference.o \
     $O/Management/dataClasses/VirtualMachines/VirtualMachine.o \
     $O/Management/dataClasses/VirtualMachines/VmInstance.o \
-    $O/Management/dataClasses/VirtualMachines/VmInstanceCollection.o \
     $O/Management/utils/LogUtils.o \
     $O/Messages/AppRequest.o \
     $O/Messages/DNS_Request.o \

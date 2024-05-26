@@ -42,6 +42,12 @@ void DcResourceManager::finish()
 {
     // Cpu usage times! -> emit signal instad of printing? Global cpu view like the hypervisor?
     // HardwareManager should "expose" the cpuState array!
+
+    // Give the allocation signals a ending point
+    emit(signals.allocatedCores, 0);
+    emit(signals.allocatedVms, 0);
+    emit(signals.allocatedDisk, 0.0);
+    emit(signals.allocatedRam, 0.0);
 }
 
 void DcResourceManager::registerNode(uint32_t ip, const NodeResources &resources)
@@ -58,7 +64,6 @@ void DcResourceManager::initBucketsAndReservations()
     auto registerNode = [](CoreHypervisorsMap &map, Node &node) -> void
     {
         map[node.availableResources.cores].push_back(node.ip);
-        node.bucketIndex = map[node.availableResources.cores].size() - 1;
     };
 
     this->activeMachines = 0;
@@ -104,6 +109,12 @@ void DcResourceManager::initBucketsAndReservations()
     emit(signals.maxDisk, maxDisk);
     emit(signals.maxRam, maxRam);
     emit(signals.maxVms, maxVMs);
+
+    // Give the allocation signals a starting point
+    emit(signals.allocatedCores, 0);
+    emit(signals.allocatedVms, 0);
+    emit(signals.allocatedDisk, 0.0);
+    emit(signals.allocatedRam, 0.0);
 }
 
 void DcResourceManager::setActiveMachines(uint32_t activeMachines)
@@ -224,15 +235,21 @@ void DcResourceManager::confirmNodeDeallocation(const uint32_t &ip, const Virtua
 void DcResourceManager::updateNode(uint32_t nodeIp, const VirtualMachine *vm, bool allocate)
 {
     // Recover resources
-    auto &resources = getNodeResources(nodeIp);
+    NodeResources &resources = getNodeResources(nodeIp);
 
     // Recover bucket
-    auto oldBucket = coresHypervisor.at(resources.cores);
+    auto bucketIter = coresHypervisor.find(resources.cores);
+    std::vector<uint32_t> &oldBucket = bucketIter->second;
 
     // Swap with last element in bucket and pop back O(1)
-    std::swap(oldBucket.at(nodes[nodeIp].bucketIndex), oldBucket.back());
+    auto pos = std::find(oldBucket.begin(), oldBucket.end(), nodeIp);
+    std::swap(*pos, oldBucket.back());
     oldBucket.pop_back();
 
+    // If there are no more nodes, then delete the bucket
+    if (oldBucket.size() == 0)
+        coresHypervisor.erase(bucketIter);
+    
     if (allocate)
     {
         // Allocate the resources
@@ -251,7 +268,6 @@ void DcResourceManager::updateNode(uint32_t nodeIp, const VirtualMachine *vm, bo
     }
 
     // Push in the correct bucket
-    auto &newBucket = coresHypervisor[resources.cores];
+    std::vector<uint32_t> &newBucket = coresHypervisor[resources.cores];
     newBucket.push_back(nodeIp);
-    nodes[nodeIp].bucketIndex = newBucket.size() - 1;
 }

@@ -172,7 +172,9 @@ const opp_string *CloudProvider::selectNode(const SM_UserVM *request)
 
   // Insert into map (if no pool existing then create one)
   coresMap[node->availableCores].insert(node);
-
+  EV << "Estimating " << totalCores << " allocated for " << node->topic << "\n";
+  EV << "New available core count: " << node->availableCores << "\n";
+  
   return &node->topic;
 }
 

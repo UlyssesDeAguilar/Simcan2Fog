@@ -1,79 +1,49 @@
 #include "VmInstance.h"
 
-VmInstance::VmInstance(std::string vmType, int currentInstanceIndex, int totalVmInstances, std::string userID){
+VmInstance::VmInstance(const VmInstanceType *type, int currentInstanceIndex, int totalVmInstances)
+{
 
     std::ostringstream osStream;
 
     // Generate the unique name -> vmType-userID[currentInstanceIndex/totalVmInstances]
-    osStream << vmType << "-" << userID << "-[" << currentInstanceIndex+1 << "/" << totalVmInstances << "]";
-    this->vmInstanceID = osStream.str();
+    osStream << type->base->getType() << "-" << type->userId << "-[" << currentInstanceIndex + 1 << "/" << totalVmInstances << "]";
+    this->id = osStream.str();
 
     // Vm State
-    this->vmType = vmType;
+    this->type = type;
     this->instanceNumber = currentInstanceIndex;
-    this->userID = userID;
     this->state = vmIdle;
 }
 
-VmInstance::~VmInstance() {
+std::ostream & operator<<(std::ostream &os, const VmInstance &obj)
+{
+    return os << obj.id << "  - State: " << obj.stateToString(obj.state);
 }
 
-int VmInstance::getInstanceNumber() const {
-    return instanceNumber;
-}
-
-tVmState VmInstance::getState() const {
-    return state;
-}
-
-void VmInstance::setState(tVmState state) {
-    this->state = state;
-}
-
-const std::string& VmInstance::getUserId() const {
-    return userID;
-}
-
-const std::string& VmInstance::getVmInstanceId() const {
-    return vmInstanceID;
-}
-
-const std::string& VmInstance::getVmType() const {
-    return vmType;
-}
-
-std::string VmInstance::toString (){
-
-    std::ostringstream info;
-
-            info << vmInstanceID << "  - State: " << stateToString(state);
-
-        return info.str();
-}
-
-std::string VmInstance::stateToString (tVmState vmState){
+std::string VmInstance::stateToString(tVmState vmState) const
+{
 
     std::string result;
 
-        switch (vmState){
+    switch (vmState)
+    {
 
-                    case vmIdle:
-                        result = "idle";
-                        break;
-                    case vmAccepted:
-                        result = "accepted";
-                        break;
-                    case vmRunning:
-                        result = "running";
-                        break;
-                    case vmFinished:
-                        result = "finished";
-                        break;
-                    default:
-                        result = "unknown state";
-                        break;
-        }
+    case vmIdle:
+        result = "idle";
+        break;
+    case vmAccepted:
+        result = "accepted";
+        break;
+    case vmRunning:
+        result = "running";
+        break;
+    case vmFinished:
+        result = "finished";
+        break;
+    default:
+        result = "unknown state";
+        break;
+    }
 
     return result;
 }
-

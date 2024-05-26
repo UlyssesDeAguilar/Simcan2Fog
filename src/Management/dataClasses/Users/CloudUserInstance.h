@@ -2,36 +2,36 @@
 #define CLOUDUSERINSTANCE_H_
 
 #include "UserInstance.h"
-#include "Management/dataClasses/VirtualMachines/VmInstanceCollection.h"
+#include "Management/dataClasses/VirtualMachines/VmInstance.h"
 #include "CloudUser.h"
 
-//#include "Messages/VMRequest.h"
+// #include "Messages/VMRequest.h"
 #include "Messages/SM_UserVM.h"
 #include "Messages/SM_UserAPP.h"
 
 struct InstanceTimes
 {
-    SimTime initTime;      // User intialization time (generated according to the distribution)
-    SimTime arrival2Cloud; // The arrival to the cloud (generally equals initTime)
-    SimTime initWaitTime;  // Start of wait for resources
-    SimTime waitTime;      // The time elapsed during the wait
-    SimTime initExec;      // Start of execution of Apps
-    SimTime endTime;       // When the user requests finally where satisfied
+    int64_t initTime;      // User intialization time (generated according to the distribution)
+    int64_t arrival2Cloud; // The arrival to the cloud (generally equals initTime)
+    int64_t initWaitTime;  // Start of wait for resources
+    int64_t waitTime;      // The time elapsed during the wait
+    int64_t initExec;      // Start of execution of Apps
+    int64_t endTime;       // When the user requests finally where satisfied
 
-    SimTime convertToSeconds(const SimTime &val)
+    int64_t convertToHours(const int64_t &val) const
     {
         return val != 0 ? val / 3600 : 0;
     }
 
-    InstanceTimes convertToSeconds()
+    InstanceTimes convertToHours() const
     {
         return {
-            .initTime = convertToSeconds(this->initTime),
-            .arrival2Cloud = convertToSeconds(this->arrival2Cloud),
-            .initWaitTime = convertToSeconds(this->initWaitTime),
-            .waitTime = convertToSeconds(this->waitTime),
-            .initExec = convertToSeconds(this->initExec),
-            .endTime = convertToSeconds(this->endTime)};
+            .initTime = convertToHours(this->initTime),
+            .arrival2Cloud = convertToHours(this->arrival2Cloud),
+            .initWaitTime = convertToHours(this->initWaitTime),
+            .waitTime = convertToHours(this->waitTime),
+            .initExec = convertToHours(this->initExec),
+            .endTime = convertToHours(this->endTime)};
     }
 };
 
@@ -46,19 +46,17 @@ class CloudUserInstance : public UserInstance
 {
 
 private:
-    int nId;                                             // Numerical id
-    std::vector<VmInstanceCollection *> virtualMachines; // Vector of Virtual Machines configured for this user.
-    InstanceTimes times;                                 // Times of specific events
-    VM_Request::InstanceRequestTimes requestTimes;       // Request times or maximum renting times
-    int numFinishedVMs;                                  // Number of finished vm requests
-    int numActiveSubscriptions;                          // Number of active subscriptions
+    int nId;                                       // Numerical id
+    VM_Request::InstanceRequestTimes requestTimes; // Request times or maximum renting times
+    InstanceTimes times;                           // Times of specific events
+    group_vector<VmInstanceType, VmInstance>
+        vmGroupedInstances;            //!< This keeps the extrinsic state grouped by the flat version for the vmInstances
+    std::map<opp_string, int> vmIdMap; // Map that coorelates a VmId to it's own instance state
+    int numFinishedVMs;                // Number of finished vm requests
+    int numActiveSubscriptions;        // Number of active subscriptions
 
 protected:
-    int numTotalVMs;                         // All of the vms contained in the collection
-    std::vector<AppInstance *> appInstances; // Flattened App vector instance FIXME: Should derive an ADT that optimizes this!
-    SM_UserVM *requestVmMsg;
-    SM_UserAPP *requestAppMsg;
-    SM_UserVM *subscribeVmMsg;
+    SM_UserVM *requestVmMsg{};
 
     // Flags that describe inner state FIXME: Create a true state machine!
     bool bTimeout_t2;
@@ -67,26 +65,11 @@ protected:
     bool bSubscribe;
 
     /**
-     * Creates the corresponding VMs instances to be included in the <b>virtualMachines</b> vector.
-     *
-     * @param vmPtr Pointer to the </b>VirtualMachine</b> object that contains the main features of the generated VM.
-     * @param numInstances Number of instances of the generated VM.
-     */
-    void insertNewVirtualMachineInstances(const VirtualMachine *vmPtr, int numInstances, int nRentTime, int total, int offset);
-
-    /**
-     * @brief Flattens the AppCollections into a single vector!
-     */
-    void processApplicationCollection();
-
-    /**
      * @brief Calculates the number of instances requested by a User of a specific type
-     *
-     * @param vmType Type of a virtual machine
      * @param user   The user reference
      * @return int   The number of instances required
      */
-    int getNumVms(std::string vmType, const CloudUser *user);
+    int getNumVms(const CloudUser *user);
 
 public:
     /**
@@ -101,11 +84,6 @@ public:
      */
     CloudUserInstance(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 
-    /**
-     * Destructor.
-     */
-    virtual ~CloudUserInstance();
-
     bool operator<(const CloudUserInstance &other) const;
 
     /**
@@ -119,25 +97,6 @@ public:
     virtual std::string toString(bool includeAppsParameters, bool includeVmFeatures);
 
     /**
-     *  Return the number of virtual machines collections
-     */
-    int getNumberVmCollections() { return virtualMachines.size(); }
-
-    /**
-     * Get an specific Vm collection
-     * @param nCollection The ID of virtual machine collection to be retrieved.
-     * @throws std::out_of_range If the index is off bounds
-     * @return Collection of VM instances.
-     */
-    VmInstanceCollection *getVmCollection(int nCollection) { return virtualMachines.at(nCollection); }
-
-    /**
-     * @brief Provides a convenient representation of the Vm Collections for range loops
-     * @return A constant refrerence to the vector containing the Vm Collections
-     */
-    const std::vector<VmInstanceCollection *> &allVmCollections() { return virtualMachines; }
-
-    /**
      * @brief FIXME: Figure out exactly what does this mean!
      * @return int The presumed numerical ID
      */
@@ -147,16 +106,12 @@ public:
      * Gets the nth vm in the virtualmachine list of collections flattened.
      * @param index Index of the required vm.
      */
-    VmInstance *getNthVm(int index);
-
-    AppInstance *getAppInstance(int nIndex);
-
+    const VmInstance &getVmInstance(int index) { return vmGroupedInstances.flattened().at(index); }
+    const std::vector<VmInstance> &getAllVmInstances() { return vmGroupedInstances.flattened(); }
+    const group_vector<VmInstanceType, VmInstance> &getAllVmInstanceTypes() const { return vmGroupedInstances; }
+    
     // Managing the messages sent and received by the user.
     SM_UserVM *getRequestVmMsg() { return requestVmMsg; }
-    SM_UserAPP *getRequestAppMsg() { return requestAppMsg; };
-    SM_UserVM *getSubscribeVmMsg() { return subscribeVmMsg; };
-
-    void setRequestApp(SM_UserAPP *requestAppMsg) { this->requestAppMsg = requestAppMsg; };
     void setRequestVmMsg(SM_UserVM *requestVmMsg) { this->requestVmMsg = requestVmMsg; }
 
     /**
@@ -204,30 +159,28 @@ public:
      */
     bool isTimeout() const { return (bTimeout_t2 || bTimeout_t4); }
 
+    void setTimeoutMaxStart() { bTimeout_t2 = true; }
+    void setTimeoutMaxRentTime() { bTimeout_t2 = true; }
+    void setTimeoutMaxSubscribed() { bTimeout_t4 = true; }
+
+    int getTotalVMs() const { return vmGroupedInstances.flattened().size(); }
+
+    /**
+     * @brief If all of the rented vms ended their contract
+     */
+    bool allVmsFinished() const { return getTotalVMs() <= numFinishedVMs; }
+
     /**
      * @brief Wheter the user did subscribe or not
      */
     bool hasSubscribed() const { return bSubscribe; }
 
-    void setTimeoutMaxStart() { bTimeout_t2 = true; }
-    void setTimeoutMaxRentTime() { bTimeout_t2 = true; }
-    void setTimeoutMaxSubscribed() { bTimeout_t4 = true; }
-    void setFinished(bool finished) { this->bFinished = finished; }
-    void setSubscribe(bool bSubscribe) { this->bSubscribe = bSubscribe; }
-
-    void addFinishedVMs(int newFinished) { numFinishedVMs += newFinished; }
-    int getTotalVMs() const { return numTotalVMs; }
-
-    /**
-     * @brief If all of the rented vms ended their contract
-     */
-    bool allVmsFinished() const { return numTotalVMs <= numFinishedVMs; }
-
-    // int getNumActiveSubscriptions() const { return numActiveSubscriptions; }
-    // void setNumActiveSubscriptions(int numActiveSubscriptions) { this->numActiveSubscriptions = numActiveSubscriptions; }
-
+    void startExecution();
     void startSubscription();
     void endSubscription();
+    void updateVmInstanceStatus(const char *vmId, tVmState state);
+    void updateVmInstanceStatus(const SM_UserVM* request, tVmState state);
+    void finish();
 };
 
 #endif /* USERINSTANCE_H_ */

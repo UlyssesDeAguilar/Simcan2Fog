@@ -103,20 +103,17 @@ namespace hypervisor
         tApplicationState status;          // The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
         std::map<int, Connection> sockets; // Map that contains the application sockets
         int deploymentIndex;               // The index relative for that request
-        SM_UserAPP *request;               // The request that instantiated the app
 
         void initialize(uint32_t pid)
         {
             this->pid = pid;
             this->vmId = 0;
             status = tApplicationState::appWaiting;
-            request = nullptr;
         }
 
         void reset()
         {
             this->vmId = 0;
-            request = nullptr;
         }
 
         bool isRunning() { return status == tApplicationState::appRunning; }
@@ -127,14 +124,15 @@ namespace hypervisor
      */
     struct VmControlBlock
     {
-        uint32_t vmId;                      //!< The vmId -- It's aligned in virtual environements with the scheduler!
-        tVmState state;                     //!< The current state of the VM
-        const std::string *globalId;        //!< The unique identifier of the vm in the global context of the simulation
-        const VirtualMachine *vmType;       //!< The virtual machine type
-        std::string userId;                 //!< The current owner of the vm
-        ControlTable<AppControlBlock> apps; //!< The apps that are currently executing
-        std::deque<SM_Syscall*> callBuffer; //!< Holds request/responses when the vm is in suspension state
-        cMessage *timeOut{};
+        uint32_t vmId;                       //!< The vmId -- It's aligned in virtual environements with the scheduler!
+        tVmState state;                      //!< The current state of the VM
+        const std::string *globalId;         //!< The unique identifier of the vm in the global context of the simulation
+        const VirtualMachine *vmType;        //!< The virtual machine type
+        std::string userId;                  //!< The current owner of the vm
+        ControlTable<AppControlBlock> apps;  //!< The apps that are currently executing
+        std::deque<SM_Syscall *> callBuffer; //!< Holds request/responses when the vm is in suspension state
+        cMessage *timeOut{};                 //!< Timeout message for vm
+        SM_UserAPP *request{};               //!< The request that instantiated the app
 
         void initialize(uint32_t vmId)
         {

@@ -7,73 +7,53 @@ CloudUserInstance::CloudUserInstance(const CloudUser *ptrUser,
                                      int totalUserInstances)
     : UserInstance(ptrUser, userNumber, currentInstanceIndex, totalUserInstances)
 {
-    std::map<std::string, int> offsetMap, totalVmMap;
-
     numFinishedVMs = 0;
-    numTotalVMs = 0;
     numActiveSubscriptions = 0;
     nId = totalUserInstance;
     requestVmMsg = nullptr;
-    requestAppMsg = nullptr;
-    subscribeVmMsg = nullptr;
-
     bTimeout_t2 = bTimeout_t4 = bFinished = false;
 
     // Init all instance times to 0
-    times = {0.0};
+    times = {0};
 
     if (ptrUser != nullptr)
     {
+        // Include VM instances
+        int instanceIndex = 0;
+        int totalVm = getNumVms(ptrUser);
+        vmGroupedInstances.reserveCollections(totalVm);
 
         for (auto const &vm : ptrUser->allVMs())
         {
-            std::string type = vm->getVmBase()->getType();
-            if (offsetMap.find(type) == offsetMap.end())
+            VmInstanceType extrinsicState;
+            extrinsicState.base = vm->getVmBase();
+            extrinsicState.rentingTime = vm->getRentTime();
+            extrinsicState.userId = this->id;
+            extrinsicState.numInstances = vm->getNumInstances();
+
+            const VmInstanceType *refType = &vmGroupedInstances.new_collection(extrinsicState);
+
+            for (int i = 0; i < vm->getNumInstances(); i++)
             {
-                offsetMap[type] = 0;
-                totalVmMap[type] = getNumVms(type, ptrUser);
-                numTotalVMs += totalVmMap[type];
+                VmInstance &lastElement = vmGroupedInstances.emplace_back(refType, instanceIndex++, totalVm);
+                vmIdMap[lastElement.getId()] = vmGroupedInstances.flattened().size() - 1;
             }
         }
 
-        // Include VM instances
-        for (auto const &vm : ptrUser->allVMs())
-        {
-            std::string type = vm->getVmBase()->getType();
-
-            int offset = offsetMap.at(type),
-                totalVm = totalVmMap.at(type);
-
-            // Insert a new collection of application instances
-            insertNewVirtualMachineInstances(vm->getVmBase(), vm->getNumInstances(), vm->getRentTime(), totalVm, offset);
-
-            offsetMap[type] = offset + vm->getNumInstances();
-        }
-
-        processApplicationCollection();
+        //processApplicationCollection();
+        if (getTotalVMs() < getNumberAppCollections())
+            throw std::logic_error("There must be at least a VmInstance for each AppCollection");
     }
 }
 
-CloudUserInstance::~CloudUserInstance()
-{
-    virtualMachines.clear();
-}
-
-int CloudUserInstance::getNumVms(std::string vmType, const CloudUser *user)
+int CloudUserInstance::getNumVms(const CloudUser *user)
 {
     int numVms = 0;
 
-    for (const auto &vm: user->allVMs())
-        if (vm->getVmBase()->getType() == vmType)
-            numVms += vm->getNumInstances();
+    for (const auto &vm : user->allVMs())
+        numVms += vm->getNumInstances();
 
     return numVms;
-}
-
-void CloudUserInstance::insertNewVirtualMachineInstances(const VirtualMachine *vmPtr, int numInstances, int nRentTime, int total, int offset)
-{
-    auto newVmCollection = new VmInstanceCollection(vmPtr, this->id, numInstances, nRentTime, total, offset);
-    virtualMachines.push_back(newVmCollection);
 }
 
 std::string CloudUserInstance::toString(bool includeAppsParameters, bool includeVmFeatures)
@@ -86,79 +66,19 @@ std::string CloudUserInstance::toString(bool includeAppsParameters, bool include
     // Prints applications
     i = 0;
     for (const auto &appCollection : applications)
-        info << "\t\tAppCollection[" << i << "] -> " << appCollection->toString(includeAppsParameters);
+        info << "\t\tAppCollection[" << i++ << "] -> " << appCollection->toString(includeAppsParameters);
 
-    // Prints VMs
+    /*info << "# Vm Instances:" << vmInstances.size() << "\n";
     i = 0;
-    for (const auto &vmCollection : virtualMachines)
-        info << "\t\tVM set[" << i << "] -> " << vmCollection->toString(includeVmFeatures);
+    for (auto const &instance : )
+        info << "\t\t  - VMs[" << i++ << "]: " << instance << " of type " << instance.getVmType() << "\n";
+
+    if (includeVmFeatures)
+        info << "\t\t\t Features:" << *vmInstances[0].getVmBase() << "\n";*/
+
+    info << "\n";
 
     return info.str();
-}
-
-AppInstance *CloudUserInstance::getAppInstance(int nIndex)
-{
-    AppInstance *pAppRet;
-
-    pAppRet = nullptr;
-
-    if (nIndex < appInstances.size())
-    {
-        pAppRet = appInstances.at(nIndex);
-    }
-
-    return pAppRet;
-}
-
-VmInstance *CloudUserInstance::getNthVm(int index)
-{
-    int offset = 0;
-
-    // Simple check, negative indexes don't represent a valid position
-    if (index < 0)
-        return nullptr;
-
-    // We iterate through the collections
-    for (const auto &vmCollection : virtualMachines)
-    {
-        int nInstances = vmCollection->getNumInstances();
-
-        // If this happens, then the current collection contains the element at the requested index
-        if (offset + nInstances > index)
-        {
-            return &vmCollection->getVmInstance(index - offset);
-        }
-        else
-            offset += nInstances; // Otherwise keep advancing
-    }
-
-    // If after iterating throughout the collections we couldn't find the requested index
-    return nullptr;
-}
-
-void CloudUserInstance::processApplicationCollection()
-{
-    int vm_size = virtualMachines.size();
-
-    int i = 0;
-    for (auto const &appCollection : applications)
-    {
-        for (int j = 0; j < appCollection->getNumInstances(); j++)
-        {
-            AppInstance *pApp = appCollection->getInstance(j);
-            VmInstance *pVm = getNthVm(i);
-            if (pVm != nullptr)
-            {
-                pApp->setVmInstanceId(pVm->getVmInstanceId());
-                appInstances.push_back(pApp);
-            }
-            else
-            {
-                EV_FATAL << "Error while setting vmId to appInstance. The number of App collections must match the number of VMs";
-            }
-        }
-        i++;
-    }
 }
 
 bool CloudUserInstance::operator<(const CloudUserInstance &other) const
@@ -166,22 +86,69 @@ bool CloudUserInstance::operator<(const CloudUserInstance &other) const
     return this->times.arrival2Cloud < other.times.arrival2Cloud;
 }
 
+void CloudUserInstance::startExecution()
+{
+    times.initExec = simTime().inUnit(SIMTIME_S);
+}
+
 void CloudUserInstance::startSubscription()
 {
+    // If first then start recording the time
     if (numActiveSubscriptions < 1)
-        times.initWaitTime = simTime();
+    {
+        bSubscribe = true;
+        times.initWaitTime = simTime().inUnit(SIMTIME_S);
+    }
 
+    // Count the subscription
     numActiveSubscriptions++;
 }
 
 void CloudUserInstance::endSubscription()
 {
-    // FIXME: It doesn't implode because waitTime it's initialized to 0, logically this is weird
-    SimTime stWaitTime;
     numActiveSubscriptions--;
+
+    // If it's the last subscription
     if (numActiveSubscriptions < 1)
+        times.waitTime = (times.waitTime + simTime().inUnit(SIMTIME_S)) - times.initWaitTime;
+}
+
+void CloudUserInstance::updateVmInstanceStatus(const char *vmId, tVmState state)
+{
+    VmInstance &instance = vmGroupedInstances.flattenedForUpdate().at(vmIdMap.at(vmId));
+    tVmState stateOld = instance.getState();
+
+    if (stateOld != vmFinished && state == vmFinished)
+        numFinishedVMs++;
+    else if (stateOld == vmFinished && state != vmFinished)
+        numFinishedVMs--;
+
+    instance.setState(state);
+
+    if (allVmsFinished())
+        finish();
+}
+
+void CloudUserInstance::updateVmInstanceStatus(const SM_UserVM *request, tVmState state)
+{
+    for (auto &instance : vmGroupedInstances.flattenedForUpdate())
     {
-        stWaitTime = times.waitTime;
-        times.waitTime = stWaitTime + simTime() - times.initWaitTime;
+        tVmState stateOld = instance.getState();
+
+        if (stateOld != vmFinished && state == vmFinished)
+            numFinishedVMs++;
+        else if (stateOld == vmFinished && state != vmFinished)
+            numFinishedVMs--;
+
+        instance.setState(state);
+
+        if (allVmsFinished())
+            finish();
     }
+}
+
+void CloudUserInstance::finish()
+{
+    times.endTime = simTime().inUnit(SIMTIME_S);
+    bFinished = true;
 }

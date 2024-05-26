@@ -50,6 +50,22 @@ void HardwareManager::initialize()
     }
 }
 
+void HardwareManager::finish()
+{
+    simtime_t finalTime = simTime();
+    uint32_t coreIndex = 0;
+    for (auto &core : coresState)
+    {
+        // Special case where the sim was interrupted but the cpus were still allocated
+        if (!core.free)
+            core.usageTime += (simTime().inUnit(SIMTIME_S) - core.startTime);
+        
+        EV << "core[" << coreIndex++ << "]: "
+           << "utilization time: " << core.usageTime
+           << " proportion " << core.usageTime / finalTime << "\n";
+    }
+}
+
 void HardwareManager::handleMessage(cMessage *msg)
 {
     // TODO - Generated method body

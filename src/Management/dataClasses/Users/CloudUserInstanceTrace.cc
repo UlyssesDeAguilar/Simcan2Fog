@@ -55,8 +55,9 @@ CloudUserInstanceTrace::CloudUserInstanceTrace(Job_t jobIn, int totalUserInstanc
     // hardcoded for 1024cores
     // TODO: configure with num of architecture cores and log it.
 
-    insertNewVirtualMachineInstances(vmReference->getVmBase(), nInstances, vmReference->getRentTime(), nInstances, 0);
-    numTotalVMs += nInstances;
+    // TODO: Fix this!
+    //insertNewVirtualMachineInstances(vmReference->getVmBase(), nInstances, vmReference->getRentTime(), nInstances, 0);
+    //numTotalVMs += nInstances;
     //}
 
     // TODO:
@@ -64,7 +65,7 @@ CloudUserInstanceTrace::CloudUserInstanceTrace(Job_t jobIn, int totalUserInstanc
 
     newAppCollection = new AppInstanceCollection(ptrApp, this->id, 1);
     applications.push_back(newAppCollection);
-    appInstances.push_back(new AppInstance("AppCPUIntensive", 0, 1, id));
+    //appInstances.push_back(new AppInstance("AppCPUIntensive", 0, 1, id)); TODO: Fix this
 
     /* FIXME: All of this is actually duplicated -- Done in CloudUserInstance!
 

@@ -41,13 +41,18 @@ void UserGenerator_simple::initializeSignals()
     notifySignal[""] = registerSignal("notify");
     timeoutSignal[""] = registerSignal("timeout");
 
-    // for (std::vector<CloudUserInstance *>::iterator it = userInstances.begin(); it != userInstances.end(); ++it)
+    cProperty *exTemplate = getProperties()->get("statisticTemplate", "executeSingleTemplate");
+    cProperty *subTemplate = getProperties()->get("statisticTemplate", "subscribeSingleTemplate");
+    cProperty *notTemplate = getProperties()->get("statisticTemplate", "notifySingleTemplate");
+    cProperty *timTemplate = getProperties()->get("statisticTemplate", "timeoutSingleTemplate");
+    cProperty *okTemplate = getProperties()->get("statisticTemplate", "appOKTemplate");
+    cProperty *failTemplate = getProperties()->get("statisticTemplate", "appTimeoutTemplate");
 
     for (const auto &instance : userInstances)
     {
-        for (int i = 0; i < instance->getTotalVMs(); i++)
+        for (const auto &vmInstance : instance->getAllVmInstances())
         {
-            std::string vmId = instance->getNthVm(i)->getVmInstanceId();
+            std::string vmId = vmInstance.getId();
 
             std::string auxExName = "execute_" + vmId;
             simsignal_t auxEx = registerSignal(auxExName.c_str());
@@ -62,12 +67,6 @@ void UserGenerator_simple::initializeSignals()
             std::string auxFailName = "appTimeout_" + vmId;
             simsignal_t auxFail = registerSignal(auxFailName.c_str());
 
-            cProperty *exTemplate = getProperties()->get("statisticTemplate", "executeSingleTemplate");
-            cProperty *subTemplate = getProperties()->get("statisticTemplate", "subscribeSingleTemplate");
-            cProperty *notTemplate = getProperties()->get("statisticTemplate", "notifySingleTemplate");
-            cProperty *timTemplate = getProperties()->get("statisticTemplate", "timeoutSingleTemplate");
-            cProperty *okTemplate = getProperties()->get("statisticTemplate", "appOKTemplate");
-            cProperty *failTemplate = getProperties()->get("statisticTemplate", "appTimeoutTemplate");
             getEnvir()->addResultRecorders(this, auxEx, auxExName.c_str(), exTemplate);
             getEnvir()->addResultRecorders(this, auxSub, auxSubName.c_str(), subTemplate);
             getEnvir()->addResultRecorders(this, auxNot, auxNotName.c_str(), notTemplate);
@@ -100,19 +99,10 @@ void UserGenerator_simple::initializeHashMaps()
 {
     for (const auto &userInstance : userInstances)
     {
-        int nVmCollections = userInstance->getNumberVmCollections();
-        std::map<std::string, int> vmExtendedTimes;
-
-        for (int j = 0; j < nVmCollections; j++)
+        for (const auto &vmInstace : userInstance->getAllVmInstances())
         {
-            auto pVmCollection = userInstance->getVmCollection(j);
-
-            // For all instances in the VmCollection
-            for (const auto &instance : pVmCollection->allInstances())
-            {
-                std::string strVmId = instance->getVmInstanceId();
-                extensionTimeHashMap[strVmId] = 0;
-            }
+            std::string strVmId = vmInstace.getId();
+            extensionTimeHashMap[strVmId] = 0;
         }
     }
 }
@@ -266,48 +256,29 @@ void UserGenerator_simple::processResponseMessage(SIMCAN_Message *sm)
         return;
     }
 
-    // Check if this user finished
-    if (userInstance->allVmsFinished())
+    if (userInstance->isFinished())
     {
         EV_INFO << "Set itself finished" << '\n';
-        finishUser(userInstance);
+        nUserInstancesFinished++;
         cancelAndDeleteMessages(userInstance);
+
+        // Check if all the users have ended
+        if (allUsersFinished())
+            endSimulation(); // FIXME: Brute Force
     }
-
-    // Check if all the users have ended
-    if (userInstance->isFinished() && allUsersFinished())
-        endSimulation();    // FIXME: Brute Force
-}
-
-void UserGenerator_simple::finishUser(CloudUserInstance *pUserInstance)
-{
-    pUserInstance->getInstanceTimesForUpdate().endTime = simTime();
-    pUserInstance->setFinished(true);
-    nUserInstancesFinished++;
 }
 
 void UserGenerator_simple::cancelAndDeleteMessages(CloudUserInstance *pUserInstance)
 {
     SM_UserVM *pVmMessage;
-    SM_UserVM *pSubscribeVmMessage;
-    SM_UserAPP *pAppMessage;
 
     pVmMessage = pUserInstance->getRequestVmMsg();
-    pAppMessage = pUserInstance->getRequestAppMsg();
-    pSubscribeVmMessage = pUserInstance->getSubscribeVmMsg();
 
     if (pVmMessage)
     {
         cancelAndDelete(pVmMessage);
         pUserInstance->setRequestVmMsg(nullptr);
     }
-    if (pAppMessage)
-    {
-        cancelAndDelete(pAppMessage);
-        pUserInstance->setRequestApp(nullptr);
-    }
-    if (pSubscribeVmMessage)
-        cancelAndDelete(pSubscribeVmMessage);
 }
 
 bool UserGenerator_simple::allUsersFinished()
@@ -327,18 +298,17 @@ bool UserGenerator_simple::allUsersFinished()
 
 void UserGenerator_simple::finish()
 {
-    double dTotalSub, dMeanSub, dWaitTime, dNoWaitUsers, dWaitUsers;
+    double dTotalSub, dMeanSub, dNoWaitUsers, dWaitUsers;
     int nTotalTimeouts, nCollectionNumber, nExtendedTime, nAcceptOffer, nUsersAcceptOffer;
     std::vector<CloudUserInstance *> userVector;
-    VmInstanceCollection *pVmCollection;
 
     // Init general statistics
     nTotalTimeouts = nAcceptOffer = nUsersAcceptOffer = 0;
-    dTotalSub = dMeanSub = dWaitTime = 0;
+    dTotalSub = dMeanSub = 0;
     dNoWaitUsers = dWaitUsers = 0;
 
     // Small lambda util -- FIXME: Should check if stl has something like this aleady
-    auto divideIfNotZero = [](double dividend, double divisor) -> double
+    auto divideIfNotZero = [](int64_t dividend, int64_t divisor) -> int64_t
     { return dividend != 0 ? dividend / divisor : 0; };
 
     int nIndex = 1;     // Index for printing purposes
@@ -347,28 +317,24 @@ void UserGenerator_simple::finish()
     for (const auto &userInstance : userInstances)
     {
         bool bUserAcceptOffer = false;
-        dMaxSub = divideIfNotZero(userInstance->getRentTimes().maxSubscriptionTime, 3600);
 
-        auto times = userInstance->getInstanceTimes();
-        double dInitTime = divideIfNotZero(times.arrival2Cloud.dbl(), 3600);
-        // double dEndTime = divideIfNotZero(times.endTime.dbl(), 3600);        <- FIXME: Not used... why?
-        double dExecTime = divideIfNotZero(times.initExec.dbl(), 3600);
-        double dWaitTime = divideIfNotZero(times.waitTime.dbl(), 3600);
+        dMaxSub = divideIfNotZero(userInstance->getRentTimes().maxSubscriptionTime, 3600);
+        const InstanceTimes & times = userInstance->getInstanceTimes().convertToHours();
 
         // Calculate subscription time
-        double dSubTime = dExecTime > dInitTime ? dExecTime - dInitTime : 0;
+        uint64_t subTime = times.initExec > times.arrival2Cloud ? times.initExec - times.arrival2Cloud : 0;
 
         if (userInstance->isTimeoutSubscribed())
         {
-            EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << " " << dWaitTime << '\n';
+            EV_FATAL << "#___#Timeout " << nIndex << " -1 " << dMaxSub << " " << times.waitTime << '\n';
             dTotalSub += dMaxSub;
             nTotalTimeouts++;
         }
         else
         {
-            EV_FATAL << "#___#Success " << nIndex << " " << dSubTime << " -1 "
-                     << " " << dWaitTime << '\n';
-            dTotalSub += dSubTime;
+            EV_FATAL << "#___#Success " << nIndex << " " << subTime << " -1 "
+                     << " " << times.waitTime << '\n';
+            dTotalSub += subTime;
         }
 
         if (userInstance->hasSubscribed())
@@ -376,25 +342,13 @@ void UserGenerator_simple::finish()
         else
             dNoWaitUsers++;
 
-        nCollectionNumber = userInstance->getNumberVmCollections();
-        for (int i = 0; i < nCollectionNumber; i++)
+        for (const auto &vmInstance : userInstance->getAllVmInstances())
         {
-            pVmCollection = userInstance->getVmCollection(i);
-            if (pVmCollection != nullptr)
+            nExtendedTime = extensionTimeHashMap.at(vmInstance.getId());
+            nAcceptOffer += nExtendedTime;
+            if (nExtendedTime > 0)
             {
-
-                // For all instances in the VmCollection
-                for (const auto instance : pVmCollection->allInstances())
-                {
-                    auto strVmId = instance->getVmInstanceId();
-
-                    nExtendedTime = extensionTimeHashMap.at(strVmId);
-                    nAcceptOffer += nExtendedTime;
-                    if (nExtendedTime > 0)
-                    {
-                        bUserAcceptOffer = true;
-                    }
-                }
+                bUserAcceptOffer = true;
             }
         }
 

@@ -18,7 +18,7 @@ class UserGeneratorBase : public CloudManagerBase
 {
 
 protected:
-    typedef std::map<std::string, CloudUserInstance *> UserMap;
+    typedef std::map<opp_string, CloudUserInstance *> UserMap;
     typedef std::vector<CloudUserInstance *> UserInstanceList;
 
     // group_vector<CloudUserInstance *> groupOfUsers; // Vector that contains the user instances (can be used in a flatenned version)

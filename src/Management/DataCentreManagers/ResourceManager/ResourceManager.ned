@@ -30,9 +30,9 @@ simple DcResourceManager{
         @statistic[maxVms](record=last);
 
         // Live statistics
-        @statistic[allocatedRam](title="Memoria RAM reservada"; unit=GB; record=min,max,vector);
-        @statistic[allocatedDisk](title="Almacenamiento reservado"; unit=GB; record=min,max,vector);
-        @statistic[allocatedCores](title="CPUs reservadas"; record=min,max,vector);
-        @statistic[allocatedVms](title="VMs reservadas"; record=min,max,vector);
+        @statistic[allocatedRam](source=sum(allocatedRam);title="Memoria RAM reservada"; unit=GB; record=min,max,vector);
+        @statistic[allocatedDisk](source=sum(allocatedDisk);title="Almacenamiento reservado"; unit=GB; record=min,max,vector);
+        @statistic[allocatedCores](source=sum(allocatedCores);title="CPUs reservadas"; record=min,max,vector);
+        @statistic[allocatedVms](source=sum(allocatedVms);title="VMs reservadas"; record=min,max,vector);
 
 }

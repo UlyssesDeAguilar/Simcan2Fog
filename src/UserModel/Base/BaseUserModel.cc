@@ -8,16 +8,13 @@ void BaseUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInsta
     if (vmRequest->getResult() == SM_VM_Res_Accept)
     {
         // Update the status
-        updateVmsStatus(userInstance, vmRequest->getVmId(), vmAccepted);
+        userInstance.updateVmInstanceStatus(vmRequest, vmAccepted);
 
         // Emit statistics
         driver.emit(driver.responseSignal, userInstance.getNId());
         driver.emit(driver.executeSignal[""], userInstance.getNId());
 
-        userInstance.getInstanceTimesForUpdate().initExec = simTime();
-
-        // Set to false - did not had to subscribe
-        userInstance.setSubscribe(false);
+        userInstance.startExecution();
 
         // submitService(vmRequest);
         deployApps(vmRequest, userInstance);
@@ -25,18 +22,14 @@ void BaseUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInsta
     else
     {
         // Update the status
-        updateVmsStatus(userInstance, vmRequest->getVmId(), vmIdle);
+        userInstance.updateVmInstanceStatus(vmRequest, vmIdle);
 
         // Update statistics
         driver.emit(driver.responseSignal, userInstance.getNId());
         driver.emit(driver.subscribeSignal[""], userInstance.getNId());
-
-        // Register times
-        userInstance.getInstanceTimesForUpdate().initExec = simTime();
+        
+        // Start the subscription
         userInstance.startSubscription();
-
-        // Register that the user had to subscribe
-        userInstance.setSubscribe(true);
 
         // Subscribe to cloud provider
         vmRequest->setIsResponse(false);
@@ -55,7 +48,8 @@ void BaseUserModel::handleResponseSubscription(SM_UserVM *vmRequest, CloudUserIn
         // Update the status
         const std::string &vmId = vmRequest->getVmId();
 
-        updateVmsStatus(userInstance, vmId, vmAccepted);
+        // Update the status
+        userInstance.updateVmInstanceStatus(vmRequest, vmAccepted);
 
         if (!vmId.empty())
             driver.extensionTimeHashMap.at(vmId)++;
@@ -66,8 +60,7 @@ void BaseUserModel::handleResponseSubscription(SM_UserVM *vmRequest, CloudUserIn
         driver.emit(driver.notifySignal[vmRequest->getVmId()], userInstance.getNId());
         driver.emit(driver.executeSignal[vmRequest->getVmId()], userInstance.getNId());
 
-        if (strcmp(vmRequest->getVmId(), "") == 0) // If well done, should not be possible!
-            userInstance.getInstanceTimesForUpdate().initExec = simTime();
+        userInstance.startExecution();
 
         // Deploy the apps
         deployApps(vmRequest, userInstance);
@@ -75,7 +68,7 @@ void BaseUserModel::handleResponseSubscription(SM_UserVM *vmRequest, CloudUserIn
     else
     {
         // Update the status
-        updateVmsStatus(userInstance, vmRequest->getVmId(), vmFinished);
+        userInstance.updateVmInstanceStatus(vmRequest, vmFinished);
 
         userInstance.endSubscription();
         userInstance.setTimeoutMaxSubscribed();
@@ -90,15 +83,16 @@ void BaseUserModel::handleResponseSubscription(SM_UserVM *vmRequest, CloudUserIn
 void BaseUserModel::handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserInstance &userInstance)
 {
     // NOTE: We assume ACCEPT/TIMEOUT
-    std::string vmId(appRequest->getVmId());
 
     if (appRequest->getResult() == SM_APP_Res_Accept)
     {
-        updateVmsStatus(userInstance, vmId, vmFinished);
-        driver.emit(driver.okSignal[vmId], userInstance.getNId());
+        userInstance.updateVmInstanceStatus(appRequest->getVmId(), vmFinished);
+        driver.emit(driver.okSignal[std::string(appRequest->getVmId())], userInstance.getNId());
     }
     else
         driver.error("Unexpected return result on Applications: UserBaseModel");
+    
+    delete appRequest;
 }
 
 void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance)
@@ -112,10 +106,10 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     response->setIsResponse(false);
     response->setResult(0);
 
-    if (!decidesToRescueVm(extensionOffer, userInstance))
+    if (userInstance.isFinished() || !decidesToRescueVm(extensionOffer, userInstance))
     {
-        // Update the vms status
-        updateVmsStatus(userInstance, extensionOffer->getVmId(), vmFinished);
+        // Update the status
+        userInstance.updateVmInstanceStatus(extensionOffer->getVmId(), vmFinished);
         response->setResult(SM_ExtensionOffer_Reject);
         response->setAccepted(false);
     }
@@ -145,12 +139,13 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
 void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {
     UserAppBuilder builder;
+    int i;
 
     /*
       Bear in mind that the CloudUserInstance checks that for each app collection there's an vmInstance
       It's entirely possible that there aren't enough app collections, so they are the limiting factor here
      */
-    for (int i = 0; i < userInstance.getNumberAppCollections(); i++)
+    for (i = 0; i < userInstance.getNumberAppCollections(); i++)
     {
         AppInstanceCollection *appCollection = userInstance.getAppCollection(i);
         const VM_Request &vmRq = vmRequest->getVm(i);
@@ -187,6 +182,13 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
         }
     }
 
+    // For each vm which is unmapped, mark as already finished
+    for (; i < vmRequest->getVmArraySize(); i++)
+    {
+        const VM_Request &vmRq = vmRequest->getVm(i);
+        userInstance.updateVmInstanceStatus(vmRq.vmId.c_str(), vmFinished);
+    }
+
     // Finish building the deployment
     std::vector<SM_UserAPP *> *appRequests = builder.finish(vmRequest->getUserId(), vmRequest->getReturnTopic());
 
@@ -195,28 +197,6 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
         driver.sendRequestMessage(request, driver.toCloudProviderGate);
 
     delete appRequests;
-}
-
-void BaseUserModel::updateVmsStatus(CloudUserInstance &userInstance, const std::string &vmId, tVmState stateNew)
-{
-    // Iterate though collections
-    for (int i = 0; i < userInstance.getNumberVmCollections(); i++)
-    {
-        for (const auto &instance : userInstance.getVmCollection(i)->allInstances())
-        {
-            if (vmId.empty() || vmId == instance->getVmInstanceId()) // WEIRDCHECK1 -- To be fixed by rescue operation!
-            {
-                tVmState stateOld = instance->getState();
-
-                if (stateOld != vmFinished && stateNew == vmFinished)
-                    userInstance.addFinishedVMs(1);
-                else if (stateOld == vmFinished && stateNew != vmFinished)
-                    userInstance.addFinishedVMs(-1);
-
-                instance->setState(stateNew);
-            }
-        }
-    }
 }
 
 bool BaseUserModel::decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance)

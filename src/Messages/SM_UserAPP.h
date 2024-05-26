@@ -22,7 +22,7 @@ private:
 
 protected:
     group_vector<std::string, AppRequest> vmAppGroupedVector;       //!< Apps stored and grouped by vm in a flat way
-    std::vector<AppRequest> &apps = vmAppGroupedVector.flattened(); //!< Alias for quick access to the flattened version, shall not be modified
+    std::vector<AppRequest> &apps = vmAppGroupedVector.flattenedForUpdate(); //!< Alias for quick access to the flattened version, shall not be modified
 
     /**
      * @brief Sets the Apps Array new size
@@ -56,7 +56,7 @@ public:
     void decreaseFinishedApps() { nFinishedApps--; };
 
     size_t getAppArraySize() const { return vmAppGroupedVector.size(); }
-    AppRequest &getApp(size_t k) { return vmAppGroupedVector.flattened().at(k); }
+    AppRequest &getApp(size_t k) { return vmAppGroupedVector.flattenedForUpdate().at(k); }
     const AppRequest &getApp(size_t k) const { return const_cast<SM_UserAPP *>(this)->getApp(k); };
 
     void changeState(const std::string &service, const std::string &vmId, tApplicationState eNewState);
@@ -127,7 +127,6 @@ public:
     std::vector<SM_UserAPP *> *finish(const char *userId, const char *destinationTopic)
     {
         auto petitions = new std::vector<SM_UserAPP *>();
-        bool first = true;
 
         for (const auto &ip : requests)
         {
@@ -145,13 +144,7 @@ public:
             // Push data in compact and organized way
             for (const auto &elem : ip.second)
             {
-                if (first)
-                {
-                    app->vmAppGroupedVector.at(0) = elem.first;
-                    first = false;
-                }
-                else
-                    app->vmAppGroupedVector.new_collection(elem.first);
+                app->vmAppGroupedVector.new_collection(elem.first);
 
                 for (const auto &appRequest : elem.second)
                     app->vmAppGroupedVector.emplace_back(appRequest);

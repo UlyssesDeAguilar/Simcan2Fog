@@ -14,7 +14,7 @@ public:
      * @brief Construct a new group vector
      * @param rep The representative of the first collection
      */
-    group_vector(const S rep = S()) { boundraries.push_back(collection(this, 0, 0, rep)); }
+    // group_vector(const S rep = S()) { boundraries.push_back(collection(this, 0, 0, rep)); }
 
     /**
      * @brief Inserts a object into the current active collection
@@ -37,15 +37,6 @@ public:
     }
 
     /**
-     * @brief Marks the start of a new collection
-     * @param rep Representative of the collection/group
-     */
-    void new_collection(const S &rep)
-    {
-        boundraries.push_back(collection(this, boundraries.size(), elements.size(), rep));
-    }
-
-    /**
      * @brief Gets the collection size
      * @param index Index of the collection
      * @return size_t Size of given collection or the max number a size_t can hold
@@ -65,7 +56,7 @@ public:
         return boundraries[index + 1].collection_index - boundraries[index].collection_index;
     }
 
-    void reserve(size_t n) { elements.reserve(n); }
+    void reserve(std::size_t n) { elements.reserve(n); }
     size_t size() const { return elements.size(); }
     const S &operator[](size_t index) const { return boundraries[index].element; }
     const S &at(size_t index) const { return boundraries.at(index).element; }
@@ -78,7 +69,8 @@ public:
      * Do not modify or dire things may happen
      * @return std::vector<E>& The reference to the vector containing the elements.
      */
-    std::vector<E> &flattened() { return elements; }
+    const std::vector<E> &flattened() const { return elements; }
+    std::vector<E> &flattenedForUpdate() { return elements; }
 
     class collection
     {
@@ -128,6 +120,18 @@ public:
 
         friend class group_vector;
     };
+
+    /**
+     * @brief Marks the start of a new collection
+     * @param rep Representative of the collection/group
+     */
+    const S &new_collection(const S &rep)
+    {
+        boundraries.push_back(collection(this, boundraries.size(), elements.size(), rep));
+        return boundraries.back().element;
+    }
+
+    void reserveCollections(std::size_t elements) { boundraries.reserve(elements); }
 
     // typename is used because collection<S> is a dependent name
     typedef typename std::vector<collection>::iterator iterator;

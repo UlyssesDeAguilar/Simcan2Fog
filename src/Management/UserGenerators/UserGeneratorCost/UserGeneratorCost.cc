@@ -38,14 +38,9 @@ void UserGeneratorCost::initializeHashMaps()
         auto userInstanceId = userInstance->getId();
         priorizedHashMap[userInstanceId] = false;
 
-        // Across all collections and their instances
-        for (const auto &vmCollection : userInstance->allVmCollections())
+        for (const auto &vmInstance : userInstance->getAllVmInstances())
         {
-            for (const auto &vm : vmCollection->allInstances())
-            {
-                auto vmId = vm->getVmInstanceId();
-                extensionTimeHashMap[vmId] = 0;
-            }
+            extensionTimeHashMap[vmInstance.getId()] = 0;
         }
     }
 }
@@ -90,11 +85,11 @@ void UserGeneratorCost::finish()
             error("Could not cast CloudUser* to CloudUserPriority* (wrong userType or class?)");
 
         // Retrieve times and convert them from seconds into hours
-        auto times = userInstance->getInstanceTimesForUpdate().convertToSeconds();
-        double dInitTime = times.arrival2Cloud.dbl();
+        auto times = userInstance->getInstanceTimesForUpdate().convertToHours();
+        double dInitTime = times.arrival2Cloud;
         // double dEndTime = times.endTime.dbl(); FIXME: Again not used
-        double dExecTime = times.initExec.dbl();
-        double dWaitTime = times.waitTime.dbl();
+        double dExecTime = times.initExec;
+        double dWaitTime = times.waitTime;
 
         double dMaxSub = userInstance->getRentTimes().maxSubscriptionTime;
         if (dMaxSub != 0)
@@ -125,15 +120,15 @@ void UserGeneratorCost::finish()
 
         dTotalSub += dSubTime;
 
-        for (const auto &vmCollection : userInstance->allVmCollections())
+        for (const auto &vmCollection : userInstance->getAllVmInstanceTypes())
         {
-            int nInstances = vmCollection->getNumInstances();
-            int nRentTime = vmCollection->getRentTime();
+            int nInstances = vmCollection.element.numInstances;
+            int nRentTime = vmCollection.element.rentingTime;
 
             // Create a loop to insert all the instances.
-            auto pvmCost = pSla->getVmCost(vmCollection->getVmType());
+            auto pvmCost = pSla->getVmCost(vmCollection.element.base->getType());
             auto &vmCost = pvmCost == nullptr ? *pvmCost : slaZero;
-            
+
             dBaseCost = vmCost.base;
 
             if (bPriorized)
@@ -162,9 +157,9 @@ void UserGeneratorCost::finish()
             dRentingBaseCost = nRentTime * dBaseCost * nInstances;
             dUserCost += dRentingBaseCost;
 
-            for (const auto &vmInstance : vmCollection->allInstances())
+            for (const auto &vmInstance : vmCollection)
             {
-                int nExtendedTime = extensionTimeHashMap.at(vmInstance->getVmInstanceId());
+                int nExtendedTime = extensionTimeHashMap.at(vmInstance.getId());
                 nAcceptOffer += nExtendedTime;
                 if (nExtendedTime > 0)
                 {

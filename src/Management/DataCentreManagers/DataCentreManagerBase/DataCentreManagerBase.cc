@@ -306,9 +306,11 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
     EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserId() << nTotalRequestedCores
              << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
 
+    
     // Start the deployment
     VmDeployment deployment(resourceManager, userVM_Rq);
 
+    EV_DEBUG << "Attempting deployment" << "\n";
     // Process all the vms
     for (int i = 0; i < nRequestedVms; i++)
     {
@@ -333,6 +335,7 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
             return false;
         }
     }
+    EV_DEBUG << "Deployment was succesfull" << "\n";
 
     // Store request as accepted -- In case of renting extenion this will be useful !
     acceptedUsersRqMap[userId] = userVM_Rq->getReturnTopic();

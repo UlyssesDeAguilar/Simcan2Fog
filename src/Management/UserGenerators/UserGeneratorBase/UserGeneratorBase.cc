@@ -160,8 +160,8 @@ void UserGeneratorBase::generateUserArrivalTimes()
             // Set init and arrival time!
             lastTime = getNextTime(userInstance, lastTime);
             InstanceTimes &times = userInstance->getInstanceTimesForUpdate();
-            times.initTime = lastTime;
-            times.arrival2Cloud = lastTime;
+            times.initTime = lastTime.inUnit(SIMTIME_S);
+            times.arrival2Cloud = lastTime.inUnit(SIMTIME_S);
         }
     }
 }
@@ -212,9 +212,6 @@ SimTime UserGeneratorBase::getNextTime(CloudUserInstance *pUserInstance, SimTime
 
 SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
 {
-    int nCollectionNumber;
-    std::string userId;
-
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - Init\n";
 
     if (pUserInstance == nullptr)
@@ -223,9 +220,8 @@ SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
         return nullptr;
     }
 
+    const std::string &userId = pUserInstance->getId();
     pUserInstance->setRentTimes(timeoutsTemplate);
-    nCollectionNumber = pUserInstance->getNumberVmCollections();
-    userId = pUserInstance->getId();
 
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - UserId: " << userId
              << " | maxStartTime_t1: " << timeoutsTemplate.maxStartTime
@@ -233,7 +229,7 @@ SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
              << " | maxSubTime: " << timeoutsTemplate.maxSubTime
              << " | MaxSubscriptionTime:" << timeoutsTemplate.maxSubscriptionTime << "\n";
 
-    if (nCollectionNumber <= 0 || userId.size() <= 0)
+    if (pUserInstance->getTotalVMs() <= 0 || userId.size() <= 0)
     {
         EV_TRACE << "WARNING! [UserGenerator] Collection or User-ID malformed\n";
         throw cRuntimeError("[UserGenerator] Collection or User-ID malformed!");
@@ -245,18 +241,12 @@ SM_UserVM *UserGeneratorBase::createVmRequest(CloudUserInstance *pUserInstance)
     pUserRet->setIsResponse(false);
     pUserRet->setOperation(SM_VM_Req);
 
-    // Get all the collections and all the instances!
-    for (const auto &vmCollection : pUserInstance->allVmCollections())
+    for (const auto &vmInstance : pUserInstance->getAllVmInstances())
     {
-        double dRentTime = vmCollection->getRentTime() * 3600; // From hours to seconds
-        std::string vmType = vmCollection->getVmType();
-
-        // Create a loop to insert all the instances.
-        for (const auto &instance : vmCollection->allInstances())
-        {
-            std::string instanceId = instance->getVmInstanceId();
-            pUserRet->createNewVmRequest(vmType, instanceId, timeoutsTemplate);
-        }
+        std::string vmType = vmInstance.getVmType();
+        std::string instanceId = vmInstance.getId();
+        // double dRentTime = vmCollection->getRentTime() * 3600; // From hours to seconds FIXME: Originally ignored by the timeoutsTemplate
+        pUserRet->createNewVmRequest(vmType, instanceId, timeoutsTemplate);
     }
 
     EV_TRACE << LogUtils::prettyFunc(__FILE__, __func__) << " - End\n";
