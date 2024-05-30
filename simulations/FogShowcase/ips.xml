@@ -1,0 +1,43 @@
+<config>
+   <interface hosts="FogShowcase.cp" names="eth0" address="1.1.1.1" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.router_bb" names="eth0" address="10.0.0.1" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.smq" names="eth0" address="24.24.24.24" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.router_bb" names="eth1" address="10.0.0.5" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.router_bb" names="eth2" address="10.0.0.9" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.dc.stack" names="eth0" address="10.0.0.10" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.router_bb" names="eth3" address="10.0.0.13" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="FogShowcase.ug.ns" names="eth0" address="10.0.0.14" netmask="255.255.255.252" metric="200"/>
+   <multicast-group hosts="FogShowcase.cp" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="FogShowcase.router_bb" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="FogShowcase.smq" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="FogShowcase.router_bb" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="FogShowcase.router_bb" interfaces="eth2" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="FogShowcase.dc.stack" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="FogShowcase.router_bb" interfaces="eth3" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="FogShowcase.ug.ns" interfaces="eth0" address="224.0.0.1"/>
+   <route hosts="FogShowcase.cp" destination="1.1.1.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.cp" destination="1.1.1.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="FogShowcase.cp" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="FogShowcase.cp" destination="*" netmask="*" gateway="10.0.0.1" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.smq" destination="24.24.24.24" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.smq" destination="24.24.24.24" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="FogShowcase.smq" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="FogShowcase.smq" destination="*" netmask="*" gateway="10.0.0.5" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.router_bb" destination="1.1.1.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.router_bb" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="FogShowcase.router_bb" destination="10.0.0.4" netmask="255.255.255.252" gateway="*" interface="eth1" metric="200"/>
+   <route hosts="FogShowcase.router_bb" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth2" metric="0"/>
+   <route hosts="FogShowcase.router_bb" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth2" metric="200"/>
+   <route hosts="FogShowcase.router_bb" destination="10.0.0.12" netmask="255.255.255.252" gateway="*" interface="eth3" metric="0"/>
+   <route hosts="FogShowcase.router_bb" destination="10.0.0.12" netmask="255.255.255.252" gateway="*" interface="eth3" metric="200"/>
+   <route hosts="FogShowcase.router_bb" destination="24.24.24.24" netmask="255.255.255.252" gateway="*" interface="eth1" metric="0"/>
+   <route hosts="FogShowcase.router_bb" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="FogShowcase.dc.stack" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.dc.stack" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="FogShowcase.dc.stack" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="FogShowcase.dc.stack" destination="*" netmask="*" gateway="10.0.0.9" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.ug.ns" destination="10.0.0.12" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="FogShowcase.ug.ns" destination="10.0.0.12" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="FogShowcase.ug.ns" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="FogShowcase.ug.ns" destination="*" netmask="*" gateway="10.0.0.13" interface="eth0" metric="0"/>
+</config>

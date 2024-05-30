@@ -53,8 +53,7 @@ OBJS = \
     $O/Architecture/Network/Stack/Queue/QueuePushClient.o \
     $O/Architecture/Network/Switch/Switch.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \
-    $O/Architecture/Nodes/Iot/IotController.o \
-    $O/Architecture/Nodes/Iot/IotSensor.o \
+    $O/Architecture/Nodes/Iot/Internals/IotSensorModel.o \
     $O/Core/cSIMCAN_Core.o \
     $O/Core/CheckingHubModule/CheckingHubModule.o \
     $O/Core/DataManager/DataManager.o \
@@ -108,6 +107,7 @@ OBJS = \
     $O/UserModel/Edge/EdgeUserModelDriver.o \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
+    $O/Architecture/Nodes/Iot/IotPayload_m.o \
     $O/Management/CloudProvider/NodeEvent_m.o \
     $O/Messages/DNS_Request_m.o \
     $O/Messages/INET_AppMessage_m.o \
@@ -128,6 +128,7 @@ OBJS = \
 MSGFILES = \
     Architecture/Network/RoutingInfo/RoutingInfo.msg \
     Architecture/Network/Stack/NetworkIOEvent.msg \
+    Architecture/Nodes/Iot/IotPayload.msg \
     Management/CloudProvider/NodeEvent.msg \
     Messages/DNS_Request.msg \
     Messages/INET_AppMessage.msg \

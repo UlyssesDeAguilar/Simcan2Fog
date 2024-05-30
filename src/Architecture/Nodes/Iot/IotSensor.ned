@@ -1,13 +1,13 @@
 package simcan2.Architecture.Nodes.Iot;
-import simcan2.Core.cSIMCAN_Core;
+import simcan2.Architecture.Nodes.Iot.Internals.IotSensorModel;
+import inet.node.inet.SensorNode;
 
-// Simple node that represents an IoT sensor
-simple IotSensor extends cSIMCAN_Core{
-    parameters:
-        double updatePeriod @unit(s) = default(10s);
-        @class(IotSensor);
-        @display("i=misc/sensor2");
-    gates:
-        input in;
-        output out;
+module IotSensor extends SensorNode
+{    
+	submodules:
+	    model: IotSensorModel;
+	    
+	connections:
+	    at.in++ <-- model.socketOut;
+	    at.out++ --> model.socketIn;
 }
