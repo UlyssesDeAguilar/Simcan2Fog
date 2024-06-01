@@ -10,88 +10,80 @@
 #ifndef SIMCAN_EX_DNS_COMMON
 #define SIMCAN_EX_DNS_COMMON
 
-#include "Messages/DNS_Request.h"
 #include <memory>
-
-#define DNS_PORT 53
+#include <omnetpp.h>
+#include "inet/networklayer/common/L3Address.h"
 
 namespace dns
 {
-    // Defines the common association between URL and Resource Record
-    typedef std::map<std::string, ResourceRecord> NameIpMap;
+    using namespace omnetpp;
+    using namespace inet;
+    
+    /*
+        Based on the RFC 1034/1035 and the explanation found in:
+        http://www.tcpipguide.com/free/t_DNSNameServerDataStorageResourceRecordsandClasses-3.htm#Table_166
+    */
+
+    constexpr uint32_t DNS_PORT = 53;
 
     // Root DNS server IP (in reality is the I root server - ICANN)
-    const L3Address ROOT_DNS_IP = L3Address("199.7.83.42");
-
-    /**
-     * @brief Commodity struct for extracting information from a DNS domain name
-     * @author Ulysses de Aguilar Gudmundsson
-     */
-    struct DomainName
+    static const Ipv4Address ROOT_DNS_IP("199.7.83.42");
+    typedef enum
     {
-        uint8_t topLevelIdx;
-        std::unique_ptr<const std::string> domainName;
+        QUERY,    // Standard query
+        IQUERY,   // Used for inverse querys 				(obsolete)
+        STATUS,   // Request for status					(currently not used)
+        NOTIFY,   // Notify for Zone Transfer				(currently not used)
+        UPDATE_R, // Update the Resource Records (Add new ones)
+        UPDATE_D  // Update the Resource Records (Delete selected ones)
+    } OP_Code;
 
-        DomainName(std::string const &domainName)
+    typedef enum
+    {
+        NOERROR,  // DNS Query completed successfully
+        FORMERR,  // DNS Query Format Error
+        SERVFAIL, // Server failed to complete the DNS request
+        NXDOMAIN, // Domain name does not exist
+        NOTIMP,   // Function not implemented
+        REFUSED,  // The server refused to answer for the query (currently not used)
+        YXDOMAIN, // Name that should not exist, does exist	  (currently not used)
+        XRRSET,   // RRset that should not exist, does exist	  (currently not used)
+        NOTAUTH,  // Server not authoritative for the zone	  (currently not used)
+        NOTZONE   // Name not in zone							  (currently not used)
+    } ReturnCode;
+
+    typedef enum
+    {
+        A,     // Address
+        NS,    // Name Server
+        CNAME, // Canonical Name
+        SOA,   // Start of Authority
+        PTR,   // Pointer
+        MX,    // eMail eXchange
+        TXT    // Text string (arbitrary text)
+    } RR_Type;
+
+    struct ResourceRecord
+    {
+        opp_string domain;
+        RR_Type type;
+        inet::L3Address ip;
+
+        const char *typeToStr() const
         {
-            // Auto managed unique name reference
-            this->domainName = std::unique_ptr<const std::string>(new std::string(domainName));
-            std::stringstream stream(domainName);
-            std::string token[3], buffer;
-            int i;
-
-            // Iterate and fill the plausible fields
-            for (i = 0; std::getline(stream, buffer, '.'); i++)
-            {
-                if (i < 3)
-                    token[i] = buffer;
-                else
-                    throw std::invalid_argument("domainName: There are too many subdomains (maximum 1)");
-            }
-
-            /*for (int j = 0; j < i; j++)
-                std::cout << "Token:" << j << " " << token[j] << token[j].length() <<  std::endl;*/
-
-            // If there are 0 tokens or only 1 the domain name is invalid
-            if (i <= 1)
-                throw std::invalid_argument("domainName: There isn't a structure (missing dots ?)");
-
-            // Search for the top level accumulating the length of the subdomains
-            int j = 0;
-            i--;
-            topLevelIdx = 0;
-
-            for (; j < i; j++)
-                topLevelIdx += token[j].length();
-
-            // Add the amount of dots
-            topLevelIdx += i - 1;
-        };
-
-        /**
-         * @brief Returns the complete domain name
-         *
-         * @return std::string const& Constant reference to the string containing the full domain name
-         */
-        std::string const &getFullName()
-        {
-            return *(domainName.get());
+            static const char *RR_TypeToStr[] = {"A", "NS", "CNAME", "SOA", "PTR", "MX", "TXT"};
+            return RR_TypeToStr[type];
         }
 
-        /**
-         * @brief Get the Top Level Domain Name object
-         *
-         * @param str Reference to the string where the TLD name will be written
-         */
-        void getTopLevelDomainName(std::string &str)
+        friend std::ostream &operator<<(std::ostream &os, const ResourceRecord &r)
         {
-            if (topLevelIdx > 0)
-                str = domainName->substr(topLevelIdx);
-            else
-                str = *domainName.get();
+            return os << "Domain: " << r.domain.c_str() << " | "
+                      << "Type: " << r.typeToStr() << " | "
+                      << "Ip: " << r.ip << " | ";
         }
-
-        bool isNameServer() { return topLevelIdx == 0; }
     };
+
+    // Defines the common association between URL and Resource Record
+    typedef std::map<opp_string, std::vector<ResourceRecord>> DomainRecordMap;
 }
 #endif

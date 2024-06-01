@@ -1,8 +1,8 @@
-#include "DNS_Resolver.h"
+#include "DnsResolver.h"
 
-Define_Module(DNS_Resolver);
+Define_Module(DnsResolver);
 
-void DNS_Resolver::initialize(int stage)
+void DnsResolver::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL)
     {
@@ -11,13 +11,13 @@ void DNS_Resolver::initialize(int stage)
     ApplicationBase::initialize(stage);
 }
 
-void DNS_Resolver::finish()
+void DnsResolver::finish()
 {
     // Release the socket (and the other resources)
     mainSocket.close();
 }
 
-void DNS_Resolver::handleStartOperation(LifecycleOperation *operation)
+void DnsResolver::handleStartOperation(LifecycleOperation *operation)
 {
     // Configure the socket
     mainSocket.setOutputGate(gate("socketOut"));
@@ -27,17 +27,17 @@ void DNS_Resolver::handleStartOperation(LifecycleOperation *operation)
     responseSocket.setCallback(this);
 }
 
-void DNS_Resolver::handleStopOperation(LifecycleOperation *operation)
+void DnsResolver::handleStopOperation(LifecycleOperation *operation)
 {
     error("Currently stopping is not supported");
 }
 
-void DNS_Resolver::handleCrashOperation(LifecycleOperation *operation)
+void DnsResolver::handleCrashOperation(LifecycleOperation *operation)
 {
     error("Currently stopping is not supported");
 }
 
-void DNS_Resolver::handleMessageWhenUp(cMessage *msg)
+void DnsResolver::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
@@ -57,7 +57,7 @@ void DNS_Resolver::handleMessageWhenUp(cMessage *msg)
         error("Recieved unkown message");
 }
 
-void DNS_Resolver::sendResponse(SM_ResolverRequest *request, L3Address *ip)
+void DnsResolver::sendResponse(SM_ResolverRequest *request, L3Address *ip)
 {
     // Set the flag to return
     request->setIsResponse(true);
@@ -75,7 +75,7 @@ void DNS_Resolver::sendResponse(SM_ResolverRequest *request, L3Address *ip)
     send(request, gate("moduleOut"));
 }
 
-void DNS_Resolver::handleResolution(SM_ResolverRequest *request)
+void DnsResolver::handleResolution(SM_ResolverRequest *request)
 {
     auto url = std::string(request->getDomainName());
 
@@ -132,7 +132,7 @@ void DNS_Resolver::handleResolution(SM_ResolverRequest *request)
     pendingRequests[newId] = newState;
 }
 
-uint16_t DNS_Resolver::getNewRequestId()
+uint16_t DnsResolver::getNewRequestId()
 {
     // FIXME: Macro for the range of uint16_t ?
     uint16_t newId = (lastId + 1) % 65536;
@@ -147,14 +147,14 @@ uint16_t DNS_Resolver::getNewRequestId()
     return newId;
 }
 
-cMessage *DNS_Resolver::prepareRequestTimeOut(uint16_t requestId)
+cMessage *DnsResolver::prepareRequestTimeOut(uint16_t requestId)
 {
     auto timeOutEvent = new cMessage("Resolution TIMEOUT", requestId);
     scheduleAt(simTime() + timeOut, timeOutEvent);
     return timeOutEvent;
 }
 
-void DNS_Resolver::handleTimeOut(cMessage *msg)
+void DnsResolver::handleTimeOut(cMessage *msg)
 {
     uint16_t id = msg->getKind();
     EV_INFO << "Handling timeout for request: " << id << endl;
@@ -180,7 +180,7 @@ void DNS_Resolver::handleTimeOut(cMessage *msg)
     delete msg;
 }
 
-void DNS_Resolver::socketDataArrived(UdpSocket *socket, Packet *packet)
+void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     // DNS Response analysis
     auto response = dynamic_cast<const DNS_Request *>(packet->peekData().get());
@@ -242,12 +242,12 @@ void DNS_Resolver::socketDataArrived(UdpSocket *socket, Packet *packet)
     delete packet;
 }
 
-void DNS_Resolver::socketErrorArrived(UdpSocket *socket, Indication *indication)
+void DnsResolver::socketErrorArrived(UdpSocket *socket, Indication *indication)
 {
     error("Error in socket communication");
 }
 
-void DNS_Resolver::socketClosed(UdpSocket *socket)
+void DnsResolver::socketClosed(UdpSocket *socket)
 {
     // Technically it is not possible, so it is ignored
 }

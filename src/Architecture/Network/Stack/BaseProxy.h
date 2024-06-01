@@ -9,7 +9,7 @@
 #include "inet/common/socket/SocketMap.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
-#include "Architecture/Network/DNS/Service/DNS_Service.h"
+#include "Architecture/Network/DNS/DnsService.h"
 #include "Messages/SIMCAN_Message.h"
 #include "Messages/INET_AppMessage.h"
 #include "StackMultiplexer.h"
@@ -35,16 +35,15 @@ struct ServiceEntry
 class BaseProxy : public inet::ApplicationBase, public StackService
 {
 private:
-    dns::DNS_Request dnsTemplate{};
-    std::set<ServiceEntry> &findOrRegisterService(const std::string &service, const uint32_t serviceIp);
-    void removeFromPool(const std::string &service, const ServiceEntry &oldEntry);
+    std::set<ServiceEntry> &findOrRegisterService(const char *service, const uint32_t serviceIp);
+    void removeFromPool(const char *service, const ServiceEntry &oldEntry);
 
 protected:
     using ServicePoolMap = std::map<std::string, std::set<ServiceEntry>>;
 
     ServicePoolMap servicePoolMap; //!< Maps services to their pools
     StackMultiplexer *multiplexer; //!< For registering/deleting services on command
-    dns::DNS_Service *localDns;    //!< For registering/deleting DNS entries
+    dns::DnsService *localDns;    //!< For registering/deleting DNS entries
 
     virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }

@@ -4,14 +4,18 @@ import inet.applications.contract.IApp;
 simple IotSensorModel like IApp
 {
     parameters:
+        @class("IotSensorModel");
+        @diplay("i=block/cogwheel");
         string tag;
-        double value;
+        volatile double value;
         string unit;
-        int updatePeriod @unit(s);
-        string controllerPath = default("^.^.controller");
-        int listeningPort = default(-1);
-        int destinationPort = default(1000);
-        double startTime @unit(s) = uniform(0.5, 5);       // application start time (start of the first packet)
+        int updatePeriod @unit(s) = default(10s);
+        string controllerPath = default("^.^.controller.ns");
+        volatile int messageLength @unit(B) = 20B; // length of messages to generate, in bytes
+        string localAddress = default("");
+        int localPort = default(-1);
+        int destPort = default(1000);
+        double startTime @unit(s) = uniform(0.5s, 5s);     // application start time (start of the first packet)
         double stopTime @unit(s) = default(-1s);  	       // time of finishing sending, -1s means forever
         
         @signal[packetSent](type=inet::Packet);

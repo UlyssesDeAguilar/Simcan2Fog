@@ -10,6 +10,7 @@ import inet.node.ethernet.Eth10M;
 
 // Architectural components from SimCan2Fog models
 import simcan2.Architecture.Nodes.Iot.EdgeNode;
+import simcan2.Architecture.Nodes.Iot.LuminositySensor;
 import inet.node.inet.Router;
 import inet.node.inet.SensorNode;
 
@@ -31,7 +32,7 @@ module EdgeTile
         user: EdgeUserModel {
             @display("p=4.6973147,6.008193");
         }
-        device: EdgeNode {
+        controller: EdgeNode {
 
             @display("p=4.6973147,16.131088");
         }
@@ -39,8 +40,8 @@ module EdgeTile
             @display("p=4.6973147,11.579427");
         }
 
-        sensor[sensors]: SensorNode {
-            @display("i=misc/sensor;p=12.125626,15.075103");
+        sensor[sensors]: LuminositySensor {
+            @display("p=12.744652,12.853891");
         }
 
         actuator[actuators]: SensorNode {
@@ -48,8 +49,8 @@ module EdgeTile
         }
 
     connections:
-        device.comm <--> Eth10M <--> router.ethg++;
-        user.ethg++ <--> Eth10M <-->router.ethg++;
-        
+        controller.comm <--> Eth10M <--> router.ethg++;
+        user.ethg++ <--> Eth10M <--> router.ethg++;
+
         router.ethg++ <--> ethernet;
 }

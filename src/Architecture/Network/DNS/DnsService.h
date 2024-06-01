@@ -7,7 +7,9 @@
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/transportlayer/common/L4PortTag_m.h"
 #include "inet/networklayer/common/L3Address.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
 #include "Architecture/Network/DNS/common.h"
+#include "Messages/DnsRequest_m.h"
 
 /**
  * @brief Class that provides the DNS service
@@ -15,25 +17,29 @@
  */
 namespace dns
 {
-    using namespace inet;
-    class DNS_Service : public ApplicationBase, UdpSocket::ICallback
+
+    class DnsService : public ApplicationBase, UdpSocket::ICallback
     {
+    protected:
+        enum Mode
+        {
+            ROOT,
+            TLD,
+            NS
+        };
 
-    private:
-        // typedef std::map<L3Address, std::string&> IpNameMap; Could be used to do reverse resolutions
+        Mode mode;
+        const char *serverName;
+        DomainRecordMap records;
+        L3Address localAddress;
+        std::vector<std::string> fqdn;
 
-        static std::set<std::string> prefixSet; //= {"dc", "fg", "ed", "cloudProvider", "userGenerator"};
-
-        NameIpMap records;
-        const char *config_file;
-        bool isMain; // Indicates wheter it is the root DNS or not !
-        bool debug;  // Wheter to print or not the obtained debug information
-
-        void processXMLInterface(cXMLElement *elem);
-        bool filterHostByName(std::string hostName);
+        Mode parseMode(const char *mode);
+        void scanNetwork();
+        std::vector<ResourceRecord>* processQuestion(const char *domain);
+        DnsRequest* prepareResponse(const DnsRequest* request);
 
     public:
-        typedef void (DNS_Service::*Handler_t)(const DNS_Request *, DNS_Request *);
         UdpSocket socket;
 
         // Debug utility
@@ -51,11 +57,13 @@ namespace dns
 
         // Logic
         virtual void handleMessageWhenUp(cMessage *msg) override { socket.processMessage(msg); }
-        DNS_Request *selectAndExecHandler(const DNS_Request *request);
-        void handleInsert(const DNS_Request *request, DNS_Request *response);
-        void handleQuery(const DNS_Request *request, DNS_Request *response);
-        void handleDelete(const DNS_Request *request, DNS_Request *response);
-        void handleNotImplemented(const DNS_Request *request, DNS_Request *response);
+        void handleQuery(const Packet *request);
+        void handleNotImplemented(const Packet *request);
+        void sendResponseTo(const Packet *packet, DnsRequest *request);
+
+        // Only makes sense when integrated with network stack
+        void registerService(const char *serviceName);
+        void unregisterService(const char *serviceName);
 
         // Socket callbacks
         virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;

@@ -11,6 +11,6 @@ enum IotCommand
 class IotPayload extends inet::FieldsChunk
 {
     string tag;
-    string value;
+    double value;
     string unit;
 }

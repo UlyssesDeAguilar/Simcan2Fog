@@ -8,6 +8,7 @@
 #include "Architecture/Network/DNS/common.h"
 #include "Messages/SM_ResolverRequest_m.h"
 #include "Architecture/Network/Stack/StackMultiplexer.h"
+#include "Messages/DnsRequest_m.h"
 
 using namespace inet;
 using namespace dns;
@@ -33,7 +34,7 @@ struct RequestState
     }
 };
 
-class DNS_Resolver : public ApplicationBase, public UdpSocket::ICallback, public StackService
+class DnsResolver : public ApplicationBase, public UdpSocket::ICallback, public StackService
 {
 private:
 protected:

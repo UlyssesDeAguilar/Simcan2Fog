@@ -1,14 +1,14 @@
-package simcan2.Architecture.Network.Adapter.Message;
+package simcan2.Architecture.Network.Stack.Resolver;
 import inet.applications.contract.IApp;
 
-// Module for message translation between cSIMCAN_Message
-// and Packet (from INET) coming from a TCP connection
+// Module for resolving addresses
 // 
 // @author Ulysses de Aguilar Gudmundsson
-// @date 2023-09-10
-simple MessageAdapter like IApp {
+// @date 2023-10-6
+simple DnsResolver like IApp {
     parameters:
-    	@class(MessageAdapter);
+    	@class(DnsResolver);
+        double timeOut = default(10.0);
     gates:
         // Must be connected dynamically because of the definition 
         // of the IApp interface and the module composition of NetworkAdapter

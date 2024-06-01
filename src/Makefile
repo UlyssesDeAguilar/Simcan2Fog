@@ -28,13 +28,7 @@ OBJS = \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
     $O/Architecture/Disk/DiskManager.o \
-    $O/Architecture/Network/Adapter/Message/MessageAdapter.o \
-    $O/Architecture/Network/Adapter/Message/Managers/BaseManager.o \
-    $O/Architecture/Network/Adapter/Message/Managers/RequestManager.o \
-    $O/Architecture/Network/Adapter/Message/Managers/ResponseManager.o \
-    $O/Architecture/Network/Adapter/Multiplexer/RequestMultiplexer.o \
-    $O/Architecture/Network/Adapter/Resolver/DNS_Resolver.o \
-    $O/Architecture/Network/DNS/Service/DNS_Service.o \
+    $O/Architecture/Network/DNS/DnsService.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
     $O/Architecture/Network/MessageQueue/MessageQueueManager.o \
@@ -51,6 +45,7 @@ OBJS = \
     $O/Architecture/Network/Stack/Listener/UdpListener.o \
     $O/Architecture/Network/Stack/Queue/QueuePullClient.o \
     $O/Architecture/Network/Stack/Queue/QueuePushClient.o \
+    $O/Architecture/Network/Stack/Resolver/DnsResolver.o \
     $O/Architecture/Network/Switch/Switch.o \
     $O/Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.o \
     $O/Architecture/Nodes/Iot/Internals/IotSensorModel.o \
@@ -89,7 +84,6 @@ OBJS = \
     $O/Management/dataClasses/VirtualMachines/VmInstance.o \
     $O/Management/utils/LogUtils.o \
     $O/Messages/AppRequest.o \
-    $O/Messages/DNS_Request.o \
     $O/Messages/INET_AppMessage.o \
     $O/Messages/SIMCAN_Message.o \
     $O/Messages/SM_CPU_Message.o \
@@ -109,7 +103,7 @@ OBJS = \
     $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
     $O/Architecture/Nodes/Iot/IotPayload_m.o \
     $O/Management/CloudProvider/NodeEvent_m.o \
-    $O/Messages/DNS_Request_m.o \
+    $O/Messages/DnsRequest_m.o \
     $O/Messages/INET_AppMessage_m.o \
     $O/Messages/SIMCAN_Message_m.o \
     $O/Messages/SM_CloudProvider_Control_m.o \
@@ -130,7 +124,7 @@ MSGFILES = \
     Architecture/Network/Stack/NetworkIOEvent.msg \
     Architecture/Nodes/Iot/IotPayload.msg \
     Management/CloudProvider/NodeEvent.msg \
-    Messages/DNS_Request.msg \
+    Messages/DnsRequest.msg \
     Messages/INET_AppMessage.msg \
     Messages/SIMCAN_Message.msg \
     Messages/SM_CloudProvider_Control.msg \

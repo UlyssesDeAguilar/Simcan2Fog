@@ -35,6 +35,10 @@ void IotSensorModel::initialize(int stage)
         startTime = par("startTime");
         stopTime = par("stopTime");
 
+        value = &par("value");
+        tag = par("tag");
+        unit = par("unit");
+
         if (stopTime >= SIMTIME_ZERO && stopTime < startTime)
             throw cRuntimeError("Invalid startTime/stopTime parameters");
         selfMsg = new cMessage("sendTimer");
