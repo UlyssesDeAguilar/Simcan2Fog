@@ -101,9 +101,10 @@ ConnectionMode UserAppBase::mapService(StackServiceType type)
 void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
 {
     // Resolver came back
-    auto syscall = check_and_cast<ResolverSyscall *>(msg);
+    auto syscall = dynamic_cast<ResolverSyscall *>(msg);
     if (syscall)
     {
+        EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " got resolver response \n";
         returnContext.result = (SyscallResult)syscall->getResult();
         returnContext.rf = syscall->getResolvedIp();
         delete syscall;
@@ -115,15 +116,19 @@ void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
     auto event = check_and_cast<SocketIoSyscall *>(msg);
     if (event->getOpCode() == OPEN_CLI)
     {
+        EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " got socket opened \n";
         AppSocket s;
         s.mode = mapService((StackServiceType)event->getKind());
         socketMap[event->getSocketFd()] = s;
+        returnContext.result = OK;
+        returnContext.rf = event->getSocketFd();
     }
     else
     {
         // Assuming RECV
         if (event->getResult() == OK)
         {
+            EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " got incoming package \n";
             auto &s = socketMap[event->getSocketFd()];
             s.chunks.push_back(event->getPayload());
 
@@ -134,12 +139,14 @@ void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
             }
             else
             {
+                EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " immediate dispatch \n";
                 returnContext.chunk = s.chunks.front();
                 s.chunks.pop_front();
             }
         }
         else
         {
+            EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " socket failed \n";
             // Socket failed or returned that the peer closed!
             socketMap.erase(event->getSocketFd());
             returnContext.interrupt = true;
@@ -188,6 +195,7 @@ void UserAppBase::__run()
     {
         pc++;
         rerun = run();
+        EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "] Current PC: " << pc << " \n";
     } while (rerun);
 }
 

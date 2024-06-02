@@ -44,7 +44,10 @@ bool LocalIotApplication::run()
         if (returnContext.result == ERROR)
             abort();
         else
+        {
             udpSocket = returnContext.rf;
+            rerun = true;
+        }
         break;
     }
     case 2:

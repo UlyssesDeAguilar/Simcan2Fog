@@ -270,5 +270,6 @@ void Hypervisor::handleIncomingEvent(IncomingEvent *event)
 
     result->setVmId(vmId);
     result->setPid(pid);
+    result->setNextModuleIndex(pid);
     sendRequestMessage(result, appGates.outBaseId + vmId);
 }

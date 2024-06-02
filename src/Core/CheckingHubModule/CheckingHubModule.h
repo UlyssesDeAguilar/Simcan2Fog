@@ -24,10 +24,10 @@
 class CheckingHubModule : public cSIMCAN_Core
 {
 protected:
-    cGate **fromInputGates;
-    cGate **fromOutputGates;
-    cGate **toInputGates;
-    cGate **toOutputGates;
+    int upperSize;
+    int lowerSize;
+    GateInfo lower;
+    GateInfo upper;
     bool staticAppAssignment;
 
     virtual void initialize() override;
