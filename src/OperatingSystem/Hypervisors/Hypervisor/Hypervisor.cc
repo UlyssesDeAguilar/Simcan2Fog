@@ -1,5 +1,7 @@
 #include "Hypervisor.h"
+
 using namespace hypervisor;
+using namespace networkio;
 
 void Hypervisor::initialize(int stage)
 {
@@ -49,16 +51,26 @@ void Hypervisor::initialize(int stage)
 void Hypervisor::finish()
 {
     // Now it's empty as we use a std::vector!
-    for (auto & entry : vmsControl)
+    for (auto &entry : vmsControl)
     {
-        if (entry.first){
-            VmControlBlock& control = entry.second;
-            cancelAndDelete(control.timeOut);                
+        if (entry.first)
+        {
+            VmControlBlock &control = entry.second;
+            cancelAndDelete(control.timeOut);
         }
     }
 
     // Reset the control tables
     vmsControl.clear();
+}
+
+void Hypervisor::handleMessage(cMessage *msg)
+{
+    auto event = dynamic_cast<IncomingEvent *>(msg);
+    if (event)
+        handleIncomingEvent(event);
+    else
+        cSIMCAN_Core::handleMessage(msg);
 }
 
 cGate *Hypervisor::getOutGate(cMessage *msg)
@@ -76,7 +88,7 @@ cGate *Hypervisor::getOutGate(cMessage *msg)
         return gate(networkGates.outBaseId);
     else if (appGates.inBaseId == baseIndex)
     {
-        auto syscall = check_and_cast<SM_Syscall *>(msg);
+        auto syscall = check_and_cast<Syscall *>(msg);
         int arrivalIndex = arrivalGate->getIndex();
 
         // This allows the app hub to return the result
@@ -91,7 +103,6 @@ cGate *Hypervisor::getOutGate(cMessage *msg)
 
 void Hypervisor::processSelfMessage(cMessage *msg)
 {
-
     switch (msg->getKind())
     {
     case AutoEvent::VM_TIMEOUT:
@@ -124,14 +135,13 @@ void Hypervisor::processRequestMessage(SIMCAN_Message *msg)
     }
     case SM_Syscall_Req:
     {
-        auto sysCall = check_and_cast<SM_Syscall *>(msg);
+        auto sysCall = check_and_cast<Syscall *>(msg);
         VmControlBlock &vmControl = vmsControl.at(sysCall->getVmId());
 
         if (vmControl.state == vmSuspended)
             vmControl.callBuffer.push_back(sysCall);
         else
             osCore.processSyscall(sysCall);
-
         break;
     }
     // Add the network packages !
@@ -145,44 +155,28 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *msg)
     // Mostly it will be:
     // 1 - CPU status update (including finish)
     // 2 - Disk finished IO
-    switch (msg->getOperation())
+
+    auto response = check_and_cast<Syscall *>(msg);
+
+    // If it is an update from the scheduler
+    if (response->getOperation() == SM_ExecCpu)
     {
-    case SM_ExecCpu:
-    {
-        auto appId = check_and_cast<AppIdLabel *>(msg->getControlInfo());
-        VmControlBlock &vmControl = vmsControl.at(appId->getVmId());
         auto cpuRequest = check_and_cast<SM_CPU_Message *>(msg);
-        // If the batch is complete -> notify the app
-        if (cpuRequest->isCompleted())
+        if (!cpuRequest->isCompleted())
         {
-            drop(cpuRequest);
-            auto originalRequest = reinterpret_cast<SM_Syscall *>(cpuRequest->getContextPointer());
-            originalRequest->setIsResponse(true);
-            if (vmControl.state == vmSuspended)
-                vmControl.callBuffer.push_back(originalRequest);
-            else
-                sendResponseMessage(originalRequest);
+            delete msg;
+            return;
         }
-        else
-        {
-            // TODO: Update or emit statistics ?
-            delete cpuRequest;
-        }
-        break;
     }
-    default:
-    {
-        auto response = check_and_cast<SM_Syscall *>(msg);
-        response->setIsResponse(true);
-        VmControlBlock &vmControl = vmsControl.at(response->getVmId());
-        // Assuming disk io finished
-        if (vmControl.state == vmSuspended)
-            vmControl.callBuffer.push_back(response);
-        else
-            sendResponseMessage(response);
-        break;
-    }
-    }
+
+    response->setIsResponse(true);
+    VmControlBlock &vmControl = vmsControl.at(response->getVmId());
+
+    // Assuming disk io finished
+    if (vmControl.state == vmSuspended)
+        vmControl.callBuffer.push_back(response);
+    else
+        sendResponseMessage(response);
 }
 
 void Hypervisor::handleAppRequest(SM_UserAPP *sm)
@@ -207,4 +201,70 @@ void Hypervisor::handleAppRequest(SM_UserAPP *sm)
     }
 
     // Send update -> Deployment status?
+}
+
+void Hypervisor::handleIncomingEvent(IncomingEvent *event)
+{
+    auto pid = event->getPid();
+    auto vmId = event->getVmId();
+
+    Syscall *result = nullptr;
+
+    switch (event->getType())
+    {
+    case RESOLVER_NOERROR:
+    {
+        auto sys = new ResolverSyscall();
+        sys->setOpCode(RESOLVE);
+        sys->setResult(OK);
+        sys->setResolvedIp(event->getResolvedIp());
+        result = sys;
+        break;
+    }
+    case RESOLVER_NXDOMAIN:
+    {
+        auto sys = new ResolverSyscall();
+        sys->setOpCode(RESOLVE);
+        sys->setResult(ERROR);
+        sys->setDomainName(event->getServiceName());
+        result = sys;
+        break;
+    }
+    case SOCKET_ESTABLISHED:
+    {
+        auto sys = new SocketIoSyscall();
+        sys->setOpCode(OPEN_CLI);
+        sys->setResult(OK);
+        sys->setSocketFd(event->getSocketId());
+        result = sys;
+        break;
+    }
+    case SOCKET_DATA_ARRIVED:
+    {
+        auto sys = new SocketIoSyscall();
+        sys->setOpCode(RECV);
+        sys->setResult(OK);
+        sys->setSocketFd(event->getSocketId());
+        sys->setPayload(event->getPayload());
+        result = sys;
+        break;
+    }
+    case SOCKET_FAILURE:
+    case SOCKET_PEER_CLOSED:
+    {
+        auto sys = new SocketIoSyscall();
+        sys->setOpCode(RECV);
+        sys->setResult(ERROR);
+        sys->setSocketFd(event->getSocketId());
+        result = sys;
+        break;
+    }
+    default:
+        error("Could not interpret network event with code %d", event->getType());
+        break;
+    }
+
+    result->setVmId(vmId);
+    result->setPid(pid);
+    sendRequestMessage(result, appGates.outBaseId + vmId);
 }

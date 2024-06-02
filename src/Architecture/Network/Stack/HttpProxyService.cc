@@ -1,12 +1,13 @@
 #include "HttpProxyService.h"
+using namespace inet;
 
 Define_Module(HttpProxyService);
 
 TcpBaseProxyThread *HttpProxyService::newTcpThread() { return new HttpProxyThread(); }
 
-void HttpProxyThread::selectFromPool(SIMCAN_Message *sm)
+void HttpProxyThread::selectFromPool(Ptr<const Chunk> chunk)
 {
-    auto httpRequest = check_and_cast<SM_REST_API *>(sm);
+    auto httpRequest = dynamic_pointer_cast<const SM_REST_API>(chunk);
 
     auto serviceReference = proxy->getServicePoolMap().find(httpRequest->getUrl());
 

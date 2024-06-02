@@ -1,4 +1,6 @@
-import Messages.SIMCAN_Message;
+//import inet.common.packet.chunk.Chunk;
+//import Messages.SIMCAN_Message;
+import Core.PayloadMessage;
 
 namespace networkio;
 
@@ -21,14 +23,13 @@ enum Command
     RESOLVE_DOMAIN = 3; // Request to resolve a given domain
 };
 
-message EventBase
+message EventBase extends PayloadMessage
 {
     uint32_t vmId;   // For the hypervisor
     uint32_t pid;
     uint32_t ip;
     uint32_t socketId;
     string serviceName;
-    SIMCAN_Message *package;
 }
 
 message CommandEvent extends EventBase

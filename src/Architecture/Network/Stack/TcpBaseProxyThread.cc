@@ -16,13 +16,10 @@ void TcpBaseProxyThread::socketDeleted(inet::TcpSocket *socket)
 
 void TcpBaseProxyThread::socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent)
 {
-    auto chunk = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
-    auto sm = const_cast<SIMCAN_Message *>(chunk->getAppMessage());
-
     if (service == nullptr)
     {
         // The thread must select a process to handle over the request
-        selectFromPool(sm);
+        selectFromPool(packet->peekData());
 
         // If the pool was saturated
         if (service == nullptr)
@@ -38,7 +35,7 @@ void TcpBaseProxyThread::socketDataArrived(TcpSocket *socket, Packet *packet, bo
     // The thread is already established and connected
     eventTemplate->setType(networkio::SOCKET_DATA_ARRIVED);
     auto event = eventTemplate->dup();
-    event->setPackage(sm);
+    event->setPayload(packet->peekData());
     proxy->multiplexer->processResponse(event);
 
     delete packet;
@@ -47,8 +44,7 @@ void TcpBaseProxyThread::socketDataArrived(TcpSocket *socket, Packet *packet, bo
 void TcpBaseProxyThread::sendMessage(networkio::CommandEvent *event)
 {
     // Emplace into the envelope the message
-    auto chunk = makeShared<INET_AppMessage>(event->getPackageForUpdate());
-    auto packet = new Packet("Adapter Packet", chunk);
+    auto packet = new Packet("Adapter Packet", event->getPayload());
 
     // Deliver the envelope (Check all the stuff about the ip stack and everything)
     socket->send(packet);

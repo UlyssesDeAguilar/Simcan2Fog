@@ -106,6 +106,7 @@ OBJS = \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
     $O/Architecture/Nodes/Iot/IotPayload_m.o \
+    $O/Core/PayloadMessage_m.o \
     $O/Management/CloudProvider/NodeEvent_m.o \
     $O/Messages/DnsRequest_m.o \
     $O/Messages/INET_AppMessage_m.o \
@@ -115,11 +116,11 @@ OBJS = \
     $O/Messages/SM_FogIO_m.o \
     $O/Messages/SM_ResolverRequest_m.o \
     $O/Messages/SM_REST_API_m.o \
-    $O/Messages/SM_Syscall_m.o \
     $O/Messages/SM_UserAPP_m.o \
     $O/Messages/SM_UserVM_m.o \
     $O/Messages/SM_UserVM_Cost_m.o \
     $O/Messages/SM_VmExtend_m.o \
+    $O/Messages/Syscall_m.o \
     $O/OperatingSystem/AppIdLabel/AppIdLabel_m.o
 
 # Message files
@@ -127,6 +128,7 @@ MSGFILES = \
     Architecture/Network/RoutingInfo/RoutingInfo.msg \
     Architecture/Network/Stack/NetworkIOEvent.msg \
     Architecture/Nodes/Iot/IotPayload.msg \
+    Core/PayloadMessage.msg \
     Management/CloudProvider/NodeEvent.msg \
     Messages/DnsRequest.msg \
     Messages/INET_AppMessage.msg \
@@ -136,11 +138,11 @@ MSGFILES = \
     Messages/SM_FogIO.msg \
     Messages/SM_ResolverRequest.msg \
     Messages/SM_REST_API.msg \
-    Messages/SM_Syscall.msg \
     Messages/SM_UserAPP.msg \
     Messages/SM_UserVM.msg \
     Messages/SM_UserVM_Cost.msg \
     Messages/SM_VmExtend.msg \
+    Messages/Syscall.msg \
     OperatingSystem/AppIdLabel/AppIdLabel.msg
 
 # SM files

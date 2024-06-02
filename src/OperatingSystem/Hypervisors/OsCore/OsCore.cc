@@ -1,7 +1,10 @@
 #include "OsCore.h"
 #include "OperatingSystem/Hypervisors/Hypervisor/Hypervisor.h"
+#include "Architecture/Network/RoutingInfo/RoutingInfo_m.h"
+#include "Architecture/Network/Stack/StackServiceType.h"
 
 using namespace hypervisor;
+using namespace networkio;
 
 void OsCore::setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm)
 {
@@ -10,57 +13,156 @@ void OsCore::setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm)
     this->hardwareManager = hm;
 }
 
-void OsCore::processSyscall(SM_Syscall *request)
+void OsCore::processSyscall(Syscall *request)
 {
     // Get the app context
     auto appEntry = hypervisor->getAppControlBlock(request->getVmId(), request->getPid());
 
-    // Register the incoming request and get the context
-    const CallContext &callContext = request->getContext();
-
     // Select the appropiate handler or actions
-    switch (callContext.opCode)
+    switch (request->getOpCode())
     {
     // Directly send the request to the CPU scheduler
-    case Syscall::EXEC:
+    case SyscallCode::EXEC:
     {
-        auto label = new AppIdLabel();
-        label->setPid(appEntry.pid);
-        label->setVmId(appEntry.vmId);
-        callContext.data.cpuRequest->setControlInfo(label);
-        callContext.data.cpuRequest->setContextPointer(request);
-        hypervisor->take(callContext.data.cpuRequest);
-        hypervisor->sendRequestMessage(callContext.data.cpuRequest, hypervisor->schedulerGates.outBaseId + appEntry.vmId);
+        hypervisor->sendRequestMessage(request, hypervisor->schedulerGates.outBaseId + appEntry.vmId);
         break;
     }
     // Writing or reading from disk
-    case Syscall::READ:
-    case Syscall::WRITE:
+    case SyscallCode::READ:
+    case SyscallCode::WRITE:
     {
         hypervisor->sendRequestMessage(request, hypervisor->gate("toDisk"));
         break;
     }
-    // TODO: Networking
-    case Syscall::OPEN_CLI:
+    case SyscallCode::RESOLVE:
+    {
+        auto resolve = reinterpret_cast<ResolverSyscall *>(request);
+        auto command = new CommandEvent();
+        fillNetworkData(request, command);
+        command->setServiceName(resolve->getDomainName());
+        hypervisor->send(command, hypervisor->networkGates.outBaseId);
+        delete request;
         break;
-    case Syscall::OPEN_SERV:
+    }
+    case SyscallCode::OPEN_SERV:
+    {
+        auto socketIo = reinterpret_cast<SocketIoSyscall *>(request);
+        auto command = new CommandEvent();
+        fillNetworkData(request, command);
+
+        if (socketIo->getMode() == UDP)
+            command->setKind(StackServiceType::UDP_IO);
+        else
+        {
+            command->setKind(StackServiceType::HTTP_PROXY);
+            command->setServiceName(socketIo->getServiceName());
+        }
+
+        command->setCommand(SOCKET_OPEN);
+        command->setTargetPort(socketIo->getTargetPort());
+        hypervisor->send(command, hypervisor->networkGates.outBaseId);
+        delete request;
         break;
-    case Syscall::SEND:
+    }
+    case SyscallCode::OPEN_CLI:
+    {
+        auto socketIo = reinterpret_cast<SocketIoSyscall *>(request);
+        auto command = new CommandEvent();
+        fillNetworkData(request, command);
+
+        if (socketIo->getMode() == UDP)
+            command->setKind(StackServiceType::UDP_IO);
+        else
+            command->setKind(StackServiceType::HTTP_CLIENT);
+
+        command->setTargetPort(socketIo->getTargetPort());
+        command->setTargetIp(socketIo->getTargetIp());
+        command->setCommand(SOCKET_OPEN);
+        hypervisor->send(command, hypervisor->networkGates.outBaseId);
+        delete request;
         break;
-    case Syscall::RECV:
+    }
+    case SyscallCode::SEND:
+    {
+        auto socketIo = reinterpret_cast<SocketIoSyscall *>(request);
+        auto command = new CommandEvent();
+        fillNetworkData(request, command);
+
+        switch (socketIo->getMode())
+        {
+        case UDP:
+        {
+            command->setKind(StackServiceType::UDP_IO);
+            command->setTargetPort(socketIo->getTargetPort());
+            command->setTargetIp(socketIo->getTargetIp());
+            break;
+        }
+        case TCP_SERVER:
+            command->setKind(StackServiceType::HTTP_PROXY);
+            break;
+        case TCP_CLIENT:
+            command->setKind(StackServiceType::HTTP_CLIENT);
+            break;
+        default:
+            break;
+        }
+
+        command->setSocketId(socketIo->getSocketFd());
+        command->setCommand(SOCKET_SEND);
+
+        hypervisor->send(command, hypervisor->networkGates.outBaseId);
+        delete request;
         break;
+    }
+    case SyscallCode::CLOSE:
+    {
+        auto socketIo = reinterpret_cast<SocketIoSyscall *>(request);
+        auto command = new CommandEvent();
+        fillNetworkData(request, command);
+
+        switch (socketIo->getMode())
+        {
+        case UDP:
+            command->setKind(StackServiceType::UDP_IO);
+            break;
+        case TCP_SERVER:
+            command->setKind(StackServiceType::HTTP_PROXY);
+            break;
+        case TCP_CLIENT:
+            command->setKind(StackServiceType::HTTP_CLIENT);
+            break;
+        default:
+            break;
+        }
+
+        command->setSocketId(socketIo->getSocketFd());
+        command->setCommand(SOCKET_CLOSE);
+        break;
+    }
     // Gracefully exit
-    case Syscall::EXIT:
+    case SyscallCode::EXIT:
         handleAppTermination(appEntry, appFinishedOK);
         delete request;
         break;
-    case Syscall::ABORT:
+    case SyscallCode::ABORT:
         handleAppTermination(appEntry, appFinishedError);
         delete request;
         break;
     default:
         hypervisor->error("Undefined system call operation code");
     }
+}
+
+void OsCore::fillNetworkData(Syscall *sys, CommandEvent *e)
+{
+    e->setPid(sys->getPid());
+    e->setVmId(sys->getVmId());
+    e->setIp(hardwareManager->getIp());
+
+    // This section is for the dc environement
+    auto routingInfo = new RoutingInfo();
+    routingInfo->setDestinationUrl(DC_NETWORK_STACK);
+    e->setControlInfo(routingInfo);
 }
 
 void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end, const std::string &globalVmId)
@@ -107,7 +209,7 @@ void OsCore::launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, 
 void OsCore::handleAppTermination(AppControlBlock &app, tApplicationState exitStatus)
 {
     VmControlBlock &vmControl = hypervisor->vmsControl[app.vmId];
-    SM_UserAPP * userRequest = vmControl.request;
+    SM_UserAPP *userRequest = vmControl.request;
 
     auto deploymentIndex = app.deploymentIndex;
 

@@ -16,7 +16,7 @@ protected:
 class HttpProxyThread : public TcpBaseProxyThread
 {
 protected:
-    virtual void selectFromPool(SIMCAN_Message *sm) override;
+    virtual void selectFromPool(inet::Ptr<const inet::Chunk> chunk) override;
 };
 
 #endif

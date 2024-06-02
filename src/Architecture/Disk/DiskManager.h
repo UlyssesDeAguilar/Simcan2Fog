@@ -42,9 +42,11 @@ protected:
   virtual void initialize(int stage) override;
   virtual void finish() override;
   virtual void handleMessage(cMessage *msg) override;
+
 private:
   void flushQueue(DiskQueue &entry);
   void scheduleIo(DiskQueue &entry);
+
 public:
   void stopVmQueue(uint32_t vmId);
 };

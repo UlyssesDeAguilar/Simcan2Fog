@@ -85,6 +85,7 @@ void UdpIoService::processRequest(cMessage *msg)
         response->EventBase::operator=(*command);
         response->setType(SOCKET_ESTABLISHED);
         response->setSocketId(newSocket->getSocketId());
+        multiplexer->processResponse(response);
         break;
     }
     case SOCKET_CLOSE:
@@ -101,8 +102,7 @@ void UdpIoService::processRequest(cMessage *msg)
     {
         int socketId = command->getSocketId();
         auto socket = reinterpret_cast<UdpSocket *>(socketMap.getSocketById(socketId));
-        auto payload = new INET_AppMessage((command->getPackageForUpdate()));
-        auto packet = new Packet("UDP Data", Ptr<INET_AppMessage>(payload));
+        auto packet = new Packet("UDP Data", command->getPayload());
         socket->sendTo(packet, Ipv4Address(command->getTargetIp()), command->getTargetPort());
         break;
     }
@@ -118,16 +118,13 @@ void UdpIoService::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     VmSocketBinding &binding = bindingMap.at(socket->getSocketId());
 
-    auto payload = dynamic_pointer_cast<const INET_AppMessage>(packet->peekData());
-    auto msg = const_cast<SIMCAN_Message *>(payload->getAppMessage());
-
     auto response = new IncomingEvent();
     response->setIp(binding.ip);
     response->setVmId(binding.vmId);
     response->setPid(binding.vmId);
 
     response->setType(SOCKET_DATA_ARRIVED);
-    response->setPackage(msg);
+    response->setPayload(packet->peekData());
 
     multiplexer->processResponse(response);
     delete packet;

@@ -82,7 +82,7 @@ protected:
      *          or leave service as nullptr if no nodes were available (connection will then be aborted)
      * @param sm The incoming request (usually presumed as a SM_REST_API)
      */
-    virtual void selectFromPool(SIMCAN_Message *sm) = 0;
+    virtual void selectFromPool(inet::Ptr<const inet::Chunk> chunk) = 0;
 
 public:
     TcpBaseProxyThread() { eventTemplate = std::unique_ptr<networkio::IncomingEvent>(new networkio::IncomingEvent()); }

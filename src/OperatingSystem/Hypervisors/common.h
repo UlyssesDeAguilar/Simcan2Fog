@@ -22,6 +22,7 @@
 #include "Messages/SM_CPU_Message.h"
 #include "OperatingSystem/AppIdLabel/AppIdLabel_m.h"
 #include "OperatingSystem/Hypervisors/ControlTable/ControlTable.hpp"
+#include "Messages/Syscall_m.h"
 
 // Forward declaration
 class SM_Syscall;
@@ -30,24 +31,9 @@ namespace hypervisor
 {
     typedef enum
     {
-        IO_DELAY,   //!< Input/Output delay finished
         VM_TIMEOUT, //!< A virtual machine reached the maximum renting time
         POWER_ON    //!< Event for powering on the machine
     } AutoEvent;
-
-    typedef enum
-    {
-        READ,      // Read from disk
-        WRITE,     // Write to disk
-        EXEC,      // Execute / Calculate
-        OPEN_CLI,  // Open client socket : PORT/IP
-        OPEN_SERV, // Open server socket : PORT/DOMAIN/SERVICE_NAME
-        RESOLVE,   // Resolve a fully qualified DNS domain name
-        SEND,      // Send through socket
-        RECV,      // Recieve through socket
-        EXIT,      // Finish the process (gracefully)
-        ABORT      // Finish the process (abruptly)
-    } Syscall;
 
     typedef enum
     {
@@ -55,54 +41,16 @@ namespace hypervisor
         ERROR
     } SyscallResult;
 
-    // TODO: Consider if making the pointers smart pointers!
-    struct CallContext
-    {
-        Syscall opCode;
-        SyscallResult result;
-        union Context
-        {
-            double bufferSize;          // Either for read or write
-            SM_CPU_Message *cpuRequest; // For CPU requests
-            struct NetIO                // For network I/O
-            {
-                int fd;                  // Real socket id when going to the service
-                INET_AppMessage *packet; // Payload to be sent
-            };
-        } data;
-    };
-
-    struct Connection
-    {
-        enum Flags
-        {
-            BIND = 1, // If set the port is binded, ephemeral otherwise
-            OPEN = 2  // If set the port/socket is open, closed otherwise
-        };
-
-        int fd;
-        short flags;
-
-        Connection(int fd, bool binded, bool open = true)
-        {
-            this->fd = fd;
-            if (binded)
-                flags |= Flags::BIND;
-            if (open)
-                flags |= Flags::OPEN;
-        }
-    };
-
     /**
      * @brief Keeps all the necessary control information for the app
      */
     struct AppControlBlock
     {
-        uint32_t pid;                      // Process Id
-        uint32_t vmId;                     // Group Id -- Will help to identify the VM
-        tApplicationState status;          // The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
-        std::map<int, Connection> sockets; // Map that contains the application sockets
-        int deploymentIndex;               // The index relative for that request
+        uint32_t pid;                         //!< Process Id
+        uint32_t vmId;                        //!< Group Id -- Will help to identify the VM
+        tApplicationState status;             //!< The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
+        std::map<int, ConnectionMode> sockets; //!< Map that contains the application sockets
+        int deploymentIndex;                  //!< The index relative for that request
 
         void initialize(uint32_t pid)
         {
@@ -130,7 +78,7 @@ namespace hypervisor
         const VirtualMachine *vmType;        //!< The virtual machine type
         std::string userId;                  //!< The current owner of the vm
         ControlTable<AppControlBlock> apps;  //!< The apps that are currently executing
-        std::deque<SM_Syscall *> callBuffer; //!< Holds request/responses when the vm is in suspension state
+        std::deque<Syscall *> callBuffer; //!< Holds request/responses when the vm is in suspension state
         cMessage *timeOut{};                 //!< Timeout message for vm
         SM_UserAPP *request{};               //!< The request that instantiated the app
 
@@ -149,8 +97,5 @@ namespace hypervisor
     };
 
 }
-
-// Include the Syscall message after to avoid import loop
-#include "Messages/SM_Syscall_m.h"
 
 #endif

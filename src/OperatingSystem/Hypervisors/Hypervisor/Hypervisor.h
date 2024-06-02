@@ -5,6 +5,7 @@
 #include "OperatingSystem/Hypervisors/OsCore/OsCore.h"
 #include "OperatingSystem/CpuSchedulers/CpuSchedulerRR/CpuSchedulerRR.h"
 #include "Management/dataClasses/Applications/Application.h"
+#include "Architecture/Network/Stack/NetworkIOEvent_m.h"
 
 namespace hypervisor
 {
@@ -56,6 +57,9 @@ namespace hypervisor
         virtual int numInitStages() const override { return NEAR + 1; }
 
         virtual void finish() override;
+        virtual void handleMessage(cMessage *msg) override;
+        void handleIncomingEvent(networkio::IncomingEvent *event);
+        
         virtual cGate *getOutGate(cMessage *msg) override;
         virtual void processSelfMessage(cMessage *msg) override;
         virtual void processRequestMessage(SIMCAN_Message *sm) override;

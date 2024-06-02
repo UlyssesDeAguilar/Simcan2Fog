@@ -17,6 +17,7 @@
 #include "Architecture/Nodes/HardwareManagers/HardwareManager/HardwareManager.h"
 #include "OperatingSystem/Hypervisors/common.h"
 
+using namespace hypervisor;
 Define_Module(DiskManager);
 
 void DiskManager::initialize(int stage)
@@ -53,17 +54,17 @@ void DiskManager::handleMessage(cMessage *msg)
     if (msg->isSelfMessage())
     {
         DiskQueue *entry = reinterpret_cast<DiskQueue *>(msg->getContextPointer());
-        SM_Syscall *request = reinterpret_cast<SM_Syscall *>(entry->queue.pop());
+        Syscall *request = reinterpret_cast<DiskSyscall *>(entry->queue.pop());
 
         request->setIsResponse(true);
-        request->setResult(SC_OK);
+        request->setResult(OK);
         send(request, gate("diskOut"));
 
         scheduleIo(*entry);
     }
     else
     {
-        auto request = check_and_cast<SM_Syscall *>(msg);
+        auto request = check_and_cast<DiskSyscall *>(msg);
         DiskQueue &entry = queueTable.at(request->getVmId());
         entry.queue.insert(request);
 
@@ -76,13 +77,13 @@ void DiskManager::scheduleIo(DiskQueue &entry)
 {
     if (entry.queue.getLength() > 0)
     {
-        auto head = reinterpret_cast<SM_Syscall *>(entry.queue.front());
+        auto head = reinterpret_cast<DiskSyscall *>(entry.queue.front());
         double eta{};
 
-        if (head->getContext().opCode == Syscall::READ)
-            eta = head->getContext().data.bufferSize / diskSpecs.readBandwidth;
+        if (head->getOpCode() == READ)
+            eta = head->getBufferSize() / diskSpecs.readBandwidth;
         else
-            eta = head->getContext().data.bufferSize / diskSpecs.writeBandwidth;
+            eta = head->getBufferSize() / diskSpecs.writeBandwidth;
 
         scheduleAt(simTime() + eta, &entry.ioFinished);
     }

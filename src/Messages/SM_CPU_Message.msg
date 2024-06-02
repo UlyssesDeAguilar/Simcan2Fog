@@ -1,13 +1,13 @@
 import Messages.SIMCAN_Message;
-
+import Messages.Syscall;
 
 ///
 /// SIMCAN Message for CPU requests
 ///
-message SM_CPU_Message extends SIMCAN_Message{
-    
+message SM_CPU_Message extends hypervisor::Syscall{
     @customize(true);
-
+    opCode = hypervisor::SyscallCode::EXEC;
+    
 	bool useTime = false;				// Flag that indicates this requests uses time as unit to be processed in the CPU core						
     simtime_t cpuTime = 0.0;			// CPU execution time
     

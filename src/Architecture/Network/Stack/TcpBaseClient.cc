@@ -69,8 +69,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
 
         // TODO: Check compatibility with older INET_AppMessage shenanigans
         // Encapsulate the message
-        auto chunk = makeShared<INET_AppMessage>(command->getPackageForUpdate());
-        auto packet = new Packet("Adapter Packet", chunk);
+        auto packet = new Packet("Adapter Packet", command->getPayload());
 
         // Send the package
         socket->send(packet);
@@ -190,9 +189,6 @@ void TcpBaseClient::handleMessageWhenUp(cMessage *msg)
 
 void TcpBaseClient::socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent)
 {
-    auto chunk = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
-    auto sm = const_cast<SIMCAN_Message *>(chunk->getAppMessage());
-
     // Retrieve socket id and map it to the vm-pid who owns it
     auto socketId = socket->getSocketId();
     auto iter = socketReferenceMap.find(socketId);
@@ -207,7 +203,7 @@ void TcpBaseClient::socketDataArrived(TcpSocket *socket, Packet *packet, bool ur
     event->setVmId(reference->vmId);
     event->setPid(reference->pid);
     event->setSocketId(socketId);
-    event->setPackage(sm);
+    event->setPayload(packet->peekData());
 
     multiplexer->processResponse(event);
 

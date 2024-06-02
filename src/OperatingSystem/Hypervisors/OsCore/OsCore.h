@@ -2,6 +2,7 @@
 #define SIMCAN_EX_OS_CORE
 
 #include "OperatingSystem/Hypervisors/common.h"
+#include "Architecture/Network/Stack/NetworkIOEvent_m.h"
 
 namespace hypervisor
 {
@@ -21,10 +22,11 @@ namespace hypervisor
 
         OsCore() { this->hypervisor = nullptr; }
         void setUp(Hypervisor *h, DataManager *dm, HardwareManager *hm);
-        void processSyscall(SM_Syscall *sm);
+        void processSyscall(Syscall *sm);
 
         void launchApps(SM_UserAPP *request, uint32_t vmId, app_iterator begin, app_iterator end, const std::string &globalVmId);
         void handleAppTermination(AppControlBlock &app, tApplicationState exitStatus);
+        void fillNetworkData(Syscall *sys, networkio::CommandEvent *e);
         // void handleSendRequest(AppControlBlock &app, bool completed);
         // void handleBindAndListen(AppControlBlock &app);
     };

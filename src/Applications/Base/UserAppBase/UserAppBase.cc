@@ -1,9 +1,10 @@
 #include "UserAppBase.h"
+
 using namespace hypervisor;
 
 UserAppBase::~UserAppBase()
 {
-    connections.clear();
+    //connections.clear();
 }
 
 void UserAppBase::initialize()
@@ -90,9 +91,9 @@ void UserAppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate)
     cSIMCAN_Core::sendRequestMessage(sm, outGate);
 }
 
-void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
+void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
 {
-    auto syscall = check_and_cast<SM_Syscall *>(msg);
+    auto syscall = check_and_cast<Syscall *>(msg);
 
     // Sanity check
     if (state == State::RUN)
@@ -101,10 +102,45 @@ void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
     auto timeElapsed = simTime() - operationStart;
 
     // Call the corresponding callback
-    switch (syscall->getContext().opCode)
+    switch (syscall->getOpCode())
+    {
+    case RESOLVE:
+        callback->returnResolve(timeElapsed);
+        break;
+    case OPEN_CLI:
+        callback->returnRead(timeElapsed);
+        break;
+    case OPEN_SERV:
+        callback->returnWrite(timeElapsed);
+        break;
+    default:
+        break;
+    }
+
+    // Delete the system call
+    delete syscall;
+
+    // Increment the program counter, set RUN state and call run() for next step
+    pc++;
+    state = State::RUN;
+    run();
+}
+
+void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
+{
+    auto syscall = check_and_cast<Syscall *>(msg);
+
+    // Sanity check
+    if (state == State::RUN)
+        error("Recieving response message while in RUN state");
+
+    auto timeElapsed = simTime() - operationStart;
+
+    // Call the corresponding callback
+    switch (syscall->getOpCode())
     {
     case EXEC:
-        callback->returnExec(timeElapsed, syscall->getContext().data.cpuRequest);
+        callback->returnExec(timeElapsed, check_and_cast<SM_CPU_Message*>(syscall));
         break;
     case READ:
         callback->returnRead(timeElapsed);
@@ -130,13 +166,11 @@ void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
 void UserAppBase::execute(double MIs)
 {
     // Prepare the system call
-    SM_Syscall *syscall = new SM_Syscall();
     SM_CPU_Message *sm_cpu = new SM_CPU_Message();
 
     // Set PID and Context
-    syscall->setPid(pid);
-    syscall->setVmId(vmId);
-    syscall->setContext({.opCode = EXEC, .data.cpuRequest = sm_cpu});
+    sm_cpu->setPid(pid);
+    sm_cpu->setVmId(vmId);
 
     // Prepare the cpu request
     sm_cpu->setOperation(SM_ExecCpu);
@@ -148,19 +182,17 @@ void UserAppBase::execute(double MIs)
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending cpu request \n";
 
     // Send the request to the Operating System
-    sendRequestMessage(syscall, outGate);
+    sendRequestMessage(sm_cpu, outGate);
 }
 
 void UserAppBase::execute(simtime_t cpuTime)
 {
     // Prepare the system call
-    SM_Syscall *syscall = new SM_Syscall();
     SM_CPU_Message *sm_cpu = new SM_CPU_Message();
 
     // Set PID and Context
-    syscall->setPid(pid);
-    syscall->setVmId(vmId);
-    syscall->setContext({.opCode = EXEC, .data.cpuRequest = sm_cpu});
+    sm_cpu->setPid(pid);
+    sm_cpu->setVmId(vmId);
 
     // Prepare the cpu request
     sm_cpu->setOperation(SM_ExecCpu);
@@ -172,18 +204,19 @@ void UserAppBase::execute(simtime_t cpuTime)
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending cpu request \n";
 
     // Send the request to the Operating System
-    sendRequestMessage(syscall, outGate);
+    sendRequestMessage(sm_cpu, outGate);
 }
 
 void UserAppBase::read(double bytes) 
 {
     // Prepare the system call
-    SM_Syscall *syscall = new SM_Syscall();
+    auto syscall = new DiskSyscall();
 
     // Set PID and Context
     syscall->setPid(pid);
     syscall->setVmId(vmId);
-    syscall->setContext({.opCode = READ, .data.bufferSize = bytes});
+    syscall->setOpCode(READ);
+    syscall->setBufferSize(bytes);
 
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending read call: " << bytes << "B" << "\n";
 
@@ -194,12 +227,13 @@ void UserAppBase::read(double bytes)
 void UserAppBase::write(double bytes) 
 {
     // Prepare the system call
-    SM_Syscall *syscall = new SM_Syscall();
+    auto syscall = new DiskSyscall();
 
     // Set PID and Context
     syscall->setPid(pid);
     syscall->setVmId(vmId);
-    syscall->setContext({.opCode = WRITE, .data.bufferSize = bytes});
+    syscall->setOpCode(WRITE);
+    syscall->setBufferSize(bytes);
 
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending write call: " << bytes << "B" << "\n";
 
@@ -210,12 +244,12 @@ void UserAppBase::write(double bytes)
 void UserAppBase::_exit()
 {
     // Prepare the system call
-    SM_Syscall *syscall = new SM_Syscall();
+    auto syscall = new Syscall();
 
     // Set PID and Context
     syscall->setPid(pid);
     syscall->setVmId(vmId);
-    syscall->setContext({.opCode = EXIT, .data.bufferSize = 0});
+    syscall->setOpCode(ABORT);
 
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated sucessfully\n";
 
@@ -226,14 +260,14 @@ void UserAppBase::_exit()
 void UserAppBase::abort()
 {
     // Prepare the system call
-    SM_Syscall *syscall = new SM_Syscall();
+    Syscall *syscall = new Syscall();
 
     // Set PID and Context
     syscall->setPid(pid);
     syscall->setVmId(vmId);
-    syscall->setContext({.opCode = ABORT, .data.bufferSize = 0});
+    syscall->setOpCode(ABORT);
 
-    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated sucessfully\n";
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated abruptly\n";
 
     // Send the request to the Operating System
     sendRequestMessage(syscall, outGate);
