@@ -51,10 +51,11 @@ void LocalApplication::finish()
 	UserAppBase::finish();
 }
 
-void LocalApplication::run()
+bool LocalApplication::run()
 {
 	// Log (INFO)
 	EV_INFO << "Starting execution! Current iteration:" << currentIteration << '\n';
+	bool rerun = false;
 
 	switch (pc)
 	{
@@ -76,13 +77,14 @@ void LocalApplication::run()
 		{
 			currentIteration++;
 			pc = 0;
-			// Recursive call to restart event lifecycle
-			run();
+			return rerun;
 		}
 		else
 			_exit();
 		break;
 	}
+	
+	return rerun;
 }
 
 void LocalApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)

@@ -10,8 +10,20 @@ void EdgeHypervisor::initialize(int stage)
     switch (stage)
     {
     case LOCAL:
+    {
         appsVector = getModuleByPath("^.apps");
+        starterApps = par("apps");
+
+        if (*starterApps)
+        {
+            UserAppBuilder builder;
+            builder.createNewAppRequest("localApp", starterApps, "#0.0.0.0", "local", 0);
+            auto vec = builder.finish("local", "local");
+            sam = (*vec)[0];
+            delete vec;
+        }
         break;
+    }
     case NEAR:
     {
         /*
@@ -25,9 +37,13 @@ void EdgeHypervisor::initialize(int stage)
 
         VmControlBlock &vmControl = vmsControl[vmId];
         vmControl.globalId = &(vmIdMap.find("local")->first);
-        vmControl.state = vmAccepted;
+        vmControl.state = vmRunning;
         break;
     }
+    case INITSTAGE_LAST:
+        if (sam)
+            handleAppRequest(sam);
+        break;
     default:
         break;
     }

@@ -13,6 +13,7 @@ void StackMultiplexer::initialize()
     services[StackServiceType::HTTP_CLIENT] = check_and_cast<StackService *>(getModuleByPath("^.httpClient"));
     services[StackServiceType::HTTP_PROXY] = check_and_cast<StackService *>(getModuleByPath("^.httpProxy"));
     services[StackServiceType::DNS_RESOLVER] = check_and_cast<StackService *>(getModuleByPath("^.dnsResolver"));
+    services[StackServiceType::UDP_IO] = check_and_cast<StackService*>(getModuleByPath("^.udpService"));
 }
 
 void StackMultiplexer::finish() {}

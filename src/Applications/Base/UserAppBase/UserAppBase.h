@@ -2,8 +2,10 @@
 #define __SIMCAN_2_0_USER_APP_BASE_H_
 
 #include "Core/cSIMCAN_Core.h"
-//#include "Architecture/Network/Stack/NetworkIOEvent_m.h"
-#include "Messages/Syscall_m.h"
+#include "Architecture/Network/Stack/StackServiceType.h"
+#include "OperatingSystem/Hypervisors/common.h"
+
+using namespace hypervisor;
 
 /**
  * @class SimcanAPI SimcanAPI.h "SimcanAPI.h"
@@ -20,7 +22,8 @@ protected:
    enum State
    {
       RUN,
-      WAIT
+      WAIT,
+      LISTENING
    };
 
    enum Event
@@ -35,28 +38,28 @@ protected:
    simtime_t operationStart; //!< Timestamp of the starting of an operation
    cQueue incomingPackets;   //!< The incoming packets from the opened sockets
 
-   double startDelay;        //!< Starting time delay
-   double connectionDelay;   //!< Connection delay time
-   unsigned int myRank;      //!< Rank of the application's process
-   string testID;            //!< Test ID
-   string appInstance;       //!< Name of the application's instance
-   string vmInstance;        //!< Name of the vm's instance
-   string userInstance;      //!< Name of the user's instance
-   bool isDistributedApp;    //!< Is a distributed application?
-   bool debugUserAppBase;    //!< Show log messages of UserAppBase (for deep-debugging purpose only)
+   double startDelay;      //!< Starting time delay
+   double connectionDelay; //!< Connection delay time
+   unsigned int myRank;    //!< Rank of the application's process
+   string testID;          //!< Test ID
+   string appInstance;     //!< Name of the application's instance
+   string vmInstance;      //!< Name of the vm's instance
+   string userInstance;    //!< Name of the user's instance
+   bool isDistributedApp;  //!< Is a distributed application?
+   bool debugUserAppBase;  //!< Show log messages of UserAppBase (for deep-debugging purpose only)
 
    cMessage *event{}; //!< Message reserved for auto events
-   cGate *inGate;   /**< Input gate from OS. */
-   cGate *outGate;  /**< Output gate to OS. */
+   cGate *inGate;     /**< Input gate from OS. */
+   cGate *outGate;    /**< Output gate to OS. */
 
-   
-   struct AppSocket
+   struct ReturnContext
    {
-      hypervisor::ConnectionMode mode;
-   };
+      bool interrupt = false;
+      hypervisor::SyscallResult result;
+      uint32_t rf;
+      hypervisor::PTR chunk;
+   } returnContext;
 
-
-   virtual ~UserAppBase();
    virtual void initialize() override;
    virtual void finish() override;
    virtual void processSelfMessage(cMessage *msg) override;
@@ -65,16 +68,23 @@ protected:
    virtual void sendRequestMessage(SIMCAN_Message *msg, cGate *outGate) override;
    virtual void scheduleExecStart();
 
-   virtual void run() = 0;
+   virtual bool run() = 0;
+
+   // Helpers
+   void __run();
+   void syscallFillData(Syscall *syscall, SyscallCode code);
+   hypervisor::ConnectionMode mapService(StackServiceType type);
+
+   // The API
    void execute(double MIs);
    void execute(simtime_t cpuTime);
    void read(double bytes);
    void write(double bytes);
+   void resolve(const char *domainName);
    void open_client(int targetPort, hypervisor::ConnectionMode mode);
    void open_server(int targetPort, hypervisor::ConnectionMode mode, const char *serviceName = nullptr);
-   void resolve(const char *domainName);
-   void _send(int socketFd, SIMCAN_Message *msg, uint32_t targetPort = 0, uint32_t targetIp = 0);
-   void recv(int socketFd);
+   void _send(int socketFd, hypervisor::PTR payload, uint32_t targetPort = 0, uint32_t targetIp = 0);
+   bool recv(int socketFd);
    void close(int socketFd);
    void abort();
    void _exit();
@@ -90,6 +100,14 @@ public:
    };
 
    void setReturnCallback(ICallback *callback) { this->callback = callback; }
+   
+   struct AppSocket
+   {
+      hypervisor::ConnectionMode mode;
+      std::deque<hypervisor::PTR> chunks;
+   };
+
+   std::map<int, AppSocket> socketMap;
 
 private:
    ICallback *callback;

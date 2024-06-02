@@ -34,6 +34,7 @@ void HttpProxyThread::selectFromPool(Ptr<const Chunk> chunk)
         eventTemplate->setVmId(entry->vmId);
         eventTemplate->setPid(entry->pid);
         eventTemplate->setSocketId(socket->getSocketId());
+        eventTemplate->setKind(HTTP_PROXY);
 
         // Hold the service name
         service = &serviceReference->first;

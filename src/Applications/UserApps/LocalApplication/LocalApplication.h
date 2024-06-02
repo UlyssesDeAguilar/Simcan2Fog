@@ -2,11 +2,7 @@
 #define __LOCAL_APPLICATION_H_
 
 #include <omnetpp.h>
-#include "Management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.h"
 #include "Applications/Base/UserAppBase/UserAppBase.h"
-
-// Forward declaration
-class DataCentreManagerBase;
 
 /**
  * @class LocalApplication LocalApplication.h "LocalApplication.h"
@@ -43,7 +39,7 @@ protected:
 	virtual void initialize() override;
 	virtual void finish() override;
 
-	virtual void run() override;
+	virtual bool run() override;
 	virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override;
 	virtual void returnRead(simtime_t timeElapsed) override;
 	virtual void returnWrite(simtime_t timeElapsed) override;

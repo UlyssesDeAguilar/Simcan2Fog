@@ -74,22 +74,26 @@ void UdpIoService::handleMessageWhenUp(cMessage *msg)
 
 void UdpIoService::processRequest(cMessage *msg)
 {
+    Enter_Method_Silent();
     auto command = check_and_cast<CommandEvent *>(msg);
 
     switch (command->getCommand())
     {
     case SOCKET_OPEN:
     {
+        EV_DEBUG << "[UDP] Opening socket for app [" << command->getPid() << "]" << " [" << command->getVmId() << "]\n";
         UdpSocket *newSocket = setUpNewSocket(command);
         auto response = new IncomingEvent();
         response->EventBase::operator=(*command);
         response->setType(SOCKET_ESTABLISHED);
         response->setSocketId(newSocket->getSocketId());
+        response->setKind(UDP_IO);
         multiplexer->processResponse(response);
         break;
     }
     case SOCKET_CLOSE:
     {
+        EV_DEBUG << "[UDP] Closing socket for app [" << command->getPid() << "]" << " [" << command->getVmId() << "]\n";
         int socketId = command->getSocketId();
         auto socket = socketMap.getSocketById(socketId);
 
@@ -100,6 +104,7 @@ void UdpIoService::processRequest(cMessage *msg)
     }
     case SOCKET_SEND:
     {
+        EV_DEBUG << "[UDP] Sending data for app [" << command->getPid() << "]" << " [" << command->getVmId() << "]\n";
         int socketId = command->getSocketId();
         auto socket = reinterpret_cast<UdpSocket *>(socketMap.getSocketById(socketId));
         auto packet = new Packet("UDP Data", command->getPayload());
@@ -125,7 +130,7 @@ void UdpIoService::socketDataArrived(UdpSocket *socket, Packet *packet)
 
     response->setType(SOCKET_DATA_ARRIVED);
     response->setPayload(packet->peekData());
-
+    response->setKind(UDP_IO);
     multiplexer->processResponse(response);
     delete packet;
 }

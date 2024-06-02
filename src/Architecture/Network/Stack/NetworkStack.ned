@@ -42,23 +42,25 @@ module NetworkStack extends StandardHost
         httpClient: HttpClientService {
             @display("p=917.67,202.79999");
         }
-        
+
         httpProxy: HttpProxyService {
             @display("p=951.47,356.59");
         }
-        
+
         dnsResolver: DnsResolver {
             @display("p=1084.98,202.79999");
         }
-        
+
         dnsServer: DnsService {
             mode = "ns";
-            serverName = parent.name + "." + tld;
+            serverName = "";
             @display("p=1090.0499,74.36");
         }
-        
-        udpService: UdpIoService;
-        
+
+        udpService: UdpIoService {
+
+            @display("p=1196.52,194.34999");
+        }
         pushSocket: TcpClientSocketIo if enableQueue {
             connectAddress = "24.24.24.24";
             connectPort = 8444;
@@ -88,22 +90,22 @@ module NetworkStack extends StandardHost
     connections allowunconnected:
         // Bidirectional ethernet comms
         eth_comm <--> sm.comm;
-		
-		httpClient.socketIn <-- at.out++;
+
+        httpClient.socketIn <-- at.out++;
         httpClient.socketOut --> at.in++;
-        
+
         httpProxy.socketIn <-- at.out++;
         httpProxy.socketOut --> at.in++;
-        
+
         dnsResolver.socketIn <-- at.out++;
         dnsResolver.socketOut --> at.in++;
-        
+
         dnsServer.socketIn <-- at.out++;
         dnsServer.socketOut --> at.in++;
-        
+
         udpService.socketIn <-- at.out++;
         udpService.socketOut --> at.in++;
-        
+
         // Connect sockets to transport layer
         pullSocket.socketIn <-- at.out++ if enableQueue;
         pullSocket.socketOut --> at.in++ if enableQueue;

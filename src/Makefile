@@ -26,6 +26,7 @@ OBJS = \
     $O/Applications/Builder/ApplicationBuilder.o \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
+    $O/Applications/UserApps/LocalIotApplication/LocalIotApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
     $O/Architecture/Disk/DiskManager.o \
     $O/Architecture/Network/DNS/DnsCache.o \

@@ -1,4 +1,5 @@
 #include "TcpBaseClient.h"
+#include "StackServiceType.h"
 
 using namespace omnetpp;
 using namespace inet;
@@ -57,7 +58,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
         socketMap.addSocket(newSocket);
 
         // Connect to the requested ip/port
-        Ipv4Address ip(command->getTargetPort());
+        Ipv4Address ip(command->getTargetIp());
         newSocket->connect(ip, port);
 
         break;
@@ -119,6 +120,7 @@ void TcpBaseClient::socketPeerClosed(inet::TcpSocket *socket)
     event->setPid(reference->pid);
 
     // Send the event
+    event->setKind(HTTP_CLIENT);
     multiplexer->processResponse(event);
 }
 
@@ -135,6 +137,7 @@ void TcpBaseClient::socketFailure(inet::TcpSocket *socket, int code)
     event->setPid(reference->pid);
 
     // Send the event
+    event->setKind(HTTP_CLIENT);
     multiplexer->processResponse(event);
 }
 
@@ -171,6 +174,7 @@ void TcpBaseClient::socketEstablished(inet::TcpSocket *socket)
     event->setPid(reference->pid);
 
     // Send the event
+    event->setKind(HTTP_CLIENT);
     multiplexer->processResponse(event);
 }
 
@@ -205,6 +209,7 @@ void TcpBaseClient::socketDataArrived(TcpSocket *socket, Packet *packet, bool ur
     event->setSocketId(socketId);
     event->setPayload(packet->peekData());
 
+    event->setKind(HTTP_CLIENT);
     multiplexer->processResponse(event);
 
     delete packet;

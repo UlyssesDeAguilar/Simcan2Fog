@@ -12,7 +12,7 @@ module EdgeNode
 {
     parameters:
         bool staticAppAssignment = default(true);            // It has to do with the dependency of the CheckingHubModule
-        int maxApps = default(10);                           // Maximum app instances allowed
+        int maxApps = default(5);                           // Maximum app instances allowed
 
         // Hardware specs
         int numCpuCores = default(4);                        // The cores of the CPU equipped in this node
@@ -45,7 +45,9 @@ module EdgeNode
         hwm.maxUsers = 1;
         hwm.memorySize = memorySize;
         hwm.diskSize = diskSize;
-
+		hy.maxVMs =1;
+		hy.maxApps = maxApps;
+		
         @display("bgb=463,275");
     gates:
         inout comm;

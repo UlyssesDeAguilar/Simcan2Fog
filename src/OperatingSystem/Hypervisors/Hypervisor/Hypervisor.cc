@@ -181,6 +181,8 @@ void Hypervisor::processResponseMessage(SIMCAN_Message *msg)
 
 void Hypervisor::handleAppRequest(SM_UserAPP *sm)
 {
+    Enter_Method_Silent();
+
     // From the "user"/"manager" it's implied that the vmId should be here
     // For each vm in the request
     for (auto &vmApps : *sm)
@@ -192,6 +194,7 @@ void Hypervisor::handleAppRequest(SM_UserAPP *sm)
         if (vmId != UINT32_MAX && vmApps.size() <= vmsControl[vmId].apps.getFreeIds())
         {
             VmControlBlock &control = vmsControl.at(vmId);
+            control.request = sm;
             osCore.launchApps(sm, vmId, vmApps.begin(), vmApps.end(), vmApps.element);
         }
         else
@@ -234,6 +237,7 @@ void Hypervisor::handleIncomingEvent(IncomingEvent *event)
     {
         auto sys = new SocketIoSyscall();
         sys->setOpCode(OPEN_CLI);
+        sys->setKind(event->getKind());
         sys->setResult(OK);
         sys->setSocketFd(event->getSocketId());
         result = sys;

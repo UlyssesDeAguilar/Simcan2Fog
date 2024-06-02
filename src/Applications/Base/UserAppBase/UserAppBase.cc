@@ -2,11 +2,6 @@
 
 using namespace hypervisor;
 
-UserAppBase::~UserAppBase()
-{
-    //connections.clear();
-}
-
 void UserAppBase::initialize()
 {
     // Init the super-class
@@ -57,10 +52,9 @@ void UserAppBase::scheduleExecStart()
 
 void UserAppBase::finish()
 {
-    // Delete the event message
+    // Clear all sockets
+    socketMap.clear();
     cancelAndDelete(event);
-
-    // Finish the super-class
     cSIMCAN_Core::finish();
 }
 
@@ -76,9 +70,14 @@ cGate *UserAppBase::getOutGate(cMessage *msg)
 
 void UserAppBase::processSelfMessage(cMessage *msg)
 {
-    // Allow timers from children classes?
-    // Start executing
     run();
+}
+
+void UserAppBase::syscallFillData(Syscall *syscall, SyscallCode code)
+{
+    syscall->setPid(pid);
+    syscall->setVmId(vmId);
+    syscall->setOpCode(code);
 }
 
 void UserAppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate)
@@ -86,61 +85,84 @@ void UserAppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate)
     // Record the starting time and change state
     state = State::WAIT;
     operationStart = simTime();
-
-    // Send
     cSIMCAN_Core::sendRequestMessage(sm, outGate);
+}
+
+ConnectionMode UserAppBase::mapService(StackServiceType type)
+{
+    if (type == UDP_IO)
+        return UDP;
+    else if (type == HTTP_CLIENT)
+        return TCP_CLIENT;
+    else
+        return TCP_SERVER;
 }
 
 void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
 {
-    auto syscall = check_and_cast<Syscall *>(msg);
-
-    // Sanity check
-    if (state == State::RUN)
-        error("Recieving response message while in RUN state");
-
-    auto timeElapsed = simTime() - operationStart;
-
-    // Call the corresponding callback
-    switch (syscall->getOpCode())
+    // Resolver came back
+    auto syscall = check_and_cast<ResolverSyscall *>(msg);
+    if (syscall)
     {
-    case RESOLVE:
-        callback->returnResolve(timeElapsed);
-        break;
-    case OPEN_CLI:
-        callback->returnRead(timeElapsed);
-        break;
-    case OPEN_SERV:
-        callback->returnWrite(timeElapsed);
-        break;
-    default:
-        break;
+        returnContext.result = (SyscallResult)syscall->getResult();
+        returnContext.rf = syscall->getResolvedIp();
+        delete syscall;
+        __run();
+        return;
     }
 
-    // Delete the system call
-    delete syscall;
+    // Something happened with the sockets
+    auto event = check_and_cast<SocketIoSyscall *>(msg);
+    if (event->getOpCode() == OPEN_CLI)
+    {
+        AppSocket s;
+        s.mode = mapService((StackServiceType)event->getKind());
+        socketMap[event->getSocketFd()] = s;
+    }
+    else
+    {
+        // Assuming RECV
+        if (event->getResult() == OK)
+        {
+            auto &s = socketMap[event->getSocketFd()];
+            s.chunks.push_back(event->getPayload());
 
-    // Increment the program counter, set RUN state and call run() for next step
-    pc++;
-    state = State::RUN;
-    run();
+            if (state != LISTENING)
+            {
+                delete syscall;
+                return;
+            }
+            else
+            {
+                returnContext.chunk = s.chunks.front();
+                s.chunks.pop_front();
+            }
+        }
+        else
+        {
+            // Socket failed or returned that the peer closed!
+            socketMap.erase(event->getSocketFd());
+            returnContext.interrupt = true;
+        }
+    }
+
+    delete syscall;
+    __run();
 }
 
 void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
 {
     auto syscall = check_and_cast<Syscall *>(msg);
 
-    // Sanity check
     if (state == State::RUN)
         error("Recieving response message while in RUN state");
 
     auto timeElapsed = simTime() - operationStart;
 
-    // Call the corresponding callback
     switch (syscall->getOpCode())
     {
     case EXEC:
-        callback->returnExec(timeElapsed, check_and_cast<SM_CPU_Message*>(syscall));
+        callback->returnExec(timeElapsed, check_and_cast<SM_CPU_Message *>(syscall));
         break;
     case READ:
         callback->returnRead(timeElapsed);
@@ -152,13 +174,21 @@ void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
         break;
     }
 
-    // Delete the system call
     delete syscall;
+    __run();
+}
 
+void UserAppBase::__run()
+{
     // Increment the program counter, set RUN state and call run() for next step
-    pc++;
     state = State::RUN;
-    run();
+    bool rerun = true;
+
+    do
+    {
+        pc++;
+        rerun = run();
+    } while (rerun);
 }
 
 // ----------------- CPU calls ----------------- //
@@ -167,10 +197,7 @@ void UserAppBase::execute(double MIs)
 {
     // Prepare the system call
     SM_CPU_Message *sm_cpu = new SM_CPU_Message();
-
-    // Set PID and Context
-    sm_cpu->setPid(pid);
-    sm_cpu->setVmId(vmId);
+    syscallFillData(sm_cpu, EXEC);
 
     // Prepare the cpu request
     sm_cpu->setOperation(SM_ExecCpu);
@@ -189,10 +216,7 @@ void UserAppBase::execute(simtime_t cpuTime)
 {
     // Prepare the system call
     SM_CPU_Message *sm_cpu = new SM_CPU_Message();
-
-    // Set PID and Context
-    sm_cpu->setPid(pid);
-    sm_cpu->setVmId(vmId);
+    syscallFillData(sm_cpu, EXEC);
 
     // Prepare the cpu request
     sm_cpu->setOperation(SM_ExecCpu);
@@ -207,68 +231,131 @@ void UserAppBase::execute(simtime_t cpuTime)
     sendRequestMessage(sm_cpu, outGate);
 }
 
-void UserAppBase::read(double bytes) 
+void UserAppBase::read(double bytes)
 {
-    // Prepare the system call
-    auto syscall = new DiskSyscall();
-
-    // Set PID and Context
-    syscall->setPid(pid);
-    syscall->setVmId(vmId);
-    syscall->setOpCode(READ);
-    syscall->setBufferSize(bytes);
-
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending read call: " << bytes << "B" << "\n";
-
-    // Send the request to the Operating System
+    auto syscall = new DiskSyscall();
+    syscallFillData(syscall, READ);
+    syscall->setBufferSize(bytes);
     sendRequestMessage(syscall, outGate);
 }
 
-void UserAppBase::write(double bytes) 
+void UserAppBase::write(double bytes)
 {
-    // Prepare the system call
-    auto syscall = new DiskSyscall();
-
-    // Set PID and Context
-    syscall->setPid(pid);
-    syscall->setVmId(vmId);
-    syscall->setOpCode(WRITE);
-    syscall->setBufferSize(bytes);
-
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " sending write call: " << bytes << "B" << "\n";
-
-    // Send the request to the Operating System
+    auto syscall = new DiskSyscall();
+    syscallFillData(syscall, WRITE);
+    syscall->setBufferSize(bytes);
     sendRequestMessage(syscall, outGate);
 }
 
 void UserAppBase::_exit()
 {
-    // Prepare the system call
-    auto syscall = new Syscall();
-
-    // Set PID and Context
-    syscall->setPid(pid);
-    syscall->setVmId(vmId);
-    syscall->setOpCode(ABORT);
-
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated sucessfully\n";
-
-    // Send the request to the Operating System
+    auto syscall = new Syscall();
+    syscallFillData(syscall, EXIT);
     sendRequestMessage(syscall, outGate);
 }
 
 void UserAppBase::abort()
 {
-    // Prepare the system call
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated abruptly\n";
     Syscall *syscall = new Syscall();
+    syscallFillData(syscall, ABORT);
+    sendRequestMessage(syscall, outGate);
+}
+
+void UserAppBase::resolve(const char *domainName)
+{
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " resolving:" << domainName << "\n";
+    ResolverSyscall *syscall = new ResolverSyscall();
+    syscallFillData(syscall, RESOLVE);
+    syscall->setDomainName(domainName);
+    sendRequestMessage(syscall, outGate);
+}
+
+void UserAppBase::open_client(int targetPort, hypervisor::ConnectionMode mode)
+{
+    SocketIoSyscall *syscall = new SocketIoSyscall();
+    syscallFillData(syscall, OPEN_CLI);
+    syscall->setTargetPort(targetPort);
+    syscall->setMode(mode);
+
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
+             << " connecting to port:" << targetPort << " with mode: " << mode << "\n";
+
+    sendRequestMessage(syscall, outGate);
+}
+
+void UserAppBase::open_server(int targetPort, hypervisor::ConnectionMode mode, const char *serviceName)
+{
+    SocketIoSyscall *syscall = new SocketIoSyscall();
+    syscallFillData(syscall, OPEN_SERV);
+    syscall->setMode(mode);
+    syscall->setTargetPort(targetPort);
+
+    if (mode != UDP)
+    {
+        if (!serviceName)
+            error("Cannot bind a service into TCP mode without service name");
+        syscall->setServiceName(serviceName);
+    }
+
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
+             << " serving in port:" << targetPort << " with mode: " << mode << "\n";
+    sendRequestMessage(syscall, outGate);
+}
+
+void UserAppBase::_send(int socketFd, PTR payload, uint32_t targetPort, uint32_t targetIp)
+{
+    // Prepare the system call
+    SocketIoSyscall *syscall = new SocketIoSyscall();
+    auto mode = socketMap[socketFd].mode;
 
     // Set PID and Context
-    syscall->setPid(pid);
-    syscall->setVmId(vmId);
-    syscall->setOpCode(ABORT);
+    syscallFillData(syscall, SEND);
+    syscall->setMode(mode);
+    syscall->setSocketFd(socketFd);
+    syscall->setPayload(payload);
 
-    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " terminated abruptly\n";
-
-    // Send the request to the Operating System
+    if (mode == UDP)
+    {
+        syscall->setTargetIp(targetIp);
+        syscall->setTargetPort(targetPort);
+    }
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
+             << " serving in port:" << targetPort << " with mode: " << mode << "\n";
     sendRequestMessage(syscall, outGate);
+}
+
+bool UserAppBase::recv(int socketFd)
+{
+    auto &socketEntry = socketMap[socketFd];
+
+    if (socketEntry.chunks.size() > 0)
+    {
+        // Dispatch the recieved message
+        returnContext.chunk = socketEntry.chunks.front();
+        socketEntry.chunks.pop_front();
+        return true;
+    }
+    else
+    {
+        state = LISTENING;
+        return false;
+    }
+}
+
+void UserAppBase::close(int socketFd)
+{
+    SocketIoSyscall *syscall = new SocketIoSyscall();
+    auto mode = socketMap[socketFd].mode;
+    syscallFillData(syscall, CLOSE);
+    syscall->setMode(mode);
+    syscall->setSocketFd(socketFd);
+
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
+             << " closing socket:" << socketFd << " with mode: " << mode << "\n";
+    sendRequestMessage(syscall, outGate);
+    socketMap.erase(socketFd);
 }
