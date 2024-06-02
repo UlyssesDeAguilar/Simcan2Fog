@@ -28,6 +28,9 @@ OBJS = \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
     $O/Architecture/Cpu/CpuCores/CpuCore/CpuCore.o \
     $O/Architecture/Disk/DiskManager.o \
+    $O/Architecture/Network/DNS/DnsCache.o \
+    $O/Architecture/Network/DNS/DnsQuerierService.o \
+    $O/Architecture/Network/DNS/DnsResolverService.o \
     $O/Architecture/Network/DNS/DnsService.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
@@ -42,6 +45,7 @@ OBJS = \
     $O/Architecture/Network/Stack/TcpBaseClient.o \
     $O/Architecture/Network/Stack/TcpBaseProxy.o \
     $O/Architecture/Network/Stack/TcpBaseProxyThread.o \
+    $O/Architecture/Network/Stack/UdpIoService.o \
     $O/Architecture/Network/Stack/Listener/UdpListener.o \
     $O/Architecture/Network/Stack/Queue/QueuePullClient.o \
     $O/Architecture/Network/Stack/Queue/QueuePushClient.o \

@@ -8,10 +8,8 @@ import inet.applications.contract.IApp;
 simple DnsResolver like IApp {
     parameters:
     	@class(DnsResolver);
-        double timeOut = default(10.0);
+        string ispResolver = default("7.7.7.7");
     gates:
-        // Must be connected dynamically because of the definition 
-        // of the IApp interface and the module composition of NetworkAdapter
         input moduleIn @loose;
         output moduleOut @loose;
 		

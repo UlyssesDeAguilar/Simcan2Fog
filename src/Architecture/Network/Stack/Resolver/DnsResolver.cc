@@ -1,4 +1,6 @@
 #include "DnsResolver.h"
+using namespace networkio;
+using namespace dns;
 
 Define_Module(DnsResolver);
 
@@ -6,7 +8,8 @@ void DnsResolver::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL)
     {
-        timeOut = par("timeOut");
+        ispResolver = L3Address(par("ispResolver"));
+        multiplexer = check_and_cast<StackMultiplexer *>(getModuleByPath("^.sm"));
     }
     ApplicationBase::initialize(stage);
 }
@@ -14,17 +17,15 @@ void DnsResolver::initialize(int stage)
 void DnsResolver::finish()
 {
     // Release the socket (and the other resources)
-    mainSocket.close();
+    socket.close();
 }
 
 void DnsResolver::handleStartOperation(LifecycleOperation *operation)
 {
     // Configure the socket
-    mainSocket.setOutputGate(gate("socketOut"));
-    responseSocket.setOutputGate(gate("socketOut"));
-    responseSocket.bind(0);
-    mainSocket.setCallback(this);
-    responseSocket.setCallback(this);
+    socket.setOutputGate(gate("socketOut"));
+    socket.bind(0);
+    socket.setCallback(this);
 }
 
 void DnsResolver::handleStopOperation(LifecycleOperation *operation)
@@ -39,206 +40,63 @@ void DnsResolver::handleCrashOperation(LifecycleOperation *operation)
 
 void DnsResolver::handleMessageWhenUp(cMessage *msg)
 {
-    if (msg->isSelfMessage())
-    {
-        handleTimeOut(msg);
-        return;
-    }
     // Multiplex incoming messages from SIMCAN / INET
-    auto sm = dynamic_cast<SM_ResolverRequest *>(msg);
-
-    if (sm != nullptr)
-        handleResolution(sm);
-    else if (mainSocket.belongsToSocket(msg))
-        mainSocket.processMessage(msg);
-    else if (responseSocket.belongsToSocket(msg))
-        responseSocket.processMessage(msg);
-    else
-        error("Recieved unkown message");
-}
-
-void DnsResolver::sendResponse(SM_ResolverRequest *request, L3Address *ip)
-{
-    // Set the flag to return
-    request->setIsResponse(true);
-
-    // Prepare the fields for OK/ERROR response
-    if (ip == nullptr)
-        request->setResult(SC_ERROR);
+    auto packet = check_and_cast<Packet *>(msg);
+    if (packet)
+        socket.processMessage(packet);
     else
     {
-        request->setResult(SC_OK);
-        request->setResolvedIp(*ip);
+        processRequest(msg);
     }
-
-    // Send to the RequestMultiplexer
-    send(request, gate("moduleOut"));
 }
 
-void DnsResolver::handleResolution(SM_ResolverRequest *request)
+void DnsResolver::processRequest(cMessage *msg)
 {
-    auto url = std::string(request->getDomainName());
+    // Prepare a new request
+    auto event = check_and_cast<CommandEvent *>(msg);
+    auto request = new DnsRequest();
+    request->setOperationCode(QUERY);
+    request->setRequestId(getNewRequestId());
+    request->insertQuestion(event->getServiceName());
 
-    try
-    {
-        auto record = recordCache.at(url);
-        sendResponse(request, &record.ip);
-    }
-    catch (std::out_of_range const &e)
-    {
-        EV_INFO << "Requested url: " << url << " not cached" << endl;
-    }
+    auto packet = new Packet("Dns Request", Ptr<DnsRequest>(request));
+    socket.sendTo(packet, ispResolver, DNS_PORT);
 
-    // We will need to ask the servers --> init the request state
-    auto newId = getNewRequestId();
-    auto newState = new RequestState(url, request);
-
-    // Prepare the request
-    auto dnsRequest = new DNS_Request();
-    dnsRequest->setRequestId(newId);
-    dnsRequest->setOperationCode(OP_Code::QUERY);
-
-    std::string tld;
-    L3Address selectedIp;
-
-    try
-    {
-        newState->domain.getTopLevelDomainName(tld);
-        auto record = recordCache.at(tld);
-        // If found the TLD/NS -- ask for the url
-        dnsRequest->insertQuestion(url.c_str());
-        selectedIp = record.ip;
-    }
-    catch (std::out_of_range const &e)
-    {
-        EV_INFO << "Requested NS/TLD: " << tld << " not cached" << endl;
-        // Nothing found, so we really need to start from scratch
-        if (newState->domain.isNameServer())
-            newState->currentState = RequestState::URL_RESOLUTION;
-        else
-            newState->currentState = RequestState::TLD_RESOLUTION;
-        dnsRequest->insertQuestion(tld.c_str());
-        selectedIp = ROOT_DNS_IP;
-    }
-
-    EV_INFO << "Generated request with id: " << newId << " attempting resolution" << endl;
-
-    // Compose and send packet
-    auto packet = new Packet("DNS_Request", Ptr<DNS_Request>(dnsRequest));
-    mainSocket.sendTo(packet, selectedIp, DNS_PORT);
-
-    // Prepare the timeout and register the request
-    newState->timeOut = prepareRequestTimeOut(newId);
-    pendingRequests[newId] = newState;
+    pendingRequests[request->getRequestId()] = std::unique_ptr<networkio::CommandEvent>(event);
 }
 
 uint16_t DnsResolver::getNewRequestId()
 {
-    // FIXME: Macro for the range of uint16_t ?
-    uint16_t newId = (lastId + 1) % 65536;
-
-    // Find the next non occupied id
-    while (pendingRequests.find(newId) != pendingRequests.end())
-        newId++;
-
-    // Store the last assigned id
-    lastId = newId;
-
-    return newId;
-}
-
-cMessage *DnsResolver::prepareRequestTimeOut(uint16_t requestId)
-{
-    auto timeOutEvent = new cMessage("Resolution TIMEOUT", requestId);
-    scheduleAt(simTime() + timeOut, timeOutEvent);
-    return timeOutEvent;
-}
-
-void DnsResolver::handleTimeOut(cMessage *msg)
-{
-    uint16_t id = msg->getKind();
-    EV_INFO << "Handling timeout for request: " << id << endl;
-
-    // Search the request
-    auto iter = pendingRequests.find(id);
-    if (iter == pendingRequests.end())
-        EV_ERROR << "Attempted to delete a non registered request -- ignored" << endl;
-    else
-    {
-        auto pendingRequest = iter->second;
-        pendingRequests.erase(iter);
-
-        // Extract SM_ResolverRequest and erase the associated state!
-        auto originalRequest = pendingRequest->request;
-        delete pendingRequest;
-
-        // Send the error
-        sendResponse(originalRequest, nullptr);
-    }
-
-    // Delete the event
-    delete msg;
+    if (lastId == UINT16_MAX)
+        lastId = 0;
+    return lastId++;
 }
 
 void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
-    // DNS Response analysis
-    auto response = dynamic_cast<const DNS_Request *>(packet->peekData().get());
-    if (response == nullptr)
-        error("Non DNS response recieved via UDP");
+    auto response = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
+    auto iter = pendingRequests.find(response->getRequestId());
 
-    // Retrieve Id and then the status
-    uint16_t requestId = response->getRequestId();
-    auto iter = pendingRequests.find(requestId);
+    auto event = new IncomingEvent();
+    event->setPid(iter->second->getPid());
+    event->setVmId(iter->second->getVmId());
+    event->setIp(iter->second->getIp());
 
-    if (iter == pendingRequests.end())
+    // TODO: Send the appropiate response back
+    if (response->getReturnCode() == dns::ReturnCode::NOERROR)
     {
-        EV_ERROR << "Recieved response for non registered request: " << requestId << " possible timeout" << endl;
-        delete packet;
-        return;
-    }
-
-    auto requestStatus = iter->second;
-
-    if (response->getReturnCode() != ReturnCode::NOERROR || response->getRecordArraySize() != 1)
-    {
-        // DNS error -- delete and return failure
-        EV_INFO << "Recieved error from DNS lookup for: " << requestId << " resolving: " << requestStatus->domain.getFullName() << endl;
-        cancelAndDelete(requestStatus->timeOut);
-        pendingRequests.erase(iter);
-        sendResponse(requestStatus->request, nullptr);
-        delete packet;
-        return;
-    }
-
-    auto record = response->getRecord(0);
-    if (requestStatus->currentState == RequestState::URL_RESOLUTION)
-    {
-        // Everything resolved
-        EV_INFO << "Request with id: " << requestId << " completed succesfully" <<endl;
-        cancelAndDelete(requestStatus->timeOut);
-        pendingRequests.erase(iter);
-        sendResponse(requestStatus->request, &record.ip);
+        const ResourceRecord &rec = response->getNonAuthoritativeAnswers(0);
+        event->setType(networkio::EventType::RESOLVER_NOERROR);
+        event->setResolvedIp(rec.ip.toIpv4().getInt());
     }
     else
     {
-        // FIXME consider rechecking cache ?
-        // Go from TLD_RESOLUTION to URL_RESOLUTION
-        EV_INFO << "Request with id: " << requestId << " recieved NS/TLD, attempting final resolution" << endl;
-        requestStatus->currentState = RequestState::URL_RESOLUTION;
-        
-        // Prepare the query
-        auto dnsRequest = new DNS_Request();
-        dnsRequest->setOperationCode(OP_Code::QUERY);
-        dnsRequest->insertQuestion(requestStatus->domain.getFullName().c_str());
-
-        // Prepare package and send it to the NS/TLD
-        auto packet = new Packet("DNS_Request", Ptr<DNS_Request>(dnsRequest));
-        mainSocket.sendTo(packet, record.ip, DNS_PORT);
+        event->setType(networkio::EventType::RESOLVER_NXDOMAIN);
+        event->setServiceName(iter->second->getServiceName());
     }
 
-    // In both cases, cache the returned info
-    recordCache[record.url] = record;
+    multiplexer->processResponse(event);
+    pendingRequests.erase(iter);
     delete packet;
 }
 
@@ -247,7 +105,4 @@ void DnsResolver::socketErrorArrived(UdpSocket *socket, Indication *indication)
     error("Error in socket communication");
 }
 
-void DnsResolver::socketClosed(UdpSocket *socket)
-{
-    // Technically it is not possible, so it is ignored
-}
+void DnsResolver::socketClosed(UdpSocket *socket) {}

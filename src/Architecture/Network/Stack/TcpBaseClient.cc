@@ -34,7 +34,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
 {
     Enter_Method_Silent();
 
-    auto command = check_and_cast<networkio::Event *>(msg);
+    auto command = check_and_cast<networkio::CommandEvent *>(msg);
 
     switch (command->getCommand())
     {
@@ -57,7 +57,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
         socketMap.addSocket(newSocket);
 
         // Connect to the requested ip/port
-        Ipv4Address ip(command->getRips());
+        Ipv4Address ip(command->getTargetPort());
         newSocket->connect(ip, port);
 
         break;
@@ -65,7 +65,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
     case networkio::SOCKET_SEND:
     {
         // Find the socket
-        auto socket = static_cast<TcpSocket *>(socketMap.getSocketById(command->getRips()));
+        auto socket = static_cast<TcpSocket *>(socketMap.getSocketById(command->getSocketId()));
 
         // TODO: Check compatibility with older INET_AppMessage shenanigans
         // Encapsulate the message
@@ -80,7 +80,7 @@ void TcpBaseClient::processRequest(cMessage *msg)
     case networkio::SOCKET_CLOSE:
     {
         // Find the socket and close it
-        auto socket = socketMap.getSocketById(command->getRips());
+        auto socket = socketMap.getSocketById(command->getSocketId());
         socket->close();
         break;
     }
@@ -110,12 +110,12 @@ void TcpBaseClient::handleCrashOperation(LifecycleOperation *operation)
 void TcpBaseClient::socketPeerClosed(inet::TcpSocket *socket)
 {
     // Create the event
-    auto event = new networkio::Event();
+    auto event = new networkio::IncomingEvent();
 
     // Prepare the event
     auto reference = socketReferenceMap.at(socket->getSocketId());
     event->setType(networkio::SOCKET_PEER_CLOSED);
-    event->setRips(socket->getSocketId());
+    event->setSocketId(socket->getSocketId());
     event->setVmId(reference->vmId);
     event->setPid(reference->pid);
 
@@ -126,12 +126,12 @@ void TcpBaseClient::socketPeerClosed(inet::TcpSocket *socket)
 void TcpBaseClient::socketFailure(inet::TcpSocket *socket, int code)
 {
     // Create the event
-    auto event = new networkio::Event();
+    auto event = new networkio::IncomingEvent();
 
     // Prepare the event
     auto reference = socketReferenceMap.at(socket->getSocketId());
     event->setType(networkio::SOCKET_FAILURE);
-    event->setRips(socket->getSocketId());
+    event->setSocketId(socket->getSocketId());
     event->setVmId(reference->vmId);
     event->setPid(reference->pid);
 
@@ -162,12 +162,12 @@ void TcpBaseClient::socketClosed(inet::TcpSocket *socket)
 void TcpBaseClient::socketEstablished(inet::TcpSocket *socket)
 {
     // Create the event
-    auto event = new networkio::Event();
+    auto event = new networkio::IncomingEvent();
 
     // Prepare the event
     auto reference = socketReferenceMap.at(socket->getSocketId());
     event->setType(networkio::SOCKET_ESTABLISHED);
-    event->setRips(socket->getSocketId());
+    event->setSocketId(socket->getSocketId());
     event->setVmId(reference->vmId);
     event->setPid(reference->pid);
 
@@ -201,12 +201,12 @@ void TcpBaseClient::socketDataArrived(TcpSocket *socket, Packet *packet, bool ur
         error("The socket id is not found on the reference map");
 
     auto reference = iter->second;
-    auto event = new networkio::Event();
+    auto event = new networkio::IncomingEvent();
 
     event->setType(networkio::SOCKET_DATA_ARRIVED);
     event->setVmId(reference->vmId);
     event->setPid(reference->pid);
-    event->setRips(socketId);
+    event->setSocketId(socketId);
     event->setPackage(sm);
 
     multiplexer->processResponse(event);

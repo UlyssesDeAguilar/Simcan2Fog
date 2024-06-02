@@ -10,9 +10,9 @@ void StackMultiplexer::initialize()
     outGateId = gateHalf("comm", cGate::OUTPUT)->getId();
 
     // Locate and get references to the services
-    services[StackServiceType::HTTP_CLIENT] = check_and_cast<StackService *>(getModuleByPath("^.app[0]"));
-    services[StackServiceType::HTTP_PROXY] = check_and_cast<StackService *>(getModuleByPath("^.app[1]"));
-    services[StackServiceType::DNS_RESOLVER] = check_and_cast<StackService *>(getModuleByPath("^.app[2]"));
+    services[StackServiceType::HTTP_CLIENT] = check_and_cast<StackService *>(getModuleByPath("^.httpClient"));
+    services[StackServiceType::HTTP_PROXY] = check_and_cast<StackService *>(getModuleByPath("^.httpProxy"));
+    services[StackServiceType::DNS_RESOLVER] = check_and_cast<StackService *>(getModuleByPath("^.dnsResolver"));
 }
 
 void StackMultiplexer::finish() {}

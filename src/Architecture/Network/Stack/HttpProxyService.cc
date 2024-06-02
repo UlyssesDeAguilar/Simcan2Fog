@@ -32,7 +32,7 @@ void HttpProxyThread::selectFromPool(SIMCAN_Message *sm)
         eventTemplate->setIp(entry->ip);
         eventTemplate->setVmId(entry->vmId);
         eventTemplate->setPid(entry->pid);
-        eventTemplate->setRips(socket->getSocketId());
+        eventTemplate->setSocketId(socket->getSocketId());
 
         // Hold the service name
         service = &serviceReference->first;

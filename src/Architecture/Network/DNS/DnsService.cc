@@ -100,8 +100,6 @@ void DnsService::handleStartOperation(LifecycleOperation *operation)
 void DnsService::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     // See if it is a DNS request
-    auto request = check_and_cast<const DnsRequest *>(packet->peekData().get());
-
     auto request = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
     switch (request->getOperationCode())
     {

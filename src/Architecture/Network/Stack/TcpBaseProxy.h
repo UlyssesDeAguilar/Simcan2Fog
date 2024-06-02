@@ -64,7 +64,7 @@ protected:
     ServiceEntry *entry{};                             //!< Pool entry reference to IP/VM/PROCESS which holds the service
     TcpSocket *socket{};                               //!< The socket this thread manages
     TcpBaseProxy *proxy{};                             //!< Reference to the "main" thread
-    std::unique_ptr<networkio::Event> eventTemplate{}; //!< Template which makes creating events faster
+    std::unique_ptr<networkio::IncomingEvent> eventTemplate{}; //!< Template which makes creating events faster
 
     virtual void socketAvailable(inet::TcpSocket *socket, inet::TcpAvailableInfo *availableInfo) override { throw cRuntimeError("Unexpected connexion opening"); };
     virtual void socketEstablished(inet::TcpSocket *socket) override {};
@@ -85,11 +85,11 @@ protected:
     virtual void selectFromPool(SIMCAN_Message *sm) = 0;
 
 public:
-    TcpBaseProxyThread() { eventTemplate = std::unique_ptr<networkio::Event>(new networkio::Event()); }
+    TcpBaseProxyThread() { eventTemplate = std::unique_ptr<networkio::IncomingEvent>(new networkio::IncomingEvent()); }
     void setSocket(TcpSocket *socket) { this->socket = socket; }
     void setProxy(TcpBaseProxy *proxy) { this->proxy = proxy; }
     const std::string *getService() { return service; }
-    virtual void sendMessage(networkio::Event *event);
+    virtual void sendMessage(networkio::CommandEvent *event);
 };
 
 #endif

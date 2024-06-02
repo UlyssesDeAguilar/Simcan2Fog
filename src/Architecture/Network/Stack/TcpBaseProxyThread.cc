@@ -44,7 +44,7 @@ void TcpBaseProxyThread::socketDataArrived(TcpSocket *socket, Packet *packet, bo
     delete packet;
 }
 
-void TcpBaseProxyThread::sendMessage(networkio::Event *event)
+void TcpBaseProxyThread::sendMessage(networkio::CommandEvent *event)
 {
     // Emplace into the envelope the message
     auto chunk = makeShared<INET_AppMessage>(event->getPackageForUpdate());

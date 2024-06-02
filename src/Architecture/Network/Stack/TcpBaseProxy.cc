@@ -34,7 +34,7 @@ void TcpBaseProxy::processRequest(cMessage *msg)
 {
     Enter_Method_Silent();
     
-    auto command = check_and_cast<networkio::Event *>(msg);
+    auto command = check_and_cast<networkio::CommandEvent *>(msg);
 
     switch (command->getCommand())
     {
@@ -47,12 +47,12 @@ void TcpBaseProxy::processRequest(cMessage *msg)
     case networkio::SOCKET_SEND:
     {
         // Dispatch the corresponding thread in order to send the message
-        threadMap.at(command->getRips())->sendMessage(command);
+        threadMap.at(command->getSocketId())->sendMessage(command);
         break;
     }
     case networkio::SOCKET_CLOSE:
     {
-        int socketId = command->getRips();
+        int socketId = command->getSocketId();
         
         // Inyect the corresponding service name into the command
         command->setServiceName(threadMap.at(socketId)->getService()->c_str());
@@ -61,7 +61,7 @@ void TcpBaseProxy::processRequest(cMessage *msg)
         BaseProxy::processRequest(command);
 
         // Find the socket
-        auto socket = socketMap.getSocketById(command->getRips());
+        auto socket = socketMap.getSocketById(socketId);
 
         // Close action, triggering the end of the thread and the deallocation of resources
         socket->close();

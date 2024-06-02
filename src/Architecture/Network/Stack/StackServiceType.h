@@ -5,6 +5,7 @@ enum StackServiceType {
     HTTP_CLIENT = 0,
     HTTP_PROXY = 1,
     DNS_RESOLVER = 2,
+    UDP_IO = 3,
     NUM_SERVICES 
 };
 

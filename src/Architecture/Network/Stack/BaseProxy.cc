@@ -10,7 +10,7 @@ void BaseProxy::initialize(int stage)
         // Locate the multiplexer
         multiplexer = check_and_cast<StackMultiplexer *>(getModuleByPath("^.sm"));
         // Locate the local dns server
-        localDns = check_and_cast<DnsService *>(getModuleByPath("^.app[3]"));
+        localDns = check_and_cast<DnsService *>(getModuleByPath("^.dnsServer"));
     }
 
     ApplicationBase::initialize(stage);
@@ -18,7 +18,7 @@ void BaseProxy::initialize(int stage)
 
 void BaseProxy::processRequest(omnetpp::cMessage *msg)
 {
-    auto command = check_and_cast<networkio::Event *>(msg);
+    auto command = check_and_cast<networkio::CommandEvent *>(msg);
 
     switch (command->getCommand())
     {
@@ -29,7 +29,7 @@ void BaseProxy::processRequest(omnetpp::cMessage *msg)
         newEntry.vmId = command->getVmId();
         newEntry.ip = command->getIp();
 
-        auto &servicePool = findOrRegisterService(command->getServiceName(), command->getRips());
+        auto &servicePool = findOrRegisterService(command->getServiceName(), command->getTargetPort());
         servicePool.insert(newEntry);
         break;
     }
