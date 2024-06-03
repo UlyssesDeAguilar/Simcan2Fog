@@ -164,17 +164,25 @@ const opp_string *CloudProvider::selectNode(const SM_UserVM *request)
 
   // Retrieve the first node in the set
   auto first = iter->second.begin();
+  if (first == iter->second.end())
+    error("Empty pool!");
+
   Node *node = const_cast<Node *>(*first);
-  iter->second.erase(first);
 
   // Update
   node->availableCores -= totalCores;
 
   // Insert into map (if no pool existing then create one)
   coresMap[node->availableCores].insert(node);
+  iter->second.erase(first);
+
+  // If the pool got to zero then erase
+  if (iter->second.size() == 0)
+    coresMap.erase(iter);
+  
   EV << "Estimating " << totalCores << " allocated for " << node->topic << "\n";
   EV << "New available core count: " << node->availableCores << "\n";
-  
+
   return &node->topic;
 }
 
@@ -202,24 +210,26 @@ void CloudProvider::rejectVmRequest(SM_UserVM *userVM_Rq)
 
 void CloudProvider::attemptDispatching()
 {
-  if (queue.size() == 0)
-    return;
+  const opp_string *topic = nullptr;
 
-  const opp_string *topic{};
-  do
+  while (queue.size() > 0)
   {
-    QueueElement element = queue.front();
+    QueueElement &element = queue.front();
     topic = selectNode(element.request);
 
     if (topic)
     {
-      queue.pop_front();
       cancelAndDelete(element.timeOut);
       element.request->setAutoSourceTopic(false);
       element.request->setDestinationTopic(topic->c_str());
       send(element.request, "queueOut");
+      queue.pop_front();
     }
-  } while (queue.size() > 0 && topic != nullptr);
+    else
+    {
+      return;
+    }
+  }
 }
 
 const CloudUser *CloudProvider::findUserTypeById(const std::string &userId)

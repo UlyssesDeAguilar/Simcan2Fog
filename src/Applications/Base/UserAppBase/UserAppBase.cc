@@ -134,7 +134,7 @@ void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
 
             if (state != LISTENING)
             {
-                delete syscall;
+                delete event;
                 return;
             }
             else
@@ -153,7 +153,7 @@ void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
         }
     }
 
-    delete syscall;
+    delete event;
     __run();
 }
 
