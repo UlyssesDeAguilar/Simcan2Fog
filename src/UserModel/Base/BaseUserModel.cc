@@ -27,7 +27,7 @@ void BaseUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInsta
         // Update statistics
         driver.emit(driver.responseSignal, userInstance.getNId());
         driver.emit(driver.subscribeSignal[""], userInstance.getNId());
-        
+
         // Start the subscription
         userInstance.startSubscription();
 
@@ -91,7 +91,7 @@ void BaseUserModel::handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserIn
     }
     else
         driver.error("Unexpected return result on Applications: UserBaseModel");
-    
+
     delete appRequest;
 }
 
@@ -100,11 +100,12 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     // Individual VM timeout -> Rescue or not rescue?
     driver.emit(driver.failSignal[extensionOffer->getVmId()], userInstance.getNId());
 
-    SM_VmExtend * response = extensionOffer->dup();
+    SM_VmExtend *response = extensionOffer->dup();
 
     bool finished = (userInstance.isFinished() || userInstance.getVmInstanceState(extensionOffer->getVmId()) == vmFinished);
     if (finished || !decidesToRescueVm(extensionOffer, userInstance))
     {
+        EV_INFO << "User " << userInstance.getNId() << ": closing vm: " << extensionOffer->getVmId();
         // Update the status
         userInstance.updateVmInstanceStatus(extensionOffer->getVmId(), vmFinished);
         response->setResult(SM_ExtensionOffer_Reject);
@@ -112,6 +113,7 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     }
     else
     {
+        EV_INFO << "User " << userInstance.getNId() << ": rescuing vm: " << extensionOffer->getVmId();
         // Decided to recover the vm and suscribe
         driver.extensionTimeHashMap.at(extensionOffer->getVmId())++;
         response->setResult(SM_ExtensionOffer_Accept);
@@ -120,7 +122,7 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     }
 
     // Note that control info objects are not cloned across cMessage's
-    auto routingInfo = check_and_cast<RoutingInfo*>(extensionOffer->getControlInfo());
+    auto routingInfo = check_and_cast<RoutingInfo *>(extensionOffer->getControlInfo());
     auto newRoutingInfo = new RoutingInfo();
     newRoutingInfo->setDestinationUrl(routingInfo->getSourceUrl());
     newRoutingInfo->setSourceUrl(ServiceURL(0));
@@ -163,7 +165,7 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
         {
             auto pAppInstance = appCollection->getInstance(j);
             const std::string &type = pAppInstance->getAppName();
-            const std::string & instanceId = pAppInstance->getAppInstanceId();
+            const std::string &instanceId = pAppInstance->getAppInstanceId();
 
             // auto nPrice = pRes->price;
 

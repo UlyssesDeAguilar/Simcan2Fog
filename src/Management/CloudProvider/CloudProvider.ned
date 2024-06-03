@@ -16,7 +16,7 @@ module CloudProvider extends StandardHost
 {
     parameters:
         string nodeTopic = default("CloudProvider"); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment  
-
+        string smqIp = default("10.0.2.1");
         @display("bgb=1308.825,883.57495;i=cloud-manager");
     submodules:
         cpService: CloudProviderService {
@@ -29,13 +29,13 @@ module CloudProvider extends StandardHost
         }
 
         pushSocket: TcpClientSocketIo {
-            connectAddress = "24.24.24.24";
+            connectAddress = smqIp;
             connectPort = 8444;
             @display("p=687,88");
         }
 
         pullSocket: TcpClientSocketIo {
-            connectAddress = "24.24.24.24";
+            connectAddress = smqIp;
             connectPort = 8443;
             @display("p=783,88");
         }

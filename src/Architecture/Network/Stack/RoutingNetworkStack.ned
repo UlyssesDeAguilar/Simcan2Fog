@@ -1,5 +1,19 @@
-package simcan2.Architecture.Network.Stack;
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/.
+// 
 
+package simcan2.Architecture.Network.Stack;
 import simcan2.Architecture.Network.Stack.StackMultiplexer;
 import simcan2.Architecture.Network.Stack.Queue.QueuePullClient;
 import simcan2.Architecture.Network.Stack.Queue.QueuePushClient;
@@ -7,22 +21,12 @@ import simcan2.Architecture.Network.Stack.Resolver.DnsResolver;
 import simcan2.Architecture.Network.DNS.DnsService;
 import inet.applications.tcpapp.TcpClientSocketIo;
 import inet.applications.udpapp.UdpSocketIo;
-import inet.node.inet.StandardHost;
+import inet.node.inet.Router;
 
-// This is the main network technology stack for hypervisors.
-//
-// It contains an HttpClient, HttpProxy, DNS Resolver, DNS Local Server, Queue Pull Client, Queue Push Client
-//
-// They work closely with the hypervisor in order to provide and consume services
-// 
-// @author Ulysses de Aguilar Gudmundsson
-// @date 2024-05-05
-//
-module NetworkStack extends StandardHost
+module RoutingNetworkStack extends Router
 {
     parameters:
-        @display("i=device/card;bgb=1255.1174,837.4274");     	// We have to make an icon (default is a PC)
-        string nodeTopic = default(""); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment  
+        string nodeTopic = default(""); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment
         string cpIp = default("10.0.1.1");
         string smqIp = default("10.0.2.1");
         bool hasCloudEvents = default(false);	// Wheter the module sends events to the cloud provider
@@ -60,9 +64,9 @@ module NetworkStack extends StandardHost
         }
 
         udpService: UdpIoService {
-
             @display("p=1196.52,194.34999");
         }
+
         pushSocket: TcpClientSocketIo if enableQueue {
             connectAddress = smqIp;
             connectPort = 8444;

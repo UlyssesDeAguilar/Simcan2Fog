@@ -20,10 +20,12 @@ import inet.node.bgp.BgpRouter;
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Network.MessageQueue.MessageQueue;
 import inet.node.inet.Router;
+import inet.node.ethernet.EtherSwitch;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100G;
 
 // Entities involved in action
+import simcan2.Architecture.Nodes.Fog.FogNode;
 import simcan2.Management.CloudProvider.CloudProvider;
 import simcan2.Management.DataCentre.DataCentre;
 import simcan2.Management.UserGenerators.UserGenerator;
@@ -32,50 +34,52 @@ import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 network FogShowcase2
 {
     @display("bgb=700,700;bgi=maps/europe,c;bgg=100;bgu=km");
+    types:
     submodules:
         simData: SimData {
             @display("p=626.56,140.8");
         }
         cp: CloudProvider {
-            @display("p=264.704,192.89601");
+            @display("p=283.008,168.96");
         }
 
         dc1: DataCentre {
-            @display("p=322.432,156.28801");
+            @display("p=366.08002,171.776");
         }
-        dc2: DataCentre {
-            @display("p=380.16,177.408");
+
+        fg1: FogNode {
+            @display("p=185.856,439.29602");
         }
+
         smq: MessageQueue {
             @display("p=125.312004,326.656");
         }
         ug: UserGenerator {
             @display("p=70.4,639.232;is=l");
         }
+
+        switch: EtherSwitch {
+
+            @display("p=315.392,247.80801");
+        }
         configurator: Ipv4NetworkConfigurator {
             @display("p=626.56,47.872");
         }
-        router_bb: Router {
-            @display("p=302.72,461.824");
-        }
         router1: Router {
-            @display("p=343.552,291.456");
+            @display("p=308.35202,335.104");
         }
-        router2: Router {
-            @display("p=168.96,409.72803");
-        }
-        router3: Router {
-            @display("p=159.104,615.296");
+        fg2: FogNode {
+            @display("p=260.48,535.04004");
         }
     connections:
-        cp.ethg++ <--> Eth10M <--> router1.ethg++;
-        dc1.comm++ <--> Eth10M <--> router1.ethg++;
-        dc2.comm++ <--> Eth10M <--> router1.ethg++;
+        switch.ethg++ <--> Eth10M <--> router1.ethg++;
+        dc1.comm++ <--> Eth10M <--> switch.ethg++;
+        cp.ethg++ <--> Eth10M <--> switch.ethg++;
 
-        smq.ethg++ <--> Eth10M <--> router2.ethg++;
-        ug.comm <--> Eth10M <--> router3.ethg++;
+        fg1.comm++ <--> Eth100G <--> router1.ethg++;
+        fg2.comm++ <--> Eth100G <--> router1.ethg++;
+        fg1.comm++ <--> Eth100G <--> fg2.comm++;
+        fg1.comm++ <--> Eth100G <--> smq.ethg++;
+        ug.comm <--> Eth10M <--> fg2.comm++;
 
-        router1.ethg++ <--> Eth100G <--> router_bb.ethg++;
-        router2.ethg++ <--> Eth100G <--> router_bb.ethg++;
-        router3.ethg++ <--> Eth100G <--> router_bb.ethg++;
 }
