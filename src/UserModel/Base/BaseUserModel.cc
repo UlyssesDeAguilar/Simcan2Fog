@@ -101,12 +101,9 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     driver.emit(driver.failSignal[extensionOffer->getVmId()], userInstance.getNId());
 
     SM_VmExtend * response = extensionOffer->dup();
-    auto routingInfo = check_and_cast<RoutingInfo*>(extensionOffer->getControlInfo());
 
-    response->setIsResponse(false);
-    response->setResult(0);
-
-    if (userInstance.isFinished() || !decidesToRescueVm(extensionOffer, userInstance))
+    bool finished = (userInstance.isFinished() || userInstance.getVmInstanceState(extensionOffer->getVmId()) == vmFinished);
+    if (finished || !decidesToRescueVm(extensionOffer, userInstance))
     {
         // Update the status
         userInstance.updateVmInstanceStatus(extensionOffer->getVmId(), vmFinished);
@@ -123,6 +120,7 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
     }
 
     // Note that control info objects are not cloned across cMessage's
+    auto routingInfo = check_and_cast<RoutingInfo*>(extensionOffer->getControlInfo());
     auto newRoutingInfo = new RoutingInfo();
     newRoutingInfo->setDestinationUrl(routingInfo->getSourceUrl());
     newRoutingInfo->setSourceUrl(ServiceURL(0));

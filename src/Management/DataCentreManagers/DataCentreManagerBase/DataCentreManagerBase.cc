@@ -275,7 +275,7 @@ void DataCentreManagerBase::handleVmSubscription(SIMCAN_Message *sm)
 
     // Set response and operation type
     userVM_Rq->setIsResponse(true);
-    userVM_Rq->setOperation(SM_VM_Notify);
+    userVM_Rq->setOperation(SM_VM_Sub);
 
     // Send the response
     userVM_Rq->setDestinationTopic(userVM_Rq->getReturnTopic());
@@ -361,7 +361,7 @@ void DataCentreManagerBase::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
        << response->getVmId() << " for " << response->getExtensionTime() << "\n";
 
     auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
-    resourceManager->resumeVm(routingInfo->getSourceUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
+    resourceManager->resumeVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
 }
 
 void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
@@ -370,7 +370,7 @@ void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
     EV << "User: " << response->getUserId() << " decided to not extend vm " << response->getVmId() << ". Freeing resources\n";
 
     auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
-    resourceManager->deallocateVm(routingInfo->getSourceUrl().getLocalAddress().getInt(), response->getVmId());
+    resourceManager->deallocateVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId());
 
     // Notifiy the Cloud provider that the resources were finally freed
     eventTemplate.setAvailableCores(resourceManager->getAvailableCores());

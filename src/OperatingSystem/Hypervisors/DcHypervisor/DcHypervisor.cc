@@ -114,7 +114,7 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
     // Register the global id in map and in the control block
     vmIdMap[request.vmId] = id;
     auto iter = vmIdMap.find(request.vmId);
-    controlBlock.globalId = &iter->first;
+    controlBlock.globalId = iter->first;
     controlBlock.userId = userId;
     controlBlock.vmType = vm;
     controlBlock.state = vmRunning;
@@ -151,7 +151,7 @@ void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
     auto extensionOffer = new SM_VmExtend();
 
     // Fill in the neccesary details
-    extensionOffer->setVmId(vm.globalId->c_str());
+    extensionOffer->setVmId(vm.globalId.c_str());
     extensionOffer->setUserId(vm.userId.c_str());
 
     // Set as a request and send to the Manager
@@ -165,13 +165,20 @@ void DcHypervisor::handleVmTimeout(VmControlBlock &vm)
     extensionOffer->setControlInfo(routingInfo);
     sendRequestMessage(extensionOffer, networkGates.outBaseId);
 }
+uint32_t DcHypervisor::resolveGlobalVmId(const std::string &vmId)
+{
+    auto iter = vmIdMap.find(vmId.c_str());
+    if (iter == vmIdMap.end())
+        return UINT32_MAX;
+    return iter->second;
+}
 
 void DcHypervisor::extendVm(const std::string &vmId, int extensionTime)
 {
     Enter_Method_Silent();
 
     // This could be fixed with an approach similar to AppControlBlock
-    auto id = getOrDefault(vmIdMap, vmId, UINT32_MAX);
+    auto id = resolveGlobalVmId(vmId);
 
     // If not found
     if (id == UINT32_MAX)
@@ -204,7 +211,7 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
     Enter_Method_Silent();
 
     // This could be fixed with an approach similar to AppControlBlock
-    auto id = getOrDefault(vmIdMap, vmId, UINT32_MAX);
+    auto id = resolveGlobalVmId(vmId);
 
     // If not found
     if (id == UINT32_MAX)
@@ -213,9 +220,13 @@ void DcHypervisor::deallocateVmResources(const std::string &vmId)
         return;
     }
 
+    // Remove the global id
+    vmIdMap.erase(vmId.c_str());
+    
     // Delete the timer
     VmControlBlock &block = vmsControl.at(id);
     cancelAndDelete(block.timeOut);
+    block.timeOut = nullptr;
 
     // Force app termination
     for (auto &app : block.apps)

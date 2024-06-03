@@ -239,7 +239,7 @@ void OsCore::handleAppTermination(AppControlBlock &app, tApplicationState exitSt
         // Global routing
         update->setDestinationTopic(userRequest->getReturnTopic());
         update->setResult(SM_APP_Res_Accept);
-        update->setVmId(vmControl.globalId->c_str());
+        update->setVmId(vmControl.globalId.c_str());
         update->setIsResponse(true);
         hypervisor->sendResponseMessage(update);
 

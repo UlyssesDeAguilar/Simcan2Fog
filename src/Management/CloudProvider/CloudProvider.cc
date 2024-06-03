@@ -147,7 +147,7 @@ void CloudProvider::handleSubscriptionTimeout(cMessage *msg)
 
   // Fill the message and send
   request->setIsResponse(true);
-  request->setOperation(SM_VM_Notify);
+  request->setOperation(SM_VM_Sub);
   request->setResult(SM_APP_Sub_Timeout);
   request->setDestinationTopic(request->getReturnTopic());
   send(request, "queueOut");

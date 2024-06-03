@@ -163,6 +163,7 @@ public:
     void setTimeoutMaxRentTime() { bTimeout_t2 = true; }
     void setTimeoutMaxSubscribed() { bTimeout_t4 = true; }
 
+    tVmState getVmInstanceState(const opp_string &r) { return vmGroupedInstances.flattened().at(vmIdMap.at(r)).getState();}
     int getTotalVMs() const { return vmGroupedInstances.flattened().size(); }
 
     /**

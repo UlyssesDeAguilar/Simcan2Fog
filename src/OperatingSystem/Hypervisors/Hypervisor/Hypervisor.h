@@ -17,7 +17,7 @@ namespace hypervisor
         OsCore osCore;                           //!< The core operating system utilities
         ControlTable<VmControlBlock> vmsControl; //!< Control table for vms
         uint32_t maxAppsPerVm;                   //!< Max number of vms per vm -> TODO: Check out the values
-        std::map<std::string, uint32_t> vmIdMap; //!< Map that translates the general VM Id to the local VM Id
+        std::map<opp_string, uint32_t> vmIdMap;  //!< Map that translates the general VM Id to the local VM Id
 
         GateInfo appGates;       //!< General info for appGates
         GateInfo schedulerGates; //!< General info for schedulerGates
@@ -59,7 +59,7 @@ namespace hypervisor
         virtual void finish() override;
         virtual void handleMessage(cMessage *msg) override;
         void handleIncomingEvent(networkio::IncomingEvent *event);
-        
+
         virtual cGate *getOutGate(cMessage *msg) override;
         virtual void processSelfMessage(cMessage *msg) override;
         virtual void processRequestMessage(SIMCAN_Message *sm) override;

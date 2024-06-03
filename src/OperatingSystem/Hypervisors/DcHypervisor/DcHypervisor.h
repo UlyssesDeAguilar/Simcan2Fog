@@ -42,7 +42,7 @@ namespace hypervisor
       // Hypervisor inheritance section
       virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) override { return getParentModule()->getSubmodule("appsVectors", vmId)->getSubmodule("appModule", pid); }
       virtual HardwareManager *locateHardwareManager() override { return check_and_cast<HardwareManager *>(getModuleByPath("^.^.hardwareManager")); }
-      virtual uint32_t resolveGlobalVmId(const std::string &vmId) override { return getOrDefault(vmIdMap, vmId, UINT32_MAX); }
+      virtual uint32_t resolveGlobalVmId(const std::string &vmId) override;
 
       /**
        * Check if there are VMs running in the machine.

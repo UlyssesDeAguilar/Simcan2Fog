@@ -36,7 +36,7 @@ void EdgeHypervisor::initialize(int stage)
         vmIdMap["local"] = vmId;
 
         VmControlBlock &vmControl = vmsControl[vmId];
-        vmControl.globalId = &(vmIdMap.find("local")->first);
+        vmControl.globalId = "local";
         vmControl.state = vmRunning;
         break;
     }

@@ -74,7 +74,7 @@ namespace hypervisor
     {
         uint32_t vmId;                       //!< The vmId -- It's aligned in virtual environements with the scheduler!
         tVmState state;                      //!< The current state of the VM
-        const std::string *globalId;         //!< The unique identifier of the vm in the global context of the simulation
+        opp_string globalId;         //!< The unique identifier of the vm in the global context of the simulation
         const VirtualMachine *vmType;        //!< The virtual machine type
         std::string userId;                  //!< The current owner of the vm
         ControlTable<AppControlBlock> apps;  //!< The apps that are currently executing
@@ -87,7 +87,6 @@ namespace hypervisor
             this->vmId = vmId;
             state = tVmState::vmIdle;
             vmType = nullptr;
-            globalId = nullptr;
         }
 
         friend std::ostream &operator<<(std::ostream &os, const VmControlBlock &obj)
