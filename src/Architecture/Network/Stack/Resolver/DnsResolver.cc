@@ -41,7 +41,7 @@ void DnsResolver::handleCrashOperation(LifecycleOperation *operation)
 void DnsResolver::handleMessageWhenUp(cMessage *msg)
 {
     // Multiplex incoming messages from SIMCAN / INET
-    auto packet = check_and_cast<Packet *>(msg);
+    auto packet = dynamic_cast<Packet *>(msg);
     if (packet)
         socket.processMessage(packet);
     else

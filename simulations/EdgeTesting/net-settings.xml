@@ -1,4 +1,5 @@
 <config>
-	<interface hosts="*.tile[*]." address="10.0.x.x" netmask="255.255.x.x"/>
-	<interface hosts='**' address='1.x.x.x' netmask='255.x.x.x'/>
+	<interface hosts="*.tile[*].**" address="10.0.x.x" netmask="255.255.x.x"/>
+	<interface among="**.router*" address="10.x.x.x" netmask="255.x.x.x"/>
+	<interface hosts='**' address='10.x.x.x' netmask='255.x.x.x'/>
 </config>

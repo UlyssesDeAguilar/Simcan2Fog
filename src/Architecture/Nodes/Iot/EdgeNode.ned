@@ -50,15 +50,15 @@ module EdgeNode
 		
         @display("bgb=463,275");
     gates:
-        inout comm;
+        inout comm @loose;
 
     submodules:
         ns: NetworkStack {
             @display("p=220,221");
             numWlanInterfaces = default(1);
-        	energyStorage.typename = default("IdealEpEnergyStorage");
-        	wlan[*].typename = default("Ieee802154NarrowbandInterface");
-        	wlan[*].radio.energyConsumer.typename = default("SensorStateBasedEpEnergyConsumer"); //FIXME does this consumer exist???	
+        	//energyStorage.typename = default("IdealEpEnergyStorage");
+        	//wlan[0].typename = default("Ieee802154NarrowbandInterface");
+        	//wlan[0].radio.energyConsumer.typename = default("SensorStateBasedEpEnergyConsumer"); //FIXME does this consumer exist???	
         }
 
         hy: EdgeHypervisor {

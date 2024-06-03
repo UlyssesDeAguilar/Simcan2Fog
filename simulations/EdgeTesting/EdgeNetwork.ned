@@ -15,11 +15,6 @@
 
 package simcan2.simulations.EdgeTesting;
 
-// This includes the simulation of the medium of propagation for the standard IEEE 802.15.4
-import inet.physicallayer.apskradio.packetlevel.ApskScalarRadioMedium;
-import inet.physicallayer.ieee802154.bitlevel.Ieee802154UwbIrRadioMedium;
-import inet.physicallayer.ieee802154.packetlevel.Ieee802154NarrowbandScalarRadioMedium;
-
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.UserModel.Edge.EdgeTile;
@@ -30,7 +25,7 @@ import inet.node.ethernet.Eth10M;
 network EdgeNetwork
 {
     parameters:
-        int edgeTiles = default(5);
+        int edgeTiles = default(1);
 
         @display("bgb=698,437");
     submodules:
@@ -43,10 +38,6 @@ network EdgeNetwork
 
         configurator: Ipv4NetworkConfigurator {
             @display("p=48,35");
-        }
-
-        radioMedium: Ieee802154NarrowbandScalarRadioMedium {
-            @display("p=48,234");
         }
 
         tile[edgeTiles]: EdgeTile {

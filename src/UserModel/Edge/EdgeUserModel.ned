@@ -1,8 +1,9 @@
 package simcan2.UserModel.Edge;
 
-import inet.node.inet.StandardHost;
+import inet.node.inet.WirelessHost;
 
-module EdgeUserModel extends StandardHost{
+module EdgeUserModel extends WirelessHost
+{
     parameters:
         @display("i=user");
         

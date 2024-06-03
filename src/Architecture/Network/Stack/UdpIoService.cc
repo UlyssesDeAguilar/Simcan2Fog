@@ -58,7 +58,7 @@ void UdpIoService::handleCrashOperation(LifecycleOperation *operation)
 void UdpIoService::handleMessageWhenUp(cMessage *msg)
 {
     // Multiplex incoming messages from SIMCAN / INET
-    auto command = check_and_cast<CommandEvent *>(msg);
+    auto command = dynamic_cast<CommandEvent *>(msg);
 
     if (command)
         processRequest(msg);

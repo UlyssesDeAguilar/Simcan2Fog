@@ -54,6 +54,7 @@ bool LocalIotApplication::run()
         rerun = recv(udpSocket);
         break;
     case 3:
+        EV_INFO << "Recieved package" << "\n";
         if (actuators.size() > 0)
         {
             EV << "Should do something here" << "\n";
