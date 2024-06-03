@@ -55,8 +55,8 @@ void CloudProvider::handleNodeUpdate(Packet *update)
     newNode.availableCores = nodeEvent->getAvailableCores();
 
     nodePool.push_back(newNode);
-    coresMap[newNode.availableCores].insert(&nodePool.back());
-    nodeMap[newNode.topic] = &nodePool.back();
+    coresMap[newNode.availableCores].insert(nodePool.size()-1);
+    nodeMap[newNode.topic] = nodePool.size()-1;
 
     EV << "(CP) Added node to resource pool with topic: " << newNode.topic
        << " with: " << newNode.availableCores << " available cores";
@@ -64,11 +64,11 @@ void CloudProvider::handleNodeUpdate(Packet *update)
   else
   {
     // Update the node
-    Node *nodeInfo = iter->second;
-    nodeInfo->availableCores = nodeEvent->getAvailableCores();
+    Node &nodeInfo = nodePool[iter->second];
+    nodeInfo.availableCores = nodeEvent->getAvailableCores();
 
-    EV << "(CP) Updated: " << nodeInfo->topic
-       << " with: " << nodeInfo->availableCores << " available cores";
+    EV << "(CP) Updated: " << nodeInfo.topic
+       << " with: " << nodeInfo.availableCores << " available cores";
   }
 
   // As the invariants have changed, check the queue to see if a deployment is now possible
@@ -167,23 +167,24 @@ const opp_string *CloudProvider::selectNode(const SM_UserVM *request)
   if (first == iter->second.end())
     error("Empty pool!");
 
-  Node *node = const_cast<Node *>(*first);
+  //Node *node = const_cast<Node *>(*first);
+  Node &node = nodePool[*first];
 
   // Update
-  node->availableCores -= totalCores;
+  node.availableCores -= totalCores;
 
   // Insert into map (if no pool existing then create one)
-  coresMap[node->availableCores].insert(node);
+  coresMap[node.availableCores].insert(*first);
   iter->second.erase(first);
 
   // If the pool got to zero then erase
   if (iter->second.size() == 0)
     coresMap.erase(iter);
   
-  EV << "Estimating " << totalCores << " allocated for " << node->topic << "\n";
-  EV << "New available core count: " << node->availableCores << "\n";
+  EV << "Estimating " << totalCores << " allocated for " << node.topic << "\n";
+  EV << "New available core count: " << node.availableCores << "\n";
 
-  return &node->topic;
+  return &node.topic;
 }
 
 uint64_t CloudProvider::calculateRequestedCores(const SM_UserVM *request)

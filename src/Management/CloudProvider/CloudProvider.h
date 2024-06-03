@@ -37,8 +37,8 @@ protected:
     };
 
     using NodePool = std::vector<Node>;
-    using NodeCoresMap = std::map<opp_string, Node *>;
-    using CoresNodeMap = std::map<uint64_t, std::set<Node *>>;
+    using NodeCoresMap = std::map<opp_string, int>;
+    using CoresNodeMap = std::map<uint64_t, std::set<int>>;
     using RequestQueue = std::deque<QueueElement>;
 
     NodePool nodePool;        //!< Holds the registered nodes and their status
