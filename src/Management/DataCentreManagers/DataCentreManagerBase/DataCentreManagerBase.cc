@@ -306,7 +306,6 @@ bool DataCentreManagerBase::checkVmUserFit(SM_UserVM *&userVM_Rq)
     EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserId() << nTotalRequestedCores
              << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
 
-    
     // Start the deployment
     VmDeployment deployment(resourceManager, userVM_Rq);
 
@@ -362,6 +361,7 @@ void DataCentreManagerBase::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
 
     auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
     resourceManager->resumeVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
+    delete response;
 }
 
 void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
@@ -371,6 +371,7 @@ void DataCentreManagerBase::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
 
     auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
     resourceManager->deallocateVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId());
+    delete response;
 
     // Notifiy the Cloud provider that the resources were finally freed
     eventTemplate.setAvailableCores(resourceManager->getAvailableCores());

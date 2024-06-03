@@ -40,7 +40,7 @@ CloudUserInstance::CloudUserInstance(const CloudUser *ptrUser,
             }
         }
 
-        //processApplicationCollection();
+        // processApplicationCollection();
         if (getTotalVMs() < getNumberAppCollections())
             throw std::logic_error("There must be at least a VmInstance for each AppCollection");
     }
@@ -141,10 +141,10 @@ void CloudUserInstance::updateVmInstanceStatus(const SM_UserVM *request, tVmStat
             numFinishedVMs--;
 
         instance.setState(state);
-
-        if (allVmsFinished())
-            finish();
     }
+    
+    if (allVmsFinished())
+        finish();
 }
 
 void CloudUserInstance::finish()
