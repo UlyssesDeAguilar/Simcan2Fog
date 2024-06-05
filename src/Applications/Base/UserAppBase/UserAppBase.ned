@@ -3,9 +3,8 @@ import simcan2.Applications.UserApps.IUserApp;
 import simcan2.Core.cSIMCAN_Core;
 
 simple UserAppBase extends cSIMCAN_Core like IUserApp{
-    
     parameters:    
-    	double startDelay @unit(s) = default (2s);		// Delay time for executing the application
+    	double startDelay @unit(s) = default (0.5s);		// Delay time for executing the application
     	double connectionDelay @unit(s) = default(1s);	// Delay time to establish connections between processes! 
     	bool isDistributedApp = default(false);			// Is this application a distributed one?
     	int myRank = default (999);						// Process rank     
@@ -17,6 +16,8 @@ simple UserAppBase extends cSIMCAN_Core like IUserApp{
 		
     gates:
         input in;										// Input gate
-        output out;										// Output gate      
+        output out;										// Output gate   
+        input socketIn;
+        output socketOut;   
 }
 

@@ -1,11 +1,15 @@
 #ifndef __SIMCAN_2_0_USER_APP_BASE_H_
 #define __SIMCAN_2_0_USER_APP_BASE_H_
 
-#include "Core/cSIMCAN_Core.h"
+#include "inet/transportlayer/contract/tcp/TcpSocket.h"
+#include "inet/transportlayer/contract/udp/UdpSocket.h"
+#include "inet/common/socket/SocketMap.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
 #include "Architecture/Network/Stack/StackServiceType.h"
 #include "OperatingSystem/Hypervisors/common.h"
-
+#include "Core/cSIMCAN_Core.h"
 using namespace hypervisor;
+using namespace inet;
 
 /**
  * @class SimcanAPI SimcanAPI.h "SimcanAPI.h"
@@ -15,16 +19,10 @@ using namespace hypervisor;
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @date 2016-07-01
  */
-class UserAppBase : public cSIMCAN_Core
+class UserAppBase : public cSIMCAN_Core, public TcpSocket::ICallback, public UdpSocket::ICallback
 {
-
 protected:
-   enum State
-   {
-      RUN,
-      WAIT,
-      LISTENING
-   };
+   using SocketQueue = std::map<int, cQueue>;
 
    enum Event
    {
@@ -33,11 +31,13 @@ protected:
 
    uint32_t pid;             //!< Process id
    uint32_t vmId;            //!< Virtual machine id
-   uint32_t pc;              //!< Program counter
-   State state;              //!< Application state
    simtime_t operationStart; //!< Timestamp of the starting of an operation
-   cQueue incomingPackets;   //!< The incoming packets from the opened sockets
 
+   SocketMap socketMap;
+   SocketQueue socketQueue;
+
+   const char *nsPath{};
+   const char *parentPath{};
    double startDelay;      //!< Starting time delay
    double connectionDelay; //!< Connection delay time
    unsigned int myRank;    //!< Rank of the application's process
@@ -51,29 +51,18 @@ protected:
    cMessage *event{}; //!< Message reserved for auto events
    cGate *inGate;     /**< Input gate from OS. */
    cGate *outGate;    /**< Output gate to OS. */
-
-   struct ReturnContext
-   {
-      bool interrupt = false;
-      hypervisor::SyscallResult result;
-      uint32_t rf;
-      hypervisor::PTR chunk;
-   } returnContext;
+   int socketInId;    /**< Input gate to socket */
+   int socketOutId;   /**< Output gate to socket */
 
    virtual void initialize() override;
    virtual void finish() override;
-   virtual void processSelfMessage(cMessage *msg) override;
-   virtual void processRequestMessage(SIMCAN_Message *msg) override;
+   virtual void handleMessage(cMessage *msg) override;
+   void syscallFillData(Syscall *syscall, SyscallCode code);
+   // virtual void processSelfMessage(cMessage *msg) override;
+   virtual void processRequestMessage(SIMCAN_Message *msg) override { error("This module doesn't take requests"); }
    virtual void processResponseMessage(SIMCAN_Message *msg) override;
    virtual void sendRequestMessage(SIMCAN_Message *msg, cGate *outGate) override;
    virtual void scheduleExecStart();
-
-   virtual bool run() = 0;
-
-   // Helpers
-   void __run();
-   void syscallFillData(Syscall *syscall, SyscallCode code);
-   hypervisor::ConnectionMode mapService(StackServiceType type);
 
    // The API
    void execute(double MIs);
@@ -81,10 +70,14 @@ protected:
    void read(double bytes);
    void write(double bytes);
    void resolve(const char *domainName);
-   void open_client(int targetPort, hypervisor::ConnectionMode mode);
-   void open_server(int targetPort, hypervisor::ConnectionMode mode, const char *serviceName = nullptr);
-   void _send(int socketFd, hypervisor::PTR payload, uint32_t targetPort = 0, uint32_t targetIp = 0);
-   bool recv(int socketFd);
+   int open(uint16_t localPort, ConnectionMode mode);
+   void connect(int socketFd, uint32_t destIp, uint16_t destPort);
+   // void openService(int targetPort, const char *serviceName = nullptr);
+
+   void _send(int socketFd, Packet *packet) { _send(socketFd, packet, 0, 0); }
+   void _send(int socketFd, Packet *packet, uint32_t destIp, uint16_t destPort);
+   // Packet *recv(int socketFd);
+
    void close(int socketFd);
    void abort();
    void _exit();
@@ -96,21 +89,30 @@ public:
       virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) {};
       virtual void returnRead(simtime_t timeElapsed) {};
       virtual void returnWrite(simtime_t timeElapsed) {};
-      virtual void returnResolve(simtime_t timeElapsed) {};
+      virtual void handleDataArrived(int sockFd, Packet *p) = 0;
+      virtual void handleConnectReturn(int sockFd, bool connected) = 0;
+      virtual bool handlePeerClosed(int sockFd) = 0;
    };
+
+   // UDP/SOCK_DGRAM
+   virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;
+   virtual void socketErrorArrived(UdpSocket *socket, Indication *indication) override;
+   virtual void socketClosed(UdpSocket *socket) override;
+
+   // TCP/SOCK_STREAM
+   virtual void socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent) override;
+   virtual void socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo) override { error("Accepting connections is not supported"); }
+   virtual void socketEstablished(TcpSocket *socket) override;
+   virtual void socketPeerClosed(TcpSocket *socket) override;
+   virtual void socketClosed(TcpSocket *socket) override;
+   virtual void socketFailure(TcpSocket *socket, int code) override;
+   virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) override {}
+   virtual void socketDeleted(TcpSocket *socket) override {}
 
    void setReturnCallback(ICallback *callback) { this->callback = callback; }
-   
-   struct AppSocket
-   {
-      hypervisor::ConnectionMode mode;
-      std::deque<hypervisor::PTR> chunks;
-   };
-
-   std::map<int, AppSocket> socketMap;
 
 private:
-   ICallback *callback;
+   ICallback *callback{};
    virtual cGate *getOutGate(cMessage *msg) override;
 };
 

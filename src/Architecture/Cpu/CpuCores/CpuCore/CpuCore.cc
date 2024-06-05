@@ -37,6 +37,12 @@ void CpuCore::initialize()
 void CpuCore::finish()
 {
     // Finish the super-class
+    if (pendingMessage)
+        delete pendingMessage;
+
+    if (latencyMessage)
+        cancelAndDelete(latencyMessage);
+    
     cSIMCAN_Core::finish();
 }
 

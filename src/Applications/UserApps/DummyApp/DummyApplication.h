@@ -19,7 +19,7 @@ protected:
 	virtual void initialize() override;
 	virtual void finish() override;
 	virtual void scheduleExecStart() override {}
-	virtual bool run() override { return false; }
+	void processSelfMessage(cMessage *msg) override {}
 	void processRequestMessage(SIMCAN_Message *sm) override;
 	void processResponseMessage(SIMCAN_Message *sm) override;
 };

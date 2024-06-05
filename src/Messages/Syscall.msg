@@ -29,9 +29,8 @@ enum SyscallCode
 
 enum ConnectionMode
 {
-    TCP_SERVER = 0;
-    TCP_CLIENT = 1;
-    UDP = 2;
+    SOCK_DGRAM = 0;
+    SOCK_STREAM = 1;
 };
 
 message Syscall extends SIMCAN_Message {

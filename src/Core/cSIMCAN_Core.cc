@@ -3,7 +3,7 @@
 cSIMCAN_Core::~cSIMCAN_Core()
 {
 	// Delete latency message
-	cancelAndDelete(latencyMessage);
+	//cancelAndDelete(latencyMessage);
 }
 
 void cSIMCAN_Core::initialize(int stage)

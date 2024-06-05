@@ -53,10 +53,12 @@ void Hypervisor::finish()
     // Now it's empty as we use a std::vector!
     for (auto &entry : vmsControl)
     {
-        if (entry.first)
+        if (!entry.first)
         {
             VmControlBlock &control = entry.second;
             cancelAndDelete(control.timeOut);
+            if (control.request)
+                delete control.request;
         }
     }
 
@@ -133,6 +135,8 @@ void Hypervisor::processRequestMessage(SIMCAN_Message *msg)
         handleAppRequest(reinterpret_cast<SM_UserAPP *>(msg));
         break;
     }
+    case SM_AbortCpu:
+    case SM_ExecCpu:
     case SM_Syscall_Req:
     {
         auto sysCall = check_and_cast<Syscall *>(msg);
@@ -146,6 +150,8 @@ void Hypervisor::processRequestMessage(SIMCAN_Message *msg)
     }
     // Add the network packages !
     default:
+        delete msg;
+        error("Unkown syscall!");
         break;
     }
 }

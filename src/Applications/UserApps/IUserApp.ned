@@ -19,5 +19,7 @@ moduleinterface IUserApp{
     gates:
         input in;							// Input gate
         output out;							// Output gate
+        input socketIn;
+        output socketOut;
 }
 

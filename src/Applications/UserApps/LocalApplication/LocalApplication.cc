@@ -36,6 +36,41 @@ void LocalApplication::initialize()
 	par("initialized") = true;
 }
 
+void LocalApplication::processSelfMessage(cMessage *msg)
+{
+	read(inputDataSize);
+}
+
+void LocalApplication::returnRead(simtime_t timeElapsed)
+{
+	// Add time
+	total_service_IO += timeElapsed;
+	execute(currentRemainingMIs);
+}
+
+void LocalApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)
+{
+	// Add time
+	total_service_CPU += timeElapsed;
+	write(outputDataSize);
+}
+
+void LocalApplication::returnWrite(simtime_t timeElapsed)
+{
+	// Add time
+	total_service_IO += timeElapsed;
+	currentIteration++;
+	
+	if (currentIteration < iterations)
+	{
+		read(inputDataSize);
+	}
+	else
+	{
+		_exit();
+	}
+}
+
 void LocalApplication::finish()
 {
 	// Calculate the total runtime
@@ -49,61 +84,4 @@ void LocalApplication::finish()
 
 	// Finish the super-class
 	UserAppBase::finish();
-}
-
-bool LocalApplication::run()
-{
-	// Log (INFO)
-	EV_INFO << "Starting execution! Current iteration:" << currentIteration << '\n';
-	bool rerun = false;
-
-	switch (pc)
-	{
-	case 0:
-		/* READ */
-		read(inputDataSize);
-		break;
-	case 1:
-		/* CPU */
-		execute(currentRemainingMIs);
-		break;
-	case 2:
-		/* WRITE */
-		write(outputDataSize);
-		break;
-	default:
-		/* Check exit condition */
-		if (currentIteration < iterations)
-		{
-			currentIteration++;
-			pc = 0;
-			return rerun;
-		}
-		else
-			_exit();
-		break;
-	}
-	
-	return rerun;
-}
-
-void LocalApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)
-{
-	// Add time
-	total_service_CPU += timeElapsed;
-
-	// Erase the request
-	delete (sm);
-}
-
-void LocalApplication::returnRead(simtime_t timeElapsed)
-{
-	// Add time
-	total_service_IO += timeElapsed;
-}
-
-void LocalApplication::returnWrite(simtime_t timeElapsed)
-{
-	// Add time
-	total_service_IO += timeElapsed;
 }

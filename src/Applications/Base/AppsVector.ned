@@ -12,9 +12,13 @@ module AppsVector
         int vmId = default(-1);             // The virtual machine ID where this vector is contained
         int numApps;						// Number of applications in this vector
         bool staticAppAssignment;			// True if the assignment of application is static or False in another case
-
+		string nsPath;
+		string parentPath;
+		
         @display("bgb=856.935,461.82748");
     gates:
+        input socketIn[];
+        output socketOut[];
         input fromOS;						// Input gate from the Operating System
         output toOS;						// Output gate to the Operating System
 
@@ -46,7 +50,12 @@ module AppsVector
 
         // Connections between the applications and the Hub
         for i=0..numApps-1 {
-            appHub.toInput++ --> ned.IdealChannel --> appModule[i].fromHub;
-            appHub.fromInput++ <-- ned.IdealChannel <-- appModule[i].toHub;
+            appHub.toInput++ --> appModule[i].fromHub;
+            appHub.fromInput++ <-- appModule[i].toHub;
+        }
+        
+        for i=0..numApps-1{
+        	socketIn[i] --> appModule[i].socketIn;
+        	socketOut[i] <-- appModule[i].socketOut;
         }
 }

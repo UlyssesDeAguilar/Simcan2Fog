@@ -38,6 +38,7 @@ void EdgeHypervisor::initialize(int stage)
         VmControlBlock &vmControl = vmsControl[vmId];
         vmControl.globalId = "local";
         vmControl.state = vmRunning;
+        vmControl.request = sam;
         break;
     }
     case INITSTAGE_LAST:

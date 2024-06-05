@@ -18,6 +18,7 @@ package simcan2.simulations.EdgeTesting;
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.UserModel.Edge.EdgeTile;
+import simcan2.UserModel.Edge.LightEdgeTile;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
@@ -40,7 +41,7 @@ network EdgeNetwork
             @display("p=48,35");
         }
 
-        tile[edgeTiles]: EdgeTile {
+        tile[edgeTiles]: LightEdgeTile {
             @display("p=398,256,m,4,10;is=s");
         }
 

@@ -25,7 +25,7 @@ cModule *ApplicationBuilder::searchAndCreate(cModule *parent, const Context &con
     cModuleType *moduleType = cModuleType::get(schema->getFullPath().c_str());
 
     // Reserve the necessary space (if needed)
-    if ((bool) parent->par("defaultInitialized"))
+    if ((bool)parent->par("defaultInitialized"))
     {
         deleteApp(parent);
         parent->par("defaultInitialized").setBoolValue(false);
@@ -69,6 +69,8 @@ void ApplicationBuilder::connectApp(cModule *parent, cModule *app)
     // Connect gates
     parent->gate("fromHub")->connectTo(app->gate("in"));
     app->gate("out")->connectTo(parent->gate("toHub"));
+    parent->gate("socketIn")->connectTo(app->gate("socketIn"));
+    app->gate("socketOut")->connectTo(parent->gate("socketOut"));
 }
 
 void ApplicationBuilder::deleteApp(cModule *parent)
@@ -80,6 +82,8 @@ void ApplicationBuilder::deleteApp(cModule *parent)
     // Disconnect
     parent->gate("fromHub")->disconnect();
     parent->gate("toHub")->getPreviousGate()->disconnect();
+    parent->gate("socketIn")->disconnect();
+    parent->gate("socketOut")->getPreviousGate()->disconnect();
 
     // Release and delete
     oldApp->deleteModule();

@@ -7,10 +7,6 @@ void UserAppBase::initialize()
     // Init the super-class
     cSIMCAN_Core::initialize();
 
-    // Init the state
-    state = State::RUN;
-    pc = 0;
-
     // Init module parameters
     startDelay = par("startDelay");
     connectionDelay = par("connectionDelay");
@@ -30,6 +26,10 @@ void UserAppBase::initialize()
     cModule *appVector = appModule->getParentModule();
     vmId = appVector->par("vmId");
 
+    // Get needed paths
+    nsPath = appVector->par("nsPath");
+    parentPath = appVector->par("parentPath");
+
     // Init cGates
     inGate = gate("in");
     outGate = gate("out");
@@ -46,14 +46,18 @@ void UserAppBase::scheduleExecStart()
 {
     // Schedule waiting time to execute
     EV_DEBUG << "App module: " << getClassName() << " will start executing in " << startDelay << " seconds from now\n";
-    event = new cMessage("EXECUTION START", Event::EXEC_START);
+    event = new cMessage("EXECUTION START");
     scheduleAt(simTime() + startDelay, event);
 }
 
 void UserAppBase::finish()
 {
     // Clear all sockets
-    socketMap.clear();
+    for (auto &iter : socketMap.getMap())
+        iter.second->destroy();
+
+    socketMap.deleteSockets();
+    socketQueue.clear();
     cancelAndDelete(event);
     cSIMCAN_Core::finish();
 }
@@ -68,11 +72,6 @@ cGate *UserAppBase::getOutGate(cMessage *msg)
     return nullptr;
 }
 
-void UserAppBase::processSelfMessage(cMessage *msg)
-{
-    run();
-}
-
 void UserAppBase::syscallFillData(Syscall *syscall, SyscallCode code)
 {
     syscall->setPid(pid);
@@ -80,90 +79,34 @@ void UserAppBase::syscallFillData(Syscall *syscall, SyscallCode code)
     syscall->setOpCode(code);
 }
 
+void UserAppBase::handleMessage(cMessage *msg)
+{
+    auto packet = dynamic_cast<Packet *>(msg);
+
+    if (packet)
+    {
+        auto socket = socketMap.findSocketFor(msg);
+        if (socket)
+            socket->processMessage(msg);
+        else
+            error("Message arrived for an unregistered socket");
+    }
+    else
+    {
+        cSIMCAN_Core::handleMessage(msg);
+    }
+}
+
 void UserAppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate)
 {
     // Record the starting time and change state
-    state = State::WAIT;
     operationStart = simTime();
     cSIMCAN_Core::sendRequestMessage(sm, outGate);
-}
-
-ConnectionMode UserAppBase::mapService(StackServiceType type)
-{
-    if (type == UDP_IO)
-        return UDP;
-    else if (type == HTTP_CLIENT)
-        return TCP_CLIENT;
-    else
-        return TCP_SERVER;
-}
-
-void UserAppBase::processRequestMessage(SIMCAN_Message *msg)
-{
-    // Resolver came back
-    auto syscall = dynamic_cast<ResolverSyscall *>(msg);
-    if (syscall)
-    {
-        EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " got resolver response \n";
-        returnContext.result = (SyscallResult)syscall->getResult();
-        returnContext.rf = syscall->getResolvedIp();
-        delete syscall;
-        __run();
-        return;
-    }
-
-    // Something happened with the sockets
-    auto event = check_and_cast<SocketIoSyscall *>(msg);
-    if (event->getOpCode() == OPEN_CLI)
-    {
-        EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " got socket opened \n";
-        AppSocket s;
-        s.mode = mapService((StackServiceType)event->getKind());
-        socketMap[event->getSocketFd()] = s;
-        returnContext.result = OK;
-        returnContext.rf = event->getSocketFd();
-    }
-    else
-    {
-        // Assuming RECV
-        if (event->getResult() == OK)
-        {
-            EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " got incoming package \n";
-            auto &s = socketMap[event->getSocketFd()];
-            s.chunks.push_back(event->getPayload());
-
-            if (state != LISTENING)
-            {
-                delete event;
-                return;
-            }
-            else
-            {
-                EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " immediate dispatch \n";
-                returnContext.chunk = s.chunks.front();
-                s.chunks.pop_front();
-            }
-        }
-        else
-        {
-            EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " socket failed \n";
-            // Socket failed or returned that the peer closed!
-            socketMap.erase(event->getSocketFd());
-            returnContext.interrupt = true;
-        }
-    }
-
-    delete event;
-    __run();
 }
 
 void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
 {
     auto syscall = check_and_cast<Syscall *>(msg);
-
-    if (state == State::RUN)
-        error("Recieving response message while in RUN state");
-
     auto timeElapsed = simTime() - operationStart;
 
     switch (syscall->getOpCode())
@@ -182,21 +125,6 @@ void UserAppBase::processResponseMessage(SIMCAN_Message *msg)
     }
 
     delete syscall;
-    __run();
-}
-
-void UserAppBase::__run()
-{
-    // Increment the program counter, set RUN state and call run() for next step
-    state = State::RUN;
-    bool rerun = true;
-
-    do
-    {
-        pc++;
-        rerun = run();
-        EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "] Current PC: " << pc << " \n";
-    } while (rerun);
 }
 
 // ----------------- CPU calls ----------------- //
@@ -282,20 +210,111 @@ void UserAppBase::resolve(const char *domainName)
     sendRequestMessage(syscall, outGate);
 }
 
-void UserAppBase::open_client(int targetPort, hypervisor::ConnectionMode mode)
+int UserAppBase::open(uint16_t localPort, ConnectionMode mode)
 {
-    SocketIoSyscall *syscall = new SocketIoSyscall();
-    syscallFillData(syscall, OPEN_CLI);
-    syscall->setTargetPort(targetPort);
-    syscall->setMode(mode);
+    ISocket *socket{};
+    if (mode == SOCK_DGRAM)
+    {
+        auto s = new UdpSocket();
+        s->setCallback(this);
+        s->setOutputGate(gate("socketOut"));
+        s->bind(localPort);
+        socket = s;
+    }
+    else
+    {
+        auto s = new TcpSocket();
+        s->setCallback(this);
+        s->setOutputGate(gate("socketOut"));
+        s->bind(localPort);
+    }
 
-    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-             << " connecting to port:" << targetPort << " with mode: " << mode << "\n";
-
-    sendRequestMessage(syscall, outGate);
+    socketMap.addSocket(socket);
+    return socket->getSocketId();
 }
 
-void UserAppBase::open_server(int targetPort, hypervisor::ConnectionMode mode, const char *serviceName)
+void UserAppBase::connect(int socketFd, uint32_t destIp, uint16_t destPort)
+{
+    ISocket *sock = socketMap.getSocketById(socketFd);
+    Ipv4Address address(destIp);
+    auto tcpSocket = check_and_cast<TcpSocket *>(sock);
+    tcpSocket->connect(address, destPort);
+}
+
+void UserAppBase::_send(int socketFd, Packet *packet, uint32_t destIp, uint16_t destPort)
+{
+    ISocket *sock = socketMap.getSocketById(socketFd);
+    Ipv4Address address(destIp);
+
+    if (destIp == 0 && destPort == 0)
+    {
+        auto tcpSocket = check_and_cast<TcpSocket *>(sock);
+        tcpSocket->send(packet);
+    }
+    else
+    {
+        auto udpSock = check_and_cast<UdpSocket *>(sock);
+        udpSock->sendTo(packet, address, destPort);
+    }
+}
+
+void UserAppBase::close(int socketFd)
+{
+    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
+             << " closing socket:" << socketFd;
+
+    ISocket *sock = socketMap.removeSocket(socketMap.getSocketById(socketFd));
+    sock->close();
+}
+
+void UserAppBase::socketDataArrived(UdpSocket *socket, Packet *packet)
+{
+    int socketFd = socket->getSocketId();
+    EV << "Incoming message for socket: " << socketFd << "pushing into the queue\n";
+    callback->handleDataArrived(socketFd, packet);
+}
+
+void UserAppBase::socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent)
+{
+    int socketFd = socket->getSocketId();
+    EV << "Incoming message for socket: " << socketFd << "pushing into the queue\n";
+    callback->handleDataArrived(socketFd, msg);
+}
+
+void UserAppBase::socketErrorArrived(UdpSocket *socket, Indication *indication)
+{
+    EV_WARN << "Ignoring UDP error report " << indication->getName() << endl;
+    delete indication;
+}
+
+void UserAppBase::socketEstablished(TcpSocket *socket)
+{
+    int socketFd = socket->getSocketId();
+    EV << "Incoming message for socket: " << socketFd << "pushing into the queue\n";
+    callback->handleConnectReturn(socketFd, true);
+}
+
+void UserAppBase::socketFailure(TcpSocket *socket, int code)
+{
+    int socketFd = socket->getSocketId();
+    EV << "Incoming message for socket: " << socketFd
+       << "connection failed with code" << code << "\n";
+    callback->handleConnectReturn(socketFd, false);
+}
+
+void UserAppBase::socketPeerClosed(TcpSocket *socket)
+{
+    int socketFd = socket->getSocketId();
+    EV << "Incoming message for socket: " << socketFd
+       << "peer closed\n";
+    bool closeSocket = callback->handlePeerClosed(socketFd);
+
+    // Close here as well!
+    if (closeSocket)
+        close(socketFd);
+};
+
+/*void UserAppBase::open_server(int targetPort, hypervisor::ConnectionMode mode, const char *serviceName)
 {
     SocketIoSyscall *syscall = new SocketIoSyscall();
     syscallFillData(syscall, OPEN_SERV);
@@ -312,58 +331,18 @@ void UserAppBase::open_server(int targetPort, hypervisor::ConnectionMode mode, c
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
              << " serving in port:" << targetPort << " with mode: " << mode << "\n";
     sendRequestMessage(syscall, outGate);
+}*/
+
+void UserAppBase::socketClosed(UdpSocket *socket)
+{
+    int socketFd = socket->getSocketId();
+    socketMap.removeSocket(socketMap.getSocketById(socketFd));
+    delete socket;
 }
 
-void UserAppBase::_send(int socketFd, PTR payload, uint32_t targetPort, uint32_t targetIp)
+void UserAppBase::socketClosed(TcpSocket *socket)
 {
-    // Prepare the system call
-    SocketIoSyscall *syscall = new SocketIoSyscall();
-    auto mode = socketMap[socketFd].mode;
-
-    // Set PID and Context
-    syscallFillData(syscall, SEND);
-    syscall->setMode(mode);
-    syscall->setSocketFd(socketFd);
-    syscall->setPayload(payload);
-
-    if (mode == UDP)
-    {
-        syscall->setTargetIp(targetIp);
-        syscall->setTargetPort(targetPort);
-    }
-    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-             << " serving in port:" << targetPort << " with mode: " << mode << "\n";
-    sendRequestMessage(syscall, outGate);
-}
-
-bool UserAppBase::recv(int socketFd)
-{
-    auto &socketEntry = socketMap[socketFd];
-
-    if (socketEntry.chunks.size() > 0)
-    {
-        // Dispatch the recieved message
-        returnContext.chunk = socketEntry.chunks.front();
-        socketEntry.chunks.pop_front();
-        return true;
-    }
-    else
-    {
-        state = LISTENING;
-        return false;
-    }
-}
-
-void UserAppBase::close(int socketFd)
-{
-    SocketIoSyscall *syscall = new SocketIoSyscall();
-    auto mode = socketMap[socketFd].mode;
-    syscallFillData(syscall, CLOSE);
-    syscall->setMode(mode);
-    syscall->setSocketFd(socketFd);
-
-    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-             << " closing socket:" << socketFd << " with mode: " << mode << "\n";
-    sendRequestMessage(syscall, outGate);
-    socketMap.erase(socketFd);
+    int socketFd = socket->getSocketId();
+    socketMap.removeSocket(socketMap.getSocketById(socketFd));
+    delete socket;
 }

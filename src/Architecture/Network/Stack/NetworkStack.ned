@@ -35,14 +35,12 @@ module NetworkStack extends StandardHost
         output queueOut @loose;
         input eventsIn @loose;	// If hasCloudEvents is true this should be connected!
         inout eth_comm;
-
+		input ssIn[];
+		output ssOut[];
+		
     submodules:
         sm: StackMultiplexer {
             @display("p=1187.5499,66.15");
-        }
-
-        httpClient: HttpClientService {
-            @display("p=917.67,202.79999");
         }
 
         httpProxy: HttpProxyService {
@@ -58,11 +56,7 @@ module NetworkStack extends StandardHost
             serverName = "";
             @display("p=1090.0499,74.36");
         }
-
-        udpService: UdpIoService {
-
-            @display("p=1196.52,194.34999");
-        }
+        
         pushSocket: TcpClientSocketIo if enableQueue {
             connectAddress = smqIp;
             connectPort = 8444;
@@ -93,9 +87,6 @@ module NetworkStack extends StandardHost
         // Bidirectional ethernet comms
         eth_comm <--> sm.comm;
 
-        httpClient.socketIn <-- at.out++;
-        httpClient.socketOut --> at.in++;
-
         httpProxy.socketIn <-- at.out++;
         httpProxy.socketOut --> at.in++;
 
@@ -104,9 +95,6 @@ module NetworkStack extends StandardHost
 
         dnsServer.socketIn <-- at.out++;
         dnsServer.socketOut --> at.in++;
-
-        udpService.socketIn <-- at.out++;
-        udpService.socketOut --> at.in++;
 
         // Connect sockets to transport layer
         pullSocket.socketIn <-- at.out++ if enableQueue;
@@ -128,7 +116,12 @@ module NetworkStack extends StandardHost
         // Incoming and outgoing from SMQ
         pullClient.queueOut --> queueOut if enableQueue;
         queueIn --> pushClient.queueIn if enableQueue;
-
+		
+		for i=0..sizeof(ssIn)-1 {
+		    ssIn[i] --> at.in++;
+		    ssOut[i] <-- at.out++;
+		}
+		
         // Outgoing to the cloud provider
         eventsIn --> eventsSocket.trafficIn if hasCloudEvents;
 }

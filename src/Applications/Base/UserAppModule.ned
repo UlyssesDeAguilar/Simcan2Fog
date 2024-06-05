@@ -15,12 +15,16 @@ module UserAppModule
     gates:
         input fromHub;			// Input gate from ModuleHub
         output toHub;			// Output gate to ModuleHub
+        input socketIn;
+        output socketOut;
 
     submodules:
         app: <userAppName> like IUserApp if defaultInitialized {	// Application
             @display("p=110,53;i=app");
         }
     connections:
-        fromHub --> app.in if defaultInitialized;
-        toHub <-- app.out if defaultInitialized;
+        fromHub --> app.in;
+        toHub <-- app.out;
+        socketIn --> app.socketIn;
+        socketOut <-- app.socketOut;
 }

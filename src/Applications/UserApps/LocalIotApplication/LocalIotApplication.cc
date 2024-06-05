@@ -1,6 +1,10 @@
 #include "LocalIotApplication.h"
+#include "inet/common/TimeTag_m.h"
+
 Define_Module(LocalIotApplication);
+
 using namespace hypervisor;
+using namespace iot;
 
 void LocalIotApplication::initialize()
 {
@@ -10,10 +14,77 @@ void LocalIotApplication::initialize()
     processingMIs = par("processingMIs");
     listeningPort = par("listeningPort");
 
+    setReturnCallback(this);
+
+    cModule *edgeTile = getModuleByPath(parentPath);
+    endpointName = edgeTile->par("serviceName");
+    cModule *actuator = edgeTile->getSubmodule("actuator", 0);
+    int vectorSize = actuator->getVectorSize();
+
+    for (int i = 0; i < vectorSize; i++)
+    {
+        actuator = edgeTile->getSubmodule("actuator", i);
+        actuators.push_back(L3AddressResolver().addressOf(actuator));
+        EV << "Detected actuator" << i << "with address:" << actuators.back();
+    }
+
     // Record times
     simStartTime = simTime();
     runStartTime = time(nullptr);
 }
+
+void LocalIotApplication::processSelfMessage(cMessage *msg)
+{
+    // Open connection on listening port for starting the simulation
+    udpSocket = open(listeningPort, SOCK_DGRAM);
+}
+
+void LocalIotApplication::handleDataArrived(int sockFd, Packet *p)
+{
+    if (sockFd == udpSocket)
+    {
+        EV << "Recieved packet: " << p->getName() << "\n";
+        numPings++;
+        if (numPings > (int)par("pingsThreshold"))
+        {
+            execute(processingMIs);
+            numPings = 0;
+        }
+        delete p;
+    }
+}
+
+void LocalIotApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)
+{
+    if (serviceUp)
+    {
+        // Send to endpoint
+    }
+    else
+    {
+        int randAcutator = intuniform(0, actuators.size() - 1);
+        int on = intuniform(0, 1);
+
+        EV << "Sending command to actuator\n";
+        // Send command to actuator
+        Packet *packet = new Packet("Controller command");
+        const auto &payload = makeShared<IotPayload>();
+        payload->setChunkLength(B(20));
+        payload->addTag<CreationTimeTag>()->setCreationTime(simTime());
+        payload->setTag("Controller command");
+        payload->setValue(on);
+        payload->setUnit("");
+        packet->insertAtBack(payload);
+
+        _send(udpSocket, packet, actuators[randAcutator].toIpv4().getInt(), listeningPort);
+    }
+}
+
+void LocalIotApplication::returnRead(simtime_t timeElapsed) {}
+void LocalIotApplication::returnWrite(simtime_t timeElapsed) {}
+
+void LocalIotApplication::handleConnectReturn(int sockFd, bool connected) {}
+bool LocalIotApplication::handlePeerClosed(int sockFd) { return true; }
 
 void LocalIotApplication::finish()
 {
@@ -27,47 +98,6 @@ void LocalIotApplication::finish()
     // EV_INFO << " + Time for CPU:" << total_service_CPU.dbl() << '\n';
 
     // Finish the super-class
+    actuators.clear();
     UserAppBase::finish();
-}
-
-bool LocalIotApplication::run()
-{
-    bool rerun = false;
-    switch (pc)
-    {
-    case 0:
-        // Opening udp socket
-        open_server(listeningPort, ConnectionMode::UDP);
-        break;
-    case 1:
-    {
-        if (returnContext.result == ERROR)
-            abort();
-        else
-        {
-            udpSocket = returnContext.rf;
-            rerun = true;
-        }
-        break;
-    }
-    case 2:
-        rerun = recv(udpSocket);
-        break;
-    case 3:
-        EV_INFO << "Recieved package" << "\n";
-        if (actuators.size() > 0)
-        {
-            EV << "Should do something here" << "\n";
-            // recv(udpSocket);
-        }
-        rerun = true;
-        break;
-    default:
-        // Emulates an arduino, it's in an infinite loop that listens to the incoming requests
-        pc = 1;
-        rerun = true;
-        break;
-    }
-
-    return rerun;
 }

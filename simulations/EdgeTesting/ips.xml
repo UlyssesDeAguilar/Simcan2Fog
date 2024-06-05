@@ -1,55 +1,51 @@
 <config>
    <interface hosts="EdgeNetwork.router_bb" names="eth0" address="10.0.0.2" netmask="255.255.255.252" metric="200"/>
    <interface hosts="EdgeNetwork.tile[0].router" names="eth1" address="10.0.0.1" netmask="255.255.255.252" metric="200"/>
-   <interface hosts="EdgeNetwork.tile[0].user" names="wlan0" address="10.0.0.17" netmask="255.255.255.240" metric="1"/>
-   <interface hosts="EdgeNetwork.tile[0].sensor[0]" names="wlan0" address="10.0.0.18" netmask="255.255.255.240" metric="1"/>
-   <interface hosts="EdgeNetwork.tile[0].sensor[1]" names="wlan0" address="10.0.0.19" netmask="255.255.255.240" metric="1"/>
-   <interface hosts="EdgeNetwork.tile[0].actuator[0]" names="wlan0" address="10.0.0.20" netmask="255.255.255.240" metric="1"/>
-   <interface hosts="EdgeNetwork.tile[0].actuator[1]" names="wlan0" address="10.0.0.21" netmask="255.255.255.240" metric="1"/>
-   <interface hosts="EdgeNetwork.tile[0].controller.ns" names="wlan0" address="10.0.0.22" netmask="255.255.255.240" metric="1"/>
+   <interface hosts="EdgeNetwork.tile[0].user" names="eth0" address="10.0.0.17" netmask="255.255.255.240" metric="200"/>
+   <interface hosts="EdgeNetwork.tile[0].controller.ns" names="eth0" address="10.0.0.18" netmask="255.255.255.240" metric="200"/>
+   <interface hosts="EdgeNetwork.tile[0].sensor[0]" names="eth0" address="10.0.0.19" netmask="255.255.255.240" metric="200"/>
+   <interface hosts="EdgeNetwork.tile[0].sensor[1]" names="eth0" address="10.0.0.20" netmask="255.255.255.240" metric="200"/>
+   <interface hosts="EdgeNetwork.tile[0].actuator[0]" names="eth0" address="10.0.0.21" netmask="255.255.255.240" metric="200"/>
+   <interface hosts="EdgeNetwork.tile[0].actuator[1]" names="eth0" address="10.0.0.22" netmask="255.255.255.240" metric="200"/>
    <interface hosts="EdgeNetwork.tile[0].router" names="eth0" address="10.0.0.23" netmask="255.255.255.240" metric="200"/>
-   <interface hosts="EdgeNetwork.tile[0].controller.ns" names="eth0" address="10.0.0.5" netmask="255.255.255.252" metric="1"/>
    <multicast-group hosts="EdgeNetwork.router_bb" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
    <multicast-group hosts="EdgeNetwork.tile[0].router" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].user" interfaces="wlan0" address="224.0.0.1"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].sensor[0]" interfaces="wlan0" address="224.0.0.1"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].sensor[1]" interfaces="wlan0" address="224.0.0.1"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].actuator[0]" interfaces="wlan0" address="224.0.0.1"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].actuator[1]" interfaces="wlan0" address="224.0.0.1"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].controller.ns" interfaces="wlan0" address="224.0.0.1"/>
-   <multicast-group hosts="EdgeNetwork.tile[0].router" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="EdgeNetwork.tile[0].user" interfaces="eth0" address="224.0.0.1"/>
    <multicast-group hosts="EdgeNetwork.tile[0].controller.ns" interfaces="eth0" address="224.0.0.1"/>
-   <wireless interfaces="EdgeNetwork.tile[0].user%wlan0 EdgeNetwork.tile[0].sensor[0]%wlan0 EdgeNetwork.tile[0].sensor[1]%wlan0 EdgeNetwork.tile[0].actuator[0]%wlan0 EdgeNetwork.tile[0].actuator[1]%wlan0 EdgeNetwork.tile[0].controller.ns%wlan0 "/>
+   <multicast-group hosts="EdgeNetwork.tile[0].sensor[0]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="EdgeNetwork.tile[0].sensor[1]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="EdgeNetwork.tile[0].actuator[0]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="EdgeNetwork.tile[0].actuator[1]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="EdgeNetwork.tile[0].router" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
    <route hosts="EdgeNetwork.router_bb" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
    <route hosts="EdgeNetwork.router_bb" destination="*" netmask="*" gateway="10.0.0.1" interface="eth0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].user" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].user" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].user" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].user" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].user" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
-   <route hosts="EdgeNetwork.tile[0].user" destination="*" netmask="*" gateway="10.0.0.23" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].router" destination="10.0.0.5" netmask="255.255.255.255" gateway="10.0.0.22" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].user" destination="*" netmask="*" gateway="10.0.0.23" interface="eth0" metric="0"/>
    <route hosts="EdgeNetwork.tile[0].router" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth1" metric="0"/>
    <route hosts="EdgeNetwork.tile[0].router" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth1" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].router" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
    <route hosts="EdgeNetwork.tile[0].router" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].router" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
-   <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
-   <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="*" netmask="*" gateway="10.0.0.23" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].sensor[0]" destination="*" netmask="*" gateway="10.0.0.23" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
-   <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="*" netmask="*" gateway="10.0.0.23" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].sensor[1]" destination="*" netmask="*" gateway="10.0.0.23" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
-   <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="*" netmask="*" gateway="10.0.0.23" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].actuator[0]" destination="*" netmask="*" gateway="10.0.0.23" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
-   <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="*" netmask="*" gateway="10.0.0.23" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].controller.ns" destination="10.0.0.0" netmask="255.255.255.252" gateway="10.0.0.23" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].controller.ns" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="0"/>
-   <route hosts="EdgeNetwork.tile[0].controller.ns" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="wlan0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].actuator[1]" destination="*" netmask="*" gateway="10.0.0.23" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].controller.ns" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="EdgeNetwork.tile[0].controller.ns" destination="10.0.0.16" netmask="255.255.255.240" gateway="*" interface="eth0" metric="200"/>
    <route hosts="EdgeNetwork.tile[0].controller.ns" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="EdgeNetwork.tile[0].controller.ns" destination="*" netmask="*" gateway="10.0.0.23" interface="eth0" metric="0"/>
 </config>

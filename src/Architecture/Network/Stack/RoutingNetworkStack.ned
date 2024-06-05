@@ -45,10 +45,6 @@ module RoutingNetworkStack extends Router
             @display("p=1187.5499,66.15");
         }
 
-        httpClient: HttpClientService {
-            @display("p=917.67,202.79999");
-        }
-
         httpProxy: HttpProxyService {
             @display("p=951.47,356.59");
         }
@@ -61,10 +57,6 @@ module RoutingNetworkStack extends Router
             mode = "ns";
             serverName = "";
             @display("p=1090.0499,74.36");
-        }
-
-        udpService: UdpIoService {
-            @display("p=1196.52,194.34999");
         }
 
         pushSocket: TcpClientSocketIo if enableQueue {
@@ -96,10 +88,7 @@ module RoutingNetworkStack extends Router
     connections allowunconnected:
         // Bidirectional ethernet comms
         eth_comm <--> sm.comm;
-
-        httpClient.socketIn <-- at.out++;
-        httpClient.socketOut --> at.in++;
-
+        
         httpProxy.socketIn <-- at.out++;
         httpProxy.socketOut --> at.in++;
 
@@ -108,9 +97,6 @@ module RoutingNetworkStack extends Router
 
         dnsServer.socketIn <-- at.out++;
         dnsServer.socketOut --> at.in++;
-
-        udpService.socketIn <-- at.out++;
-        udpService.socketOut --> at.in++;
 
         // Connect sockets to transport layer
         pullSocket.socketIn <-- at.out++ if enableQueue;

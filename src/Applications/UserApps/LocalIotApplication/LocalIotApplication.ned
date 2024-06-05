@@ -9,9 +9,7 @@ simple LocalIotApplication extends UserAppBase{
 
     parameters:
         @class(LocalIotApplication);
-        int processingMIs = default(100);				    // Number of MIs to execute in each iteration
+        int processingMIs = default(10);				    // Number of MIs to execute in each iteration
         int listeningPort = default(1000);					// The port where it will listen (UDP)	
-        string endpointName = default("");					// The endpoint service name 
-        int endpointIp = default(0);						// The endpoint ip
-        string actuators = default("");						// Ips of the actuators
+        int pingsThreshold = default(5);                    // The number of pings where it will start processing
 }

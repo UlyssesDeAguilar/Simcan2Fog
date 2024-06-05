@@ -80,7 +80,7 @@ void IotSensorModel::processStart()
     socket.setCallback(this);
 
     cModule *controller = getModuleByPath(par("controllerPath"));
-    controllerAddress = L3AddressResolver().addressOf(controller,"wlan0");
+    controllerAddress = L3AddressResolver().addressOf(controller, (const char*)par("controllerInterface"));
 
     selfMsg->setKind(SEND);
     processSend();

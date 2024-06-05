@@ -39,6 +39,8 @@ module EdgeNode
 		// Max applications in vector
         apps.numApps = maxApps;
 		apps.vmId = 0;
+		apps.nsPath = "^.^.^.ns";
+		apps.parentPath = "^.^.^.^.";
 		
 		// Pass settings down to the hardware manager
         hwm.maxVMs = 1;
@@ -55,7 +57,7 @@ module EdgeNode
     submodules:
         ns: NetworkStack {
             @display("p=220,221");
-            numWlanInterfaces = default(1);
+            //numWlanInterfaces = default(1);
         	//energyStorage.typename = default("IdealEpEnergyStorage");
         	//wlan[0].typename = default("Ieee802154NarrowbandInterface");
         	//wlan[0].radio.energyConsumer.typename = default("SensorStateBasedEpEnergyConsumer"); //FIXME does this consumer exist???	
@@ -99,4 +101,10 @@ module EdgeNode
         // Connect apps to hypervisor
         hy.toApps++ --> apps.fromOS;
         hy.fromApps++ <-- apps.toOS;
+        
+        // Enable app connectivity to the socket interfaces
+        for i=0..maxApps-1 {
+        	ns.ssIn++ <-- {@display("ls=,0");} <-- apps.socketOut++;
+        	ns.ssOut++ --> {@display("ls=,0");}--> apps.socketIn++;
+        }
 }

@@ -17,7 +17,6 @@
  */
 class LocalApplication : public UserAppBase, public UserAppBase::ICallback
 {
-
 protected:
 	unsigned int inputDataSize;	 //!< Size of the data to be read (in bytes)
 	unsigned int outputDataSize; //!< Size of the data to be written (in bytes)
@@ -38,17 +37,14 @@ protected:
 	virtual ~LocalApplication() = default;
 	virtual void initialize() override;
 	virtual void finish() override;
+	virtual void processSelfMessage(cMessage *msg) override;
 
-	virtual bool run() override;
 	virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override;
 	virtual void returnRead(simtime_t timeElapsed) override;
 	virtual void returnWrite(simtime_t timeElapsed) override;
-
-public:
-	unsigned int getCurrentIteration() const { return currentIteration; }
-	void setCurrentIteration(unsigned int currentIteration) { this->currentIteration = currentIteration; }
-	unsigned int getCurrentRemainingMIs() const { return MIs; }
-	void setCurrentRemainingMIs(unsigned int currentRemainingMIs) { this->MIs = currentRemainingMIs; }
+	virtual void handleDataArrived(int sockFd, Packet *p) override { error("LocalApp: no sockets"); }
+	virtual void handleConnectReturn(int sockFd, bool connected) override { error("LocalApp: no sockets"); }
+	virtual bool handlePeerClosed(int sockFd) override { error("LocalApp: no sockets"); return true; }
 };
 
 #endif
