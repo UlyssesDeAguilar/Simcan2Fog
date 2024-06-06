@@ -16,7 +16,7 @@ simple DataCentreManagerBase extends CloudManagerBase {
 		int cpuStatusInterval @unit(s)  = default(3600s);   //
         int activeMachinesThreshold = default(0);           //
         bool forecastActiveMachines = default(false);       //
-                 
+        bool hasCloudEvents = default(true);
     gates:
         input networkIn;
         output networkOut;

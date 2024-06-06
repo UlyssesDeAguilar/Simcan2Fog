@@ -25,6 +25,7 @@ module EdgeNode
 		
 		// An edge hypervisor is always active
 		hy.active = true;
+		ns.enableQueue = false;
 		
         // Propagating values to submodules + configuration
         *.numCpuCores = numCpuCores;

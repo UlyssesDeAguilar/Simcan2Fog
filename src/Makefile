@@ -33,6 +33,7 @@ OBJS = \
     $O/Architecture/Network/DNS/DnsQuerierService.o \
     $O/Architecture/Network/DNS/DnsResolverService.o \
     $O/Architecture/Network/DNS/DnsService.o \
+    $O/Architecture/Network/DNS/DnsServiceSimplified.o \
     $O/Architecture/Network/DataCentreNetwork/CommNetwork/CommNetwork.o \
     $O/Architecture/Network/DataCentreNetwork/StorageNetwork/StorageNetwork.o \
     $O/Architecture/Network/MessageQueue/MessageQueueManager.o \

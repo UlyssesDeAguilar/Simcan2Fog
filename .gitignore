@@ -58,3 +58,4 @@ Simcan2Cloud_dbg
 
 # VsCode configuration files
 .vscode/
+/.computed/

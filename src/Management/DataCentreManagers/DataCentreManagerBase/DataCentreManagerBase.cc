@@ -65,15 +65,18 @@ void DataCentreManagerBase::initialize(int stage)
         // Set the global DC address into the resource manager
         resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.stack")));
 
-        // Prepare the event message template for cloud provider
-        const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
-        eventTemplate.setChunkLength(inet::B(20));
-        eventTemplate.setNodeTopic(topic);
-        eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+        if (par("hasCloudEvents"))
+        {
+            // Prepare the event message template for cloud provider
+            const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
+            eventTemplate.setChunkLength(inet::B(20));
+            eventTemplate.setNodeTopic(topic);
+            eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
 
-        // Allow for init
-        Packet *packet = buildUpdateEvent();
-        sendDelayed(packet, 1, gate("eventOut"));
+            // Allow for init
+            Packet *packet = buildUpdateEvent();
+            sendDelayed(packet, 1, gate("eventOut"));
+        }
         break;
     }
     default:

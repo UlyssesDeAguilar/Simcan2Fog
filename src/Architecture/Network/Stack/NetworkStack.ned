@@ -25,9 +25,10 @@ module NetworkStack extends StandardHost
         string nodeTopic = default(""); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment  
         string cpIp = default("10.0.1.1");
         string smqIp = default("10.0.2.1");
-        bool hasCloudEvents = default(false);	// Wheter the module sends events to the cloud provider
-        bool enableQueue = default(true);		// Wheter to instatiate or not the queue push/pull clients
+        bool hasCloudEvents = default(false);	// Whether the module sends events to the cloud provider
+        bool enableQueue = default(true);		// Whether to instatiate or not the queue push/pull clients
         string tld = default("com");
+        string dns = default("10.1.0.1");
         @dnsTld(tld);
 
     gates:

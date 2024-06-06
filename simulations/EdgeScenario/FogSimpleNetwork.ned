@@ -13,8 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.EdgeTesting;
-
+package simcan2.simulations.EdgeScenario;
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Network.DNS.DnsSimplified;
 import simcan2.Management.DataCentre.DataCentre;
@@ -25,33 +24,39 @@ import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
 
-network EdgeNetwork
+network SimpleFogNetwork
 {
     parameters:
         int edgeTiles = default(1);
 
-        @display("bgb=698,437");
+        @display("bgb=600,400");
     submodules:
         simData: SimData {
             @display("p=48,103");
         }
 
-        router_bb: Router {
-            @display("i=abstract/router2;p=262,257");
+        dns: DnsSimplified {
+            @display("p=301,169");
         }
 
+        router: Router {
+            @display("p=300,261");
+        }
+
+        dc: DataCentre {
+            @display("p=472,256");
+        }
+        
         configurator: Ipv4NetworkConfigurator {
             @display("p=48,35");
         }
 
-        tile[edgeTiles]: LightEdgeTile {
-            @display("p=398,256,m,4,10;is=s");
+        tile: LightEdgeTile {
+            @display("p=151,259,m,4,10;is=s");
         }
 
     connections:
-        for i=0..edgeTiles-1 {
-            router_bb.ethg++ <--> Eth10M <--> tile[i].ethernet;
-        }
+        router.ethg++ <--> Eth10M <--> tile.ethernet;
+        router.ethg++ <--> Eth10M <--> dc.comm++;
+        router.ethg++ <--> Eth10M <--> dns.ethg++;
 }
-
-

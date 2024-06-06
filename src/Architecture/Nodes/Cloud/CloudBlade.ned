@@ -34,7 +34,8 @@ module CloudBlade
         double diskSize @unit(GB);
         double diskReadBandwidth @unit(Mbps);
         double diskWriteBandwidth @unit(Mbps);
-
+		int numApps = default(5);									// Number of applications in this vector
+			
 
         string hardwareManagerType = default("HardwareManager");	// Hardware manager type
         string hypervisorType = default("DcHypervisor");            // Hypervisor type
@@ -48,6 +49,7 @@ module CloudBlade
         *.numCpuCores = numCpuCores;
         *.maxVMs = maxVMs;
         *.isVirtualHardware = isVirtualHardware;
+        osModule.numApps = numApps;
         hardwareManager.address = address;
         disk.diskReadBandwidth = diskReadBandwidth;
         disk.diskWriteBandwidth = diskWriteBandwidth;
@@ -62,6 +64,8 @@ module CloudBlade
 
     gates:
         inout comm;
+        input socketIn[];
+        output socketOut[];
 
     submodules:
 
@@ -105,6 +109,11 @@ module CloudBlade
         // Connections between OS and Disk
         osModule.toDisk --> disk.diskIn;
         osModule.fromDisk <-- disk.diskOut;
+        
+        for i=0..(maxUsers * numApps)-1 {
+        	osModule.socketIn++ <-- {@display("ls=,0");} <-- socketIn++;
+            osModule.socketOut++ --> {@display("ls=,0");} --> socketOut++;
+        }
 
         // In/Out connection of the Operating System with the data centre network
         osModule.comm <--> comm;

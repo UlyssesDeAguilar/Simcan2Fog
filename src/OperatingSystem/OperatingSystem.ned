@@ -29,7 +29,9 @@ module OperatingSystem
         output toCpu;				// Output gate to the CPU schedulers vector
 		input fromDisk;
 		output toDisk;
-
+		input socketIn[];
+		output socketOut[];
+		
     submodules:
 
         // Hypervisor module
@@ -76,6 +78,11 @@ module OperatingSystem
         for i=0..maxVMs-1 {
             hypervisor.toCpuScheduler++ --> ned.IdealChannel --> cpuSchedVector.fromHypervisor++;
             hypervisor.fromCpuScheduler++ <-- ned.IdealChannel <-- cpuSchedVector.toHypervisor++;
+        }
+        
+        for i=0..maxUsers-1, for j=0..numApps-1 {
+            appsVectors[i].socketIn++ <-- {@display("ls=,0");} <-- socketIn++;
+            appsVectors[i].socketOut++ --> {@display("ls=,0");} --> socketOut++;
         }
 
         // Connection between the CPU schedulers vector and the CPU module

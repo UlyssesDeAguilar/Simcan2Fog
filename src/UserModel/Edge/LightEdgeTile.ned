@@ -17,7 +17,7 @@ import inet.node.inet.WirelessHost;
 module LightEdgeTile
 {
     parameters:
-        @display("i=HouseIcon;bgb=20,20;bgi=showcases/floorplan,s");
+        @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s");
         string serviceName = default("service");
         int sensors;
         int actuators;

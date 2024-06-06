@@ -24,8 +24,14 @@ module DataCentre
 {
     parameters:
         @smlevel(0);
+        @servicenode();
+        
+        string serviceDeployed;
         int numBlades;
         dcManager.minActiveMachines = numBlades;	// Test the capabilities afterwards!
+        
+        **.parentPath = "";
+        **.nsPath = "";
         @display("i=data-center;bgb=571,307");
     gates:
         inout comm[];
@@ -41,7 +47,7 @@ module DataCentre
             @display("p=288,138");
         }
         stack: NetworkStack {
-			hasCloudEvents = true;
+			hasCloudEvents = default(true);
             @display("p=71,137");
         }
         // Blades of the Datacentre
@@ -68,6 +74,11 @@ module DataCentre
 
         for i=0..numBlades-1 {
             switch.comm++ <--> blade[i].comm;
+        }
+        
+        for i=0..numBlades-1, for j=0..(blade[i].maxUsers * blade[i].numApps)-1 {
+            blade[i].socketIn++ <-- {@display("ls=,0");} <-- stack.ssOut++;
+            blade[i].socketOut++ --> {@display("ls=,0");} --> stack.ssIn++;
         }
 }
 
