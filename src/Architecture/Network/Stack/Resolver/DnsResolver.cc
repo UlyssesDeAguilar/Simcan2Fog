@@ -1,4 +1,6 @@
 #include "DnsResolver.h"
+#include "Applications/Base/UserAppBase/UserAppBase.h"
+
 using namespace networkio;
 using namespace dns;
 
@@ -24,8 +26,9 @@ void DnsResolver::handleStartOperation(LifecycleOperation *operation)
 {
     // Configure the socket
     socket.setOutputGate(gate("socketOut"));
-    socket.bind(0);
+    socket.bind(-1);
     socket.setCallback(this);
+    // socket.connect(ispResolver, DNS_PORT);
 }
 
 void DnsResolver::handleStopOperation(LifecycleOperation *operation)
@@ -52,17 +55,21 @@ void DnsResolver::handleMessageWhenUp(cMessage *msg)
 
 void DnsResolver::processRequest(cMessage *msg)
 {
-    // Prepare a new request
-    auto event = check_and_cast<CommandEvent *>(msg);
+    /* FIXME */
+}
+
+void DnsResolver::resolve(const char *domain, cModule *callback)
+{
+    Enter_Method_Silent();
     auto request = new DnsRequest();
     request->setOperationCode(QUERY);
     request->setRequestId(getNewRequestId());
-    request->insertQuestion(event->getServiceName());
+    request->insertQuestion(domain);
 
     auto packet = new Packet("Dns Request", Ptr<DnsRequest>(request));
     socket.sendTo(packet, ispResolver, DNS_PORT);
 
-    pendingRequests[request->getRequestId()] = std::unique_ptr<networkio::CommandEvent>(event);
+    pendingRequests[request->getRequestId()] = callback;
 }
 
 uint16_t DnsResolver::getNewRequestId()
@@ -76,26 +83,19 @@ void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     auto response = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
     auto iter = pendingRequests.find(response->getRequestId());
+    auto callback = check_and_cast<UserAppBase::ICallback *>(iter->second);
 
-    auto event = new IncomingEvent();
-    event->setPid(iter->second->getPid());
-    event->setVmId(iter->second->getVmId());
-    event->setIp(iter->second->getIp());
-
-    // TODO: Send the appropiate response back
     if (response->getReturnCode() == dns::ReturnCode::NOERROR)
     {
-        const ResourceRecord &rec = response->getNonAuthoritativeAnswers(0);
-        event->setType(networkio::EventType::RESOLVER_NOERROR);
-        event->setResolvedIp(rec.ip.toIpv4().getInt());
+        const ResourceRecord &rec = response->getAuthoritativeAnswers(0);
+        callback->handleResolverReturned(rec.ip.toIpv4().getInt());
     }
     else
     {
-        event->setType(networkio::EventType::RESOLVER_NXDOMAIN);
-        event->setServiceName(iter->second->getServiceName());
+        callback->handleResolverReturned(0);
     }
 
-    multiplexer->processResponse(event);
+    // multiplexer->processResponse(event);
     pendingRequests.erase(iter);
     delete packet;
 }

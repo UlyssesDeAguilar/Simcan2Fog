@@ -1,0 +1,62 @@
+<config>
+   <interface hosts="SimpleFogNetwork.dns" names="eth0" address="10.0.0.1" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="SimpleFogNetwork.router" names="eth2" address="10.0.0.2" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="SimpleFogNetwork.router" names="eth0" address="10.0.0.5" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.router" names="eth1" address="10.0.0.6" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="SimpleFogNetwork.router" names="eth1" address="10.0.0.9" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="SimpleFogNetwork.dc.stack" names="eth0" address="10.0.0.10" netmask="255.255.255.252" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.user" names="eth0" address="10.0.0.17" netmask="255.255.255.248" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.controller.ns" names="eth0" address="10.0.0.18" netmask="255.255.255.248" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.sensor[0]" names="eth0" address="10.0.0.19" netmask="255.255.255.248" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.sensor[1]" names="eth0" address="10.0.0.20" netmask="255.255.255.248" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.actuator[0]" names="eth0" address="10.0.0.21" netmask="255.255.255.248" metric="200"/>
+   <interface hosts="SimpleFogNetwork.tile.router" names="eth0" address="10.0.0.22" netmask="255.255.255.248" metric="200"/>
+   <multicast-group hosts="SimpleFogNetwork.dns" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.router" interfaces="eth2" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="SimpleFogNetwork.router" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.router" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="SimpleFogNetwork.router" interfaces="eth1" address="224.0.0.1 224.0.0.2"/>
+   <multicast-group hosts="SimpleFogNetwork.dc.stack" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.user" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.controller.ns" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.sensor[0]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.sensor[1]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.actuator[0]" interfaces="eth0" address="224.0.0.1"/>
+   <multicast-group hosts="SimpleFogNetwork.tile.router" interfaces="eth0" address="224.0.0.1 224.0.0.2"/>
+   <route hosts="SimpleFogNetwork.dns" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.dns" destination="*" netmask="*" gateway="10.0.0.2" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.router" destination="10.0.0.6" netmask="255.255.255.255" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.router" destination="10.0.0.0" netmask="255.255.255.252" gateway="*" interface="eth2" metric="0"/>
+   <route hosts="SimpleFogNetwork.router" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth1" metric="0"/>
+   <route hosts="SimpleFogNetwork.router" destination="10.0.0.16" netmask="255.255.255.248" gateway="10.0.0.6" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.dc.stack" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.dc.stack" destination="10.0.0.8" netmask="255.255.255.252" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.dc.stack" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.dc.stack" destination="*" netmask="*" gateway="10.0.0.9" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.user" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.user" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.user" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.tile.user" destination="*" netmask="*" gateway="10.0.0.22" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.router" destination="10.0.0.5" netmask="255.255.255.255" gateway="*" interface="eth1" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.router" destination="10.0.0.4" netmask="255.255.255.252" gateway="*" interface="eth1" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.router" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.router" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.router" destination="10.0.0.0" netmask="255.255.255.240" gateway="10.0.0.5" interface="eth1" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.router" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[0]" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[0]" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[0]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[0]" destination="*" netmask="*" gateway="10.0.0.22" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[1]" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[1]" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[1]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.tile.sensor[1]" destination="*" netmask="*" gateway="10.0.0.22" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.actuator[0]" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.actuator[0]" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.actuator[0]" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.tile.actuator[0]" destination="*" netmask="*" gateway="10.0.0.22" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.controller.ns" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="0"/>
+   <route hosts="SimpleFogNetwork.tile.controller.ns" destination="10.0.0.16" netmask="255.255.255.248" gateway="*" interface="eth0" metric="200"/>
+   <route hosts="SimpleFogNetwork.tile.controller.ns" destination="127.0.0.0" netmask="255.0.0.0" gateway="*" interface="lo0" metric="1"/>
+   <route hosts="SimpleFogNetwork.tile.controller.ns" destination="*" netmask="*" gateway="10.0.0.22" interface="eth0" metric="0"/>
+</config>

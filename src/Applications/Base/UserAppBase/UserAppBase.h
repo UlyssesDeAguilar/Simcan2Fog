@@ -5,6 +5,7 @@
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 #include "inet/common/socket/SocketMap.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
+#include "Architecture/Network/Stack/Resolver/DnsResolver.h"
 #include "Architecture/Network/Stack/StackServiceType.h"
 #include "OperatingSystem/Hypervisors/common.h"
 #include "Core/cSIMCAN_Core.h"
@@ -33,6 +34,7 @@ protected:
    uint32_t vmId;            //!< Virtual machine id
    simtime_t operationStart; //!< Timestamp of the starting of an operation
 
+   DnsResolver *resolver;
    SocketMap socketMap;
    SocketQueue socketQueue;
 
@@ -89,6 +91,7 @@ public:
       virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) {};
       virtual void returnRead(simtime_t timeElapsed) {};
       virtual void returnWrite(simtime_t timeElapsed) {};
+      virtual void handleResolverReturned(uint32_t ip) = 0;
       virtual void handleDataArrived(int sockFd, Packet *p) = 0;
       virtual void handleConnectReturn(int sockFd, bool connected) = 0;
       virtual bool handlePeerClosed(int sockFd) = 0;

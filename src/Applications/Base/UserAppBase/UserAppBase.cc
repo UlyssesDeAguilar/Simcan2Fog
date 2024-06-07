@@ -82,8 +82,9 @@ void UserAppBase::syscallFillData(Syscall *syscall, SyscallCode code)
 void UserAppBase::handleMessage(cMessage *msg)
 {
     auto packet = dynamic_cast<Packet *>(msg);
+    auto cmd = dynamic_cast<Message*>(msg);
 
-    if (packet)
+    if (packet || cmd)
     {
         auto socket = socketMap.findSocketFor(msg);
         if (socket)
@@ -95,6 +96,7 @@ void UserAppBase::handleMessage(cMessage *msg)
     {
         cSIMCAN_Core::handleMessage(msg);
     }
+
 }
 
 void UserAppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate)
@@ -204,10 +206,7 @@ void UserAppBase::abort()
 void UserAppBase::resolve(const char *domainName)
 {
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " resolving:" << domainName << "\n";
-    ResolverSyscall *syscall = new ResolverSyscall();
-    syscallFillData(syscall, RESOLVE);
-    syscall->setDomainName(domainName);
-    sendRequestMessage(syscall, outGate);
+    resolver->resolve(domainName, this);
 }
 
 int UserAppBase::open(uint16_t localPort, ConnectionMode mode)
@@ -227,6 +226,7 @@ int UserAppBase::open(uint16_t localPort, ConnectionMode mode)
         s->setCallback(this);
         s->setOutputGate(gate("socketOut"));
         s->bind(localPort);
+        socket = s;
     }
 
     socketMap.addSocket(socket);

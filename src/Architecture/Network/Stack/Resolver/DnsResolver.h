@@ -16,7 +16,7 @@ class DnsResolver : public ApplicationBase, public UdpSocket::ICallback, public 
 {
 private:
 protected:
-    using RequestMap = std::map<uint16_t, std::unique_ptr<networkio::CommandEvent>>;
+    using RequestMap = std::map<uint16_t, cModule*>;
 
     StackMultiplexer *multiplexer; // For forwarding the responses from the endpoints
     RequestMap pendingRequests;
@@ -34,7 +34,7 @@ protected:
     virtual void handleStopOperation(LifecycleOperation *operation) override;
     virtual void handleCrashOperation(LifecycleOperation *operation) override;
     virtual void handleMessageWhenUp(cMessage *msg) override;
-
+    
     // Logic
     uint16_t getNewRequestId();
 
@@ -44,6 +44,7 @@ protected:
     virtual void socketClosed(UdpSocket *socket) override;
 
 public:
+    void resolve(const char *domain, cModule *module);
     virtual void processRequest(cMessage *msg) override;
 };
 

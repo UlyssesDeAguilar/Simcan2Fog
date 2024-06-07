@@ -9,11 +9,11 @@ void DnsServiceSimplified::initialize(int stage)
     {
     case INITSTAGE_LOCAL:
     {
-        //serverName = par("serverName");
+        // serverName = par("serverName");
         break;
     }
     case INITSTAGE_APPLICATION_LAYER:
-        //localAddress = L3AddressResolver().addressOf(getParentModule());
+        // localAddress = L3AddressResolver().addressOf(getParentModule());
         scanNetwork();
         break;
     };
@@ -84,6 +84,8 @@ void DnsServiceSimplified::sendResponseTo(const Packet *packet, DnsRequest *resp
     L3Address remoteAddress = packet->getTag<L3AddressInd>()->getSrcAddress();
     int remotePort = packet->getTag<L4PortInd>()->getSrcPort();
 
+    EV_DEBUG << "Sending response to: " << remoteAddress << "\n";
+
     // Process and package response
     auto responsePacket = new Packet("DnsRequest", Ptr<DnsRequest>(response));
     socket.sendTo(responsePacket, remoteAddress, remotePort);
@@ -96,6 +98,8 @@ void DnsServiceSimplified::socketErrorArrived(UdpSocket *socket, Indication *ind
 
 void DnsServiceSimplified::handleQuery(const Packet *packet)
 {
+    EV_DEBUG << "Handling query" << "\n";
+
     auto request = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
     auto questionCount = request->getQuestionArraySize();
 
@@ -117,23 +121,23 @@ void DnsServiceSimplified::handleQuery(const Packet *packet)
 
     for (int i = 0; i < questionCount; i++)
     {
-        DnsRequest *p;
+        EV_DEBUG << "Processing query" << i << "\n";
         auto vec = processQuestion(request->getQuestion(i));
 
         if (vec)
         {
-            p = allocateIfNull(ok, request.get());
-            p->insertQuestion(request->getQuestion(i));
+            ok = allocateIfNull(ok, request.get());
+            ok->insertQuestion(request->getQuestion(i));
 
             for (const auto &record : *vec)
             {
-                p->insertAuthoritativeAnswers(record);
+                ok->insertAuthoritativeAnswers(record);
             }
         }
         else
         {
-            p = allocateIfNull(error, request.get());
-            p->insertQuestion(request->getQuestion(i));
+            error = allocateIfNull(error, request.get());
+            error->insertQuestion(request->getQuestion(i));
         }
     }
 

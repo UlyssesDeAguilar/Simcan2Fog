@@ -63,7 +63,8 @@ module LightEdgeTile
         for i=0..actuators-1 {
             actuator[i].ethg++ <--> Eth10M <--> ap.ethg++;
         }
-
+		
+		//ap.ethg++ <--> ethernet;
         router.ethg++ <--> Eth10M <--> ap.ethg++;
         router.ethg++ <--> ethernet;
 }

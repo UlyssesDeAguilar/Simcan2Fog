@@ -13,6 +13,20 @@ VALUES
     );
 
 INSERT INTO
+    app_models(name, package, interface)
+VALUES
+    (
+        "IotApplication",
+        "simcan2.Applications.UserApps.IotApplication",
+        JSON_OBJECT(
+            "processingMIs",
+            "int",
+            "listeningPort",
+            "int"
+        )
+    );
+
+INSERT INTO
     apps(name, model_id, parameters)
 VALUES
     (
@@ -21,6 +35,20 @@ VALUES
         JSON_OBJECT(
             "processingMIs",
             "100",
+            "listeningPort",
+            "1000"
+        )
+    );
+
+INSERT INTO
+    apps(name, model_id, parameters)
+VALUES
+    (
+        "SmartHomeAppEndToEnd",
+        3,
+        JSON_OBJECT(
+            "processingMIs",
+            "1",
             "listeningPort",
             "1000"
         )

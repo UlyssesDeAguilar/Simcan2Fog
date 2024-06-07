@@ -239,36 +239,6 @@ void Hypervisor::handleIncomingEvent(IncomingEvent *event)
         result = sys;
         break;
     }
-    case SOCKET_ESTABLISHED:
-    {
-        auto sys = new SocketIoSyscall();
-        sys->setOpCode(OPEN_CLI);
-        sys->setKind(event->getKind());
-        sys->setResult(OK);
-        sys->setSocketFd(event->getSocketId());
-        result = sys;
-        break;
-    }
-    case SOCKET_DATA_ARRIVED:
-    {
-        auto sys = new SocketIoSyscall();
-        sys->setOpCode(RECV);
-        sys->setResult(OK);
-        sys->setSocketFd(event->getSocketId());
-        sys->setPayload(event->getPayload());
-        result = sys;
-        break;
-    }
-    case SOCKET_FAILURE:
-    case SOCKET_PEER_CLOSED:
-    {
-        auto sys = new SocketIoSyscall();
-        sys->setOpCode(RECV);
-        sys->setResult(ERROR);
-        sys->setSocketFd(event->getSocketId());
-        result = sys;
-        break;
-    }
     default:
         error("Could not interpret network event with code %d", event->getType());
         break;
