@@ -7,6 +7,8 @@ Define_Module(IotApplication);
 using namespace hypervisor;
 using namespace iot;
 
+simsignal_t roundTripTime = cComponent::registerSignal("roundTripTime");
+
 void IotApplication::initialize()
 {
     // Init the super-class
@@ -83,6 +85,10 @@ void IotApplication::handleDataArrived(int sockFd, Packet *p)
     else if (sockFd == tcpSocket)
     {
         EV << "Got response from the server\n";
+
+        chronometer = simTime().dbl() - chronometer;
+        emit(packetReceivedSignal, p);
+        emit(roundTripTime, chronometer);
         sendActuator();
     }
 
@@ -106,6 +112,9 @@ void IotApplication::sendServer()
     payload->setExpectedReplyLength(B(par("replySize")));
     payload->setReplyDelay(par("replyDelay"));
     packet->insertAtBack(Ptr<GenericAppMsg>(payload));
+
+    emit(packetSentSignal, packet);
+    chronometer = simTime().dbl();
 
     _send(tcpSocket, packet);
 }

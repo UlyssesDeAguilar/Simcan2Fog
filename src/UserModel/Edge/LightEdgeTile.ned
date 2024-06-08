@@ -1,7 +1,7 @@
 package simcan2.UserModel.Edge;
 
 // Wired comms
-import inet.node.ethernet.Eth10M;
+import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.EtherSwitch;
 
 // Architectural components from SimCan2Fog models
@@ -17,7 +17,7 @@ import inet.node.inet.WirelessHost;
 module LightEdgeTile
 {
     parameters:
-        @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s");
+        @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s;bgu=m");
         string serviceName = default("service");
         int sensors;
         int actuators;
@@ -53,18 +53,18 @@ module LightEdgeTile
         }
 
     connections:
-        controller.comm <--> Eth10M <--> ap.ethg++;
-        user.ethg++ <--> Eth10M <--> ap.ethg++;
+        controller.comm <--> Eth100M <--> ap.ethg++;
+        user.ethg++ <--> Eth100M <--> ap.ethg++;
 
         for i=0..sensors-1 {
-            sensor[i].ethg++ <--> Eth10M <--> ap.ethg++;
+            sensor[i].ethg++ <--> Eth100M <--> ap.ethg++;
         }
 
         for i=0..actuators-1 {
-            actuator[i].ethg++ <--> Eth10M <--> ap.ethg++;
+            actuator[i].ethg++ <--> Eth100M <--> ap.ethg++;
         }
 		
 		//ap.ethg++ <--> ethernet;
-        router.ethg++ <--> Eth10M <--> ap.ethg++;
+        router.ethg++ <--> Eth100M <--> ap.ethg++;
         router.ethg++ <--> ethernet;
 }

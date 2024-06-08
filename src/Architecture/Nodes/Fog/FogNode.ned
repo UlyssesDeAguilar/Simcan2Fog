@@ -24,8 +24,13 @@ module FogNode
 {
 	parameters:
         @smlevel(0);
+        @servicenode();
+        
         int numBlades;
+        string serviceDeployed;
         dcManager.minActiveMachines = numBlades;	// Test the capabilities afterwards!
+        **.parentPath = "";
+        **.nsPath = "";
         @display("i=abstract/router;bgb=571,307");
     gates:
         inout comm[];
@@ -71,5 +76,10 @@ module FogNode
 
         for i=0..numBlades-1 {
             switch.comm++ <--> blade[i].comm;
+        }
+        
+        for i=0..numBlades-1, for j=0..(blade[i].maxUsers * blade[i].numApps)-1 {
+            blade[i].socketIn++ <-- {@display("ls=,0");} <-- stack.ssOut++;
+            blade[i].socketOut++ --> {@display("ls=,0");} --> stack.ssIn++;
         }
 }

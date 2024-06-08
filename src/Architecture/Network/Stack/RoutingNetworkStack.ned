@@ -31,22 +31,21 @@ module RoutingNetworkStack extends Router
         string smqIp = default("10.0.2.1");
         bool hasCloudEvents = default(false);	// Wheter the module sends events to the cloud provider
         bool enableQueue = default(true);		// Wheter to instatiate or not the queue push/pull clients
+        string dns = default("10.1.0.1");
         string tld = default("com");
         @dnsTld(tld);
-
+		dnsResolver.ispResolver = dns;
     gates:
         input queueIn @loose;
         output queueOut @loose;
         input eventsIn @loose;	// If hasCloudEvents is true this should be connected!
         inout eth_comm;
-
+		input ssIn[];
+		output ssOut[];
+		
     submodules:
         sm: StackMultiplexer {
             @display("p=1187.5499,66.15");
-        }
-
-        httpProxy: HttpProxyService {
-            @display("p=951.47,356.59");
         }
 
         dnsResolver: DnsResolver {
@@ -88,9 +87,6 @@ module RoutingNetworkStack extends Router
     connections allowunconnected:
         // Bidirectional ethernet comms
         eth_comm <--> sm.comm;
-        
-        httpProxy.socketIn <-- at.out++;
-        httpProxy.socketOut --> at.in++;
 
         dnsResolver.socketIn <-- at.out++;
         dnsResolver.socketOut --> at.in++;
@@ -114,11 +110,16 @@ module RoutingNetworkStack extends Router
 
         pushClient.netOut --> pushSocket.trafficIn if enableQueue;
         pushClient.netIn <-- pushSocket.trafficOut if enableQueue;
-
+		
+		for i=0..sizeof(ssIn)-1 {
+		    ssIn[i] --> at.in++;
+		    ssOut[i] <-- at.out++;
+		}
+		
         // Incoming and outgoing from SMQ
         pullClient.queueOut --> queueOut if enableQueue;
         queueIn --> pushClient.queueIn if enableQueue;
-
+		
         // Outgoing to the cloud provider
         eventsIn --> eventsSocket.trafficIn if hasCloudEvents;
 }

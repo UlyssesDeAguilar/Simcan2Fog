@@ -13,6 +13,7 @@ protected:
     Ipv4Address endpointIp{};         //!< Remote endpoint ip
     int udpSocket;                    //!< UdpSocket
     int tcpSocket;                    //!< TcpSocket
+    double chronometer;                  //!< Measures round trip time
     int16_t listeningPort;            //!< Port where to listen
     std::vector<L3Address> actuators; //!< Actuators ips
     simtime_t simStartTime;           //!< Simulation Starting timestamp

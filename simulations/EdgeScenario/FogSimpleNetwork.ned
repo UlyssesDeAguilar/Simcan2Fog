@@ -17,46 +17,61 @@ package simcan2.simulations.EdgeScenario;
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Network.DNS.DnsSimplified;
 import simcan2.Management.DataCentre.DataCentre;
+import simcan2.Architecture.Nodes.Fog.FogNode;
 import simcan2.Architecture.Nodes.Iot.*;
 import simcan2.UserModel.Edge.EdgeTile;
 import simcan2.UserModel.Edge.LightEdgeTile;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
+import inet.node.internetcloud.InternetCloud;
 import inet.node.inet.Router;
+
 import inet.node.ethernet.Eth10M;
+import inet.node.ethernet.Eth10G;
+import inet.node.ethernet.Eth100G;
 
 network SimpleFogNetwork
 {
     parameters:
         int edgeTiles = default(1);
 
-        @display("bgb=600,400");
+        @display("bgb=800,400;bgg=50");
     submodules:
         simData: SimData {
-            @display("p=48,103");
+            @display("p=623,40");
         }
 
         dns: DnsSimplified {
-            @display("p=301,169");
-        }
-
-        router: Router {
-            @display("p=300,261");
+            @display("p=599,197");
         }
 
         dc: DataCentre {
-            @display("p=472,256");
-        }
-        
-        configurator: Ipv4NetworkConfigurator {
-            @display("p=48,35");
+            @display("p=707,250");
         }
 
+        fg: FogNode {
+            @display("p=153,251");
+        }
+
+        configurator: Ipv4NetworkConfigurator {
+            @display("p=734,34");
+        }
+
+        metropolitan: InternetCloud {
+
+            @display("p=256,252");
+        }
+
+        backbone: InternetCloud {
+            @display("p=503,253");
+        }
         tile: LightEdgeTile {
-            @display("p=151,259,m,4,10;is=s");
+            @display("p=51,250,m,4,10;is=s");
         }
 
     connections:
-        router.ethg++ <--> Eth10M <--> tile.ethernet;
-        router.ethg++ <--> Eth10M <--> dc.comm++;
-        router.ethg++ <--> Eth10M <--> dns.ethg++;
+        tile.ethernet <--> Eth10G <--> fg.comm++;
+        metropolitan.ethg++ <--> Eth10G <--> fg.comm++;
+        metropolitan.ethg++ <--> Eth100G <--> backbone.ethg++;
+        backbone.ethg++ <--> Eth100G <--> dc.comm++;
+        backbone.ethg++ <--> Eth100G <--> dns.ethg++;
 }
