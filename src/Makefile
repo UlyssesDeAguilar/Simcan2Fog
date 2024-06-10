@@ -24,6 +24,8 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 OBJS = \
     $O/Applications/Base/UserAppBase/UserAppBase.o \
     $O/Applications/Builder/ApplicationBuilder.o \
+    $O/Applications/Services/ProcessingService.o \
+    $O/Applications/Services/SimService.o \
     $O/Applications/UserApps/DummyApp/DummyApplication.o \
     $O/Applications/UserApps/IotApplication/IotApplication.o \
     $O/Applications/UserApps/LocalApplication/LocalApplication.o \
@@ -104,6 +106,7 @@ OBJS = \
     $O/UserModel/Base/BaseUserModel.o \
     $O/UserModel/Cloud/CloudUserModel.o \
     $O/UserModel/Edge/EdgeUserModelDriver.o \
+    $O/Applications/Services/SimServiceReq_m.o \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
     $O/Architecture/Nodes/Iot/IotPayload_m.o \
@@ -126,6 +129,7 @@ OBJS = \
 
 # Message files
 MSGFILES = \
+    Applications/Services/SimServiceReq.msg \
     Architecture/Network/RoutingInfo/RoutingInfo.msg \
     Architecture/Network/Stack/NetworkIOEvent.msg \
     Architecture/Nodes/Iot/IotPayload.msg \

@@ -86,6 +86,7 @@ protected:
 
 public:
     typedef CoreHypervisorsMap::iterator iterator;
+    void emitSignals(const VirtualMachine *vmTemplate, bool allocation);
 
     /**
      * @brief Register a node of the dc
@@ -106,7 +107,6 @@ public:
     void deallocateVm(uint32_t ip, const char *vmId) { getHypervisor(ip)->deallocateVmResources(std::string(vmId)); }
     void confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool idleNode);
 
-
     /**
      * @brief Scans through the nodes and activates or deactivates them to match the objective count
      * @param activeMachines
@@ -125,7 +125,8 @@ public:
     uint32_t getTotalCores() const { return totalCores; }
     uint32_t getAvailableCores() const { return availableCores; }
     double getAggregatedCpuUsage() const { return availableCores / (double)totalCores; }
-
+    
+    size_t getTotalNodes() const { return nodes.size(); }
     friend class VmDeployment;
 };
 

@@ -1,6 +1,7 @@
 #include "IotApplication.h"
 #include "inet/applications/tcpapp/GenericAppMsg_m.h"
 #include "inet/common/TimeTag_m.h"
+#include "Applications/Services/SimServiceReq_m.h"
 
 Define_Module(IotApplication);
 
@@ -89,7 +90,9 @@ void IotApplication::handleDataArrived(int sockFd, Packet *p)
         chronometer = simTime().dbl() - chronometer;
         emit(packetReceivedSignal, p);
         emit(roundTripTime, chronometer);
-        sendActuator();
+        
+        if (actuators.size() > 0)
+            sendActuator();
     }
 
     delete p;
@@ -104,13 +107,14 @@ void IotApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)
 void IotApplication::sendServer()
 {
     Packet *packet = new Packet("Controller command");
-    auto payload = new GenericAppMsg();
+    auto payload = new SimServiceReq();
 
     payload->addTag<CreationTimeTag>()->setCreationTime(simTime());
     payload->setChunkLength(B(par("synthSize")));
     payload->setServerClose(par("serverClosesOnReturn"));
     payload->setExpectedReplyLength(B(par("replySize")));
     payload->setReplyDelay(par("replyDelay"));
+    payload->setVmType(par("vmType"));
     packet->insertAtBack(Ptr<GenericAppMsg>(payload));
 
     emit(packetSentSignal, packet);

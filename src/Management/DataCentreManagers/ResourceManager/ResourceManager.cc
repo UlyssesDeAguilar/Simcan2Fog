@@ -9,6 +9,13 @@ void DcResourceManager::initialize(int stage)
     {
     case LOCAL:
     {
+        totalCores = 0;        //!< Total cpus in the datacentre
+        availableCores = 0;    //!< Cpus available in the datacentre
+        machinesInUse = 0;     //!< Nodes in use
+        activeMachines = 0;    //!< Active nodes (powered on)
+        minActiveMachines = 0; //!< Minimum required active nodes
+        reservedNodes = 0;     //!< Number of reserved nodes
+        
         // Register the signals for statistical recording
         signals.maxCores = registerSignal("maxCores");
         signals.maxRam = registerSignal("maxRam");
@@ -42,12 +49,13 @@ void DcResourceManager::finish()
 {
     // Cpu usage times! -> emit signal instad of printing? Global cpu view like the hypervisor?
     // HardwareManager should "expose" the cpuState array!
-
+    coresHypervisor.clear();
+    reservedCoresHypervisor.clear();
     // Give the allocation signals a ending point
-    emit(signals.allocatedCores, 0);
-    emit(signals.allocatedVms, 0);
-    emit(signals.allocatedDisk, 0.0);
-    emit(signals.allocatedRam, 0.0);
+    // emit(signals.allocatedCores, 0);
+    // emit(signals.allocatedVms, 0);
+    // emit(signals.allocatedDisk, 0.0);
+    // emit(signals.allocatedRam, 0.0);
 }
 
 void DcResourceManager::registerNode(uint32_t ip, const NodeResources &resources)
@@ -109,12 +117,6 @@ void DcResourceManager::initBucketsAndReservations()
     emit(signals.maxDisk, maxDisk);
     emit(signals.maxRam, maxRam);
     emit(signals.maxVms, maxVMs);
-
-    // Give the allocation signals a starting point
-    emit(signals.allocatedCores, 0);
-    emit(signals.allocatedVms, 0);
-    emit(signals.allocatedDisk, 0.0);
-    emit(signals.allocatedRam, 0.0);
 }
 
 void DcResourceManager::setActiveMachines(uint32_t activeMachines)
@@ -179,18 +181,32 @@ hypervisor::DcHypervisor *const DcResourceManager::getHypervisor(uint32_t nodeIp
     return check_and_cast<hypervisor::DcHypervisor *>(hypervisor);
 }
 
-void DcResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualMachine *vmTemplate)
+void DcResourceManager::emitSignals(const VirtualMachine *vmTemplate, bool allocation)
 {
-    this->availableCores -= vmTemplate->getNumCores();
-
     // Emit statistical signals -- Heuristic for considering if there may be a listening configuration
-    if (mayHaveListeners(signals.allocatedVms))
+    if (!mayHaveListeners(signals.allocatedVms))
+        return;
+
+    if (allocation)
     {
         emit(signals.allocatedVms, 1);
         emit(signals.allocatedCores, vmTemplate->getNumCores());
         emit(signals.allocatedRam, vmTemplate->getMemoryGb());
         emit(signals.allocatedDisk, vmTemplate->getDiskGb());
     }
+    else
+    {
+        emit(signals.allocatedVms, -1);
+        emit(signals.allocatedCores, -vmTemplate->getNumCores());
+        emit(signals.allocatedRam, -vmTemplate->getMemoryGb());
+        emit(signals.allocatedDisk, -vmTemplate->getDiskGb());
+    }
+}
+
+void DcResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualMachine *vmTemplate)
+{
+    this->availableCores -= vmTemplate->getNumCores();
+    emitSignals(vmTemplate, true);
 
     // Mark node in use and increment machinesInUse (if previously not set)
     if ((nodes[ip].state & Node::IN_USE) == 0)
@@ -207,15 +223,7 @@ void DcResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualM
 void DcResourceManager::confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool idleNode)
 {
     this->availableCores += vmTemplate->getNumCores();
-
-    // Emit statistical signals -- Heuristic for considering if there may be a listening configuration
-    if (mayHaveListeners(signals.allocatedVms))
-    {
-        emit(signals.allocatedVms, -1);
-        emit(signals.allocatedCores, -vmTemplate->getNumCores());
-        emit(signals.allocatedRam, -vmTemplate->getMemoryGb());
-        emit(signals.allocatedDisk, -vmTemplate->getDiskGb());
-    }
+    emitSignals(vmTemplate, false);
 
     // If no longer in use
     if (idleNode)
@@ -249,7 +257,7 @@ void DcResourceManager::updateNode(uint32_t nodeIp, const VirtualMachine *vm, bo
     // If there are no more nodes, then delete the bucket
     if (oldBucket.size() == 0)
         coresHypervisor.erase(bucketIter);
-    
+
     if (allocate)
     {
         // Allocate the resources
