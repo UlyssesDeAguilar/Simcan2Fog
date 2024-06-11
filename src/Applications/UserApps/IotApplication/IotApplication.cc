@@ -65,6 +65,7 @@ void IotApplication::handleResolverReturned(uint32_t ip)
 
 void IotApplication::handleConnectReturn(int sockFd, bool connected)
 {
+    recordScalar("connected to endpoint", 1.0);
     if (!connected)
         error("Unable to connect to endpoint");
 
@@ -142,7 +143,11 @@ void IotApplication::sendActuator()
     _send(udpSocket, packet, actuators[randAcutator].toIpv4().getInt(), listeningPort);
 }
 
-bool IotApplication::handlePeerClosed(int sockFd) { return true; }
+bool IotApplication::handlePeerClosed(int sockFd) 
+{
+    error("Here");
+    return true; 
+}
 
 void IotApplication::finish()
 {

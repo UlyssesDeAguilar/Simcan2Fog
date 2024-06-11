@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.EdgeScenario;
+package simcan2.simulations.EdgeMediumScenario;
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Network.DNS.DnsSimplified;
 import simcan2.Management.DataCentre.DataCentre;
@@ -29,11 +29,12 @@ import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100G;
 import inet.node.ethernet.EtherSwitch;
+import inet.node.inet.WirelessHost;
 
 import simcan2.Architecture.Nodes.Iot.HumiditySensor;
 import simcan2.Architecture.Nodes.Iot.Raspberry5;
 
-network SimpleFogNetwork
+network MediumNet
 {
     parameters:
         int edgeTiles = default(1);
@@ -84,7 +85,7 @@ network SimpleFogNetwork
         ap: EtherSwitch {
             @display("i=device/accesspoint, p=144.72,199.99501");
         }
-        actuator[1]: AutomaticWatering {
+        actuator[1]: WirelessHost {
             numWlanInterfaces = 0;
             @display("i=faucet64;p=52.260002,195.975");
         }

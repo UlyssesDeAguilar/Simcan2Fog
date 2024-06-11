@@ -5,22 +5,20 @@ import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.EtherSwitch;
 
 // Architectural components from SimCan2Fog models
-import simcan2.Architecture.Nodes.Iot.EdgeNode;
-import simcan2.Architecture.Nodes.Iot.LuminositySensor;
+import simcan2.Architecture.Nodes.Iot.*;
 import inet.node.inet.Router;
-import inet.node.inet.WirelessHost;
 
 //
 //	Represents an "Edge Scenario" as an reusable "mini bubble" in the
 //	grand scheme of the simulation.
 //
-module LightEdgeTile like ITile
+module SmartHouse like ITile
 {
     parameters:
         @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s;bgu=m");
-        string serviceName = default("service");
-        int sensors;
-        int actuators;
+        string serviceName;
+        int sensors = 2;
+        int actuators = 2;
     gates:
         inout ethernet;
 
@@ -34,7 +32,8 @@ module LightEdgeTile like ITile
             @display("p=4.6973147,6.008193");
         }
 
-        controller: EdgeNode {
+        controller: Raspberry5 {
+            hy.apps = "SmartHomeAppEndToEnd";
             @display("p=4.733728,15.668639");
         }
 
@@ -47,9 +46,9 @@ module LightEdgeTile like ITile
             @display("p=12.744652,12.853891");
         }
 
-        actuator[actuators]: WirelessHost {
+        actuator[actuators]: SmartBulb {
             numWlanInterfaces = 0;
-            @display("i=status/bulb;p=10.8,7.6");
+            @display("p=10.8,7.6");
         }
 
     connections:
@@ -64,7 +63,6 @@ module LightEdgeTile like ITile
             actuator[i].ethg++ <--> Eth100M <--> ap.ethg++;
         }
 		
-		//ap.ethg++ <--> ethernet;
         router.ethg++ <--> Eth100M <--> ap.ethg++;
         router.ethg++ <--> ethernet;
 }
