@@ -109,6 +109,7 @@ OBJS = \
     $O/Applications/Services/SimServiceReq_m.o \
     $O/Architecture/Network/RoutingInfo/RoutingInfo_m.o \
     $O/Architecture/Network/Stack/NetworkIOEvent_m.o \
+    $O/Architecture/Network/Stack/Resolver/RequestTimeout_m.o \
     $O/Architecture/Nodes/Iot/IotPayload_m.o \
     $O/Core/PayloadMessage_m.o \
     $O/Management/CloudProvider/NodeEvent_m.o \
@@ -132,6 +133,7 @@ MSGFILES = \
     Applications/Services/SimServiceReq.msg \
     Architecture/Network/RoutingInfo/RoutingInfo.msg \
     Architecture/Network/Stack/NetworkIOEvent.msg \
+    Architecture/Network/Stack/Resolver/RequestTimeout.msg \
     Architecture/Nodes/Iot/IotPayload.msg \
     Core/PayloadMessage.msg \
     Management/CloudProvider/NodeEvent.msg \

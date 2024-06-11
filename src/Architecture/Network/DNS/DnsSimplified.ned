@@ -5,6 +5,7 @@ module DnsSimplified extends StandardHost
 {
     parameters:
         @display("i=dns");
+        
     submodules:
         dnsServer: DnsServiceSimplified {
             @display("i=block/table;p=858.375,58.274998");

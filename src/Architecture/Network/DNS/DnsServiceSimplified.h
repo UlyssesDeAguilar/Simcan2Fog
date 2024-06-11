@@ -26,12 +26,12 @@ namespace dns
         L3Address localAddress;
         std::vector<std::string> fqdn;
 
-        std::vector<ResourceRecord>* processQuestion(const char *domain);
         DnsRequest* prepareResponse(const DnsRequest* request);
         void scanNetwork();
         
     public:
         UdpSocket socket;
+        std::vector<ResourceRecord>* processQuestion(const char *domain);
 
         // Debug utility
         void printRecords();

@@ -41,6 +41,33 @@ void DnsResolver::handleCrashOperation(LifecycleOperation *operation)
     error("Currently stopping is not supported");
 }
 
+void DnsResolver::handleMessage(cMessage *msg)
+{
+    if (msg == timeOut)
+    {
+        // HACK then we'll get it ourselves
+        auto dns = check_and_cast<DnsServiceSimplified*>(getModuleByPath("dns.dnsServer"));
+        auto iter = pendingRequests.find(timeOut->getRequestId());
+
+        if (iter == pendingRequests.end())
+            error("Dns Resolver unexpected timeout");
+        
+        auto vec = dns->processQuestion(timeOut->getDomain());
+        
+        if (vec->size() == 0)
+            error("Dns Resolver: no record found");
+        
+        auto &address = vec->at(0).ip;
+        auto callback = check_and_cast<UserAppBase::ICallback *>(iter->second);
+        callback->handleResolverReturned(address.toIpv4().getInt());
+
+        pendingRequests.erase(iter);
+        delete timeOut;
+        timeOut = nullptr;
+    }
+    else
+        ApplicationBase::handleMessage(msg);
+}
 void DnsResolver::handleMessageWhenUp(cMessage *msg)
 {
     // Multiplex incoming messages from SIMCAN / INET
@@ -66,10 +93,15 @@ void DnsResolver::resolve(const char *domain, cModule *callback)
     request->setRequestId(getNewRequestId());
     request->insertQuestion(domain);
 
+    timeOut = new RequestTimeout();
+    timeOut->setRequestId(request->getRequestId());
+    timeOut->setDomain(domain);
+
     auto packet = new Packet("Dns Request", Ptr<DnsRequest>(request));
     socket.sendTo(packet, ispResolver, DNS_PORT);
-
+    
     pendingRequests[request->getRequestId()] = callback;
+    scheduleAt(simTime() + 10, timeOut);
 }
 
 uint16_t DnsResolver::getNewRequestId()
@@ -83,6 +115,14 @@ void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     auto response = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
     auto iter = pendingRequests.find(response->getRequestId());
+
+    if (iter == pendingRequests.end())
+    {
+        EV << "Ignoring not registered request with id: " << response->getRequestId() << "\n";
+        delete packet;
+        return;
+    }
+
     auto callback = check_and_cast<UserAppBase::ICallback *>(iter->second);
 
     if (response->getReturnCode() == dns::ReturnCode::NOERROR)
@@ -95,6 +135,12 @@ void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
         callback->handleResolverReturned(0);
     }
 
+    if (timeOut)
+    {
+        cancelAndDelete(timeOut);
+        timeOut = nullptr;
+    }
+    
     // multiplexer->processResponse(event);
     pendingRequests.erase(iter);
     delete packet;
