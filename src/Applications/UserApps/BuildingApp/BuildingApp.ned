@@ -1,5 +1,5 @@
-package simcan2.Applications.UserApps.IotApplication;
-import simcan2.Applications.Base.UserAppBase.UserAppBase;
+package simcan2.Applications.UserApps.BuildingApp;
+import simcan2.Applications.UserApps.IotApplication.IotApplication;
 
 // Application that is executed in a single computer.
 //
@@ -9,7 +9,7 @@ simple BuildingApp extends IotApplication{
     parameters:
         @class(IotApplication);
         processingMIs = default(100);				// Number of MIs to execute in each iteration
-        synthSize @unit(B) = default(3MB);          // The payload that'll be sent
+        synthSize @unit(B) = default(400B);          // The payload that'll be sent
 
         replyDelay @unit(s) = default(0.4s);        // The time the server should take to process the request
         replySize  @unit(B) = default(20B);         // The expected size of the reply

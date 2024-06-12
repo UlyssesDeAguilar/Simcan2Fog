@@ -1,5 +1,5 @@
-package simcan2.Applications.UserApps.IotApplication;
-import simcan2.Applications.Base.UserAppBase.UserAppBase;
+package simcan2.Applications.UserApps.FarmApp;
+import simcan2.Applications.UserApps.IotApplication.IotApplication;
 
 // Application that is executed in a single computer.
 //
