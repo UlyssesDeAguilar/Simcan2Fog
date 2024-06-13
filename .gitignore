@@ -61,3 +61,4 @@ Simcan2Cloud_dbg
 /.computed/
 
 **/.ipynb_checkpoints
+**/.jupyter_ystore.db
