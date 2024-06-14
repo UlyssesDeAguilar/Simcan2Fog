@@ -192,40 +192,40 @@ network BigNet
         }
 
         // Regional - Fog Nodes
-        localA.ethg++ <--> Eth100G <--> fgA1.comm++;
-        localA.ethg++ <--> Eth100G <--> fgA2.comm++;
-        fgA1.comm++ <--> Eth100G <--> fgA3.comm++;
-        fgA2.comm++ <--> Eth100G <--> fgA3.comm++;
+        localA.ethg++ <--> Eth10G <--> fgA1.comm++;
+        localA.ethg++ <--> Eth10G <--> fgA2.comm++;
+        fgA1.comm++ <--> Eth10G <--> fgA3.comm++;
+        fgA2.comm++ <--> Eth10G <--> fgA3.comm++;
 
-        localB.ethg++ <--> Eth100G <--> fgB1.comm++;
-        localB.ethg++ <--> Eth100G <--> fgB2.comm++;
-        fgB1.comm++ <--> Eth100G <--> fgB3.comm++;
-        fgB2.comm++ <--> Eth100G <--> fgB3.comm++;
+        localB.ethg++ <--> Eth10G <--> fgB1.comm++;
+        localB.ethg++ <--> Eth10G <--> fgB2.comm++;
+        fgB1.comm++ <--> Eth10G <--> fgB3.comm++;
+        fgB2.comm++ <--> Eth10G <--> fgB3.comm++;
 
-        localC.ethg++ <--> Eth100G <--> fgC1.comm++;
-        localC.ethg++ <--> Eth100G <--> fgC2.comm++;
-        fgC1.comm++ <--> Eth100G <--> fgC3.comm++;
-        fgC2.comm++ <--> Eth100G <--> fgC3.comm++;
+        localC.ethg++ <--> Eth10G <--> fgC1.comm++;
+        localC.ethg++ <--> Eth10G <--> fgC2.comm++;
+        fgC1.comm++ <--> Eth10G <--> fgC3.comm++;
+        fgC2.comm++ <--> Eth10G <--> fgC3.comm++;
 
-        localD.ethg++ <--> Eth100G <--> fgD1.comm++;
-        localD.ethg++ <--> Eth100G <--> fgD2.comm++;
-        fgD1.comm++ <--> Eth100G <--> fgD3.comm++;
-        fgD2.comm++ <--> Eth100G <--> fgD3.comm++;
+        localD.ethg++ <--> Eth10G <--> fgD1.comm++;
+        localD.ethg++ <--> Eth10G <--> fgD2.comm++;
+        fgD1.comm++ <--> Eth10G <--> fgD3.comm++;
+        fgD2.comm++ <--> Eth10G <--> fgD3.comm++;
 
-        localE.ethg++ <--> Eth100G <--> fgE1.comm++;
-        localE.ethg++ <--> Eth100G <--> fgE2.comm++;
-        fgE1.comm++ <--> Eth100G <--> fgE3.comm++;
-        fgE2.comm++ <--> Eth100G <--> fgE3.comm++;
+        localE.ethg++ <--> Eth10G <--> fgE1.comm++;
+        localE.ethg++ <--> Eth10G <--> fgE2.comm++;
+        fgE1.comm++ <--> Eth10G <--> fgE3.comm++;
+        fgE2.comm++ <--> Eth10G <--> fgE3.comm++;
 
         //metropolitan.ethg++ <--> Eth10G <--> fg.comm++;
         //metropolitan.ethg++ <--> Eth100G <--> backbone.ethg++;
 
         // Metropolitan connections
-        fgA3.comm++ <--> Eth100G <--> metroA.ethg++;
-        fgB3.comm++ <--> Eth100G <--> metroB.ethg++;
-        fgC3.comm++ <--> Eth100G <--> metroC.ethg++;
-        fgD3.comm++ <--> Eth100G <--> metroD.ethg++;
-        fgE3.comm++ <--> Eth100G <--> metroE.ethg++;
+        fgA3.comm++ <--> Eth10G <--> metroA.ethg++;
+        fgB3.comm++ <--> Eth10G <--> metroB.ethg++;
+        fgC3.comm++ <--> Eth10G <--> metroC.ethg++;
+        fgD3.comm++ <--> Eth10G <--> metroD.ethg++;
+        fgE3.comm++ <--> Eth10G <--> metroE.ethg++;
 
         metroA.ethg++ <--> Eth100G <--> backbone.ethg++;
         metroB.ethg++ <--> Eth100G <--> backbone.ethg++;

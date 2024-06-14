@@ -1,7 +1,7 @@
 package simcan2.UserModel.Edge;
 
 // Wired comms
-import inet.node.ethernet.Eth100M;
+import inet.node.ethernet.Eth1G;
 import inet.node.ethernet.EtherSwitch;
 
 // Architectural components from SimCan2Fog models
@@ -52,17 +52,17 @@ module SmartBuilding like ITile
         }
 
     connections:
-        controller.comm <--> Eth100M <--> ap.ethg++;
-        user.ethg++ <--> Eth100M <--> ap.ethg++;
+        controller.comm <--> Eth1G <--> ap.ethg++;
+        user.ethg++ <--> Eth1G <--> ap.ethg++;
 
         for i=0..sensors-1 {
-            sensor[i].ethg++ <--> Eth100M <--> ap.ethg++;
+            sensor[i].ethg++ <--> Eth1G <--> ap.ethg++;
         }
 
         for i=0..actuators-1 {
-            actuator[i].ethg++ <--> Eth100M <--> ap.ethg++;
+            actuator[i].ethg++ <--> Eth1G <--> ap.ethg++;
         }
 
-        router.ethg++ <--> Eth100M <--> ap.ethg++;
+        router.ethg++ <--> Eth1G <--> ap.ethg++;
         router.ethg++ <--> ethernet;
 }

@@ -14,6 +14,6 @@ simple FarmApp extends IotApplication{
         replyDelay @unit(s) = default(0.1s);         // The time the server should take to process the request
         replySize  @unit(B) = default(20B);          // The expected size of the reply
         
-        vmType = default("VM_medium");
+        vmType = default("VM_small");
         pingsThreshold = default(10);                // The number of pings where it will start processing
 }
