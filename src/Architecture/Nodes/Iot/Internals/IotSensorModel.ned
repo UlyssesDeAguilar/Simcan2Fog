@@ -16,7 +16,7 @@ simple IotSensorModel like IApp
         string localAddress = default("");
         int localPort = default(-1);
         int destPort = default(1000);
-        double startTime @unit(s) = uniform(0.5s, 5s);     // application start time (start of the first packet)
+        double startTime @unit(s) = default(uniform(0.5s, 5s));     // application start time (start of the first packet)
         double stopTime @unit(s) = default(-1s);  	       // time of finishing sending, -1s means forever
         
         @signal[packetSent](type=inet::Packet);
