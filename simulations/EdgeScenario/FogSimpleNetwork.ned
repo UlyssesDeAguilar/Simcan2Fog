@@ -14,6 +14,7 @@
 // 
 
 package simcan2.simulations.EdgeScenario;
+import simcan2.simulations.Templates.BaseNetwork;
 import simcan2.Core.SimData.SimData;
 import simcan2.Architecture.Network.DNS.DnsSimplified;
 import simcan2.Management.DataCentre.DataCentre;
@@ -33,7 +34,7 @@ import inet.node.ethernet.EtherSwitch;
 import simcan2.Architecture.Nodes.Iot.HumiditySensor;
 import simcan2.Architecture.Nodes.Iot.Raspberry5;
 
-network SimpleFogNetwork
+network SimpleFogNetwork extends BaseNetwork
 {
     parameters:
         int edgeTiles = default(1);
@@ -41,9 +42,6 @@ network SimpleFogNetwork
 
         @display("bgb=800,400;bgg=50");
     submodules:
-        simData: SimData {
-            @display("p=626.115,51.255");
-        }
 
         dns: DnsSimplified {
             @display("p=628.125,191.955");
@@ -55,10 +53,6 @@ network SimpleFogNetwork
 
         fg: FogNode {
             @display("p=285.42,248.235");
-        }
-
-        configurator: Ipv4NetworkConfigurator {
-            @display("p=705.51,51.255");
         }
 
         local: InternetCloud {
