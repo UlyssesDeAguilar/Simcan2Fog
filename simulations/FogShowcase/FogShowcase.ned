@@ -13,18 +13,18 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.FogShowcase;
+package s2f.simulations.FogShowcase;
 
 // Mission critical modules
-import simcan2.Core.SimData.SimData;
-import simcan2.Architecture.Network.MessageQueue.MessageQueue;
+import s2f.Core.SimData.SimData;
+import s2f.Architecture.Network.MessageQueue.MessageQueue;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
 
 // Entities involved in action
-import simcan2.Management.CloudProvider.CloudProvider;
-import simcan2.Management.DataCentre.DataCentre;
-import simcan2.Management.UserGenerators.UserGenerator;
+import s2f.Management.CloudProvider.CloudProvider;
+import s2f.Management.DataCentre.DataCentre;
+import s2f.Management.UserGenerators.UserGenerator;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 
 network FogShowcase

@@ -1,5 +1,5 @@
 package mq;
-import simcan2.Core.cSIMCAN_Core;
+import s2f.Core.cSIMCAN_Core;
 
 simple MQDriver extends cSIMCAN_Core{
     parameters:

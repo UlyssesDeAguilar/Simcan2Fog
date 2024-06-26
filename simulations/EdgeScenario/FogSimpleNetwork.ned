@@ -13,15 +13,15 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.EdgeScenario;
-import simcan2.simulations.Templates.BaseNetwork;
-import simcan2.Core.SimData.SimData;
-import simcan2.Architecture.Network.DNS.DnsSimplified;
-import simcan2.Management.DataCentre.DataCentre;
-import simcan2.Architecture.Nodes.Fog.FogNode;
-import simcan2.Architecture.Nodes.Iot.*;
-import simcan2.UserModel.Edge.EdgeTile;
-import simcan2.UserModel.Edge.LightEdgeTile;
+package s2f.simulations.EdgeScenario;
+import s2f.simulations.Templates.BaseNetwork;
+import s2f.Core.SimData.SimData;
+import s2f.Architecture.Network.DNS.DnsSimplified;
+import s2f.Management.DataCentre.DataCentre;
+import s2f.Architecture.Nodes.Fog.FogNode;
+import s2f.Architecture.Nodes.Iot.*;
+import s2f.UserModel.Edge.EdgeTile;
+import s2f.UserModel.Edge.LightEdgeTile;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.internetcloud.InternetCloud;
 import inet.node.inet.Router;
@@ -31,8 +31,8 @@ import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100G;
 import inet.node.ethernet.EtherSwitch;
 
-import simcan2.Architecture.Nodes.Iot.HumiditySensor;
-import simcan2.Architecture.Nodes.Iot.Raspberry5;
+import s2f.Architecture.Nodes.Iot.HumiditySensor;
+import s2f.Architecture.Nodes.Iot.Raspberry5;
 
 network SimpleFogNetwork extends BaseNetwork
 {

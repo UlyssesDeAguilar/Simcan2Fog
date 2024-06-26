@@ -13,16 +13,16 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.ScenarioTestFog;
+package s2f.simulations.ScenarioTestFog;
 
-import simcan2.Architecture.Nodes.Cloud.CloudBlade;
-import simcan2.Architecture.Nodes.Cloud.CloudBoard;
-import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Architecture.Network.Switch.Switch;
-import simcan2.Architecture.Network.Adapter.NetworkAdapter;
-import simcan2.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
-import simcan2.Management.CloudProviders.*.*;
-import simcan2.Architecture.Network.DataCentreNetwork.*;
+import s2f.Architecture.Nodes.Cloud.CloudBlade;
+import s2f.Architecture.Nodes.Cloud.CloudBoard;
+import s2f.Architecture.Nodes.Cloud.CloudRack;
+import s2f.Architecture.Network.Switch.Switch;
+import s2f.Architecture.Network.Adapter.NetworkAdapter;
+import s2f.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
+import s2f.Management.CloudProviders.*.*;
+import s2f.Architecture.Network.DataCentreNetwork.*;
 
 // ---------------------------------------------------------------
 //   Definition of the data-centre DataCentre_A

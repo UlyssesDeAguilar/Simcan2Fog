@@ -1,5 +1,5 @@
-import simcan2.Architecture.Network.Stack.NetworkStack;
-import simcan2.Architecture.Network.MessageQueue.MessageQueue;
+import s2f.Architecture.Network.Stack.NetworkStack;
+import s2f.Architecture.Network.MessageQueue.MessageQueue;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;

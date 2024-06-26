@@ -14,10 +14,10 @@
 // 
 package DcDriver;
 
-import simcan2.Architecture.Nodes.Cloud.CloudBlade;
-import simcan2.Architecture.Network.Switch.Switch;
-import simcan2.Architecture.Network.Adapter.NetworkAdapter;
-import simcan2.Management.DataCentreManagers.**;
+import s2f.Architecture.Nodes.Cloud.CloudBlade;
+import s2f.Architecture.Network.Switch.Switch;
+import s2f.Architecture.Network.Adapter.NetworkAdapter;
+import s2f.Management.DataCentreManagers.**;
 
 
 module SimpleDc

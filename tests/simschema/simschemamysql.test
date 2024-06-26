@@ -20,8 +20,8 @@ undisposed object:
 Search App with name: AppCPUIntensive
 Name:    AppCPUIntensive
 Type:    LocalApplication
-Package: simcan2.Applications.UserApps.LocalApplication
-Path:    simcan2.Applications.UserApps.LocalApplication.LocalApplication
+Package: s2f.Applications.UserApps.LocalApplication
+Path:    s2f.Applications.UserApps.LocalApplication.LocalApplication
 Parameters:
 	int MIs = 79200000
 	int inputDataSize (MiB)  = 10MiB

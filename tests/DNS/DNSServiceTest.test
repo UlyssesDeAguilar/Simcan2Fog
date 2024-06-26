@@ -13,8 +13,8 @@ It should dump the expected values present in the config file of the Ipv4 config
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
-import simcan2.Architecture.Network.DNS.DNS_Server;
-import simcan2.Architecture.Network.Adapter.NetworkAdapter;
+import s2f.Architecture.Network.DNS.DNS_Server;
+import s2f.Architecture.Network.Adapter.NetworkAdapter;
 import inet.node.inet.Router;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.ethernet.Eth10M;

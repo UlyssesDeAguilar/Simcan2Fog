@@ -13,13 +13,13 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.ScenarioTestFog;
+package s2f.simulations.ScenarioTestFog;
 
-import simcan2.Core.SimData.SimData;
-import simcan2.Architecture.Nodes.Iot.*;
-import simcan2.Architecture.Nodes.Fog.FogNode;
-import simcan2.Architecture.Network.Adapter.NetworkAdapter;
-import simcan2.Architecture.Network.DNS.DNS_Server;
+import s2f.Core.SimData.SimData;
+import s2f.Architecture.Nodes.Iot.*;
+import s2f.Architecture.Nodes.Fog.FogNode;
+import s2f.Architecture.Network.Adapter.NetworkAdapter;
+import s2f.Architecture.Network.DNS.DNS_Server;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;

@@ -1,12 +1,12 @@
 #
-# OMNeT++/OMNEST Makefile for Simcan2Cloud
+# OMNeT++/OMNEST Makefile for Simcan2Fog
 #
 # This file was generated with the command:
-#  opp_makemake -f -O out -KINET4_PROJ=../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lSimcan2Cloud$$\(D\) -lmysqlcppconn -lINET$$\(D\) -d src -X.
+#  opp_makemake -f -O bin -KINET4_PROJ=../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lSimcan2Fog$$\(D\) -lmysqlcppconn -lINET$$\(D\) -d src -X.
 #
 
 # Name of target to be created (-o option)
-TARGET = Simcan2Cloud$(D)$(EXE_SUFFIX)
+TARGET = Simcan2Fog$(D)$(EXE_SUFFIX)
 TARGET_DIR = .
 
 # User interface (uncomment one) (-u option)
@@ -19,10 +19,10 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src $(LDFLAG_LIBPATH)out/$(CONFIGNAME)/src  -lSimcan2Cloud$(D) -lmysqlcppconn -lINET$(D)
+LIBS = $(LDFLAG_LIBPATH)$(INET4_PROJ)/src $(LDFLAG_LIBPATH)out/$(CONFIGNAME)/src  -lSimcan2Fog$(D) -lmysqlcppconn -lINET$(D)
 
 # Output directory
-PROJECT_OUTPUT_DIR = out
+PROJECT_OUTPUT_DIR = bin
 PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 

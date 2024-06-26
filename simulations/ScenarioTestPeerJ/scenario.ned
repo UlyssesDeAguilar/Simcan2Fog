@@ -1,12 +1,12 @@
-package simcan2.simulations.ScenarioTestPeerJ;
+package s2f.simulations.ScenarioTestPeerJ;
 
-import simcan2.Architecture.Nodes.Cloud.CloudBlade;
-import simcan2.Architecture.Nodes.Cloud.CloudBoard;
-import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
-import simcan2.Management.CloudProviders.*.*;
-import simcan2.Architecture.Network.DataCentreNetwork.*;
-import simcan2.Management.UserGenerators.*.*;
+import s2f.Architecture.Nodes.Cloud.CloudBlade;
+import s2f.Architecture.Nodes.Cloud.CloudBoard;
+import s2f.Architecture.Nodes.Cloud.CloudRack;
+import s2f.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
+import s2f.Management.CloudProviders.*.*;
+import s2f.Architecture.Network.DataCentreNetwork.*;
+import s2f.Management.UserGenerators.*.*;
 
 // ---------------------------------------------------------------
 //   Definition of the data-centre DataCentre_A

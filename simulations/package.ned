@@ -1,3 +1,3 @@
-package simcan2.simulations;
+package s2f.simulations;
 
 @license(LGPL);

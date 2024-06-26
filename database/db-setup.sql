@@ -338,7 +338,7 @@ INSERT INTO
 VALUES
     (
         "LocalApplication",
-        "simcan2.Applications.UserApps.LocalApplication",
+        "s2f.Applications.UserApps.LocalApplication",
         JSON_OBJECT(
             "inputDataSize",
             "int",

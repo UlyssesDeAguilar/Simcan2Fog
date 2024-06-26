@@ -1,14 +1,14 @@
-package simcan2.simulations.ScenarioTestFog;
+package s2f.simulations.ScenarioTestFog;
 
-import simcan2.Architecture.Nodes.Iot.*;
-import simcan2.Architecture.Nodes.Fog.FogNode;
-import simcan2.Architecture.Nodes.Cloud.CloudBlade;
-import simcan2.Architecture.Nodes.Cloud.CloudBoard;
-import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
-import simcan2.Management.CloudProviders.*.*;
-import simcan2.Architecture.Network.DataCentreNetwork.*;
-import simcan2.Management.UserGenerators.*.*;
+import s2f.Architecture.Nodes.Iot.*;
+import s2f.Architecture.Nodes.Fog.FogNode;
+import s2f.Architecture.Nodes.Cloud.CloudBlade;
+import s2f.Architecture.Nodes.Cloud.CloudBoard;
+import s2f.Architecture.Nodes.Cloud.CloudRack;
+import s2f.Management.DataCentreManagers.DataCentreManagerFirstFit.DataCentreManagerFirstFit;
+import s2f.Management.CloudProviders.*.*;
+import s2f.Architecture.Network.DataCentreNetwork.*;
+import s2f.Management.UserGenerators.*.*;
 
 
 // ---------------------------------------------------------------

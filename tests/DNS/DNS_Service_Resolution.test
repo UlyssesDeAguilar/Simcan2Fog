@@ -8,8 +8,8 @@ Test the ability of the DNS_Service to register and resolve domains.
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
-import simcan2.Architecture.Network.DNS.DNS_Server;
-import simcan2.Architecture.Network.Adapter.NetworkAdapter;
+import s2f.Architecture.Network.DNS.DNS_Server;
+import s2f.Architecture.Network.Adapter.NetworkAdapter;
 import endpoint.Endpoint;
 import inet.node.inet.Router;
 import inet.node.ethernet.EtherSwitch;

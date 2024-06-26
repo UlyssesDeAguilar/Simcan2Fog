@@ -1,5 +1,5 @@
 package echo;
-import simcan2.Core.cSIMCAN_Core;
+import s2f.Core.cSIMCAN_Core;
 
 simple Echo extends cSIMCAN_Core{
     parameters:

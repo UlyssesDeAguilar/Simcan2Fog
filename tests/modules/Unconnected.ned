@@ -1,4 +1,4 @@
-import simcan2.Core.SimSchema.MySQL.SimSchemaMySQL;
+import s2f.Core.SimSchema.MySQL.SimSchemaMySQL;
 import querier.SimSchemaQuerier;
 
 network Unconnected

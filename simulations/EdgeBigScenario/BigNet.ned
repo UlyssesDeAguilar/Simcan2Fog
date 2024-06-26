@@ -13,14 +13,14 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.EdgeBigScenario;
-import simcan2.Core.SimData.SimData;
-import simcan2.Architecture.Network.DNS.DnsSimplified;
-import simcan2.Management.DataCentre.DataCentre;
-import simcan2.Architecture.Nodes.Fog.FogNode;
-import simcan2.Architecture.Nodes.Iot.*;
-import simcan2.UserModel.Edge.*;
-import simcan2.UserModel.Edge.ITile;
+package s2f.simulations.EdgeBigScenario;
+import s2f.Core.SimData.SimData;
+import s2f.Architecture.Network.DNS.DnsSimplified;
+import s2f.Management.DataCentre.DataCentre;
+import s2f.Architecture.Nodes.Fog.FogNode;
+import s2f.Architecture.Nodes.Iot.*;
+import s2f.UserModel.Edge.*;
+import s2f.UserModel.Edge.ITile;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.internetcloud.InternetCloud;
 import inet.node.inet.Router;
@@ -31,8 +31,8 @@ import inet.node.ethernet.Eth100G;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.inet.WirelessHost;
 
-import simcan2.Architecture.Nodes.Iot.HumiditySensor;
-import simcan2.Architecture.Nodes.Iot.Raspberry5;
+import s2f.Architecture.Nodes.Iot.HumiditySensor;
+import s2f.Architecture.Nodes.Iot.Raspberry5;
 
 network BigNet
 {

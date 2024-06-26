@@ -31,7 +31,7 @@ M_CONST=\-KINET4_PROJ\=$INET_PROJ\ \-KSM_PROJ\=$SM_PROJ
 #C_OPTS=\-KCXXFLAGS=-gdwarf-4 
 
 # Libs for the proyect
-LIBS=\-lINET\$\(D\)\ \-lSimcan2Cloud\$\(D\)\ \-lmysqlcppconn
+LIBS=\-lINET\$\(D\)\ \-lSimcan2Fog\$\(D\)\ \-lmysqlcppconn
 
 # Generate the test case files
 for folder in ${TARGETS[@]}
@@ -43,6 +43,6 @@ echo "Targets: $ALL"
 opp_test gen -v $ALL
 
 
-# At first it seems like magic. It really is just importing the Simcan2Cloud and INET framework
+# At first it seems like magic. It really is just importing the Simcan2Fog and INET framework
 (cd work; opp_makemake -f -O ./tests/work/cmp -o testing --deep $M_CONST $C_OPTS -DINET_IMPORT  -I$\(SM_PROJ\)/ -I$\(INET4_PROJ\)/ -L$\(SM_PROJ\)/ -L$\(INET4_PROJ\)/ $LIBS; $MAKE) || exit 1
 echo

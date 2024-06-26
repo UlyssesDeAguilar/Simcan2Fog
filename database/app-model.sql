@@ -3,7 +3,7 @@ INSERT INTO
 VALUES
     (
         "LocalIotApplication",
-        "simcan2.Applications.UserApps.LocalIotApplication",
+        "s2f.Applications.UserApps.LocalIotApplication",
         JSON_OBJECT(
             "processingMIs",
             "int",
@@ -17,7 +17,7 @@ INSERT INTO
 VALUES
     (
         "IotApplication",
-        "simcan2.Applications.UserApps.IotApplication",
+        "s2f.Applications.UserApps.IotApplication",
         JSON_OBJECT(
             "processingMIs",
             "int",
@@ -60,7 +60,7 @@ INSERT INTO
 VALUES
     (
         "FactoryApp",
-        "simcan2.Applications.UserApps.FactoryApp",
+        "s2f.Applications.UserApps.FactoryApp",
         JSON_OBJECT(
             "listeningPort",
             "int"
@@ -68,7 +68,7 @@ VALUES
     ),
     (
         "FarmApp",
-        "simcan2.Applications.UserApps.FarmApp",
+        "s2f.Applications.UserApps.FarmApp",
         JSON_OBJECT(
             "listeningPort",
             "int"
@@ -76,7 +76,7 @@ VALUES
     ),
     (
         "BuildingApp",
-        "simcan2.Applications.UserApps.BuildingApp",
+        "s2f.Applications.UserApps.BuildingApp",
         JSON_OBJECT(
             "listeningPort",
             "int"

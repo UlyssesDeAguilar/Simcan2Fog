@@ -13,10 +13,10 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package simcan2.simulations.Templates;
+package s2f.simulations.Templates;
 
 // Central component imports
-import simcan2.Core.SimData.SimData;
+import s2f.Core.SimData.SimData;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 
 network BaseNetwork

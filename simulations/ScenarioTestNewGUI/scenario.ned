@@ -1,13 +1,13 @@
-package simcan2.simulations.ScenarioTestNewGUI; 
+package s2f.simulations.ScenarioTestNewGUI; 
 
-import simcan2.Architecture.Nodes.Cloud.CloudBlade;
-import simcan2.Architecture.Nodes.Cloud.CloudBoard;
-import simcan2.Architecture.Nodes.Cloud.CloudRack;
-import simcan2.Management.DataCenterManager.DataCenterManager;
-import simcan2.Management.CloudProviders.*.*;
-import simcan2.Architecture.Network.DataCenterNetwork.*;
-import simcan2.Management.UserGenerators.UserGenerator.*;
-import simcan2.Management.UserGenerators.UserGeneratorBase.*;
+import s2f.Architecture.Nodes.Cloud.CloudBlade;
+import s2f.Architecture.Nodes.Cloud.CloudBoard;
+import s2f.Architecture.Nodes.Cloud.CloudRack;
+import s2f.Management.DataCenterManager.DataCenterManager;
+import s2f.Management.CloudProviders.*.*;
+import s2f.Architecture.Network.DataCenterNetwork.*;
+import s2f.Management.UserGenerators.UserGenerator.*;
+import s2f.Management.UserGenerators.UserGeneratorBase.*;
 
 // ---------------------------------------------------------------
 //   Definition of the data-center DataCenter_A

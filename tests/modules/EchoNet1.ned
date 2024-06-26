@@ -1,4 +1,4 @@
-import simcan2.Architecture.Network.Switch.Switch;
+import s2f.Architecture.Network.Switch.Switch;
 import echo.Echo;
 
 network EchoNet1 {

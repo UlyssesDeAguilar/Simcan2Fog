@@ -1,7 +1,7 @@
-import simcan2.Core.SimData.SimData;
-import simcan2.Architecture.Nodes.Iot.*;
-import simcan2.Architecture.Nodes.Fog.FogNode;
-import simcan2.Architecture.Network.Adapter.NetworkAdapter;
+import s2f.Core.SimData.SimData;
+import s2f.Architecture.Nodes.Iot.*;
+import s2f.Architecture.Nodes.Fog.FogNode;
+import s2f.Architecture.Network.Adapter.NetworkAdapter;
 import DcDriver.SimpleDc;
 import DcDriver.DcDriver;
 
