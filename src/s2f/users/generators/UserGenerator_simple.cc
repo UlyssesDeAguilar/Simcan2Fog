@@ -1,6 +1,5 @@
-#include "../../../management/UserGenerators/UserGenerator_simple/UserGenerator_simple.h"
-
-#include "../../../management/utils/LogUtils.h"
+#include "UserGenerator_simple.h"
+#include "s2f/management/utils/LogUtils.h"
 
 #define USER_REQ_GEN_MSG "USER_REQ_GEN"
 

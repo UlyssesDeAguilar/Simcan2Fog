@@ -4,13 +4,12 @@
 #include <algorithm>
 #include <omnetpp.h>
 
-#include "../cloudprovider/NodeEvent_m.h"
-#include "../managers/ManagerBase.h"
+#include "s2f/core/simdata/DataManager.h"
+#include "s2f/management/cloudprovider/NodeEvent_m.h"
 #include "inet/common/packet/Packet.h"
-#include "Core/DataManager/DataManager.h"
-#include "Messages/SM_UserVM.h"
-#include "Messages/SM_UserAPP.h"
-#include "Messages/SM_CloudProvider_Control_m.h"
+#include "s2f/messages/SM_UserVM.h"
+#include "s2f/messages/SM_UserAPP.h"
+#include "s2f/messages/SM_CloudProvider_Control_m.h"
 
 /**
  * Class that parses information about the data-centres.

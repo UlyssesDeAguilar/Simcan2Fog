@@ -23,7 +23,7 @@ void PushClient::initialize(int stage)
     {
     case SimCanInitStages::NEAR:
         // Retrieve the topic from the parent
-        this->parentTopic = getParentModule()->par("nodeTopic");
+        this->parentTopic = getParentModule()->getParentModule()->par("nodeTopic");
         break;
     default:
         break;

@@ -18,10 +18,10 @@
 
 #include <algorithm>
 
-#include "../../../management/dataClasses/Users/CloudUserInstancePriority.h"
-#include "../../../management/dataClasses/Users/CloudUserPriority.h"
-#include "../../../management/UserGenerators/UserGenerator_simple/UserGenerator_simple.h"
-#include "../../../messages/SM_UserVM_Cost_m.h"
+#include "s2f/users/generators/UserGenerator_simple.h"
+#include "s2f/management/dataClasses/Users/CloudUserPriority.h"
+#include "s2f/management/dataClasses/Users/CloudUserInstancePriority.h"
+#include "s2f/messages/SM_UserVM_Cost_m.h"
 
 class UserGeneratorCost : public UserGenerator_simple
 {

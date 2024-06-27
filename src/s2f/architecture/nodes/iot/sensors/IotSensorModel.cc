@@ -1,8 +1,6 @@
-#include "../sensors/IotSensorModel.h"
+#include "IotSensorModel.h"
 
-#include "../../../../architecture/Nodes/Iot/IotPayload_m.h"
-#include "../../../../s2f/Architecture/Nodes/Iot/IotPayload_m.h"
-#include "../../iot/IotPayload_m.h"
+#include "s2f/architecture/nodes/iot/IotPayload_m.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/TagBase_m.h"
 #include "inet/common/TimeTag_m.h"

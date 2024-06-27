@@ -31,7 +31,7 @@ protected:
     virtual void handleDataArrived(int sockFd, Packet *p) override;
     virtual void handleConnectReturn(int sockFd, bool connected) override;
     virtual bool handlePeerClosed(int sockFd) override;
-    virtual void handleResolverReturned(uint32_t ip) override { error("LocalIotApp: no resolving"); }
+    virtual void handleResolverReturned(uint32_t ip, bool resolved) override { error("LocalIotApp: no resolving"); }
 };
 
 #endif

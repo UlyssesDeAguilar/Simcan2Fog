@@ -16,11 +16,8 @@
 #ifndef __SIMCAN_2_0_CHEKING_HUB_MODULE_H_
 #define __SIMCAN_2_0_CHEKING_HUB_MODULE_H_
 
-#include "../../core/cSIMCAN_Core.h"
+#include "s2f/core/cSIMCAN_Core.h"
 
-/**
- * TODO: Fix this to use indexing instead of a gigantic array of cGates
- */
 class CheckingHubModule : public cSIMCAN_Core
 {
 protected:

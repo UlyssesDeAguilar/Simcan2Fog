@@ -1,4 +1,4 @@
-#include "../../../management/UserGenerators/UserGeneratorBase/UserGeneratorBase.h"
+#include "UserGeneratorBase.h"
 
 static void parse_swf(vector<Job_t> *jobs, const char *swf_file);
 
@@ -9,7 +9,7 @@ UserGeneratorBase::~UserGeneratorBase()
 void UserGeneratorBase::initialize()
 {
     // Init super-class
-    CloudManagerBase::initialize();
+    ManagerBase::initialize();
 
     EV_INFO << "UserGeneratorBase::initialize - Init\n";
 

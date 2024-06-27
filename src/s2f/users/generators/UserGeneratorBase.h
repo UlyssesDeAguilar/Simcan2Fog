@@ -1,20 +1,20 @@
 #ifndef __SIMCAN_2_0_USERGENERATOR_BASE_H_
 #define __SIMCAN_2_0_USERGENERATOR_BASE_H_
 
-#include "Core/include/GroupVector.hpp"
-#include "Messages/SM_UserVM.h"
-
 #include <fstream>
-#include "../../../management/dataClasses/Users/CloudUserInstance.h"
-#include "../../../management/dataClasses/Users/CloudUserInstanceTrace.h"
-#include "../../managers/ManagerBase.h"
+#include "s2f/core/include/GroupVector.hpp"
+#include "s2f/messages/SM_UserVM.h"
+
+#include "s2f/management/dataClasses/Users/CloudUserInstance.h"
+#include "s2f/management/dataClasses/Users/CloudUserInstanceTrace.h"
+#include "s2f/management/managers/ManagerBase.h"
 
 /**
  * @brief Base class for User generators.
  * @details class parses and manages cloud users
  * @author Pablo Cerro Cañizares
  */
-class UserGeneratorBase : public CloudManagerBase
+class UserGeneratorBase : public ManagerBase
 {
 
 protected:

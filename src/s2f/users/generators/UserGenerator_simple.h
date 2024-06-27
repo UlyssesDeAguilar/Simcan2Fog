@@ -6,12 +6,12 @@
 #include <random>
 #include <functional>
 
-#include "../../../management/UserGenerators/UserGeneratorBase/UserGeneratorBase.h"
-#include "../../../messages/SM_CloudProvider_Control_m.h"
-#include "../../../messages/SM_UserAPP.h"
-#include "../../../messages/SM_UserVM.h"
-#include "../../../messages/SM_VmExtend_m.h"
-#include "../../../users/cloud/CloudUserModel.h"
+#include "s2f/users/generators/UserGeneratorBase.h"
+#include "s2f/messages/SM_CloudProvider_Control_m.h"
+#include "s2f/messages/SM_UserAPP.h"
+#include "s2f/messages/SM_UserVM.h"
+#include "s2f/messages/SM_VmExtend_m.h"
+#include "s2f/users/cloud/CloudUserModel.h"
 
 /**
  * Class that implements a User generator for cloud environments.

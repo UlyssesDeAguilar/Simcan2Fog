@@ -1,6 +1,6 @@
-#include "../../users/base/BaseUserModel.h"
+#include "BaseUserModel.h"
 
-#include "Management/UserGenerators/UserGenerator_simple/UserGenerator_simple.h"
+#include "s2f/users/generators/UserGenerator_simple.h"
 
 void BaseUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {

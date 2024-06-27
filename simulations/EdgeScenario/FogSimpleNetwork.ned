@@ -21,7 +21,6 @@ import s2f.architecture.nodes.fog.FogNode;
 import s2f.architecture.dns.DnsSimplified;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.internetcloud.InternetCloud;
-import s2f.simulations.Templates.BaseNetwork;
 
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
@@ -34,7 +33,7 @@ import s2f.architecture.nodes.iot.sensors.HumiditySensor;
 import s2f.architecture.nodes.iot.actuators.AutomaticWatering;
 import s2f.architecture.nodes.iot.controllers.Raspberry5;
 
-network SimpleFogNetwork extends BaseNetwork
+network SimpleFogNetwork
 {
     parameters:
         int edgeTiles = default(1);
@@ -42,6 +41,14 @@ network SimpleFogNetwork extends BaseNetwork
 
         @display("bgb=800,400;bgg=50");
     submodules:
+        simData: SimData {
+
+            @display("p=752.745,27.135");
+        }
+        configurator: Ipv4NetworkConfigurator {
+
+            @display("p=675.36,27.135");
+        }
 
         dns: DnsSimplified {
             @display("p=628.125,191.955");
@@ -68,7 +75,7 @@ network SimpleFogNetwork extends BaseNetwork
         }
 
         sensor: HumiditySensor {
-			numWlanInterfaces = 0;
+            numWlanInterfaces = 0;
             @display("p=218.085,127.635");
         }
         controller: Raspberry5 {

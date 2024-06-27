@@ -1,4 +1,4 @@
-#include "../../net/dns/DnsServiceSimplified.h"
+#include "DnsServiceSimplified.h"
 using namespace dns;
 Define_Module(DnsServiceSimplified);
 

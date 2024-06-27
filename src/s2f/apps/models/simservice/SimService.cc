@@ -28,7 +28,7 @@ void SimService::initialize(int stage)
         msgsRcvd = msgsSent = bytesRcvd = bytesSent = 0;
 
         // managers
-        resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath(par("resourceManagerPath")));
+        resourceManager = check_and_cast<ResourceManager *>(getModuleByPath(par("resourceManagerPath")));
         dataManager = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
 
         WATCH(msgsRcvd);

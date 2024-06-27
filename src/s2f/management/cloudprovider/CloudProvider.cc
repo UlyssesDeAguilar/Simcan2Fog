@@ -1,4 +1,4 @@
-#include "../cloudprovider/CloudProvider.h"
+#include "CloudProvider.h"
 using namespace inet;
 
 Define_Module(CloudProvider);

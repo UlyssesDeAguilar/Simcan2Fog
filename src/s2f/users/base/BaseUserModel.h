@@ -1,7 +1,7 @@
 #ifndef SIMCAN_EX_BASE_USER_MODEL
 #define SIMCAN_EX_BASE_USER_MODEL
 
-#include "../../users/common.h"
+#include "s2f/users/common.h"
 
 class UserGenerator_simple;
 

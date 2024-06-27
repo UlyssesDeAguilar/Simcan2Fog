@@ -1,7 +1,7 @@
 #ifndef SIMCAN_EX_EDGE_USER_MODEL_DRIVER
 #define SIMCAN_EX_EDGE_USER_MODEL_DRIVER
 
-#include "../../users/common.h"
+#include "s2f/users/common.h"
 #include "inet/common/INETDefs.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "inet/applications/tcpapp/TcpServerHostApp.h"

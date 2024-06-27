@@ -1,5 +1,5 @@
 #include "DcHypervisor.h"
-#include "Management/DataCentreManagers/ResourceManager/ResourceManager.h"
+#include "s2f/management/managers/ResourceManager.h"
 
 using namespace hypervisor;
 
@@ -32,7 +32,7 @@ void DcHypervisor::initialize(int stage)
     case BLADE:
     {
         // This is the reason why I would like to do this with messages instead
-        resourceManager = check_and_cast<DcResourceManager *>(getModuleByPath("^.^.^.resourceManager"));
+        resourceManager = check_and_cast<ResourceManager *>(getModuleByPath("^.^.^.resourceManager"));
         localUrl.setLocalAddress(hardwareManager->getIp());
         resourceManager->registerNode(hardwareManager->getIp(), hardwareManager->getAvailableResources());
         break;

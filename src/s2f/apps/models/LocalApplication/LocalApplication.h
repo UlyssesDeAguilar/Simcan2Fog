@@ -46,7 +46,7 @@ protected:
 	virtual void handleDataArrived(int sockFd, Packet *p) override { error("LocalApp: no sockets"); }
 	virtual void handleConnectReturn(int sockFd, bool connected) override { error("LocalApp: no sockets"); }
 	virtual bool handlePeerClosed(int sockFd) override { error("LocalApp: no sockets"); return true; }
-	virtual void handleResolverReturned(uint32_t ip) override { error("LocalApp: no resolving"); }
+	virtual void handleResolverReturned(uint32_t ip, bool resolved) override { error("LocalApp: no resolving"); }
 };
 
 #endif

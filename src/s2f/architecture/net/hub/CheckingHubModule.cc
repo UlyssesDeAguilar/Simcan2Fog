@@ -1,4 +1,4 @@
-#include "../hub/CheckingHubModule.h"
+#include "CheckingHubModule.h"
 
 Define_Module(CheckingHubModule);
 

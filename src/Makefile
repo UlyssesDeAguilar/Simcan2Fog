@@ -36,40 +36,24 @@ OBJS = \
     $O/s2f/architecture/dns/resolver/DnsQuerierService.o \
     $O/s2f/architecture/dns/resolver/DnsResolverService.o \
     $O/s2f/architecture/dns/server/DnsService.o \
+    $O/s2f/architecture/messagequeue/MessageQueueManager.o \
+    $O/s2f/architecture/messagequeue/internals/SinkDelegate.o \
+    $O/s2f/architecture/messagequeue/internals/SourceDelegate.o \
+    $O/s2f/architecture/messagequeue/services/PullService.o \
+    $O/s2f/architecture/messagequeue/services/PushService.o \
     $O/s2f/architecture/net/hub/CheckingHubModule.o \
-    $O/s2f/architecture/net/messagequeue/MessageQueueManager.o \
-    $O/s2f/architecture/net/messagequeue/Internals/SinkDelegate.o \
-    $O/s2f/architecture/net/messagequeue/Internals/SourceDelegate.o \
-    $O/s2f/architecture/net/messagequeue/Services/PullService.o \
-    $O/s2f/architecture/net/messagequeue/Services/PushService.o \
-    $O/s2f/architecture/net/stack/BaseProxy.o \
-    $O/s2f/architecture/net/stack/HttpProxyService.o \
-    $O/s2f/architecture/net/stack/StackMultiplexer.o \
-    $O/s2f/architecture/net/stack/TcpBaseProxy.o \
-    $O/s2f/architecture/net/stack/TcpBaseProxyThread.o \
-    $O/s2f/architecture/net/stack/Listener/UdpListener.o \
-    $O/s2f/architecture/net/stack/Queue/QueuePullClient.o \
-    $O/s2f/architecture/net/stack/Queue/QueuePushClient.o \
-    $O/s2f/architecture/net/stack/Resolver/DnsResolver.o \
+    $O/s2f/architecture/net/stack/listener/UdpListener.o \
+    $O/s2f/architecture/net/stack/queue/PullClient.o \
+    $O/s2f/architecture/net/stack/queue/PushClient.o \
+    $O/s2f/architecture/net/stack/resolver/DnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
-    $O/s2f/architecture/nodes/Iot/Internals/IotSensorModel.o \
     $O/s2f/architecture/nodes/hardwaremanagers/HardwareManager.o \
+    $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/simdata/DataManager.o \
     $O/s2f/core/simdata/mysql/SimSchemaMySQL.o \
-    $O/s2f/management/CloudManagerBase/CloudManagerBase.o \
-    $O/s2f/management/CloudProvider/CloudProvider.o \
-    $O/s2f/management/DataCentreManagers/DataCentreManagerBase/DataCentreManagerBase.o \
-    $O/s2f/management/DataCentreManagers/ResourceManager/ResourceManager.o \
-    $O/s2f/management/DataCentreManagers/ResourceManager/VmDeployment.o \
-    $O/s2f/management/DataCentreManagers/Selection/BestFit.o \
-    $O/s2f/management/DataCentreManagers/Selection/CostFit.o \
-    $O/s2f/management/DataCentreManagers/Selection/FirstFit.o \
-    $O/s2f/management/DataCentreManagers/Selection/SelectionStrategy.o \
-    $O/s2f/management/UserGenerators/UserGeneratorBase/UserGeneratorBase.o \
-    $O/s2f/management/UserGenerators/UserGeneratorCost/UserGeneratorCost.o \
-    $O/s2f/management/UserGenerators/UserGenerator_simple/UserGenerator_simple.o \
+    $O/s2f/management/cloudprovider/CloudProvider.o \
     $O/s2f/management/dataClasses/Applications/AppInstance.o \
     $O/s2f/management/dataClasses/Applications/AppInstanceCollection.o \
     $O/s2f/management/dataClasses/Applications/Application.o \
@@ -86,6 +70,14 @@ OBJS = \
     $O/s2f/management/dataClasses/Users/UserVmReference.o \
     $O/s2f/management/dataClasses/VirtualMachines/VirtualMachine.o \
     $O/s2f/management/dataClasses/VirtualMachines/VmInstance.o \
+    $O/s2f/management/managers/DcManager.o \
+    $O/s2f/management/managers/ManagerBase.o \
+    $O/s2f/management/managers/ResourceManager.o \
+    $O/s2f/management/managers/VmDeployment.o \
+    $O/s2f/management/managers/selection/BestFit.o \
+    $O/s2f/management/managers/selection/CostFit.o \
+    $O/s2f/management/managers/selection/FirstFit.o \
+    $O/s2f/management/managers/selection/SelectionStrategy.o \
     $O/s2f/management/utils/LogUtils.o \
     $O/s2f/messages/AppRequest.o \
     $O/s2f/messages/INET_AppMessage.o \
@@ -95,22 +87,24 @@ OBJS = \
     $O/s2f/messages/SM_UserAPP.o \
     $O/s2f/messages/SM_UserVM.o \
     $O/s2f/messages/VMRequest.o \
-    $O/s2f/os/hypervisors/DcHypervisor/DcHypervisor.o \
-    $O/s2f/os/hypervisors/EdgeHypervisor/EdgeHypervisor.o \
-    $O/s2f/os/hypervisors/Hypervisor/Hypervisor.o \
-    $O/s2f/os/hypervisors/OsCore/OsCore.o \
+    $O/s2f/os/hypervisors/DcHypervisor.o \
+    $O/s2f/os/hypervisors/EdgeHypervisor.o \
+    $O/s2f/os/hypervisors/Hypervisor.o \
+    $O/s2f/os/hypervisors/OsCore.o \
     $O/s2f/os/schedulers/CpuSchedulerRR.o \
-    $O/s2f/user/Base/BaseUserModel.o \
-    $O/s2f/user/Cloud/CloudUserModel.o \
-    $O/s2f/user/Edge/EdgeUserModelDriver.o \
+    $O/s2f/users/base/BaseUserModel.o \
+    $O/s2f/users/cloud/CloudUserModel.o \
+    $O/s2f/users/edge/EdgeUserModelDriver.o \
+    $O/s2f/users/generators/UserGenerator_simple.o \
+    $O/s2f/users/generators/UserGeneratorBase.o \
+    $O/s2f/users/generators/UserGeneratorCost.o \
     $O/s2f/apps/models/simservice/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
     $O/s2f/architecture/net/routing/RoutingInfo_m.o \
-    $O/s2f/architecture/net/stack/NetworkIOEvent_m.o \
-    $O/s2f/architecture/net/stack/Resolver/RequestTimeout_m.o \
-    $O/s2f/architecture/nodes/Iot/IotPayload_m.o \
+    $O/s2f/architecture/net/stack/resolver/RequestTimeout_m.o \
+    $O/s2f/architecture/nodes/iot/IotPayload_m.o \
     $O/s2f/core/PayloadMessage_m.o \
-    $O/s2f/management/CloudProvider/NodeEvent_m.o \
+    $O/s2f/management/cloudprovider/NodeEvent_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
     $O/s2f/messages/SM_CloudProvider_Control_m.o \
@@ -122,19 +116,17 @@ OBJS = \
     $O/s2f/messages/SM_UserVM_m.o \
     $O/s2f/messages/SM_UserVM_Cost_m.o \
     $O/s2f/messages/SM_VmExtend_m.o \
-    $O/s2f/messages/Syscall_m.o \
-    $O/s2f/os/AppIdLabel/AppIdLabel_m.o
+    $O/s2f/messages/Syscall_m.o
 
 # Message files
 MSGFILES = \
     s2f/apps/models/simservice/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
     s2f/architecture/net/routing/RoutingInfo.msg \
-    s2f/architecture/net/stack/NetworkIOEvent.msg \
-    s2f/architecture/net/stack/Resolver/RequestTimeout.msg \
-    s2f/architecture/nodes/Iot/IotPayload.msg \
+    s2f/architecture/net/stack/resolver/RequestTimeout.msg \
+    s2f/architecture/nodes/iot/IotPayload.msg \
     s2f/core/PayloadMessage.msg \
-    s2f/management/CloudProvider/NodeEvent.msg \
+    s2f/management/cloudprovider/NodeEvent.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \
     s2f/messages/SM_CloudProvider_Control.msg \
@@ -146,8 +138,7 @@ MSGFILES = \
     s2f/messages/SM_UserVM.msg \
     s2f/messages/SM_UserVM_Cost.msg \
     s2f/messages/SM_VmExtend.msg \
-    s2f/messages/Syscall.msg \
-    s2f/os/AppIdLabel/AppIdLabel.msg
+    s2f/messages/Syscall.msg
 
 # SM files
 SMFILES =

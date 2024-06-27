@@ -6,7 +6,7 @@
 #include "s2f/os/hypervisors/common.h"
 #include "s2f/os/hypervisors/Hypervisor.h"
 
-class DcResourceManager; // Forward declaration
+class ResourceManager; // Forward declaration
 namespace hypervisor
 {
    class DcHypervisor : public Hypervisor
@@ -15,7 +15,7 @@ namespace hypervisor
       void loadVector(std::vector<cModule *> &v, cModule *osModule, cModule *(*accessor)(cModule *, int));
 
    protected:
-      DcResourceManager *resourceManager; //!< Resource manager of the datacentre
+      ResourceManager *resourceManager; //!< Resource manager of the datacentre
       DiskManager *diskManager;           //!< The disk manager
       ServiceURL localUrl;                //!< The url which identifies this hypervisor
       cMessage *powerMessage;             //!< Power on event

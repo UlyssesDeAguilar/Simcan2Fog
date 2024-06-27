@@ -1,4 +1,5 @@
-#include "../../net/dns/DnsCache.h"
+#include "DnsCache.h"
+
 using namespace dns;
 Define_Module(DnsCache);
 

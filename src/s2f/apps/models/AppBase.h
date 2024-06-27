@@ -1,8 +1,8 @@
 #ifndef __SIMCAN_2_0_USER_APP_BASE_H_
 #define __SIMCAN_2_0_USER_APP_BASE_H_
 
-#include "s2f/architecture/net/stack/Resolver/DnsResolver.h"
-//#include "s2f/architecture/Network/Stack/StackServiceType.h"
+#include "s2f/architecture/net/stack/resolver/DnsResolver.h"
+// #include "s2f/architecture/Network/Stack/StackServiceType.h"
 #include "s2f/core/cSIMCAN_Core.h"
 #include "s2f/os/hypervisors/common.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
@@ -21,7 +21,7 @@ using namespace inet;
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @date 2016-07-01
  */
-class AppBase : public cSIMCAN_Core, public TcpSocket::ICallback, public UdpSocket::ICallback
+class AppBase : public cSIMCAN_Core, public TcpSocket::ICallback, public UdpSocket::ICallback, public DnsResolver::ResolverCallback
 {
 protected:
    using SocketQueue = std::map<int, cQueue>;
@@ -92,7 +92,7 @@ public:
       virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) {};
       virtual void returnRead(simtime_t timeElapsed) {};
       virtual void returnWrite(simtime_t timeElapsed) {};
-      virtual void handleResolverReturned(uint32_t ip) = 0;
+      virtual void handleResolverReturned(uint32_t ip, bool resolved) = 0;
       virtual void handleDataArrived(int sockFd, Packet *p) = 0;
       virtual void handleConnectReturn(int sockFd, bool connected) = 0;
       virtual bool handlePeerClosed(int sockFd) = 0;
@@ -113,8 +113,10 @@ public:
    virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) override {}
    virtual void socketDeleted(TcpSocket *socket) override {}
 
+   // DNS RESOLVER
+   virtual void handleResolverReturned(uint32_t ip, bool resolved) override { Enter_Method_Silent(); callback->handleResolverReturned(ip, resolved); }
+   
    void setReturnCallback(ICallback *callback) { this->callback = callback; }
-
 private:
    ICallback *callback{};
    virtual cGate *getOutGate(cMessage *msg) override;

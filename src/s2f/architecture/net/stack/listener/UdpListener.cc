@@ -1,5 +1,5 @@
 
-#include "../../../net/stack/Listener/UdpListener.h"
+#include "UdpListener.h"
 
 #include "inet/applications/common/SocketTag_m.h"
 #include "inet/common/ModuleAccess.h"

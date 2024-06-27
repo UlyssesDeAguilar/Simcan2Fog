@@ -35,7 +35,7 @@ PullClient::~PullClient()
 void PullClient::initialize(int stage)
 {
     // Retrieve the topic from the parent
-    cPar &parameter = getParentModule()->par("nodeTopic");
+    cPar &parameter = getParentModule()->getParentModule()->par("nodeTopic");
     const char *parentTopic = parameter;
 
     // If it was empty then fill in with the module Id

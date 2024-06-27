@@ -50,10 +50,9 @@ void IotApplication::processSelfMessage(cMessage *msg)
     resolve(endpointName);
 }
 
-void IotApplication::handleResolverReturned(uint32_t ip)
+void IotApplication::handleResolverReturned(uint32_t ip, bool resolved)
 {
-    Enter_Method_Silent();
-    if (ip == 0)
+    if (!resolved)
         error("Unexpected unavailability of service: %s", endpointName);
 
     endpointIp.set(ip);

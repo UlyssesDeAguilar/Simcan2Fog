@@ -1,7 +1,7 @@
 #ifndef SIMCAN_EX_CLOUD_USER_MODEL
 #define SIMCAN_EX_CLOUD_USER_MODEL
 
-#include "../../users/base/BaseUserModel.h"
+#include "s2f/users/base/BaseUserModel.h"
 
 class CloudUserModel : public BaseUserModel
 {

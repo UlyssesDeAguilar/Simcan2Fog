@@ -3,8 +3,8 @@
 
 #include "s2f/core/simdata/DataManager.h"
 #include "s2f/management/dataClasses/VirtualMachines/VirtualMachine.h"
-#include "s2f/management/DataCentreManagers/ResourceManager/ResourceManager.h"
-#include "s2f/management/DataCentreManagers/Selection/Strategies.h"
+#include "s2f/management/managers/ResourceManager.h"
+//#include "s2f/management/DataCentreManagers/Selection/Strategies.h"
 #include "inet/common/lifecycle/LifecycleUnsupported.h"
 #include "inet/common/packet/ChunkQueue.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
@@ -25,7 +25,7 @@ class SimService : public cSimpleModule, public LifecycleUnsupported
     long bytesSent;
 
     std::map<int, ChunkQueue> socketQueue;
-    DcResourceManager *resourceManager;
+    ResourceManager *resourceManager;
     DataManager *dataManager;        
   protected:
     virtual void sendBack(cMessage *msg);

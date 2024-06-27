@@ -1,6 +1,5 @@
-#include "../../users/cloud/CloudUserModel.h"
-
-#include "Management/UserGenerators/UserGeneratorCost/UserGeneratorCost.h"
+#include "CloudUserModel.h"
+#include "s2f/users/generators/UserGeneratorCost.h"
 
 void CloudUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {

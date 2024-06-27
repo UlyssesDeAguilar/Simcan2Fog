@@ -1,5 +1,5 @@
 cplusplus{{
-#include "Core/include/SIMCAN_types.h"
+#include "s2f/core/include/SIMCAN_types.h"
 }};
 
 // This also generates a descriptor for parsim

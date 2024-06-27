@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#include "../../net/dns/DnsResolverService.h"
+#include "DnsResolverService.h"
 using namespace dns;
 
 Define_Module(DnsResolverService);

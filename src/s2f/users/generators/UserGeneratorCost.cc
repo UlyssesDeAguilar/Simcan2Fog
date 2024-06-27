@@ -13,9 +13,9 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#include "../../../management/UserGenerators/UserGeneratorCost/UserGeneratorCost.h"
+#include "UserGeneratorCost.h"
 
-#include "../../../management/utils/LogUtils.h"
+#include "s2f/management/utils/LogUtils.h"
 
 using namespace omnetpp;
 

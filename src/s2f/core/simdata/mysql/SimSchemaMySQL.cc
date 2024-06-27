@@ -1,4 +1,5 @@
-#include "../../../core/SimSchema/MySQL/SimSchemaMySQL.h"
+#include "SimSchemaMySQL.h"
+
 using namespace simschema;
 Define_Module(SimSchemaMySQL);
 
