@@ -1,8 +1,7 @@
 package s2f.os;
-import s2f.OperatingSystem.Hypervisors.IHypervisor;
-import s2f.OperatingSystem.CpuSchedulers.CpuSchedulersVector;
-import s2f.Applications.Base.AppsVector;
-
+import s2f.os.hypervisors.IHypervisor;
+import s2f.os.schedulers.CpuSchedulersVector;
+import s2f.apps.AppsVector;
 
 // Module that simulates the Operating System in a computer.
 //

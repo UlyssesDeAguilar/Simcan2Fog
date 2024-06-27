@@ -32,8 +32,8 @@ void Switch::handleMessage(cMessage *msg)
     
     if (address == DC_MANAGER_LOCAL_ADDR)
         send(msg, manager.outBaseId);
-    else if( address == DC_NETWORK_STACK)
-        send(msg, network.outBaseId);
+    /*else if( address == DC_NETWORK_STACK)
+        send(msg, network.outBaseId);*/
     else
         send(msg, lower.outBaseId + address);
 }

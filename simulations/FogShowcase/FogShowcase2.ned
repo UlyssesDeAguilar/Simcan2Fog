@@ -15,20 +15,19 @@
 
 package s2f.simulations.FogShowcase;
 
-import inet.node.bgp.BgpRouter;
 // Mission critical modules
-import s2f.Core.SimData.SimData;
-import s2f.Architecture.Network.MessageQueue.MessageQueue;
+import s2f.core.simdata.SimData;
+import s2f.architecture.messagequeue.MessageQueue;
 import inet.node.inet.Router;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100G;
 
 // Entities involved in action
-import s2f.Architecture.Nodes.Fog.FogNode;
-import s2f.Management.CloudProvider.CloudProvider;
-import s2f.Management.DataCentre.DataCentre;
-import s2f.Management.UserGenerators.UserGenerator;
+import s2f.management.cloudprovider.CloudProvider;
+import s2f.architecture.nodes.cloud.DataCentre;
+import s2f.architecture.nodes.fog.FogNode;
+import s2f.users.generators.UserGenerator;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 
 network FogShowcase2

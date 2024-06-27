@@ -13,7 +13,7 @@ simple Switch{
         
     gates:
         inout manager;			// Gate for the manager
-        inout netStack;         // Gate for the network stack
+        //inout netStack;         // Gate for the network stack
         inout comm[];			// Communication gates    
 }
 

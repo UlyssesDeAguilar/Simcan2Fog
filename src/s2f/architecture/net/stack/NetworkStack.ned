@@ -3,7 +3,6 @@ package s2f.architecture.net.stack;
 import s2f.architecture.net.stack.resolver.DnsResolver;
 import s2f.architecture.net.stack.queue.QueuePullClient;
 import s2f.architecture.net.stack.queue.QueuePushClient;
-import inet.applications.tcpapp.TcpClientSocketIo;
 import inet.applications.udpapp.UdpSocketIo;
 import inet.node.inet.StandardHost;
 
@@ -40,16 +39,16 @@ module NetworkStack extends StandardHost
 
     submodules:
         dnsResolver: DnsResolver {
-            @display("p=1100.028,75.689995");
+            @display("p=1140.396,65.598");
         }
 
         pushClient: QueuePushClient if enableQueue {
-            @display("p=748,70");
+            @display("p=857.81995,68.962");
             connectAddress = smqIp;
         }
 
         pullClient: QueuePullClient if enableQueue {
-            @display("p=960.27747,69.615");
+            @display("p=973.878,75.689995");
             connectAddress = smqIp;
         }
 

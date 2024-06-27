@@ -14,16 +14,15 @@
 // 
 
 package s2f.simulations.EdgeScenario;
-import s2f.simulations.Templates.BaseNetwork;
-import s2f.Core.SimData.SimData;
-import s2f.Architecture.Network.DNS.DnsSimplified;
-import s2f.Management.DataCentre.DataCentre;
-import s2f.Architecture.Nodes.Fog.FogNode;
-import s2f.Architecture.Nodes.Iot.*;
-import s2f.UserModel.Edge.EdgeTile;
-import s2f.UserModel.Edge.LightEdgeTile;
+
+import s2f.core.simdata.SimData;
+import s2f.architecture.nodes.cloud.DataCentre;
+import s2f.architecture.nodes.fog.FogNode;
+import s2f.architecture.dns.DnsSimplified;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.internetcloud.InternetCloud;
+import s2f.simulations.Templates.BaseNetwork;
+
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100M;
@@ -31,8 +30,9 @@ import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100G;
 import inet.node.ethernet.EtherSwitch;
 
-import s2f.Architecture.Nodes.Iot.HumiditySensor;
-import s2f.Architecture.Nodes.Iot.Raspberry5;
+import s2f.architecture.nodes.iot.sensors.HumiditySensor;
+import s2f.architecture.nodes.iot.actuators.AutomaticWatering;
+import s2f.architecture.nodes.iot.controllers.Raspberry5;
 
 network SimpleFogNetwork extends BaseNetwork
 {

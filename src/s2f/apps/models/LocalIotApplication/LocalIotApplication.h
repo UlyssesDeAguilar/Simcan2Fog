@@ -3,7 +3,7 @@
 
 #include <omnetpp.h>
 
-#include "s2f/architecture/nodes/Iot/IotPayload_m.h"
+#include "../../../architecture/nodes/iot/IotPayload_m.h"
 #include "s2f/apps/models/AppBase.h"
 
 class LocalIotApplication : public AppBase, public AppBase::ICallback

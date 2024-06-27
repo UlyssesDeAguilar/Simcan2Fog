@@ -1,5 +1,5 @@
 package s2f.architecture.cpu;
-import s2f.Core.CheckingHubModule.CheckingHubModule;
+import s2f.architecture.net.hub.CheckingHubModule;
 
 
 //

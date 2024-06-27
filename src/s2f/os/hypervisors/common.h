@@ -21,8 +21,7 @@
 #include "s2f/messages/SM_UserVM.h"
 #include "s2f/messages/SM_VmExtend_m.h"
 #include "s2f/messages/Syscall_m.h"
-#include "s2f/os/AppIdLabel/AppIdLabel_m.h"
-#include "ControlTable/ControlTable.hpp"
+#include "ControlTable.hpp"
 #include "s2f/apps/ApplicationBuilder.h"
 
 // Forward declaration

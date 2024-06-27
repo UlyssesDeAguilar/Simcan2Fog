@@ -1,4 +1,4 @@
-package s2f.OperatingSystem.Hypervisors;
+package s2f.os.hypervisors;
 
 // Interface that must be implemented by each hyervisor.
 //

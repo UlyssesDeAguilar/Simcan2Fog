@@ -1,11 +1,11 @@
 #ifndef CLOUDUSERINSTANCE_H_
 #define CLOUDUSERINSTANCE_H_
 
-#include "../../../management/dataClasses/Users/CloudUser.h"
-#include "../../../management/dataClasses/Users/UserInstance.h"
-#include "../../../management/dataClasses/VirtualMachines/VmInstance.h"
-#include "Messages/SM_UserVM.h"
-#include "Messages/SM_UserAPP.h"
+#include "s2f/management/dataClasses/Users/CloudUser.h"
+#include "s2f/management/dataClasses/Users/UserInstance.h"
+#include "s2f/management/dataClasses/VirtualMachines/VmInstance.h"
+#include "s2f/messages/SM_UserVM.h"
+#include "s2f/messages/SM_UserAPP.h"
 
 struct InstanceTimes
 {
