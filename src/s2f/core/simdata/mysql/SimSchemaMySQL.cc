@@ -185,10 +185,9 @@ SimSchemaMySQL::searchApp(const std::string &name)
     {
         try
         {
-            json value = parameters.at(param.key());
-
-            auto newParam = new AppParameter(param.key(), param.value(), value);
-            newApp->insertParameter(newParam);
+            // auto newParam = new AppParameter(param.key(), param.value(), value);
+            std::string value = param.value();
+            newApp->insertParameter(param.key().c_str(), value.c_str());
         }
         catch (const std::out_of_range &e)
         {
@@ -356,7 +355,7 @@ SimSchemaMySQL::searchUsersInExperiment(const std::string &experiment)
     {
         // Allocate in place the element
         usersList->emplace_back();
-        auto& base = usersList->back();
+        auto &base = usersList->back();
 
         // Fill in with reference
         base.userName = res->getString("name").asStdString();
@@ -369,7 +368,7 @@ SimSchemaMySQL::searchUsersInExperiment(const std::string &experiment)
 }
 
 DataList<UserAppInfo>
-SimSchemaMySQL::searchUserApps(const std::string &user) 
+SimSchemaMySQL::searchUserApps(const std::string &user)
 {
     // Notify the kernel
     Enter_Method_Silent("Query requested apps of user: %s", user.c_str());
@@ -396,7 +395,7 @@ SimSchemaMySQL::searchUserApps(const std::string &user)
     {
         // Allocate in place the element
         appsList->emplace_back();
-        auto& base = appsList->back();
+        auto &base = appsList->back();
 
         // Fill in with reference
         base.appName = res->getString("name").asStdString();
@@ -407,7 +406,7 @@ SimSchemaMySQL::searchUserApps(const std::string &user)
 }
 
 DataList<UserVmInfo>
-SimSchemaMySQL::searchUserVms(const std::string &user) 
+SimSchemaMySQL::searchUserVms(const std::string &user)
 {
     // Notify the kernel
     Enter_Method_Silent("Query requested vms of user: %s", user.c_str());
@@ -434,7 +433,7 @@ SimSchemaMySQL::searchUserVms(const std::string &user)
     {
         // Allocate in place the element
         vmsList->emplace_back();
-        auto& base = vmsList->back();
+        auto &base = vmsList->back();
 
         // Fill in with reference
         base.type = res->getString("type").asStdString();

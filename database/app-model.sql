@@ -114,3 +114,8 @@ VALUES
 -- Confirmation query
 SELECT apps.name, app_models.name
 FROM apps JOIN app_models ON apps.model_id = app_models.id;
+
+-- Update path query
+UPDATE app_models
+SET package = 's2f.apps.models.LocalIotApplication'
+WHERE name = 'LocalIotApplication';

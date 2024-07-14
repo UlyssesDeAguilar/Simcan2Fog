@@ -16,15 +16,16 @@ void DnsResolver::initialize(int stage)
 
 void DnsResolver::finish()
 {
-    // Release the socket (and the other resources)
-    socket.close();
+    for (auto iter : pendingRequests)
+        freeContext(iter.second);
+    
+    pendingRequests.clear();
 }
 
 void DnsResolver::handleStartOperation(LifecycleOperation *operation)
 {
     // Configure the socket
     socket.setOutputGate(gate("socketOut"));
-    socket.bind(-1);
     socket.setCallback(this);
 }
 
@@ -40,97 +41,77 @@ void DnsResolver::handleCrashOperation(LifecycleOperation *operation)
 
 void DnsResolver::handleMessage(cMessage *msg)
 {
-    if (msg == timeOut)
+    auto timeOut = dynamic_cast<RequestTimeout *>(msg);
+    if (timeOut)
     {
-        // HACK then we'll get it ourselves
-        auto dns = check_and_cast<DnsServiceSimplified*>(getModuleByPath("dns.dnsServer"));
-        auto iter = pendingRequests.find(timeOut->getRequestId());
+        auto &ctx = pendingRequests[timeOut->getRequestId()];
+        ctx.remainingAttempts--;
 
-        if (iter == pendingRequests.end())
-            error("Dns Resolver unexpected timeout");
-        
-        auto vec = dns->processQuestion(timeOut->getDomain());
-        
-        if (vec->size() == 0)
-            error("Dns Resolver: no record found");
-        
-        auto &address = vec->at(0).ip;
-        auto callback = iter->second;
-        callback->handleResolverReturned(address.toIpv4().getInt(), true);
+        if (ctx.remainingAttempts <= 0)
+        {
+            L3Address address;
+            invokeCallback(timeOut->getRequestId(), address, false);
+            return;
+        }
 
-        pendingRequests.erase(iter);
-        delete timeOut;
-        timeOut = nullptr;
+        socket.sendTo(ctx.packet->dup(), ispResolver, DNS_PORT);
+        scheduleAt(simTime() + par("requestTimeout"), timeOut);
     }
     else
         ApplicationBase::handleMessage(msg);
 }
+
 void DnsResolver::handleMessageWhenUp(cMessage *msg)
 {
-    // Multiplex incoming messages from SIMCAN / INET
-    auto packet = dynamic_cast<Packet *>(msg);
-    if (packet)
-        socket.processMessage(packet);
-    else
-    {
-        error("Unexpected message");
-    }
+    socket.processMessage(check_and_cast<Packet *>(msg));
 }
 
 void DnsResolver::resolve(const char *domain, ResolverCallback *callback)
 {
-    Enter_Method_Silent();
-    auto request = new DnsRequest();
+    Enter_Method("Resolving domain: %s\n", domain);
+    RequestContext ctx;
+
+    const auto &request = makeShared<DnsRequest>();
     request->setOperationCode(QUERY);
     request->setRequestId(getNewRequestId());
     request->insertQuestion(domain);
 
-    timeOut = new RequestTimeout();
+    auto packet = new Packet("Dns Request");
+    packet->insertAtBack(request);
+
+    auto timeOut = new RequestTimeout();
     timeOut->setRequestId(request->getRequestId());
     timeOut->setDomain(domain);
 
-    auto packet = new Packet("Dns Request", Ptr<DnsRequest>(request));
-    socket.sendTo(packet, ispResolver, DNS_PORT);
-    
-    pendingRequests[request->getRequestId()] = callback;
-    scheduleAt(simTime() + 10, timeOut);
-}
+    ctx.remainingAttempts = par("retryCount");
+    ctx.callback = callback;
+    ctx.timeOut = timeOut;
+    ctx.packet = packet;
 
-uint16_t DnsResolver::getNewRequestId()
-{
-    if (lastId == UINT16_MAX)
-        lastId = 0;
-    return lastId++;
+    pendingRequests[request->getRequestId()] = ctx;
+
+    socket.sendTo(packet->dup(), ispResolver, DNS_PORT);
+    scheduleAt(simTime() + par("requestTimeout"), timeOut);
 }
 
 void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     auto response = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
-    auto iter = pendingRequests.find(response->getRequestId());
+    L3Address address;
+    bool resolved;
 
-    if (iter == pendingRequests.end())
-    {
-        EV << "Ignoring not registered request with id: " << response->getRequestId() << "\n";
-        delete packet;
-        return;
-    }
-
-    auto callback = iter->second;
     if (response->getReturnCode() == dns::ReturnCode::NOERROR)
     {
         const ResourceRecord &rec = response->getAuthoritativeAnswers(0);
-        callback->handleResolverReturned(rec.ip.toIpv4().getInt(), true);
+        address = rec.ip;
+        resolved = true;
     }
     else
-        callback->handleResolverReturned(0, false);
-
-    if (timeOut)
     {
-        cancelAndDelete(timeOut);
-        timeOut = nullptr;
+        resolved = false;
     }
-    
-    pendingRequests.erase(iter);
+
+    invokeCallback(response->getRequestId(), address, resolved);
     delete packet;
 }
 
@@ -141,3 +122,34 @@ void DnsResolver::socketErrorArrived(UdpSocket *socket, Indication *indication)
 }
 
 void DnsResolver::socketClosed(UdpSocket *socket) {}
+
+void DnsResolver::invokeCallback(uint16_t requestId, const L3Address &address, bool resolved)
+{
+    auto iter = pendingRequests.find(requestId);
+    if (iter == pendingRequests.end())
+    {
+        EV_WARN << "Ignoring not registered request with id: " << requestId << "\n";
+        return;
+    }
+
+    // Invoke the callback
+    auto &ctx = iter->second;
+    ctx.callback->handleResolverReturned(address, resolved);
+
+    // Erase the context
+    freeContext(ctx);
+    pendingRequests.erase(iter);
+}
+
+uint16_t DnsResolver::getNewRequestId()
+{
+    if (lastId == UINT16_MAX)
+        lastId = 0;
+    return lastId++;
+}
+
+void DnsResolver::freeContext(RequestContext &ctx)
+{
+    delete ctx.packet;
+    cancelAndDelete(ctx.timeOut);
+}

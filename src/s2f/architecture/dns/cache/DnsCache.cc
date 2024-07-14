@@ -12,7 +12,7 @@ void DnsCache::finish()
 
 void DnsCache::insertData(const ResourceRecord &record)
 {
-    if (record.type == A)
+    if (record.type == ResourceRecord::RR_Type::A)
     {
         ipCache[record.domain] = record;
     }

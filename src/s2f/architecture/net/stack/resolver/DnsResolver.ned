@@ -9,6 +9,8 @@ simple DnsResolver like IApp {
     parameters:
     	@class(DnsResolver);
         string ispResolver = default("7.7.7.7");
+        int requestTimeout @unit(s) = default(5s);
+        int retryCount = default(3);
     gates:
 		// These labels help the visualizer
         input socketIn @labels(ITransportPacket/up);

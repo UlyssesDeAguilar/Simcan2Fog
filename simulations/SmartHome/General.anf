@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scave:Analysis xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:scave="http://www.omnetpp.org/omnetpp/scave">
+  <inputs>
+    <inputs name="results/*experiment*.vec"/>
+    <inputs name="results/*experiment*.sca"/>
+  </inputs>
+  <datasets>
+    <datasets name="EndToEnd 1">
+      <items xsi:type="scave:Add" filterPattern="file(/Simcan2Cloud/simulations/EdgeTesting/results/experiment-R=*,S=1,A=*-#*.vec) AND attr:configname(experiment) AND module(EdgeNetwork.tile[0].actuator[*].app[0]) AND name(endToEndDelay:vector)" type="VECTOR"/>
+      <items xsi:type="scave:Apply" operation="mean"/>
+      <items xsi:type="scave:ScatterChart" name="" xDataPattern="module(EdgeNetwork.tile[0].actuator[3].app[0]) AND name(&quot;mean(aggregator(endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;endToEndDelay:vector;...))&quot;)"/>
+    </datasets>
+  </datasets>
+  <chartSheets>
+    <chartSheets name="default" charts="//@datasets/@datasets.0/@items.2"/>
+  </chartSheets>
+</scave:Analysis>

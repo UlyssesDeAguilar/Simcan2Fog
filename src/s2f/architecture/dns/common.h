@@ -18,7 +18,7 @@ namespace dns
 {
     using namespace omnetpp;
     using namespace inet;
-    
+
     /*
         Based on the RFC 1034/1035 and the explanation found in:
         http://www.tcpipguide.com/free/t_DNSNameServerDataStorageResourceRecordsandClasses-3.htm#Table_166
@@ -28,14 +28,13 @@ namespace dns
 
     // Root DNS server IP (in reality is the I root server - ICANN)
     static const Ipv4Address ROOT_DNS_IP("199.7.83.42");
+
     typedef enum
     {
-        QUERY,    // Standard query
-        IQUERY,   // Used for inverse querys 				(obsolete)
-        STATUS,   // Request for status					(currently not used)
-        NOTIFY,   // Notify for Zone Transfer				(currently not used)
-        UPDATE_R, // Update the Resource Records (Add new ones)
-        UPDATE_D  // Update the Resource Records (Delete selected ones)
+        QUERY,  // Standard query
+        IQUERY, // Used for inverse querys 				(obsolete)
+        STATUS, // Request for status					(currently not used)
+        NOTIFY  // Notify for Zone Transfer				(currently not used)
     } OP_Code;
 
     typedef enum
@@ -52,22 +51,21 @@ namespace dns
         NOTZONE   // Name not in zone							  (currently not used)
     } ReturnCode;
 
-    typedef enum
-    {
-        A,     // Address
-        NS,    // Name Server
-        CNAME, // Canonical Name
-        SOA,   // Start of Authority
-        PTR,   // Pointer
-        MX,    // eMail eXchange
-        TXT    // Text string (arbitrary text)
-    } RR_Type;
-
     struct ResourceRecord
     {
         opp_string domain;
-        RR_Type type;
         inet::L3Address ip;
+        enum RR_Type
+        {
+            A,     // Address
+            NS,    // Name Server
+            CNAME, // Canonical Name
+            SOA,   // Start of Authority
+            PTR,   // Pointer
+            MX,    // eMail eXchange
+            TXT    // Text string (arbitrary text)
+        } type;
+        
 
         const char *typeToStr() const
         {
@@ -84,6 +82,12 @@ namespace dns
     };
 
     // Defines the common association between URL and Resource Record
-    typedef std::map<opp_string, std::vector<ResourceRecord>> DomainRecordMap;
+    using DomainRecordMap = std::map<opp_string, std::vector<ResourceRecord>>;
+
+    /**
+     * @brief Map that binds directly the domain to an Ip
+     * @details Currently used with DnsServiceSimplified
+     */
+    using DirectDomainRecordMap = std::map<opp_string, ResourceRecord>;
 }
 #endif

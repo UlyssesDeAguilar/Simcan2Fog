@@ -14,19 +14,22 @@ void LocalIotApplication::initialize()
 
     processingMIs = par("processingMIs");
     listeningPort = par("listeningPort");
-
+    serviceUp = false;
     setReturnCallback(this);
 
     cModule *edgeTile = getModuleByPath(parentPath);
-    endpointName = edgeTile->par("serviceName");
-    cModule *actuator = edgeTile->getSubmodule("actuator", 0);
-    int vectorSize = actuator->getVectorSize();
+    // endpointName = edgeTile->par("serviceName");
+    cPatternMatcher matcher("lamp*", true, true, true);
+    EV_INFO << edgeTile->getFullName() << "\n";
 
-    for (int i = 0; i < vectorSize; i++)
+    for (cModule::SubmoduleIterator it(edgeTile); !it.end(); ++it)
     {
-        actuator = edgeTile->getSubmodule("actuator", i);
-        actuators.push_back(L3AddressResolver().addressOf(actuator));
-        EV << "Detected actuator" << i << "with address:" << actuators.back();
+        cModule *submodule = *it;
+        if (matcher.matches(submodule->getFullName()))
+        {
+            actuators.push_back(L3AddressResolver().addressOf(submodule));
+            EV_INFO << "Detected actuator " << submodule->getFullName() << " with address: " << actuators.back();
+        }
     }
 
     // Record times

@@ -270,14 +270,14 @@ void AppBase::close(int socketFd)
 void AppBase::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     int socketFd = socket->getSocketId();
-    EV << "Incoming message for socket: " << socketFd << "pushing into the queue\n";
+    EV << "Incoming message for socket: " << socketFd << " pushing into the queue\n";
     callback->handleDataArrived(socketFd, packet);
 }
 
 void AppBase::socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent)
 {
     int socketFd = socket->getSocketId();
-    EV << "Incoming message for socket: " << socketFd << "pushing into the queue\n";
+    EV << "Incoming message for socket: " << socketFd << " pushing into the queue\n";
     callback->handleDataArrived(socketFd, msg);
 }
 
@@ -290,7 +290,7 @@ void AppBase::socketErrorArrived(UdpSocket *socket, Indication *indication)
 void AppBase::socketEstablished(TcpSocket *socket)
 {
     int socketFd = socket->getSocketId();
-    EV << "Incoming message for socket: " << socketFd << "pushing into the queue\n";
+    EV << "Incoming message for socket: " << socketFd << " pushing into the queue\n";
     callback->handleConnectReturn(socketFd, true);
 }
 
@@ -306,7 +306,7 @@ void AppBase::socketPeerClosed(TcpSocket *socket)
 {
     int socketFd = socket->getSocketId();
     EV << "Incoming message for socket: " << socketFd
-       << "peer closed\n";
+       << " peer closed\n";
     bool closeSocket = callback->handlePeerClosed(socketFd);
 
     // Close here as well!

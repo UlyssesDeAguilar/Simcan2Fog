@@ -1,20 +1,15 @@
 #include "DnsServiceSimplified.h"
+
 using namespace dns;
+
 Define_Module(DnsServiceSimplified);
 
 void DnsServiceSimplified::initialize(int stage)
 {
-    // This layer could be initialized earlier, maybe in INITSTAGE_TRANSPORT_LAYER
     switch (stage)
     {
-    case INITSTAGE_LOCAL:
-    {
-        // serverName = par("serverName");
-        break;
-    }
     case INITSTAGE_APPLICATION_LAYER:
-        // localAddress = L3AddressResolver().addressOf(getParentModule());
-        scanNetwork();
+        cache = check_and_cast<DnsCache*>(getModuleByPath("^.cache"));
         break;
     };
     ApplicationBase::initialize(stage);
@@ -23,32 +18,6 @@ void DnsServiceSimplified::initialize(int stage)
 void DnsServiceSimplified::finish()
 {
     // Reset the records for the next simulation
-    records.clear();
-}
-
-void DnsServiceSimplified::scanNetwork()
-{
-    cTopology topo;
-    ResourceRecord r;
-    r.type = RR_Type::NS;
-
-    topo.extractByProperty("servicenode");
-
-    if (topo.getNumNodes() == 0)
-        error("Couldn't find the nodes in the topology");
-
-    for (int i = 0; i < topo.getNumNodes(); i++)
-    {
-        cTopology::Node *node = topo.getNode(i);
-        cModule *module = node->getModule();
-        L3Address address = L3AddressResolver().addressOf(module->getSubmodule("stack"));
-        const char *domain = module->par("serviceDeployed");
-
-        r.ip = address;
-        r.domain = domain;
-        records[domain].push_back(r);
-        EV << "Service: \"" << domain << "\" located on: " << module->getName() << " with ip: " << address << "\n";
-    }
 }
 
 void DnsServiceSimplified::handleStartOperation(LifecycleOperation *operation)
@@ -122,17 +91,13 @@ void DnsServiceSimplified::handleQuery(const Packet *packet)
     for (int i = 0; i < questionCount; i++)
     {
         EV_DEBUG << "Processing query" << i << "\n";
-        auto vec = processQuestion(request->getQuestion(i));
+        auto record = processQuestion(request->getQuestion(i));
 
-        if (vec)
+        if (record)
         {
             ok = allocateIfNull(ok, request.get());
             ok->insertQuestion(request->getQuestion(i));
-
-            for (const auto &record : *vec)
-            {
-                ok->insertAuthoritativeAnswers(record);
-            }
+            ok->insertAuthoritativeAnswers(*record);
         }
         else
         {
@@ -141,7 +106,7 @@ void DnsServiceSimplified::handleQuery(const Packet *packet)
         }
     }
 
-    // Indicate everything went OK
+    // Send the responses
     if (ok)
     {
         ok->setReturnCode(ReturnCode::NOERROR);
@@ -164,13 +129,13 @@ DnsRequest *DnsServiceSimplified::prepareResponse(const DnsRequest *request)
     return response;
 }
 
-std::vector<ResourceRecord> *DnsServiceSimplified::processQuestion(const char *domain)
+const ResourceRecord *DnsServiceSimplified::processQuestion(const char *domain)
 {
-    auto iter = records.find(domain);
-    if (iter == records.end())
-        return nullptr;
+    
+    if (cache->hasDomainCached(domain))
+        return &cache->getCachedDomain(domain);
     else
-        return &iter->second;
+        return nullptr;
 }
 
 void DnsServiceSimplified::handleNotImplemented(const Packet *packet)
@@ -180,17 +145,4 @@ void DnsServiceSimplified::handleNotImplemented(const Packet *packet)
     auto response = request->dup();
     response->setReturnCode(ReturnCode::NOTIMP);
     sendResponseTo(packet, response);
-}
-
-void DnsServiceSimplified::printRecords()
-{
-    EV << "Record table: " << endl;
-
-    // Print all the records (const & avoids copying the elements)
-    for (auto const &elem : records)
-    {
-        EV << elem.first.c_str() << " :\n";
-        for (auto const &record : elem.second)
-            EV << record << "\n";
-    }
 }

@@ -8,7 +8,7 @@
 
 /**
  * @brief This class encapsulates the steps needed for app instantiation
- * @author Ulysses de Aguilar
+ * @author Ulysses de Aguilar Gudmundsson
  */
 class ApplicationBuilder
 {

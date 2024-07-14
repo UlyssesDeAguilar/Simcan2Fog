@@ -1,23 +1,28 @@
 #ifndef APPLICATION_H_
 #define APPLICATION_H_
 
+#include "s2f/core/include/SIMCAN_types.h"
 #include <string>
-#include <vector>
-#include "AppParameter.h"
 
 /**
  * @brief Class that represents a SIMCAN application.
- * @author Pablo Cerro Cañizares
- * @author Ulysses de Aguilar Gudmundsson
+ * @author (v1) Pablo Cerro Cañizares
+ * @author (v2) Ulysses de Aguilar Gudmundsson
  */
 class Application
 {
 private:
-    std::string type;                       // Type of the application in the SIMCAN repository (template)
-    std::string name;                       // Name of the application in the SIMCAN repository
-    std::string package;                    // NED path to the package where the app resides
-    std::vector<AppParameter *> parameters; // List of parameters for this application
+    std::string type; // Type of the application in the SIMCAN repository (template)
+    std::string name; // Name of the application in the SIMCAN repository
+    std::string path; // NED path to the application
+    std::map<opp_string, opp_string> parameters;
+
+    typedef std::map<std::string, cPar::Type> TypeMap;
+    const static TypeMap typeMap; // Utility map for parsing the type
+
 public:
+    using ParamPtr = std::unique_ptr<cParImpl>;
+
     /**
      * Constructor that sets each attribute and creates the corresponding application instance.
      *
@@ -25,12 +30,7 @@ public:
      * @param type Type of the application to be created.
      * @param package The package where the app resides
      */
-    Application(std::string name, std::string type, std::string package);
-
-    /**
-     * Destructor
-     */
-    virtual ~Application();
+    Application(std::string name, std::string type, std::string path);
 
     /**
      * Gets the name of the application.
@@ -48,22 +48,7 @@ public:
      * Gets the application package.
      * @return Application package.
      */
-    const std::string &getPackage() const { return package; }
-
-    /**
-     * @brief Gets the full path for the application model
-     * @return The full NED path
-     */
-    const std::string getFullPath() const { return package + "." + type; }
-
-    /**
-     * Gets the parameter allocated at index position. If the index \a position does not exist, an error is raised.
-     *
-     * @param index Position of the parameter in the parameter vector.
-     * @throws std::out_of_range If the index is out of range
-     * @return Parameter at index position.
-     */
-    const AppParameter &getParameter(int index) const { return *parameters.at(index); }
+    const std::string &getPath() const { return path; }
 
     /**
      * @brief Gets the parameter by the name
@@ -72,20 +57,21 @@ public:
      * @throws std::out_of_range If the name doesn't match any pattern
      * @return The parameter
      */
-    const AppParameter &getParameter(std::string name) const;
+    const char *getParameter(const char *name) const { return parameters.at(name).c_str(); }
 
     /**
      * @brief Gets all the parameters into a vector (constant) which is iterable
      * @return The vector containing all the parameters
      */
-    const std::vector<AppParameter *> &getAllParameters() const { return parameters; }
+    const std::map<opp_string, opp_string> &getAllParameters() const { return parameters; }
 
     /**
-     * Inserts a new parameter in the parameters vector. The new parameter is allocated at the last position in the parameter vector.
+     * @brief Inserts a parameter definition
      *
-     * @param param New parameter to be included in the parameter vector.
+     * @param name Name of the parameter
+     * @param value Textual value of the parameter, will hold the same value
      */
-    void insertParameter(AppParameter *param) { parameters.push_back(param); }
+    void insertParameter(const char *name, const char *value) { parameters[name] = value; }
 
     /**
      * Returns the number of parameters of this application.
@@ -93,6 +79,8 @@ public:
      * @return Number of existing parameters in the parameter vector.
      */
     int getNumParameters() const { return parameters.size(); }
+
+    static cPar::Type strToType(const std::string &type) { return typeMap.at(type); }
 
     /**
      * @brief Outputs an instance into a stream

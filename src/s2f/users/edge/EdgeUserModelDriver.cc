@@ -10,7 +10,7 @@ void EdgeUserModelDriver::initialize(int stage)
     {
         // Retrieve the local address from the network layer
         cModule *host = getParentModule();
-        address = L3AddressResolver().addressOf(host);
+        //address = L3AddressResolver().addressOf(host);
     }
     ApplicationBase::initialize(stage);
 }

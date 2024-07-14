@@ -1,0 +1,5 @@
+<config>
+	<interface hosts="**" address="10.0.x.x" netmask="255.255.x.x"/>
+	<wireless hosts="** area1AP"/>
+	<route hosts="lamp* sensor*" destination="*" gateway="10.0.0.1"/>
+</config>

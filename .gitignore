@@ -50,15 +50,15 @@ simulations/**/results/
 simulations/**/results/*.*
 
 # Executables
-Simcan2Cloud
-Simcan2Cloud_dbg
+Simcan2Fog
+Simcan2Fog_dbg
 
 # GUI files
 .qtenvrc
 
 # VsCode configuration files
 .vscode/
-/.computed/
+.computed/
 
 **/.ipynb_checkpoints
 **/.jupyter_ystore.db

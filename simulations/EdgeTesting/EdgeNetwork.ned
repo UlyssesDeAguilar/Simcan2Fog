@@ -20,7 +20,7 @@ import s2f.architecture.nodes.cloud.DataCentre;
 import s2f.architecture.nodes.fog.FogNode;
 import s2f.architecture.dns.DnsSimplified;
 import s2f.users.edge.LightEdgeTile;
-
+import s2f.users.edge.EdgeTile;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
@@ -45,7 +45,7 @@ network EdgeNetwork
             @display("p=48,35");
         }
 
-        tile[edgeTiles]: LightEdgeTile {
+        tile[edgeTiles]: EdgeTile {
             @display("p=398,256,m,4,10;is=s");
         }
 

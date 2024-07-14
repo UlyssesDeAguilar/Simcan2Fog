@@ -17,7 +17,6 @@
 
 // Data Classes that represent the information
 #include "s2f/management/dataClasses/Applications/Application.h"
-#include "s2f/management/dataClasses/Applications/AppParameter.h"
 #include "s2f/management/dataClasses/SLAs/Sla.h"
 #include "s2f/management/dataClasses/Users/CloudUser.h"
 #include "s2f/management/dataClasses/Users/CloudUserPriority.h"

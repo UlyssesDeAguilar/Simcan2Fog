@@ -18,19 +18,26 @@ public:
     class ResolverCallback
     {
     public:
-        virtual void handleResolverReturned(uint32_t ip, bool resolved) = 0;
+        virtual void handleResolverReturned(const L3Address &address, bool resolved) = 0;
     };
 
     void resolve(const char *domain, ResolverCallback *module);
 
 protected:
-    using RequestMap = std::map<uint16_t, ResolverCallback *>;
+    struct RequestContext
+    {
+        ResolverCallback *callback;
+        RequestTimeout *timeOut;
+        Packet *packet;
+        int remainingAttempts;
+    };
+
+    using RequestMap = std::map<uint16_t, RequestContext>;
 
     RequestMap pendingRequests;
     L3Address ispResolver;
     uint16_t lastId{}; // Last reserved id (gives linearity and better likelyhood of finding a free one)
     UdpSocket socket;  // Socket for establishing communication with the DNS Servers
-    RequestTimeout *timeOut = nullptr;
 
     // Kernel lifecycle
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -46,6 +53,9 @@ protected:
 
     // Logic
     uint16_t getNewRequestId();
+    Packet * assembleRequest(uint16_t requestId, const char *domain);
+    void invokeCallback(uint16_t requestId, const L3Address &address, bool resolved);
+    void freeContext(RequestContext &ctx);
 
     // Socket callbacks
     virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override;

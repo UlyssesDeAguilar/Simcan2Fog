@@ -92,7 +92,7 @@ public:
       virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) {};
       virtual void returnRead(simtime_t timeElapsed) {};
       virtual void returnWrite(simtime_t timeElapsed) {};
-      virtual void handleResolverReturned(uint32_t ip, bool resolved) = 0;
+      virtual void handleResolverReturned(const L3Address ip, bool resolved) = 0;
       virtual void handleDataArrived(int sockFd, Packet *p) = 0;
       virtual void handleConnectReturn(int sockFd, bool connected) = 0;
       virtual bool handlePeerClosed(int sockFd) = 0;
@@ -114,7 +114,7 @@ public:
    virtual void socketDeleted(TcpSocket *socket) override {}
 
    // DNS RESOLVER
-   virtual void handleResolverReturned(uint32_t ip, bool resolved) override { Enter_Method_Silent(); callback->handleResolverReturned(ip, resolved); }
+   virtual void handleResolverReturned(const L3Address& address, bool resolved) override { Enter_Method_Silent(); callback->handleResolverReturned(address, resolved); }
    
    void setReturnCallback(ICallback *callback) { this->callback = callback; }
 private:

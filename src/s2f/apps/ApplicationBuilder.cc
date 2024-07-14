@@ -22,7 +22,7 @@ cModule *ApplicationBuilder::searchAndCreate(cModule *parent, const Context &con
 {
     // Get type from schema
     auto schema = context.schema;
-    cModuleType *moduleType = cModuleType::get(schema->getFullPath().c_str());
+    cModuleType *moduleType = cModuleType::get(schema->getPath().c_str());
 
     // Reserve the necessary space (if needed)
     if ((bool)parent->par("defaultInitialized"))
@@ -42,10 +42,10 @@ void ApplicationBuilder::initParameters(cModule *appModule, const Context &conte
     appModule->par("userInstance") = *context.userId;
 
     // Initialize all the "free" parameters
-    for (const auto param : context.schema->getAllParameters())
+    for (const auto &iter : context.schema->getAllParameters())
     {
-        auto moduleParam = &appModule->par(param->getName().c_str());
-        param->initModuleParameter(moduleParam);
+        cPar &param = appModule->par(iter.first.c_str());
+        param.parse(iter.second.c_str());
     }
 
     // Finalize the parameters

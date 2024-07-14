@@ -23,20 +23,12 @@ namespace dns
     class DnsServiceSimplified : public ApplicationBase, UdpSocket::ICallback
     {
     protected:
-        const char *serverName;
-        DomainRecordMap records;
-        L3Address localAddress;
-        std::vector<std::string> fqdn;
-
-        DnsRequest* prepareResponse(const DnsRequest* request);
-        void scanNetwork();
-        
-    public:
         UdpSocket socket;
-        std::vector<ResourceRecord>* processQuestion(const char *domain);
+        DnsCache *cache{};
+        DnsRequest *prepareResponse(const DnsRequest *request);
 
-        // Debug utility
-        void printRecords();
+    public:
+        const ResourceRecord *processQuestion(const char *domain);
 
         // Kernel lifecycle
         virtual int numInitStages() const override { return NUM_INIT_STAGES + 1; }

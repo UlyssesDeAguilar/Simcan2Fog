@@ -10,7 +10,7 @@ class LocalIotApplication : public AppBase, public AppBase::ICallback
 {
 protected:
     unsigned int processingMIs;       //!< Number of MIs to be executed
-    const char *endpointName{};       //!< Domain of the endpoint
+    //const char *endpointName{};       //!< Domain of the endpoint
     uint32_t endpointIp{};            //!< Remote endpoint ip
     int udpSocket;                    //!< UdpSocket
     int16_t listeningPort;            //!< Port where to listen

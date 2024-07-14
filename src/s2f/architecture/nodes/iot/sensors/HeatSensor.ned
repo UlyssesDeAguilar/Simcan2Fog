@@ -1,6 +1,5 @@
 package s2f.architecture.nodes.iot.sensors;
 
-
 module HeatSensor extends IotSensor {
 	parameters:
 	    @display("i=temperature64");

@@ -1,24 +1,18 @@
-#include "../../../management/dataClasses/Applications/Application.h"
+#include "Application.h"
 
-Application::Application(std::string name, std::string type, std::string package)
+const Application::TypeMap Application::typeMap = {
+    {"int", tNedType::INT},
+    {"double", tNedType::DOUBLE},
+    {"string", tNedType::STRING},
+    {"xml", tNedType::XML},
+    {"bool", tNedType::BOOL},
+};
+
+Application::Application(std::string name, std::string type, std::string path)
 {
     this->name = name;
     this->type = type;
-    this->package = package;
-}
-
-Application::~Application()
-{
-    parameters.clear();
-}
-
-const AppParameter &Application::getParameter(std::string name) const
-{
-    for (auto const& p : parameters)
-        if (name.compare(p->getName()) == 0)
-            return *p;
-    
-    throw std::out_of_range("The specified name doesn't match any parameter");
+    this->path = path;
 }
 
 std::ostream &operator<<(std::ostream &os, const Application &obj)
@@ -26,13 +20,12 @@ std::ostream &operator<<(std::ostream &os, const Application &obj)
     // General information
     os << "Name:    " << obj.name << "\n"
        << "Type:    " << obj.type << "\n"
-       << "Package: " << obj.package << "\n"
-       << "Path:    " << obj.getFullPath() << "\n"
+       << "Path:    " << obj.path << "\n"
        << "Parameters:\n";
-    
+
     // Parameters
-    for (const auto &param : obj.parameters)
-        os << "\t" << *param << "\n";
-    
+    for (const auto &iter : obj.parameters)
+        os << "\t" << iter.first << " : " << iter.second << "\n";
+
     return os;
 }
