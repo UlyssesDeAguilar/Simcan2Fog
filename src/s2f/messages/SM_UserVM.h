@@ -56,7 +56,7 @@ public:
 
      VM_Request::InstanceRequestTimes &getInstanceRequestTimes(int index) { return vmRequests.at(index).times; }
 
-     virtual void insertVm(const VM_Request &vm) override { vmRequests.push_back(vm); }
+     virtual void appendVm(const VM_Request& vm) override { vmRequests.push_back(vm); }
      virtual void setVmArraySize(size_t size) override { vmRequests.resize(size); }
      virtual size_t getVmArraySize() const override { return vmRequests.size(); }
      virtual const VM_Request &getVm(size_t k) const override { return vmRequests.at(k); }

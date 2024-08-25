@@ -39,7 +39,7 @@ SM_UserVM *SM_UserVM::dup(const std::string &vmId) const
   {
     auto duplicate = new SM_UserVM();
     duplicate->SM_UserVM_Base::operator=(*this);
-    duplicate->insertVm(*iter);
+    duplicate->appendVm(*iter);
   }
 
   return nullptr;

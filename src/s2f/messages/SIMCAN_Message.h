@@ -230,8 +230,8 @@ public:
 	 */
 	std::vector<TraceComponent> getNodeTrace(int k);
 
-	virtual void insertTrace(const TraceComponent &trace) {};
 	virtual void insertTrace(size_t k, const TraceComponent &trace) {};
+	virtual void appendTrace(const TraceComponent& trace){};
 	virtual void eraseTrace(size_t k) {};
 };
 

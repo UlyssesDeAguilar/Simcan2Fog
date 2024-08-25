@@ -1,3 +1,0 @@
-#!/bin/sh
-cd /lustre/home/dc010/abbc/Simcan2CloudPruebas/simulations/ScenarioTest
-../../src/Simcan2Cloud -n ../:../../src $*

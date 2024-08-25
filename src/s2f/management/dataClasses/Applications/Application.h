@@ -21,7 +21,6 @@ private:
     const static TypeMap typeMap; // Utility map for parsing the type
 
 public:
-    using ParamPtr = std::unique_ptr<cParImpl>;
 
     /**
      * Constructor that sets each attribute and creates the corresponding application instance.

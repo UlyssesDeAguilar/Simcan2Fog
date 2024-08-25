@@ -21,17 +21,14 @@ Define_Module(DnsQuerierService);
 void DnsQuerierService::initialize(int stage)
 {
     // This layer could be initialized earlier, maybe in INITSTAGE_TRANSPORT_LAYER
-    switch (stage)
-    {
-    case INITSTAGE_LOCAL:
+    if (stage == INITSTAGE_LOCAL)
     {
         serverGateId = gate("querierIn")->getId();
         cache = check_and_cast<DnsCache *>(getModuleByPath("^.cache"));
-        break;
     }
-    case INITSTAGE_APPLICATION_LAYER:
-        break;
-    };
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
+    }
     ApplicationBase::initialize(stage);
 }
 
@@ -159,7 +156,7 @@ DnsRequest *DnsQuerierService::sendRequest(const char *domain, const L3Address &
     auto request = new DnsRequest();
     request->setRequestId(getNewQueryId());
     request->setOperationCode(OP_Code::QUERY);
-    request->insertQuestion(domain);
+    request->appendQuestion(domain);
 
     auto packet = new Packet("DnsQuery", Ptr<DnsRequest>(request));
     serverSocket.sendTo(packet, address, DNS_PORT);
@@ -173,7 +170,7 @@ DnsRequest *DnsQuerierService::sendRequest(DependenciesList list, const L3Addres
     request->setOperationCode(OP_Code::QUERY);
 
     for (const auto &question : *list)
-        request->insertQuestion(question->domain.c_str());
+        request->appendQuestion(question->domain.c_str());
 
     auto packet = new Packet("DnsQuery", Ptr<DnsRequest>(request));
     serverSocket.sendTo(packet, address, DNS_PORT);
@@ -208,7 +205,7 @@ void DnsQuerierService::socketDataArrived(UdpSocket *socket, Packet *packet)
         {
             for (int i = 0; i < request->getQuestionArraySize(); i++)
             {
-                const char * domain = request->getQuestion(i);
+                const char *domain = request->getQuestion(i);
                 auto iter = pendingRequests.find(domain);
                 pendingRequests.erase(iter);
                 questions.erase(domain);

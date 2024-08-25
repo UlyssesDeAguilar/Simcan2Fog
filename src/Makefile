@@ -2,15 +2,19 @@
 # OMNeT++/OMNEST Makefile for $(LIB_PREFIX)Simcan2Fog
 #
 # This file was generated with the command:
-#  opp_makemake --make-lib -f --deep -O out -KINET4_PROJ=../../inet4 -DINET_IMPORT -I. -I$$\(INET4_PROJ\)/src -L$$\(INET4_PROJ\)/src -lmysqlcppconn -lINET$$\(D\)
+#  opp_makemake --make-lib -f --deep -O out -KINET4_5_PROJ=../../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -lmysqlcppconn -lINET$$\(D\)
 #
 
 # Name of target to be created (-o option)
-TARGET = $(LIB_PREFIX)Simcan2Fog$(D)$(A_LIB_SUFFIX)
 TARGET_DIR = .
+TARGET_NAME = $(LIB_PREFIX)Simcan2Fog$(D)
+TARGET = $(TARGET_NAME)$(A_LIB_SUFFIX)
+TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
+TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
+TARGET_FILES = $(TARGET_DIR)/$(TARGET)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I. -I$(INET4_PROJ)/src
+INCLUDE_PATH = -I. -I$(INET4_5_PROJ)/src
 
 # Additional object and library files to link with
 EXTRA_OBJS =
@@ -22,17 +26,18 @@ O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
 OBJS = \
+    $O/s2f/apps/AppBase.o \
     $O/s2f/apps/ApplicationBuilder.o \
-    $O/s2f/apps/models/AppBase.o \
-    $O/s2f/apps/models/DummyApp/DummyApplication.o \
-    $O/s2f/apps/models/IotApplication/IotApplication.o \
-    $O/s2f/apps/models/LocalApplication/LocalApplication.o \
-    $O/s2f/apps/models/LocalIotApplication/LocalIotApplication.o \
-    $O/s2f/apps/models/simservice/SimService.o \
+    $O/s2f/apps/cloud/LocalApplication.o \
+    $O/s2f/apps/dummy/DummyApplication.o \
+    $O/s2f/apps/iot/IotApplication.o \
+    $O/s2f/apps/iot/LocalIotApplication.o \
+    $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
     $O/s2f/architecture/dns/DnsServiceSimplified.o \
     $O/s2f/architecture/dns/cache/DnsCache.o \
+    $O/s2f/architecture/dns/registry/DnsRegistryService.o \
     $O/s2f/architecture/dns/resolver/DnsQuerierService.o \
     $O/s2f/architecture/dns/resolver/DnsResolverService.o \
     $O/s2f/architecture/dns/server/DnsService.o \
@@ -42,9 +47,12 @@ OBJS = \
     $O/s2f/architecture/messagequeue/services/PullService.o \
     $O/s2f/architecture/messagequeue/services/PushService.o \
     $O/s2f/architecture/net/hub/CheckingHubModule.o \
+    $O/s2f/architecture/net/stack/dispatcher/ToggableDispatcher.o \
     $O/s2f/architecture/net/stack/listener/UdpListener.o \
+    $O/s2f/architecture/net/stack/proxy/AppProxy.o \
     $O/s2f/architecture/net/stack/queue/PullClient.o \
     $O/s2f/architecture/net/stack/queue/PushClient.o \
+    $O/s2f/architecture/net/stack/registry/ServiceRegistrar.o \
     $O/s2f/architecture/net/stack/resolver/DnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/hardwaremanagers/HardwareManager.o \
@@ -57,7 +65,6 @@ OBJS = \
     $O/s2f/management/dataClasses/Applications/AppInstance.o \
     $O/s2f/management/dataClasses/Applications/AppInstanceCollection.o \
     $O/s2f/management/dataClasses/Applications/Application.o \
-    $O/s2f/management/dataClasses/Applications/AppParameter.o \
     $O/s2f/management/dataClasses/SLAs/Sla.o \
     $O/s2f/management/dataClasses/Users/CloudUser.o \
     $O/s2f/management/dataClasses/Users/CloudUserInstance.o \
@@ -98,12 +105,14 @@ OBJS = \
     $O/s2f/users/generators/UserGenerator_simple.o \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
-    $O/s2f/apps/models/simservice/SimServiceReq_m.o \
+    $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
+    $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
     $O/s2f/architecture/net/routing/RoutingInfo_m.o \
+    $O/s2f/architecture/net/stack/dispatcher/ToggleReq_m.o \
+    $O/s2f/architecture/net/stack/proxy/RestMsg_m.o \
     $O/s2f/architecture/net/stack/resolver/RequestTimeout_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
-    $O/s2f/core/PayloadMessage_m.o \
     $O/s2f/management/cloudprovider/NodeEvent_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
@@ -120,12 +129,14 @@ OBJS = \
 
 # Message files
 MSGFILES = \
-    s2f/apps/models/simservice/SimServiceReq.msg \
+    s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
+    s2f/architecture/dns/registry/DnsRegistrationRequest.msg \
     s2f/architecture/net/routing/RoutingInfo.msg \
+    s2f/architecture/net/stack/dispatcher/ToggleReq.msg \
+    s2f/architecture/net/stack/proxy/RestMsg.msg \
     s2f/architecture/net/stack/resolver/RequestTimeout.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
-    s2f/core/PayloadMessage.msg \
     s2f/management/cloudprovider/NodeEvent.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \
@@ -144,7 +155,7 @@ MSGFILES = \
 SMFILES =
 
 # Other makefile variables (-K)
-INET4_PROJ=../../inet4
+INET4_5_PROJ=../../inet4.5
 
 #------------------------------------------------------------------------------
 
@@ -153,11 +164,7 @@ INET4_PROJ=../../inet4
 ifneq ("$(OMNETPP_CONFIGFILE)","")
 CONFIGFILE = $(OMNETPP_CONFIGFILE)
 else
-ifneq ("$(OMNETPP_ROOT)","")
-CONFIGFILE = $(OMNETPP_ROOT)/Makefile.inc
-else
 CONFIGFILE = $(shell opp_configfilepath)
-endif
 endif
 
 ifeq ("$(wildcard $(CONFIGFILE))","")
@@ -171,40 +178,42 @@ MSGCOPTS = $(INCLUDE_PATH)
 SMCOPTS =
 
 # we want to recompile everything if COPTS changes,
-# so we store COPTS into $COPTS_FILE and have object
-# files depend on it (except when "make depend" was called)
+# so we store COPTS into $COPTS_FILE (if COPTS has changed since last build)
+# and make the object files depend on it
 COPTS_FILE = $O/.last-copts
 ifneq ("$(COPTS)","$(shell cat $(COPTS_FILE) 2>/dev/null || echo '')")
-$(shell $(MKPATH) "$O" && echo "$(COPTS)" >$(COPTS_FILE))
+  $(shell $(MKPATH) "$O")
+  $(file >$(COPTS_FILE),$(COPTS))
 endif
 
 #------------------------------------------------------------------------------
 # User-supplied makefile fragment(s)
-# >>>
-# inserted from file 'makefrag':
-MSGC:=$(MSGC) --msg6
+-include makefrag
 
-# <<<
 #------------------------------------------------------------------------------
 
 # Main target
-all: $(TARGET_DIR)/$(TARGET)
+all: $(TARGET_FILES)
 
 $(TARGET_DIR)/% :: $O/%
 	@mkdir -p $(TARGET_DIR)
 	$(Q)$(LN) $< $@
-ifeq ($(TOOLCHAIN_NAME),clangc2)
-	$(Q)-$(LN) $(<:%.dll=%.lib) $(@:%.dll=%.lib)
+ifeq ($(TOOLCHAIN_NAME),clang-msabi)
+	-$(Q)-$(LN) $(<:%.dll=%.lib) $(@:%.dll=%.lib) 2>/dev/null
+
+$O/$(TARGET_NAME).pdb: $O/$(TARGET)
 endif
 
 $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
 	@$(MKPATH) $O
 	@echo Creating static library: $@
-	$(Q)$(AR) $O/$(TARGET) $(OBJS) $(EXTRA_OBJS)
+	$(Q)$(AR_CR) $O/$(TARGET) $(OBJS) $(EXTRA_OBJS)
 
 .PHONY: all clean cleanall depend msgheaders smheaders
 
-.SUFFIXES: .cc
+# disabling all implicit rules
+.SUFFIXES :
+.PRECIOUS : %_m.h %_m.cc
 
 $O/%.o: %.cc $(COPTS_FILE) | msgheaders smheaders
 	@$(MKPATH) $(dir $@)
@@ -226,14 +235,18 @@ smheaders: $(SMFILES:.sm=_sm.h)
 clean:
 	$(qecho) Cleaning $(TARGET)
 	$(Q)-rm -rf $O
-	$(Q)-rm -f $(TARGET_DIR)/$(TARGET)
-	$(Q)-rm -f $(TARGET_DIR)/$(TARGET:%.dll=%.lib)
+	$(Q)-rm -f $(TARGET_FILES)
 	$(Q)-rm -f $(call opp_rwildcard, . , *_m.cc *_m.h *_sm.cc *_sm.h)
 
 cleanall:
-	$(Q)$(MAKE) -s clean MODE=release
-	$(Q)$(MAKE) -s clean MODE=debug
+	$(Q)$(CLEANALL_COMMAND)
 	$(Q)-rm -rf $(PROJECT_OUTPUT_DIR)
+
+help:
+	@echo "$$HELP_SYNOPSYS"
+	@echo "$$HELP_TARGETS"
+	@echo "$$HELP_VARIABLES"
+	@echo "$$HELP_EXAMPLES"
 
 # include all dependencies
 -include $(OBJS:%=%.d) $(MSGFILES:%.msg=$O/%_m.h.d)

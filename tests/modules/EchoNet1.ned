@@ -1,4 +1,4 @@
-import s2f.Architecture.Network.Switch.Switch;
+import s2f.architecture.net.switch.Switch;
 import echo.Echo;
 
 network EchoNet1 {
@@ -19,7 +19,7 @@ network EchoNet1 {
         }
 
     connections:
-        main.comm <--> sw.upper;
+        main.comm <--> sw.manager;
 
         for i=0..vecSize-1 {
             sw.comm++ <--> vec[i].comm;

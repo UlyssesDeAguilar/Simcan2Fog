@@ -16,6 +16,7 @@
 #include "PullClient.h"
 
 #include <string>
+using namespace inet;
 
 Define_Module(PullClient);
 

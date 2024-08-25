@@ -4,7 +4,6 @@
 #include <omnetpp.h>
 
 #include "s2f/management/dataClasses/Applications/Application.h"
-#include "s2f/management/dataClasses/Applications/AppParameter.h"
 
 /**
  * @brief This class encapsulates the steps needed for app instantiation

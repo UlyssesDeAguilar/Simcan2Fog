@@ -18,9 +18,7 @@ DcManager::~DcManager()
 
 void DcManager::initialize(int stage)
 {
-    switch (stage)
-    {
-    case LOCAL:
+    if (stage == LOCAL)
     {
         // Init super-class
         ManagerBase::initialize();
@@ -44,9 +42,8 @@ void DcManager::initialize(int stage)
         cpuStatusMessage = new cMessage("CPU_STATUS", CPU_STATUS);
         scheduleAt(SimTime(), cpuManageMachinesMessage);
         scheduleAt(SimTime(), cpuStatusMessage);
-        break;
     }
-    case NEAR:
+    else if (stage == NEAR)
     {
         // Locate the ResourceManager
         resourceManager = check_and_cast<ResourceManager *>(getModuleByPath("^.resourceManager"));
@@ -54,14 +51,13 @@ void DcManager::initialize(int stage)
         resourceManager->setReservedNodes(par("reservedNodes"));
 
         nodeSelectionStrategy = dc::SelectionStrategy::newStrategy(par("selectionStrategy"));
-    
+
         if (nodeSelectionStrategy == nullptr)
             error("Unknown selection strategy");
-        
+
         nodeSelectionStrategy->setResourceManager(resourceManager);
-        break;
     }
-    case inet::InitStages::INITSTAGE_APPLICATION_LAYER:
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
         // Set the global DC address into the resource manager
         resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.stack")));
@@ -78,10 +74,6 @@ void DcManager::initialize(int stage)
             Packet *packet = buildUpdateEvent();
             sendDelayed(packet, 1, gate("eventOut"));
         }
-        break;
-    }
-    default:
-        break;
     }
 }
 

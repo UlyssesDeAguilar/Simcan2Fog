@@ -53,23 +53,24 @@ std::string AppInstanceCollection::toString (bool showParameters){
     std::ostringstream info;
     int i, currentParameter;
 
-        info << "# Instances:" << appInstances.size() << " of " << appBase->getName() << "(" << appBase->getType() << ")" << std::endl;
+        info << "# Instances:" << appInstances.size() << " of " << appBase->getName() << "(" << appBase->getType() << ")" << "\n";
 
         for (i=0; i<appInstances.size(); i++){
-            info << "\t\t  - appInstance[" << i << "]: " << appInstances.at(i)->toString() << std::endl;
+            info << "\t\t  - appInstance[" << i << "]: " << appInstances.at(i)->toString() << "\n";
         }
 
         if (showParameters){
 
-            info << std::endl;
-            info << "\t\t\tParameters:" << std::endl;
+            info << "\n";
+            info << "\t\t\tParameters:" << "\n";
 
-            for (currentParameter = 0; currentParameter < appBase->getNumParameters(); currentParameter++){
-                info << "\t\t\t  > " << appBase->getParameter(currentParameter).toString() << std::endl;
+            for (const auto &iter: appBase->getAllParameters())
+            {
+                info << "\t\t\t  > " << iter.first << " = " << iter.second << "\n";
             }
         }
 
-        info << std::endl;
+        info << "\n";
 
 
     return info.str();

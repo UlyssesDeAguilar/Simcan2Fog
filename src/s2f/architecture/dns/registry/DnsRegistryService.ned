@@ -1,4 +1,4 @@
-package s2f.architecture.dns;
+package s2f.architecture.dns.registry;
 import inet.applications.contract.IApp;
 
 // Module for registering and resolving addresses

@@ -17,39 +17,22 @@
 #define SIMCAN_EX_SINKDELEGATE_H_
 
 #include <omnetpp.h>
-#include "inet/queueing/base/PacketSinkBase.h"
-#include "inet/queueing/contract/IActivePacketSink.h"
+#include "inet/queueing/sink/ActivePacketSink.h"
 
 using namespace omnetpp;
 
-class SinkDelegate : public inet::queueing::PacketSinkBase, public inet::queueing::IActivePacketSink
-{
+class SinkDelegate: public inet::queueing::ActivePacketSink {
 protected:
-  cGate *inputGate = nullptr;
-  inet::queueing::IPassivePacketSource *provider = nullptr;
+    cGate *destinationGate { };
+    bool clientReady = false;
 
-  cPar *collectionIntervalParameter = nullptr;
-  cMessage *collectionTimer = nullptr;
-
-  cGate *destinationGate{};
-  bool clientReady = false;
-
-  virtual void initialize(int stage) override;
-  virtual void handleMessage(cMessage *msg) override;
-
-  virtual void scheduleCollectionTimer();
-  virtual void collectPacket();
-
+    virtual void handleMessage(cMessage *msg) override;
+    virtual void scheduleCollectionTimerAndCollectPacket() override;
+    virtual void collectPacket() override;
 public:
-  virtual ~SinkDelegate() { cancelAndDelete(collectionTimer); }
-  virtual inet::queueing::IPassivePacketSource *getProvider(cGate *gate) override { return provider; }
+    void setDestinationGate(cGate *destination) { this->destinationGate = destination; }
+    void enableClientReady();
 
-  virtual bool supportsPushPacket(cGate *gate) const override { return false; }
-  virtual bool supportsPopPacket(cGate *gate) const override { return inputGate == gate; }
-  virtual void handleCanPopPacket(cGate *gate) override;
-
-  void setDestinationGate(cGate *destination) { this->destinationGate = destination; }
-  void enableClientReady();
 };
 
 #endif

@@ -1,5 +1,5 @@
 #include "DnsResolver.h"
-#include "s2f/apps/models/AppBase.h"
+#include "s2f/apps/AppBase.h"
 
 using namespace dns;
 
@@ -74,7 +74,7 @@ void DnsResolver::resolve(const char *domain, ResolverCallback *callback)
     const auto &request = makeShared<DnsRequest>();
     request->setOperationCode(QUERY);
     request->setRequestId(getNewRequestId());
-    request->insertQuestion(domain);
+    request->appendQuestion(domain);
 
     auto packet = new Packet("Dns Request");
     packet->insertAtBack(request);

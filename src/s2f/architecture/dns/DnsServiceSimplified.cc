@@ -6,12 +6,10 @@ Define_Module(DnsServiceSimplified);
 
 void DnsServiceSimplified::initialize(int stage)
 {
-    switch (stage)
+    if (stage == INITSTAGE_APPLICATION_LAYER)
     {
-    case INITSTAGE_APPLICATION_LAYER:
         cache = check_and_cast<DnsCache*>(getModuleByPath("^.cache"));
-        break;
-    };
+    }
     ApplicationBase::initialize(stage);
 }
 
@@ -96,13 +94,13 @@ void DnsServiceSimplified::handleQuery(const Packet *packet)
         if (record)
         {
             ok = allocateIfNull(ok, request.get());
-            ok->insertQuestion(request->getQuestion(i));
+            ok->appendQuestion(request->getQuestion(i));
             ok->insertAuthoritativeAnswers(*record);
         }
         else
         {
             error = allocateIfNull(error, request.get());
-            error->insertQuestion(request->getQuestion(i));
+            error->appendQuestion(request->getQuestion(i));
         }
     }
 

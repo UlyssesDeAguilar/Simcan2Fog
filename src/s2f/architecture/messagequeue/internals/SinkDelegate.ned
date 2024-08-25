@@ -14,16 +14,13 @@
 // 
 
 package s2f.architecture.messagequeue.internals;
-import inet.queueing.base.PacketSinkBase;
-import inet.queueing.contract.IActivePacketSink;
+import inet.queueing.sink.ActivePacketSink;
 
-simple SinkDelegate extends PacketSinkBase like IActivePacketSink
+simple SinkDelegate extends ActivePacketSink
 {
     parameters:
-        double collectionInterval @unit(s) = default(5s);   // Default check for queue contents
-        @class(SinkDelegate);
-    
+        collectionInterval @unit(s) = default(5s);   // Default check for queue contents
+        @class(SinkDelegate);    
     gates:
-        input in @labels(pop);
         output out @directIn;
 }

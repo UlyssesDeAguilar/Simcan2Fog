@@ -16,6 +16,7 @@
 #include "PushClient.h"
 
 Define_Module(PushClient);
+using namespace inet;
 
 void PushClient::initialize(int stage)
 {

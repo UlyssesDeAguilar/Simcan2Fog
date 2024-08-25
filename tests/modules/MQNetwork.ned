@@ -1,5 +1,5 @@
-import s2f.Architecture.Network.Stack.NetworkStack;
-import s2f.Architecture.Network.MessageQueue.MessageQueue;
+import s2f.architecture.net.stack.NetworkStack;
+import s2f.architecture.messagequeue.MessageQueue;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;

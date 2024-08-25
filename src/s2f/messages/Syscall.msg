@@ -4,14 +4,6 @@ import inet.common.packet.chunk.Chunk;
 
 namespace hypervisor;
 
-cplusplus{{
-    #include "inet/common/Ptr.h"
-    using PTR = inet::Ptr<const inet::Chunk>;
-}}
-
-class PTR {@existingClass; @descriptor(false);}
-
-
 enum SyscallCode
 {
     READ = 0;      // Read from disk
@@ -43,21 +35,4 @@ message Syscall extends SIMCAN_Message {
 message DiskSyscall extends Syscall
 {
     double bufferSize;
-}
-
-message ResolverSyscall extends Syscall
-{
-    opCode = RESOLVE;
-    string domainName;
-    uint32_t resolvedIp;
-}
-
-message SocketIoSyscall extends Syscall
-{
-    int socketFd;
-    uint32_t targetIp;
-    uint32_t targetPort;
-    ConnectionMode mode;
-    string serviceName;
-    PTR payload;
 }

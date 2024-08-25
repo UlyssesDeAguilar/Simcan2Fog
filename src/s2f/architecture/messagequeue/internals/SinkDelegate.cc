@@ -15,59 +15,33 @@
 
 #include "SinkDelegate.h"
 
-#include "inet/common/ModuleAccess.h"
-#include "inet/common/Simsignals.h"
-#include "inet/queueing/sink/ActivePacketSink.h"
 
 using namespace inet;
 using namespace inet::queueing;
 
 Define_Module(SinkDelegate);
 
-void SinkDelegate::initialize(int stage)
-{
-    PacketSinkBase::initialize(stage);
-    if (stage == INITSTAGE_LOCAL)
-    {
-        inputGate = gate("in");
-        provider = findConnectedModule<IPassivePacketSource>(inputGate);
-        collectionIntervalParameter = &par("collectionInterval");
-        collectionTimer = new cMessage("CollectionTimer");
-    }
-    else if (stage == INITSTAGE_QUEUEING)
-        checkPopPacketSupport(inputGate);
-}
-
 void SinkDelegate::handleMessage(cMessage *message)
 {
-    if (message == collectionTimer)
-    {
-        if (provider->canPopSomePacket(inputGate->getPathStartGate()))
-        {
-            // If client is ready then collect, if not try again later
-            if (clientReady)
-            {
-                collectPacket();
-                scheduleCollectionTimer();
-            }
-            else
-                scheduleCollectionTimer();
-        }
-    }
-    else
-        throw cRuntimeError("Unknown message");
-}
-
-void SinkDelegate::scheduleCollectionTimer()
-{
-    scheduleAt(simTime() + collectionIntervalParameter->doubleValue(), collectionTimer);
+	if (message == collectionTimer)
+	{
+		if (provider == nullptr || provider->canPullSomePacket(inputGate->getPathStartGate()))
+		{
+			if (clientReady)
+				collectPacket();
+			scheduleCollectionTimer(collectionIntervalParameter->doubleValue());
+		}
+	}
+	else
+		throw cRuntimeError("Unknown message");
 }
 
 void SinkDelegate::collectPacket()
 {
-    auto packet = provider->popPacket(inputGate->getPathStartGate());
+    auto packet = provider->pullPacket(inputGate->getPathStartGate());
     take(packet);
-    EV_INFO << "Collecting packet " << packet->getName() << ".\n";
+    emit(packetPulledSignal, packet);
+    EV_INFO << "Collecting packet" << EV_FIELD(packet) << EV_ENDL;
     numProcessedPackets++;
     processedTotalLength += packet->getDataLength();
     updateDisplayString();
@@ -77,22 +51,23 @@ void SinkDelegate::collectPacket()
     clientReady = false;
 }
 
-void SinkDelegate::handleCanPopPacket(cGate *gate)
+void SinkDelegate::scheduleCollectionTimerAndCollectPacket()
 {
-    Enter_Method("handleCanPopPacket");
-    if (gate->getPathEndGate() == inputGate && !collectionTimer->isScheduled())
-    {
-        // If client is ready then collect, if not try again later
+    if (!initialCollectionOffsetScheduled && initialCollectionOffset >= CLOCKTIME_ZERO) {
+        scheduleCollectionTimer(initialCollectionOffset);
+        initialCollectionOffsetScheduled = true;
+    }
+    else if (provider == nullptr || provider->canPullSomePacket(inputGate->getPathStartGate())) {
+        scheduleCollectionTimer(collectionIntervalParameter->doubleValue());
+
         if (clientReady)
-            collectPacket();
-        
-        scheduleCollectionTimer();
+        	collectPacket();
     }
 }
 
 void SinkDelegate::enableClientReady()
 {
-    Enter_Method_Silent();
-    EV_TRACE << "Client is ready to recieve another package\n";
-    clientReady = true;
+	Enter_Method_Silent();
+	EV_TRACE << "Client is ready to recieve another package\n";
+	clientReady = true;
 }

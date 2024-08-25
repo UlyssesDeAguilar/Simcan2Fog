@@ -45,7 +45,7 @@ protected:
 
     virtual ~DcManager();
     virtual void initialize(int stage) override;
-    virtual int numInitStages() const override { return inet::InitStages::INITSTAGE_APPLICATION_LAYER + 1; }
+    virtual int numInitStages() const override { return inet::INITSTAGE_APPLICATION_LAYER + 1; }
     virtual cGate *getOutGate(cMessage *msg) override;
 
     virtual void initializeSelfHandlers() override;

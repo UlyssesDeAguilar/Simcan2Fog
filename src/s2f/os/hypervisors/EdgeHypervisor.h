@@ -29,7 +29,7 @@ namespace hypervisor
         const char *starterApps;
         SM_UserAPP *sam{};
         virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return INITSTAGE_LAST + 1; }
+        virtual int numInitStages() const override { return inet::INITSTAGE_LAST + 1; }
         virtual HardwareManager *locateHardwareManager() override { return check_and_cast<HardwareManager *>(getModuleByPath("^.hwm")); }
         virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) override { return appsVector->getSubmodule("appModule", pid); }
         virtual uint32_t resolveGlobalVmId(const std::string &vmId) override { return 0; }

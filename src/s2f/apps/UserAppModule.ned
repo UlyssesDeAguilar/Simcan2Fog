@@ -1,5 +1,4 @@
 package s2f.apps;
-import s2f.apps.models.IApp;
 
 // Module that contains a user application. The parameter <i>userAppType</i> defines the name of the application to be executed.
 //

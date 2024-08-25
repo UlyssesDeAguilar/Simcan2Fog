@@ -29,7 +29,7 @@ class PullClient : public cSimpleModule
 private:
   std::string parentTopic;
   SIMCAN_Message *signal;
-  Packet *ackTemplate;
+  inet::Packet *ackTemplate;
 
 protected:
   virtual void initialize(int stage) override;

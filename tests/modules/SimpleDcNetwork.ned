@@ -1,8 +1,8 @@
-import s2f.Core.SimData.SimData;
-import s2f.Architecture.Nodes.Iot.*;
-import s2f.Architecture.Nodes.Fog.FogNode;
-import s2f.Architecture.Network.Adapter.NetworkAdapter;
-import DcDriver.SimpleDc;
+import s2f.core.simdata.SimData;
+import s2f.architecture.nodes.Iot.*;
+import s2f.architecture.nodes.Fog.FogNode;
+import s2f.architecture.net.stack.NetworkStack;
+
 import DcDriver.DcDriver;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;

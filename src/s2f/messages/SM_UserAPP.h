@@ -31,7 +31,7 @@ protected:
      * For adding new app requests one should use the createNewApp* or addAppRequest methods
      * @param size new size
      */
-    virtual void setAppArraySize(size_t size) { vmAppGroupedVector.reserve(size); }
+    virtual void setAppArraySize(size_t size) override { vmAppGroupedVector.reserve(size); }
 
     /**
      * @brief Set the App object in the specified position
@@ -39,12 +39,12 @@ protected:
      * @param k Position (AppId !)
      * @param app App request
      */
-    virtual void setApp(size_t k, const AppRequest &app);
+    virtual void setApp(size_t k, const AppRequest &app) override;
 
     /* Extra methods, could be reused for the future*/
-    virtual void insertApp(size_t k, const AppRequest &app) {};
-    virtual void insertApp(const AppRequest &app) {};
-    virtual void eraseApp(size_t k) {};
+    virtual void insertApp(size_t k, const AppRequest &app) override {};
+    virtual void appendApp(const AppRequest& app) override {};
+    virtual void eraseApp(size_t k) override {};
 
 public:
     SM_UserAPP();
@@ -56,9 +56,9 @@ public:
     void increaseFinishedApps() { nFinishedApps++; };
     void decreaseFinishedApps() { nFinishedApps--; };
 
-    size_t getAppArraySize() const { return vmAppGroupedVector.size(); }
+    size_t getAppArraySize() const override{ return vmAppGroupedVector.size(); }
     AppRequest &getApp(size_t k) { return vmAppGroupedVector.flattenedForUpdate().at(k); }
-    const AppRequest &getApp(size_t k) const { return const_cast<SM_UserAPP *>(this)->getApp(k); };
+    const AppRequest &getApp(size_t k) const override{ return const_cast<SM_UserAPP *>(this)->getApp(k); };
 
     void changeState(const std::string &service, const std::string &vmId, tApplicationState eNewState);
     void changeStateByIndex(int nIndex, tApplicationState eNewState);
@@ -75,7 +75,7 @@ public:
     bool allAppsFinished() { return nFinishedApps >= getAppArraySize(); }
     bool allAppsFinished(const std::string &vmId);
 
-    virtual SM_UserAPP *dup() const { return new SM_UserAPP(*this); }
+    virtual SM_UserAPP *dup() const override { return new SM_UserAPP(*this); }
     virtual SM_UserAPP *dup(const std::string &vmId) const;
 
     group_vector<std::string, AppRequest>::iterator begin() { return vmAppGroupedVector.begin(); }

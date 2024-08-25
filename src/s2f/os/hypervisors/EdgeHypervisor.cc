@@ -7,9 +7,7 @@ void EdgeHypervisor::initialize(int stage)
     // Let the parent setup initialize first
     Hypervisor::initialize(stage);
 
-    switch (stage)
-    {
-    case LOCAL:
+    if (stage == LOCAL)
     {
         appsVector = getModuleByPath("^.apps");
         starterApps = par("apps");
@@ -22,9 +20,8 @@ void EdgeHypervisor::initialize(int stage)
             sam = (*vec)[0];
             delete vec;
         }
-        break;
     }
-    case NEAR:
+    else if (stage == NEAR)
     {
         /*
            The control tables were already initialized by the parent class
@@ -39,13 +36,10 @@ void EdgeHypervisor::initialize(int stage)
         vmControl.globalId = "local";
         vmControl.state = vmRunning;
         vmControl.request = sam;
-        break;
     }
-    case INITSTAGE_LAST:
+    else if (stage == inet::INITSTAGE_LAST)
+    {
         if (sam)
             handleAppRequest(sam);
-        break;
-    default:
-        break;
     }
 }

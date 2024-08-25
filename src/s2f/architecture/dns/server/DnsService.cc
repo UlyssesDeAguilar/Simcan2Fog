@@ -5,9 +5,7 @@ Define_Module(DnsService);
 void DnsService::initialize(int stage)
 {
     // This layer could be initialized earlier, maybe in INITSTAGE_TRANSPORT_LAYER
-    switch (stage)
-    {
-    case INITSTAGE_LOCAL:
+    if (stage == INITSTAGE_LOCAL)
     {
         mode = parseMode(par("mode"));
         serverName = par("serverName");
@@ -21,15 +19,14 @@ void DnsService::initialize(int stage)
         WATCH(mode);
         WATCH(serverName);
         // WATCH_MAP(records);
-        break;
     }
-    case INITSTAGE_APPLICATION_LAYER:
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
         if (mode == ROOT || mode == TLD)
             scanNetwork();
 
         localAddress = L3AddressResolver().addressOf(getParentModule());
-        break;
-    };
+    }
     ApplicationBase::initialize(stage);
 }
 
@@ -54,7 +51,7 @@ void DnsService::scanNetwork()
 {
     cTopology topo;
     ResourceRecord r;
-    r.type = RR_Type::NS;
+    r.type = ResourceRecord::RR_Type::NS;
 
     if (mode == ROOT)
     {
@@ -146,7 +143,7 @@ void DnsService::handleQuery(const Packet *packet)
 
     auto allocateIfNull = [this](DnsRequest *p, const DnsRequest *req) -> DnsRequest *
     { if (!p) return prepareResponse(req); else return p; };
-    
+
     DnsRequest *ok{};
     DnsRequest *error{};
 
@@ -158,7 +155,7 @@ void DnsService::handleQuery(const Packet *packet)
         if (vec)
         {
             p = allocateIfNull(ok, request.get());
-            p->insertQuestion(request->getQuestion(i));
+            p->appendQuestion(request->getQuestion(i));
             for (const auto &record : *vec)
             {
                 if (mode == NS)
@@ -170,7 +167,7 @@ void DnsService::handleQuery(const Packet *packet)
         else
         {
             p = allocateIfNull(error, request.get());
-            p->insertQuestion(request->getQuestion(i));
+            p->appendQuestion(request->getQuestion(i));
         }
     }
     // Indicate everything went OK
@@ -233,7 +230,7 @@ void DnsService::registerService(const char *serviceName)
     stream << serviceName << "." << fqdn[2] << "." << fqdn[3];
 
     ResourceRecord r;
-    r.type = RR_Type::A;
+    r.type = ResourceRecord::RR_Type::A;
     r.domain = stream.str().c_str();
     r.ip = localAddress;
 

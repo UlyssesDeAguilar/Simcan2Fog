@@ -20,15 +20,15 @@ protected:
     virtual void handleMessage(cMessage *msg) override;
     virtual void finish() override;
 
-    virtual void socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent);
-    virtual void socketEstablished(TcpSocket *socket);
-    virtual void socketPeerClosed(TcpSocket *socket);
-    virtual void socketFailure(TcpSocket *socket, int code);
+    virtual void socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent) override;
+    virtual void socketEstablished(TcpSocket *socket) override;
+    virtual void socketPeerClosed(TcpSocket *socket) override;
+    virtual void socketFailure(TcpSocket *socket, int code) override;
 
-    virtual void socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo) { error("Tcp Client: accepting connections disabled"); }
-    virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) {};
-    virtual void socketDeleted(TcpSocket *socket) {};
-    virtual void socketClosed(TcpSocket *socket) {};
+    virtual void socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo) override { error("Tcp Client: accepting connections disabled"); }
+    virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) override {};
+    virtual void socketDeleted(TcpSocket *socket) override {};
+    virtual void socketClosed(TcpSocket *socket) override {};
 
 public:
     void registerService(const char *domain);
