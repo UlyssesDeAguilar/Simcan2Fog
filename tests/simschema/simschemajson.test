@@ -1,0 +1,129 @@
+%description:
+Tests the correct behaviour of the JsonDataEngine implementation
+
+%inifile: omnetpp.ini
+[General]
+network = Unconnected
+sim-time-limit = 10s
+
+*.simData.manager.experiment = "Experiment-1"
+*.simData.engine.apps = readJSON("apps.json")
+*.simData.engine.vms = readJSON("vms.json")
+*.simData.engine.slas = readJSON("slas.json")
+*.simData.engine.users = readJSON("users.json")
+*.simData.engine.experiments = readJSON("experiments.json")
+
+
+%file: apps.json
+[
+    {
+        "name": "AppCPUIntensive",
+        "model": "LocalApplication",
+        "package": "s2f.apps.cloud",
+        "parameters": {
+            "inputDataSize" : "10 MiB",
+            "outputDataSize" : "5 MiB",
+            "inputFile": "/inputFile_0.dat",
+            "outputFile": "/outputFile_0.dat",
+            "MIs": "79200000",
+            "iterations": "5"
+        }
+    }
+]
+
+%file: vms.json
+[
+    {
+        "name": "VM_4xlarge",
+        "cost": 23.0,
+        "cores": 16,
+        "scu": 16.0,
+        "disk": 1000.0,
+        "memory": 64.0
+    },
+]
+
+%file: slas.json
+[
+    {
+        "name": "Slai0d0c0",
+        "bindings": [
+            {
+                "name": "VM_4xlarge",
+                "cost": 0.92,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            }
+        ]
+    }
+]
+
+%file: users.json
+{
+    "User1": {
+        "vms": [
+            {
+                "name": "VM_4xlarge",
+                "instances": 2,
+                "rent_time": 2
+            }
+        ],
+        "apps": [
+            {
+                "name": "AppCPUIntensive",
+                "instances": 2
+            }
+        ],
+        "priority": true,
+        "sla_id": "Slai0d0c0"
+    }
+}
+
+%file: experiments.json
+{
+    "Experiment-1": {
+        "users": [
+            {
+                "user_id": "User",
+                "instances": 5
+            }
+        ]
+    }
+}
+
+%# This section does the actual checking of what we expect
+
+%not-contains: stdout
+undisposed object:
+
+%not-contains: stdout
+-- check module destructor
+
+%contains: stdout
+Search App with name: AppCPUIntensive
+Name:    AppCPUIntensive
+Type:    LocalApplication
+Path:    s2f.apps.cloud
+Parameters:
+	MIs : 79200000
+	inputDataSize : 10 MiB
+	inputFile : /inputFile_0.dat
+	iterations : 5
+	outputDataSize : 5 MiB
+	outputFile : /outputFile_0.dat
+
+Search VM with name: VM_4xlarge
+Type:        VM_4xlarge
+Cost (h):    23
+Cores (#):   16
+SCU (#):     16
+Disk (GB):   1000
+Memory (GB): 64
+
+Search SLA with name: Slai0d0c0
+Type:Slai0d0c0
+	  + VMCost[VM_4xlarge] -> base cost: 0.92 - cost increase: 0 - cost discount: 0 - compensation: 0
+
+Search App with name: No-app
+Application: No-app not found
