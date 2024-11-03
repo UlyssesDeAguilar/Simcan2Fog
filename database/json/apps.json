@@ -1,0 +1,15 @@
+[
+    {
+        "name": "AppCPUIntensive",
+        "model": "LocalApplication",
+        "package": "s2f.apps.cloud",
+        "parameters": {
+            "inputDataSize" : "10 MiB",
+            "outputDataSize" : "5 MiB",
+            "inputFile": "/inputFile_0.dat",
+            "outputFile": "/outputFile_0.dat",
+            "MIs": "79200000",
+            "iterations": "5"
+        }
+    }
+]

@@ -193,7 +193,7 @@ uint64_t CloudProvider::calculateRequestedCores(const SM_UserVM *request)
   for (int i = 0; i < request->getVmArraySize(); i++)
   {
     const VM_Request &vmRequest = request->getVm(i);
-    total += dataManager->searchVirtualMachine(vmRequest.vmType)->getNumCores();
+    total += dataManager->searchVm(vmRequest.vmType)->getNumCores();
   }
   return total;
 }

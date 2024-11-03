@@ -96,7 +96,7 @@ cModule *DcHypervisor::handleVmRequest(const VM_Request &request, const char *us
     unsigned int *cpuCoreIndex;
 
     // Query vm type
-    const VirtualMachine *vm = dataManager->searchVirtualMachine(request.vmType);
+    const VirtualMachine *vm = dataManager->searchVm(request.vmType);
 
     // Extract requested resources
     uint32_t cores = vm->getNumCores();

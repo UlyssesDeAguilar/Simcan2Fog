@@ -79,8 +79,8 @@ protected:
 
     // Helpers
     inet::Packet * buildUpdateEvent();
-    hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return getOrNull(acceptedVMsMap, vmId); }
-    SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return getOrNull(handlingAppsRqMap, userId); }
+    hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return acceptedVMsMap.at(vmId); }
+    SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return handlingAppsRqMap.at(userId); }
     
     /**
      * Calculates the statistics of the experiment.

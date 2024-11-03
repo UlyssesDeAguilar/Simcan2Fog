@@ -45,7 +45,12 @@ void Sla::addVmCost(const std::string &vmType, double base, double increase, dou
 
 const Sla::VMCost *Sla::getVmCost(const std::string& vmType) const
 {
-    return getOrNullConst(vmCostMap, vmType);
+    return &vmCostMap.at(vmType);
+}
+
+Sla::VMCost *Sla::getVmCostForUpdate(const std::string& vmType)
+{
+    return &vmCostMap.at(vmType);
 }
 
 std::string Sla::toString()

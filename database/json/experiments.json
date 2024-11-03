@@ -1,0 +1,10 @@
+{
+    "Experiment-1": {
+        "users": [
+            {
+                "user_id": "User",
+                "instances": 5
+            }
+        ]
+    }
+}

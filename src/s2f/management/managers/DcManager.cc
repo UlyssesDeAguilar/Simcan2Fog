@@ -308,7 +308,7 @@ bool DcManager::checkVmUserFit(SM_UserVM *&userVM_Rq)
     {
         // Retrieve vm and select candidate
         VM_Request &vmRequest = userVM_Rq->getVmForUpdate(i);
-        auto vmSpecs = dataManager->searchVirtualMachine(vmRequest.vmType);
+        auto vmSpecs = dataManager->searchVm(vmRequest.vmType);
         if (vmSpecs == nullptr)
             error("VmType %s not found in virtual machine definitions", vmRequest.vmType.c_str());
 

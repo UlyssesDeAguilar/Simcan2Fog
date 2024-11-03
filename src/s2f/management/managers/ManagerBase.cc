@@ -105,7 +105,7 @@ const CloudUser *ManagerBase::findUserTypeById(const std::string &userId)
 
 int ManagerBase::getTotalCoresByVmType(const std::string &vmType)
 {
-    auto vm = dataManager->searchVirtualMachine(vmType);
+    auto vm = dataManager->searchVm(vmType);
     return vm != nullptr ? vm->getNumCores() : 0;
 }
 

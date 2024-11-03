@@ -1,0 +1,77 @@
+[
+    {
+        "name": "Slai0d0c0",
+        "bindings": [
+            {
+                "name": "VM_4xlarge",
+                "cost": 0.92,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_2xlarge",
+                "cost": 0.46,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_xlarge",
+                "cost": 0.23,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_large",
+                "cost": 0.12,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_medium",
+                "cost": 0.05,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_small",
+                "cost": 0.03,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_micro",
+                "cost": 0.02,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_nanoHD",
+                "cost": 0.01,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_nanoRAM",
+                "cost": 0.01,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            },
+            {
+                "name": "VM_nano",
+                "cost": 0.01,
+                "increase": 0.0,
+                "discount": 0.0,
+                "compensation": 0.0 
+            }
+        ]
+    }
+]

@@ -125,7 +125,7 @@ void SimService::handleMessage(cMessage *msg)
             {
                 // MINE
                 const char *vmType = dynamic_pointer_cast<const SimServiceReq>(appmsg)->getVmType();
-                const VirtualMachine *vm = dataManager->searchVirtualMachine(vmType);
+                const VirtualMachine *vm = dataManager->searchVm(vmType);
                 resourceManager->emitSignals(vm, true);
             }
 

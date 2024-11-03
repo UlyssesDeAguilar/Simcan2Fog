@@ -62,6 +62,8 @@ public:
      */
     const Sla::VMCost *getVmCost(const std::string& vmType) const;
 
+    Sla::VMCost *getVmCostForUpdate(const std::string& vmType);
+
     /**
      * Converts the information of this sla into a string.
      *

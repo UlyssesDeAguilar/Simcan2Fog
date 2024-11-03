@@ -1,0 +1,19 @@
+{
+    "User1": {
+        "vms": [
+            {
+                "name": "VM_medium",
+                "instances": 2,
+                "rent_time": 2
+            }
+        ],
+        "apps": [
+            {
+                "name": "AppCPUIntensive",
+                "instances": 2
+            }
+        ],
+        "priority": true,
+        "sla_id": "Slai0d0c0"
+    }
+}

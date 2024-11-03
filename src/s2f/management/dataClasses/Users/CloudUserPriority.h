@@ -26,8 +26,10 @@ private:
     std::string sla;            //
 
 public:
-    CloudUserPriority(std::string type, int numInstances, tPriorityType priorityType, const std::string &sla);
-    virtual ~CloudUserPriority();
+    CloudUserPriority(const std::string &type,
+                      int numInstances,
+                      tPriorityType priorityType,
+                      const std::string &sla) : CloudUser(type, numInstances), priorityType(priorityType), sla(sla) {}
 
     /**
      * Gets the priority type assigned to this user.

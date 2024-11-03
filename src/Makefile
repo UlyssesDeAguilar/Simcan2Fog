@@ -60,7 +60,10 @@ OBJS = \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/simdata/DataManager.o \
-    $O/s2f/core/simdata/mysql/SimSchemaMySQL.o \
+    $O/s2f/core/simdata/DataRepository.o \
+    $O/s2f/core/simdata/engine/DataEngine.o \
+    $O/s2f/core/simdata/engine/JsonDataEngine.o \
+    $O/s2f/core/simdata/engine/MySqlDataEngine.o \
     $O/s2f/management/cloudprovider/CloudProvider.o \
     $O/s2f/management/dataClasses/Applications/AppInstance.o \
     $O/s2f/management/dataClasses/Applications/AppInstanceCollection.o \
@@ -70,7 +73,6 @@ OBJS = \
     $O/s2f/management/dataClasses/Users/CloudUserInstance.o \
     $O/s2f/management/dataClasses/Users/CloudUserInstancePriority.o \
     $O/s2f/management/dataClasses/Users/CloudUserInstanceTrace.o \
-    $O/s2f/management/dataClasses/Users/CloudUserPriority.o \
     $O/s2f/management/dataClasses/Users/User.o \
     $O/s2f/management/dataClasses/Users/UserAppReference.o \
     $O/s2f/management/dataClasses/Users/UserInstance.o \

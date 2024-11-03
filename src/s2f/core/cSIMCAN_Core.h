@@ -14,43 +14,6 @@ using namespace omnetpp;
 using std::string;
 using std::vector;
 
-/**
- * @brief Gets a value associated with a key
- * @details It's a template that uses type inference
- * @tparam K Key type
- * @tparam V Value type
- * @param map The map
- * @param key Key to search
- * @return V The value associated with the key or nullptr
- */
-template <typename K, typename V>
-V *getOrNull(const std::map<K, V> &map, const K &key)
-{
-	auto iter = map.find(key);
-	return iter != map.end() ? &iter->second : nullptr;
-}
-
-template <typename K, typename V>
-const V *getOrNullConst(const std::map<K, V> &map, const K &key)
-{
-	auto iter = map.find(key);
-	return iter != map.end() ? &iter->second : nullptr;
-}
-
-template <typename K, typename V>
-V *getOrNull(const std::map<K, V *> &map, const K &key)
-{
-	auto iter = map.find(key);
-	return iter != map.end() ? iter->second : nullptr;
-}
-
-template <typename K, typename V>
-V getOrDefault(const std::map<K, V> &map, const K &key, V default_val)
-{
-	auto iter = map.find(key);
-	return iter != map.end() ? iter->second : default_val;
-}
-
 enum SimCanInitStages
 {
 	LOCAL,			  //!< Strictly read from parameters given to module
