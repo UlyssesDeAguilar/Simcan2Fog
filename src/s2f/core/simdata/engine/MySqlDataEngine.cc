@@ -1,9 +1,11 @@
-#include "SimSchemaMySQL.h"
+#include "MySqlDataEngine.h"
 
-using namespace simschema;
-Define_Module(SimSchemaMySQL);
+using namespace s2f::data;
+using namespace omnetpp;
 
-const SimSchemaMySQL::QueryDefinitionArray SimSchemaMySQL::queriesDefinition = {
+Define_Module(MySqlDataEngine);
+
+const MySqlDataEngine::QueryDefinitionArray MySqlDataEngine::queriesDefinition = {
     // APP_DATA
     R"(SELECT apps.name, parameters, app_models.name as type, package, interface 
     FROM apps JOIN app_models ON apps.model_id = app_models.id
@@ -64,7 +66,7 @@ WHERE
 // Abbreviation for convenience
 using nlohmann::json;
 
-void SimSchemaMySQL::initialize()
+void MySqlDataEngine::initialize()
 {
     // Retrieve from the environement the password for the DB
     const char *password = std::getenv("S2F_DB_PASSWORD");
@@ -94,28 +96,30 @@ void SimSchemaMySQL::initialize()
         EV_ERROR << "Error Code:" << e.getErrorCode() << ", State: " << e.getSQLState() << std::endl;
         error("Connection or initialization failure");
     }
+
+    DataEngine::initialize();
 }
 
-void SimSchemaMySQL::finish()
+void MySqlDataEngine::finish()
 {
     // Delete the prepared statements
     deleteStatements();
 }
 
-void SimSchemaMySQL::deleteStatements()
+void MySqlDataEngine::deleteStatements()
 {
     // Do not delete std::arrays like dynamic arrays (std::vector)!
     for (int i = 0; i < Queries::NUM_QUERIES; i++)
         delete queries[i];
 }
 
-void SimSchemaMySQL::createStatements()
+void MySqlDataEngine::createStatements()
 {
     for (int i = 0; i < Queries::NUM_QUERIES; i++)
         queries[i] = connection->prepareStatement(queriesDefinition[i]);
 }
 
-void SimSchemaMySQL::attemptReconnect()
+void MySqlDataEngine::attemptReconnect()
 {
     // As the connection failed release the old statements
     deleteStatements();
@@ -129,7 +133,7 @@ void SimSchemaMySQL::attemptReconnect()
 }
 
 std::unique_ptr<sql::ResultSet>
-SimSchemaMySQL::executeStatement(Queries selectedQuery, std::function<void(sql::PreparedStatement *)> binder)
+MySqlDataEngine::executeStatement(Queries selectedQuery, std::function<void(sql::PreparedStatement *)> binder)
 {
     try
     {
@@ -151,8 +155,7 @@ SimSchemaMySQL::executeStatement(Queries selectedQuery, std::function<void(sql::
     }
 }
 
-std::unique_ptr<Application>
-SimSchemaMySQL::searchApp(const std::string &name)
+Application *MySqlDataEngine::searchApp(const std::string &name)
 {
     // Notify the kernel
     Enter_Method_Silent("Query App : %s\n", name.c_str());
@@ -172,22 +175,23 @@ SimSchemaMySQL::searchApp(const std::string &name)
     res->next();
     auto appName = res->getString("name");
     auto type = res->getString("type");
-    auto package = res->getString("package");
+    auto path = res->getString("package");
 
-    auto newApp = std::unique_ptr<Application>(new Application(appName, type, package));
+    Application appTemplate(name, type, path);
+    Application &app = repository->insertInMap(appName.c_str(), appTemplate);
 
     // Parse parameters from JSON
     json parameters = json::parse(res->getString("parameters").asStdString());
     json schema = json::parse(res->getString("interface").asStdString());
 
     // Construct the schema
-    for (auto const &param : schema.items())
+    for (auto const &param : parameters.items())
     {
         try
         {
             // auto newParam = new AppParameter(param.key(), param.value(), value);
             std::string value = param.value();
-            newApp->insertParameter(param.key().c_str(), value.c_str());
+            app.insertParameter(param.key().c_str(), value.c_str());
         }
         catch (const std::out_of_range &e)
         {
@@ -198,11 +202,10 @@ SimSchemaMySQL::searchApp(const std::string &name)
     }
 
     // Return the new application schema
-    return newApp;
+    return &app;
 }
 
-std::unique_ptr<VirtualMachine>
-SimSchemaMySQL::searchVirtualMachine(const std::string &name)
+VirtualMachine *MySqlDataEngine::searchVm(const std::string &name)
 {
     // Notify the kernel
     Enter_Method_Silent("Query VM : %s\n", name.c_str());
@@ -222,17 +225,18 @@ SimSchemaMySQL::searchVirtualMachine(const std::string &name)
     res->next();
     auto type = res->getString("type");
     auto cost = res->getDouble("cost");
-    auto numCores = res->getInt("cores");
+    auto cores = res->getInt("cores");
     auto scu = res->getDouble("scu");
-    auto diskGB = res->getDouble("disk");
-    auto memoryGB = res->getDouble("memory");
+    auto disk = res->getDouble("disk");
+    auto memory = res->getDouble("memory");
 
-    auto vm = new VirtualMachine(type, cost, numCores, scu, diskGB, memoryGB);
-    return std::unique_ptr<VirtualMachine>(vm);
+    VirtualMachine vmTemplate(type, cost, cores, scu, disk, memory);
+    VirtualMachine &vm = repository->insertInMap(type.c_str(), vmTemplate);
+
+    return &vm;
 }
 
-std::unique_ptr<Sla>
-SimSchemaMySQL::searchSLA(const std::string &name)
+Sla *MySqlDataEngine::searchSla(const std::string &name)
 {
     // Notify the kernel
     Enter_Method_Silent("Query SLA : %s\n", name.c_str());
@@ -248,7 +252,8 @@ SimSchemaMySQL::searchSLA(const std::string &name)
     if (!res || res->rowsCount() == 0)
         return nullptr;
 
-    auto newSla = std::unique_ptr<Sla>(new Sla(name));
+    Sla slaTemplate(name);
+    Sla &sla = repository->insertInMap(name.c_str(), slaTemplate);
 
     // While there are rows (VM definitions)
     while (res->next())
@@ -263,46 +268,32 @@ SimSchemaMySQL::searchSLA(const std::string &name)
         auto compensation = res->getDouble("compensation");
 
         // Insert the VM
-        newSla->addVmCost(type, base, increase, discount, compensation);
+        sla.addVmCost(type, base, increase, discount, compensation);
     }
 
-    return newSla;
+    return &sla;
 }
 
-std::unique_ptr<Sla::VMCost>
-SimSchemaMySQL::searchVMCost(const std::string &sla, const std::string &vmType)
+CloudUserPriority *MySqlDataEngine::searchUser(const std::string &userType, const std::string &experiment)
 {
-    // Notify the kernel
-    Enter_Method_Silent("Query VMCost => sla: %s - vmType: %s\n", sla.c_str(), vmType.c_str());
-
-    // Bind and run query
-    auto binder = [sla, vmType](sql::PreparedStatement *s)
-    {
-        s->setString(1, sla);
-        s->setString(2, vmType);
-    };
-    auto res = executeStatement(Queries::VM_COST, binder);
-
-    // In the case we did not find any match or the query failed
-    if (!res || res->rowsCount() == 0)
+    // Get the basic information about the user
+    auto information = searchUserBaseInfo(userType, experiment);
+    if (!information.ok)
         return nullptr;
 
-    // Load row and retrieve the basic info
-    res->next();
+    UserBaseInfo base = information.value;
 
-    auto vmCost = new Sla::VMCost({.base = static_cast<double>(res->getDouble("cost")),
-                                   .increase = static_cast<double>(res->getDouble("increase")),
-                                   .discount = static_cast<double>(res->getDouble("discount")),
-                                   .compensation = static_cast<double>(res->getDouble("compensation"))});
-    return std::unique_ptr<Sla::VMCost>(vmCost);
+    CloudUserPriority userTemplate(base.userName, base.numInstances, base.priority, base.slaId);
+    CloudUserPriority &user = repository->insertInMap(base.userName.c_str(), userTemplate);
+
+    loadUserAppsAndVms(&user);
+
+    return &user;
 }
 
-std::unique_ptr<UserBaseInfo>
-SimSchemaMySQL::searchUserBaseInfo(const std::string &user, const std::string &experiment)
+MySqlDataEngine::DataReturn<MySqlDataEngine::UserBaseInfo>
+MySqlDataEngine::searchUserBaseInfo(const std::string &user, const std::string &experiment)
 {
-    // Notify the kernel
-    Enter_Method_Silent("Query UserBasicInfo => user: %s from experiment: %s\n", user.c_str(), experiment.c_str());
-
     // Bind and run query
     auto binder = [user, experiment](sql::PreparedStatement *s)
     {
@@ -313,22 +304,21 @@ SimSchemaMySQL::searchUserBaseInfo(const std::string &user, const std::string &e
 
     // In the case we did not find any match or the query failed
     if (!res || res->rowsCount() == 0)
-        return nullptr;
+        return {.ok = false};
 
     // Load row and retrieve the basic info
     res->next();
 
-    auto base = new UserBaseInfo();
-    base->userName = res->getString("name").asStdString();
-    base->numInstances = res->getInt("instances");
-    base->slaId = res->getString("sla_type").asStdString();
-    base->priority = res->getInt("priority") == 1 ? tPriorityType::Priority : tPriorityType::Regular;
+    UserBaseInfo base;
+    base.userName = res->getString("name").asStdString();
+    base.numInstances = res->getInt("instances");
+    base.slaId = res->getString("sla_type").asStdString();
+    base.priority = res->getInt("priority") == 1 ? tPriorityType::Priority : tPriorityType::Regular;
 
-    return std::unique_ptr<UserBaseInfo>(base);
+    return {.ok = true, .value = base};
 }
 
-DataList<UserBaseInfo>
-SimSchemaMySQL::searchUsersInExperiment(const std::string &experiment)
+void MySqlDataEngine::loadUsersInExperiment(const std::string &experiment)
 {
     // Notify the kernel
     Enter_Method_Silent("Query users in experiment: %s", experiment.c_str());
@@ -342,33 +332,54 @@ SimSchemaMySQL::searchUsersInExperiment(const std::string &experiment)
 
     // In the case we did not find any match or the query failed
     if (!res || res->rowsCount() == 0)
-        return nullptr;
-
-    // Create vector
-    auto usersList = DataList<UserBaseInfo>(new std::vector<UserBaseInfo>());
-
-    // We know the rows -> help the vector
-    usersList->reserve(res->rowsCount());
+        error("No users in current experiment");
 
     // Load rows and retrieve the basic info
     while (res->next())
     {
         // Allocate in place the element
-        usersList->emplace_back();
-        auto &base = usersList->back();
+        const char *userName = res->getString("name").c_str();
+        CloudUserPriority userTemplate(userName,
+                                       res->getInt("instances"),
+                                       res->getInt("priority") == 1 ? tPriorityType::Priority : tPriorityType::Regular,
+                                       res->getString("sla_type").c_str());
+        
+        CloudUserPriority &user = repository->insertInMap(userName, userTemplate);
 
-        // Fill in with reference
-        base.userName = res->getString("name").asStdString();
-        base.numInstances = res->getInt("instances");
-        base.slaId = res->getString("sla_type").asStdString();
-        base.priority = res->getInt("priority") == 1 ? tPriorityType::Priority : tPriorityType::Regular;
+        loadUserAppsAndVms(&user);
     }
 
-    return usersList;
+    return;
 }
 
-DataList<UserAppInfo>
-SimSchemaMySQL::searchUserApps(const std::string &user)
+void MySqlDataEngine::loadUserAppsAndVms(CloudUserPriority *user)
+{
+    // FIXME
+    // For all vms
+    auto vmCursor = searchUserVms(user->getType());
+    while (vmCursor->next())
+    {
+        auto vm = searchVm(vmCursor->getString("type"));
+        if (vm == nullptr)
+            error("EINVAL");
+
+        user->insertVirtualMachine(vm, vmCursor->getInt("instances"), vmCursor->getInt("rent_time"));
+    }
+
+    // For all apps
+    auto appCursor = searchUserApps(user->getType());
+    while (appCursor->next())
+    {
+        auto app = searchApp(appCursor->getString("name"));
+        if (app == nullptr)
+            error("EINVAL");
+
+        user->insertApplication(app, appCursor->getInt("instances"));
+    }
+}
+
+std::unique_ptr<sql::ResultSet>
+MySqlDataEngine::searchUserApps(const std::string &user)
 {
     // Notify the kernel
     Enter_Method_Silent("Query requested apps of user: %s", user.c_str());
@@ -383,30 +394,12 @@ SimSchemaMySQL::searchUserApps(const std::string &user)
     // In the case we did not find any match or the query failed
     if (!res || res->rowsCount() == 0)
         return nullptr;
-
-    // Create vector
-    auto appsList = DataList<UserAppInfo>(new std::vector<UserAppInfo>());
-
-    // We know the rows -> help the vector
-    appsList->reserve(res->rowsCount());
-
-    // Load rows and retrieve the basic info
-    while (res->next())
-    {
-        // Allocate in place the element
-        appsList->emplace_back();
-        auto &base = appsList->back();
-
-        // Fill in with reference
-        base.appName = res->getString("name").asStdString();
-        base.numInstances = res->getInt("instances");
-    }
-
-    return appsList;
+    else
+        return res;
 }
 
-DataList<UserVmInfo>
-SimSchemaMySQL::searchUserVms(const std::string &user)
+std::unique_ptr<sql::ResultSet>
+MySqlDataEngine::searchUserVms(const std::string &user)
 {
     // Notify the kernel
     Enter_Method_Silent("Query requested vms of user: %s", user.c_str());
@@ -421,25 +414,6 @@ SimSchemaMySQL::searchUserVms(const std::string &user)
     // In the case we did not find any match or the query failed
     if (!res || res->rowsCount() == 0)
         return nullptr;
-
-    // Create vector
-    auto vmsList = DataList<UserVmInfo>(new std::vector<UserVmInfo>());
-
-    // We know the rows -> help the vector
-    vmsList->reserve(res->rowsCount());
-
-    // Load rows and retrieve the basic info
-    while (res->next())
-    {
-        // Allocate in place the element
-        vmsList->emplace_back();
-        auto &base = vmsList->back();
-
-        // Fill in with reference
-        base.type = res->getString("type").asStdString();
-        base.numInstances = res->getInt("instances");
-        base.nRentTime = res->getInt("rent_time");
-    }
-
-    return vmsList;
+    else
+        return res;
 }

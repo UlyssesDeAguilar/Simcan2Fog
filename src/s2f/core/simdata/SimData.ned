@@ -1,4 +1,5 @@
 package s2f.core.simdata;
+import s2f.core.simdata.engine.DataEngine;
 
 // This module encapsulates and collects data sources for simulation.
 module SimData
@@ -7,10 +8,14 @@ module SimData
         @display("i=block/cogwheel");
     submodules:
         manager: DataManager {
-            @display("p=189,123");
+            @display("p=47,93;i=block/rxtx");
         }
-        simSchema: <> like SimSchema {
-        // Maybe in the future add a topology reader for resource detection ?
-            @display("p=52,121");
+
+        repository: DataRepository {
+
+            @display("p=135,132;i=block/buffer2");
+        }
+        engine: <default("JsonDataEngine")> like DataEngine {
+            @display("p=135,42;i=block/cogwheel");
         }
 }
