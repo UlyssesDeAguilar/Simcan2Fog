@@ -3,7 +3,7 @@
 Tests the functionality of the template ControlTable with the VmControlBlock
 
 %includes:
-#include "Architecture/Nodes/NodeResources.h"
+#include "s2f/architecture/nodes/NodeResources.h"
 
 %activity:
 

@@ -1,5 +1,5 @@
 # Point to the definitions
-NEDPATH=$SIMCAN_HOME/src:$INET_HOME/src/:$SIMCAN_HOME/tests/modules/:.
+NEDPATH=$SIMCAN_HOME/src:$INET_ROOT/src/:$SIMCAN_HOME/tests/modules/:.
 # DNS/*.test simschema/*.test
 
 if [ $# -eq 0 ]

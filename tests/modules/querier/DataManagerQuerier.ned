@@ -1,4 +1,6 @@
 package querier;
+@namespace();
+
 simple DataManagerQuerier
 {
     parameters:

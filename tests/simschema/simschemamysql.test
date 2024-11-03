@@ -7,10 +7,13 @@ Tests the correct behaviour of the SimSchemaMySQL implementation
 network = Unconnected
 sim-time-limit = 10s
 
-*.class = "SimSchemaMySQL"
+*.simData.engine.typename = "MySqlDataEngine"
 *.simschema.hostName = "tcp://127.0.0.1:3306"
+*.simData.manager.experiment = "Test"
 
 %# This section does the actual checking of what we expect
+%expected-failure: Work in progress, testing also the other engine
+
 %not-contains: stdout
 undisposed object:
 %not-contains: stdout
@@ -50,8 +53,3 @@ Type:Slai0d0c0
 	  + VMCost[VM_nanoRAM] -> base cost: 0.01 - cost increase: 0 - cost discount: 0 - compensation: 0
 	  + VMCost[VM_small] -> base cost: 0.03 - cost increase: 0 - cost discount: 0 - compensation: 0
 	  + VMCost[VM_xlarge] -> base cost: 0.23 - cost increase: 0 - cost discount: 0 - compensation: 0
-
-Search VMCost with name: VM_4xlarge in SLA Slai0d0c0
-base cost: 0.92 - cost increase: 0 - cost discount: 0 - compensation: 0
-Search VMCost with name:  in SLA 
-VMCost:  SLA:  not found

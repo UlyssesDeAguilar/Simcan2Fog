@@ -3,7 +3,7 @@
 Tests the functionality of the utility class ControlTable
 
 %includes:
-#include "Core/include/ServiceURL.h"
+#include "s2f/core/include/ServiceURL.h"
 
 %activity:
 

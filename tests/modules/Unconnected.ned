@@ -1,12 +1,9 @@
-import s2f.core.simdata.mysql.SimSchemaMySQL;
-import querier.SimSchemaQuerier;
+import s2f.core.simdata.SimData;
+import querier.DataManagerQuerier;
 
 network Unconnected
 {
-    // parameters:
-    //    string class;
     submodules:
-    //    simschema: <class>;
-        simschema: SimSchemaMySQL;
-        querier: SimSchemaQuerier;
+        simData: SimData;
+        querier: DataManagerQuerier;
 }

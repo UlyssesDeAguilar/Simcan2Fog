@@ -50,7 +50,8 @@ void Echo::processRequestMessage(SIMCAN_Message *sm)
     {
         EV << "Recieved message: " << sm->getName() << " at address: " << ip << "\n";
         EV << "Sending ACK" << '\n';
-        auto info = check_and_cast<RoutingInfo *>(sm->getContextPointer());
+        auto obj = reinterpret_cast<cObject*>(sm->getContextPointer());
+        RoutingInfo* info = check_and_cast<RoutingInfo *>(obj);
         info->setDestinationUrl(info->getSourceUrl());
         info->setSourceUrl(localUrl);
         sm->setIsResponse(true);

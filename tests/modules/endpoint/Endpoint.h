@@ -1,5 +1,6 @@
-#include "Messages/SM_ResolverRequest_m.h"
-#include "Architecture/Network/DNS/common.h"
+#include "s2f/messages/SM_ResolverRequest_m.h"
+#include "s2f/architecture/dns/common.h"
+
 using namespace dns;
 using namespace inet;
 

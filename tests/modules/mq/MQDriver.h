@@ -1,6 +1,6 @@
-#include "Core/include/SIMCAN_types.h"
-#include "Core/cSIMCAN_Core.h"
-#include "Messages/SIMCAN_Message.h"
+#include "s2f/core/include/SIMCAN_types.h"
+#include "s2f/core/cSIMCAN_Core.h"
+#include "s2f/messages/SIMCAN_Message.h"
 
 class MQDriver : public cSIMCAN_Core
 {

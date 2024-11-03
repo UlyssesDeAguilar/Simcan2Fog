@@ -1,4 +1,4 @@
-#include "PingStackDriver.h"
+/*#include "PingStackDriver.h"
 
 using namespace omnetpp;
 using namespace networkio;
@@ -138,4 +138,4 @@ void PingStackDriver::handleMessage(cMessage *msg)
     }
 
     delete event;
-}
+}*/

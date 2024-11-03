@@ -1,7 +1,7 @@
-#include "Core/include/SIMCAN_types.h"
-#include "Core/cSIMCAN_Core.h"
-#include "Architecture/Network/RoutingInfo/RoutingInfo_m.h"
-#include "Messages/SM_UserVM.h"
+#include "s2f/core/include/SIMCAN_types.h"
+#include "s2f/core/cSIMCAN_Core.h"
+#include "s2f/architecture/net/routing/RoutingInfo_m.h"
+#include "s2f/messages/SM_UserVM.h"
 
 class DcDriver : public cSIMCAN_Core
 {

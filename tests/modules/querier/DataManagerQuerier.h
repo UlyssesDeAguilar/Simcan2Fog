@@ -1,5 +1,5 @@
 #include <omnetpp.h>
-#include "Core/DataManager/DataManager.h"
+#include "s2f/core/simdata/DataManager.h"
 
 class DataManagerQuerier : public cSimpleModule
 {
@@ -13,5 +13,4 @@ protected:
     void testApp(const std::string& appName);
     void testVM(const std::string& vmType);
     void testSLA(const std::string& name);
-    void testVMCost(const std::string &sla, const std::string &vmType);
 };

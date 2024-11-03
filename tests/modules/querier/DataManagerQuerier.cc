@@ -1,11 +1,12 @@
 #include "DataManagerQuerier.h"
 Define_Module(DataManagerQuerier);
-using namespace simschema;
+
+using namespace s2f::data;
 #define QUERY_START 1
 
 void DataManagerQuerier::initialize()
 {
-    
+    dm = check_and_cast<DataManager *>(getModuleByPath("simData.manager"));
     auto start = new cMessage("Entrypoint", QUERY_START);
     scheduleAt(0.0, start);
 }
@@ -27,7 +28,7 @@ void DataManagerQuerier::testApp(const std::string &appName)
 void DataManagerQuerier::testVM(const std::string &vmType)
 {
     EV << "Search VM with name: " << vmType << "\n";
-    auto vm = dm->searchVirtualMachine(vmType);
+    auto vm = dm->searchVm(vmType);
     if (vm)
         EV << *vm << "\n";
     else
@@ -42,15 +43,6 @@ void DataManagerQuerier::testSLA(const std::string &name)
         EV << *sla << "\n";
     else
         EV << "SLA: " << name << " not found\n";
-}
-void DataManagerQuerier::testVMCost(const std::string &sla, const std::string &vmType)
-{
-    EV << "Search VMCost with name: " << vmType << " in SLA " << sla << "\n";
-    auto vmCost = dm->searchVMCost(sla, vmType);
-    if (vmCost)
-        EV << *vmCost << "\n";
-    else
-        EV << "VMCost: " << vmType << " SLA: " << sla <<" not found\n";
 }
 
 void DataManagerQuerier::handleMessage(cMessage *msg)
@@ -77,10 +69,7 @@ void DataManagerQuerier::handleMessage(cMessage *msg)
     testApp("AppCPUIntensive");
     testVM("VM_4xlarge");
     testSLA("Slai0d0c0");
-    testVMCost("Slai0d0c0", "VM_4xlarge");
-    
-    // Next one should fail
-    testVMCost("", "");
 
-    testApp("AppCPUIntensive");
+    // This should fail
+    testApp("No-app");
 }

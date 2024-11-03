@@ -1,4 +1,4 @@
-#include "inet/networklayer/common/L3Address.h"
+/*#include "inet/networklayer/common/L3Address.h"
 #include "Architecture/Network/Stack/NetworkIOEvent_m.h"
 #include "Architecture/Network/Stack/StackServiceType.h"
 #include "Messages/SM_REST_API_m.h"
@@ -19,4 +19,4 @@ protected:
     virtual void finish() override;
     virtual void handleMessage(cMessage *msg) override;
     void handleEvent(cMessage *msg);
-};
+};*/

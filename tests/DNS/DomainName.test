@@ -5,7 +5,7 @@ Tests the functionality of the utility struct DomainName
 It should fail and return the expected TLD and complete domain names
 
 %includes:
-#include "Architecture/Network/DNS/common.h"
+#include "s2f/architecture/net/dns/common.h"
 
 %activity:
 // Case 1 -- Nothing at all in the name

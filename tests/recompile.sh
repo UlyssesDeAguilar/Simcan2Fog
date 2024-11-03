@@ -1,1 +1,1 @@
-cd ../src ; make -j4 MODE=debug
+cd ../src ; make -j4 MODE=debug ; cd ../tests/work/ ; make cleanall ; make -j4 MODE=debug

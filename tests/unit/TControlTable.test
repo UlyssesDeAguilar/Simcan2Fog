@@ -3,7 +3,7 @@
 Tests the functionality of the template ControlTable with the VmControlBlock
 
 %includes:
-#include "OperatingSystem/Hypervisors/common.h"
+#include "s2f/architecture/os/hypervisors/common.h"
 
 %activity:
 using namespace hypervisor;

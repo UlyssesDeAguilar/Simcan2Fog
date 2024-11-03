@@ -21,7 +21,7 @@ if [ ! -d work ];  then mkdir work; fi
 if [ ! -d work/modules ]; then cd work; ln -s ../modules modules; cd .. ; fi 
 
 # Paths to the project files
-INET_PROJ=$INET_HOME/src
+INET_PROJ=$INET_ROOT/src
 SM_PROJ=$SIMCAN_HOME/src
 
 # Constants for the makefile
@@ -40,7 +40,7 @@ do
 done
 
 echo "Targets: $ALL"
-opp_test gen -v $ALL
+opp_test gen -vv $ALL
 
 
 # At first it seems like magic. It really is just importing the Simcan2Fog and INET framework
