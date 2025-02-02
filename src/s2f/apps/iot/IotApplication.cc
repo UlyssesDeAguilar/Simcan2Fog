@@ -25,9 +25,6 @@ void IotApplication::initialize()
     endpointName = edgeTile->par("serviceName");
     cModule *actuator = edgeTile->getSubmodule("actuator", 0);
     int vectorSize = actuator->getVectorSize();
-
-    // Get the resolver
-    resolver = check_and_cast<DnsResolver*>(getModuleByPath(nsPath)->getSubmodule("dnsResolver"));
     
     for (int i = 0; i < vectorSize; i++)
     {

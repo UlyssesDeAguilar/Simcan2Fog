@@ -29,7 +29,7 @@ import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100G;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.EthernetSwitch;
 
 network MediumNet
 {

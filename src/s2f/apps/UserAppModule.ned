@@ -7,7 +7,9 @@ package s2f.apps;
 module UserAppModule
 {
     parameters:
-        int pid = default(-1);                					// PID of the application (within the vector)
+        int pid = default(-1);                					// PID of the application
+        int vmId = default(0);                                  // VM ID of the application
+        string resolverPath = default("");                         // If empty, implies no resolver available
         string userAppName = default("DummyApplication");		// Name of the application
         volatile bool defaultInitialized = default(true);
         @display("bgb=221,131");

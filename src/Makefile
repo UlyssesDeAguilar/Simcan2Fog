@@ -30,6 +30,8 @@ OBJS = \
     $O/s2f/apps/ApplicationBuilder.o \
     $O/s2f/apps/cloud/LocalApplication.o \
     $O/s2f/apps/dummy/DummyApplication.o \
+    $O/s2f/apps/endpoints/ClientEndpoint.o \
+    $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
     $O/s2f/apps/services/SimService.o \
@@ -47,9 +49,10 @@ OBJS = \
     $O/s2f/architecture/messagequeue/services/PullService.o \
     $O/s2f/architecture/messagequeue/services/PushService.o \
     $O/s2f/architecture/net/hub/CheckingHubModule.o \
-    $O/s2f/architecture/net/stack/dispatcher/ToggableDispatcher.o \
     $O/s2f/architecture/net/stack/listener/UdpListener.o \
     $O/s2f/architecture/net/stack/proxy/AppProxy.o \
+    $O/s2f/architecture/net/stack/proxy/ServiceTable.o \
+    $O/s2f/architecture/net/stack/proxy/Session.o \
     $O/s2f/architecture/net/stack/queue/PullClient.o \
     $O/s2f/architecture/net/stack/queue/PushClient.o \
     $O/s2f/architecture/net/stack/registry/ServiceRegistrar.o \
@@ -110,9 +113,11 @@ OBJS = \
     $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
     $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
+    $O/s2f/architecture/net/protocol/RestfulRequest_m.o \
+    $O/s2f/architecture/net/protocol/RestfulResponse_m.o \
+    $O/s2f/architecture/net/protocol/RestMsg_m.o \
     $O/s2f/architecture/net/routing/RoutingInfo_m.o \
-    $O/s2f/architecture/net/stack/dispatcher/ToggleReq_m.o \
-    $O/s2f/architecture/net/stack/proxy/RestMsg_m.o \
+    $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/RequestTimeout_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
     $O/s2f/management/cloudprovider/NodeEvent_m.o \
@@ -134,9 +139,11 @@ MSGFILES = \
     s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
     s2f/architecture/dns/registry/DnsRegistrationRequest.msg \
+    s2f/architecture/net/protocol/RestfulRequest.msg \
+    s2f/architecture/net/protocol/RestfulResponse.msg \
+    s2f/architecture/net/protocol/RestMsg.msg \
     s2f/architecture/net/routing/RoutingInfo.msg \
-    s2f/architecture/net/stack/dispatcher/ToggleReq.msg \
-    s2f/architecture/net/stack/proxy/RestMsg.msg \
+    s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/RequestTimeout.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
     s2f/management/cloudprovider/NodeEvent.msg \

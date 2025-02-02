@@ -18,17 +18,15 @@ void AppBase::initialize()
     userInstance = par("userInstance").stdstringValue();
     debugUserAppBase = par("debugUserAppBase");
 
-    // Get the pid from "wrapper module"
+    // Get the information from the "wrapper module"
     cModule *appModule = getParentModule();
     pid = appModule->par("pid");
+    vmId = appModule->par("vmId");
 
-    // Get the vmId from the AppArray
-    cModule *appVector = appModule->getParentModule();
-    vmId = appVector->par("vmId");
-
-    // Get needed paths
-    nsPath = appVector->par("nsPath");
-    parentPath = appVector->par("parentPath");
+    // If DNS resolver is enabled
+    const char *resolverPath = appModule->par("resolverPath");
+    if (!opp_isempty(resolverPath))
+        resolver = check_and_cast<DnsResolver *>(getModuleByPath(resolverPath));
 
     // Init cGates
     inGate = gate("in");
@@ -36,10 +34,6 @@ void AppBase::initialize()
 
     // Schedule start
     scheduleExecStart();
-
-    // Check connections
-    if (!outGate->getNextGate()->isConnected())
-        error("outGate is not connected");
 }
 
 void AppBase::scheduleExecStart()
@@ -57,7 +51,6 @@ void AppBase::finish()
         iter.second->destroy();
 
     socketMap.deleteSockets();
-    socketQueue.clear();
     cancelAndDelete(event);
     cSIMCAN_Core::finish();
 }
@@ -232,13 +225,11 @@ int AppBase::open(uint16_t localPort, ConnectionMode mode)
     return socket->getSocketId();
 }
 
-void AppBase::acceptSocket(TcpSocket *socket, Packet *packet)
+void AppBase::listen(int socketFd)
 {
-    socket->setCallback(this);
-    socket->setOutputGate(gate("socketOut"));
-    socketMap.addSocket(socket);
-    
-    // TODO -- notify callbacks -> directly to data arrived? (incoming packet is here already!)
+    ISocket *sock = socketMap.getSocketById(socketFd);
+    auto tcpSocket = check_and_cast<TcpSocket *>(sock);
+    tcpSocket->listen();
 }
 
 void AppBase::connect(int socketFd, const L3Address &destIp, const uint16_t &destPort)
@@ -272,6 +263,52 @@ void AppBase::close(int socketFd)
 
     ISocket *sock = socketMap.removeSocket(socketMap.getSocketById(socketFd));
     sock->close();
+}
+
+void AppBase::registerService(const char *serviceName, int sockFd)
+{
+    auto packet = new Packet();
+
+    auto request = makeShared<ProxyServiceRequest>();
+    request->setOperation(ProxyOperation::REGISTER);
+    request->setService(serviceName);
+    request->setSocketId(sockFd);
+    request->setIp(getId());
+    request->setPort(443);
+
+    packet->insertData(request);
+    send(packet, gate("socketOut"));
+}
+
+void AppBase::unregisterService(const char *serviceName, int sockFd)
+{
+    auto packet = new Packet();
+
+    auto request = makeShared<ProxyServiceRequest>();
+    request->setOperation(ProxyOperation::UNREGISTER);
+    request->setService(serviceName);
+    request->setSocketId(sockFd);
+    request->setIp(getId());
+    request->setPort(443);
+
+    packet->insertData(request);
+    send(packet, gate("socketOut"));
+}
+
+void AppBase::socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo)
+{
+    if (callback->handleClientConnection(availableInfo->getNewSocketId(), availableInfo->getRemoteAddr(), availableInfo->getRemotePort()))
+    {
+        auto newSocket = new TcpSocket(availableInfo);
+        newSocket->setCallback(this);
+        newSocket->setOutputGate(gate("socketOut"));
+        socketMap.addSocket(newSocket);
+        socket->accept(newSocket->getSocketId());
+    }
+    else
+    {
+        error("TBD: Closing socket on TCP/ACCEPT");
+    }
 }
 
 void AppBase::socketDataArrived(UdpSocket *socket, Packet *packet)
@@ -320,25 +357,6 @@ void AppBase::socketPeerClosed(TcpSocket *socket)
     if (closeSocket)
         close(socketFd);
 };
-
-/*void AppBase::open_server(int targetPort, hypervisor::ConnectionMode mode, const char *serviceName)
-{
-    SocketIoSyscall *syscall = new SocketIoSyscall();
-    syscallFillData(syscall, OPEN_SERV);
-    syscall->setMode(mode);
-    syscall->setTargetPort(targetPort);
-
-    if (mode != UDP)
-    {
-        if (!serviceName)
-            error("Cannot bind a service into TCP mode without service name");
-        syscall->setServiceName(serviceName);
-    }
-
-    EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-             << " serving in port:" << targetPort << " with mode: " << mode << "\n";
-    sendRequestMessage(syscall, outGate);
-}*/
 
 void AppBase::socketClosed(UdpSocket *socket)
 {

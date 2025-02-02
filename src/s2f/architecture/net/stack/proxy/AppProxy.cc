@@ -11,8 +11,8 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/transportlayer/contract/tcp/TcpCommand_m.h"
 
-#include "s2f/architecture/net/stack/dispatcher/ToggleReq_m.h"
-#include "s2f/apps/AppBase.h"
+using namespace inet;
+using namespace omnetpp;
 
 Define_Module(AppProxy);
 
@@ -25,11 +25,16 @@ void AppProxy::initialize(int stage)
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
-        const char *localAddress = par("localAddress");
-        int localPort = par("localPort");
-        socket.setOutputGate(gate("socketOut"));
-        socket.bind(localAddress[0] ? L3AddressResolver().resolve(localAddress) : L3Address(), localPort);
-        socket.listen();
+        inGateBase = gate("appIn", 0)->getBaseId();
+        outGateBase = gate("appOut", 0)->getBaseId();
+        transportGateIn = gate("transportIn")->getBaseId();
+        transportGateOut = gate("transportOut")->getBaseId();
+
+        serverSocket.setOutputGate(gate(transportGateOut));
+        serverSocket.bind(par("localPort"));
+        serverSocket.listen();
+
+        serviceTable = check_and_cast<ServiceTable *>(findModuleByPath(par("serviceTablePath")));
 
         cModule *node = findContainingNode(this);
         NodeStatus *nodeStatus = node ? check_and_cast_nullable<NodeStatus *>(node->getSubmodule("status")) : nullptr;
@@ -41,145 +46,282 @@ void AppProxy::initialize(int stage)
 
 void AppProxy::finish()
 {
-    // Release memory from the pending socket structs
-    for (const auto &iter : pendingComms.getMap())
-        delete iter.second;
+    socketToConnnectionMap.clear();
+    socketToSessionMap.clear();
 }
-
-// Service pool related
-void AppProxy::bindService(const char *serviceName, AppBase *app)
-{
-    ServiceEntry entry;
-    entry.app = app;
-    entry.availableConnections = 1;
-
-    auto &pool = serviceMap[serviceName];
-    pool.emplace_back(entry);
-}
-
-void AppProxy::unbindService(const char *serviceName, AppBase *app)
-{
-    auto &pool = serviceMap.at(serviceName);
-
-    auto finder = [app](const ServiceEntry &e) -> bool
-    { return e.app == app; };
-
-    auto iter = std::find_if(pool.begin(), pool.end(), finder);
-
-    if (iter == pool.end())
-        return;
-
-    // As we don't want order this is the way to delete the element in O(1)
-    std::iter_swap(pool.end() - 1, iter);
-    pool.pop_back();
-}
-
-AppBase *AppProxy::findFitForRequest(const inet::Ptr<const RestMsg> &request)
-{
-    auto iter = serviceMap.find(request->getHostname());
-
-    if (iter != serviceMap.end())
-        return nullptr;
-
-    auto &pool = iter->second;
-
-    auto finder = [](const ServiceEntry &e) -> bool
-    { return e.availableConnections > 0; };
-
-    auto pool_iter = std::find_if(pool.begin(), pool.end(), finder);
-
-    if (pool_iter == pool.end())
-        return nullptr;
-
-    pool_iter->availableConnections--;
-    return pool_iter->app;
-}
-
-void AppProxy::notifyConnRelease(const char *serviceName, AppBase *app)
-{
-    auto &pool = serviceMap.at(serviceName);
-
-    auto finder = [app](const ServiceEntry &e) -> bool
-    { return e.app == app; };
-
-    auto iter = std::find_if(pool.begin(), pool.end(), finder);
-
-    if (iter == pool.end())
-        return;
-
-    iter->availableConnections++;
-}
-
-// Network related
 
 void AppProxy::handleMessage(cMessage *msg)
 {
-    // Main server socket
-    if (socket.belongsToSocket(msg))
+    if (msg->getArrivalGate()->getId() == transportGateIn)
+        handleLowerMessage(msg);
+    else
+        handleUpperMessage(msg);
+}
+
+void AppProxy::handleUpperMessage(cMessage *msg)
+{
+    if (msg->isPacket())
     {
-        if (msg->getKind() == TCP_I_AVAILABLE)
-        {
-            // We have to accept the connection until we know which is the route to be reached
-            auto availableInfo = check_and_cast<TcpAvailableInfo *>(msg->getControlInfo());
-            TcpSocket *newSocket = new TcpSocket(availableInfo);
-            newSocket->setOutputGate(gate("socketOut"));
-            newSocket->setCallback(this);
-            pendingComms.addSocket(newSocket);
-            socket.accept(availableInfo->getNewSocketId());
-        }
+        auto packet = check_and_cast<inet::Packet *>(msg);
+        auto serviceRequest = dynamic_cast<const ProxyServiceRequest *>(packet->peekData().get());
+
+        // Registration or unregistration of a service
+        if (serviceRequest)
+            handleServiceRequest(packet, serviceRequest);
         else
-        {
-            // some indication -- ignore
-            EV_WARN << "drop msg: " << msg->getName() << ", kind:" << msg->getKind() << "(" << cEnum::get("inet::TcpStatusInd")->getStringFor(msg->getKind()) << ")\n";
-            delete msg;
-        }
+            handleAppPacket(packet);
+    }
+    else
+        handleAppCommand(check_and_cast<inet::Message *>(msg));
+}
+
+void AppProxy::handleServiceRequest(inet::Packet *packet, const ProxyServiceRequest *serviceRequest)
+{
+    if (serviceRequest->getOperation() == ProxyOperation::REGISTER)
+    {
+        serviceTable->registerService(serviceRequest->getService(), serviceRequest->getIp(), serviceRequest->getPort());
+        
+        // Update the info
+        Connection &conn = socketToConnnectionMap.at(serviceRequest->getSocketId());
+        conn.ip = serviceRequest->getIp();
+        conn.port = serviceRequest->getPort();
     }
     else
     {
-        // For pending comms to be binded
-        auto socket = pendingComms.findSocketFor(msg);
-        if (socket)
-            socket->processMessage(msg);
+        serviceTable->unregisterService(serviceRequest->getService(), serviceRequest->getIp(), serviceRequest->getPort());
+    }
+
+    delete packet;
+}
+
+void AppProxy::handleAppPacket(inet::Packet *packet)
+{
+    send(packet, transportGateOut);
+}
+
+void AppProxy::handleAppCommand(inet::Message *message)
+{
+    cGate *inGate = message->getArrivalGate();
+    const auto &socketReq = message->getTag<SocketReq>();
+    TcpCommand *tcpCommand = dynamic_cast<TcpCommand *>(message->getControlInfo());
+
+    if (tcpCommand == nullptr)
+        error("Proxy module doesn't support non TCP commands");
+
+    int socketReqId = socketReq->getSocketId();
+
+    // Opening socket
+    if (message->getKind() == TCP_C_OPEN_ACTIVE || message->getKind() == TCP_C_OPEN_PASSIVE)
+    {
+        auto it = socketToConnnectionMap.find(socketReqId);
+        if (it != socketToConnnectionMap.end())
+            throw cRuntimeError("Socket is already registered: socketId = %d, current gateIndex = %d, new gateIndex = %d, pathStartGate = %s, pathEndGate = %s",
+                                socketReqId, it->second.gateIndex, inGate->getIndex(), inGate->getPathStartGate()->getFullPath().c_str(), inGate->getPathEndGate()->getFullPath().c_str());
+
+        // Init the connection
+        Connection connection;
+        connection.socketId = socketReqId;
+        connection.gateIndex = message->getArrivalGate()->getIndex();
+        connection.type = message->getKind() == TCP_C_OPEN_PASSIVE ? ConnectionType::EDGE : ConnectionType::PASSTHROUGH;
+        socketToConnnectionMap[socketReqId] = connection;
+
+        EV_DEBUG << "New connection: " << connection << "\n";
+
+        // On client/ephemeral conns then send to TCP layer
+        if (message->getKind() == TCP_C_OPEN_ACTIVE)
+            send(message, transportGateOut);
         else
-            error("Message arrived for an unregistered socket");
+            delete message;
+    }
+    // Connection has been accepted -> Belongs to a session!
+    else if (message->getKind() == TCP_C_ACCEPT)
+    {
+        auto it = socketToSessionMap.find(socketReqId);
+        if (it == socketToSessionMap.end())
+            error("Connection not found: socketId = %d", socketReqId);
+
+        cQueue *queue = it->second.setSessionEstablished();
+        if (queue != nullptr)
+        {
+            while (!queue->isEmpty())
+                send(check_and_cast<cMessage *>(queue->pop()), outGateBase + it->second.getGateIndex());
+            delete queue;
+        }
+        delete message;
+    }
+    // Closing socket -- Could be associated to a connection or session!
+    else if (message->getKind() == TCP_C_CLOSE)
+    {
+        auto it = socketToConnnectionMap.find(socketReqId);
+        if (it != socketToConnnectionMap.end())
+        {
+            if (it->second.type == ConnectionType::EDGE)
+                send(message, transportGateOut);
+            else
+                delete message;
+
+            socketToConnnectionMap.erase(it);
+        }
+        else
+        {
+            auto it = socketToSessionMap.find(socketReqId);
+            if (it != socketToSessionMap.end())
+            {
+                send(message, transportGateOut);
+                socketToSessionMap.erase(it);
+            }
+            else
+                error("Connection not found on CLOSE: socketId = %d", socketReqId);
+        }
     }
 }
 
-void AppProxy::socketDataArrived(TcpSocket *socket, Packet *packet, bool urgent)
+void AppProxy::handleLowerMessage(cMessage *msg)
 {
-    int connId = socket->getSocketId();
-
-    ChunkQueue queue;
-    auto chunk = packet->peekDataAt(B(0), packet->getTotalLength());
-    queue.push(chunk);
-    emit(packetReceivedSignal, packet);
-
-    if (!queue.has<RestMsg>(b(-1)))
-        return;
-
-    const auto &request = queue.peek<RestMsg>(b(-1));
-
-    AppBase *app = findFitForRequest(request);
-
-    // Find which gate vector index has the app
-    cGate *g = app->gate("socketOut")->getPathEndGate();
-
-    // Redirect the SocketInd packets and messages from the transport layer
-    auto toggleRequest = new ToggleReq("Toggle socket request");
-    toggleRequest->setSocketId(connId);
-    toggleRequest->setGateIndex(g->getIndex());
-
-    send(toggleRequest, gate("socketOut"));
-
-    // Rebind socket and remove from pending comms
-    app->acceptSocket(socket, packet);
-    pendingComms.removeSocket(socket);
+    if (msg->isPacket())
+        handleTransportPacket(check_and_cast<inet::Packet *>(msg));
+    else
+        handleTransportIndication(check_and_cast<inet::Message *>(msg));
 }
 
-void AppProxy::socketPeerClosed(TcpSocket *socket)
+void AppProxy::handleTransportPacket(inet::Packet *packet)
 {
-    // Sadly, connection dropped before being served
-    socket->close();
-    pendingComms.removeSocket(socket);
-    delete socket;
+    int socketId = packet->getTag<SocketInd>()->getSocketId();
+
+    // Check if the session is established, buffer if not
+    auto session = socketToSessionMap.find(socketId);
+
+    if (session == socketToSessionMap.end() || session->second.getState() == SessionState::ESTABLISHED)
+    {
+        send(packet, outGateBase + findSocketGateIndex(socketId));
+    }
+    // Case for when a session hasn't been bound yet to an endpoint
+    else if (session->second.getState() == SessionState::INIT)
+    {
+        Session &session = socketToSessionMap.at(socketId);
+        std::string serviceName = getServiceName(packet);
+        auto iter = serviceTable->findService(serviceName.c_str());
+
+        if (iter == serviceTable->endOfServiceMap())
+            error("Service '%s' not found", serviceName.c_str());
+
+        // Select the endpoint ip + get the corresponding gate index
+        int index = selectIp(iter->second);
+        int ip = iter->second[index].getIp();
+        int port = iter->second[index].getPort();
+
+        Connection *connection = findConnection(ip, port);
+        if (!connection)
+            error("Connection not found: ip = %d, port = %d", ip, port);
+        
+        // Update the session entry
+        inet::Message *message = session.setSessionPending(index);
+        message->getTagForUpdate<SocketInd>()->setSocketId(connection->socketId);
+        // Send a request to the endpoint to open a socket (we're using the same socketId)
+        send(message, outGateBase + connection->gateIndex);
+        // Keep the request in the pending queue
+        session.pushToPendingQueue(packet);
+    }
+    else
+    {
+        // Connection pending, buffer the packet
+        session->second.pushToPendingQueue(packet);
+    }
+}
+
+void AppProxy::handleTransportIndication(inet::Message *message)
+{
+    int socketId = message->getTag<SocketInd>()->getSocketId();
+
+    // Main serving socket
+    if (serverSocket.belongsToSocket(message))
+    {
+        if (message->getKind() != TCP_I_AVAILABLE)
+            error("TCP_I_AVAILABLE expected on server socket :%d", serverSocket.getLocalPort());
+
+        auto availableInfo = check_and_cast<TcpAvailableInfo *>(message->getControlInfo());
+
+        int newSocket = availableInfo->getNewSocketId();
+        serverSocket.accept(newSocket);
+
+        // Take ownership
+        socketToSessionMap.emplace(std::piecewise_construct, std::forward_as_tuple(newSocket), std::forward_as_tuple(newSocket, message));
+        return;
+    }
+
+    // If it's for a connection then forward
+    auto it = socketToConnnectionMap.find(socketId);
+    if (it != socketToConnnectionMap.end())
+    {
+        send(message, outGateBase + it->second.gateIndex);
+        return;
+    }
+
+    // If it's for a session then we need to look at it carefully
+    auto it2 = socketToSessionMap.find(socketId);
+    if (it2 == socketToSessionMap.end())
+        error("Unkwon socketId: %d", socketId);
+
+    // Already established forward the indication
+    if (it2->second.getState() == SessionState::ESTABLISHED)
+    {
+        send(message, outGateBase + it2->second.getGateIndex());
+        return;
+    }
+
+    // Session pending
+    if (message->getKind() != TCP_I_ESTABLISHED)
+        error("TBD handle TCP_CLOSED");
+
+    delete message;
+}
+
+int AppProxy::findSocketGateIndex(int socketId)
+{
+    auto it = socketToConnnectionMap.find(socketId);
+    if (it != socketToConnnectionMap.end())
+        return it->second.gateIndex;
+
+    auto it2 = socketToSessionMap.find(socketId);
+    if (it2 != socketToSessionMap.end())
+        return it2->second.getGateIndex();
+    else
+        error("No connection for socket %d", socketId);
+
+    return -1;
+}
+
+int AppProxy::selectIp(std::vector<ServiceEntry> &entries)
+{
+    int index = intuniform(0, entries.size() - 1);
+    return index;
+}
+
+std::string AppProxy::getServiceName(inet::Packet *packet)
+{
+    ChunkQueue data("Data processed", packet->peekData());
+
+    // Look inside for the first REST like chunk in the data
+    if (data.has<RestfulRequest>())
+    {
+        auto serviceRequest = data.peek<RestfulRequest>();
+        std::string service = opp_removeend(serviceRequest->getHost(), serviceTable->getDomain());
+
+        if (service.back() == '.')
+            service.pop_back();
+
+        return service;
+    }
+    else
+        return "";
+}
+
+Connection *AppProxy::findConnection(int ip, int port)
+{
+    for (auto it = socketToConnnectionMap.begin(); it != socketToConnnectionMap.end(); it++)
+    {
+        if (it->second.ip == ip && it->second.port == port)
+            return &(it->second);
+    }
+    return nullptr;
 }

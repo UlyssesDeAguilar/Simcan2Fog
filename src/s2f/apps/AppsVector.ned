@@ -12,8 +12,6 @@ module AppsVector
         int vmId = default(-1);             // The virtual machine ID where this vector is contained
         int numApps;						// Number of applications in this vector
         bool staticAppAssignment;			// True if the assignment of application is static or False in another case
-		string nsPath;
-		string parentPath;
 		
         @display("bgb=856.935,461.82748");
     gates:
