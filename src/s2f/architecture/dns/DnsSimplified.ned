@@ -2,7 +2,7 @@ package s2f.architecture.dns;
 import inet.node.inet.StandardHost;
 import s2f.architecture.dns.cache.DnsCache;
 import s2f.architecture.dns.registry.DnsRegistryService;
-
+import s2f.architecture.dns.server.DnsServiceSimplified;
 
 //
 // Module that simplifies the DNS hierarchy by aggregating 
@@ -17,10 +17,9 @@ module DnsSimplified extends StandardHost
         dnsService: DnsServiceSimplified {
             @display("i=block/table;p=858.375,58.274998");
         }
-        
         cache: DnsCache;
-
         registryService: DnsRegistryService;
+    
     connections:
         registryService.socketIn <-- at.out++;
         registryService.socketOut --> at.in++;

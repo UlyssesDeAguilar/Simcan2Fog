@@ -1,6 +1,7 @@
 package s2f.architecture.dns.cache;
 
-simple DnsCache {
+simple DnsDb 
+{
     parameters:
-        @class(dns::DnsCache);
+        @class(dns::DnsDb);
 }

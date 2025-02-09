@@ -1,6 +1,8 @@
 #include "DnsServiceSimplified.h"
 
 using namespace dns;
+using namespace omnetpp;
+using namespace inet;
 
 Define_Module(DnsServiceSimplified);
 
@@ -8,7 +10,8 @@ void DnsServiceSimplified::initialize(int stage)
 {
     if (stage == INITSTAGE_APPLICATION_LAYER)
     {
-        cache = check_and_cast<DnsCache*>(getModuleByPath("^.cache"));
+        dnsDatabase = check_and_cast<DnsDb *>(findModuleByPath(par("dbPath")));
+        authorityMatcher.setPattern(par("domainAuthority"), true, false, false);
     }
     ApplicationBase::initialize(stage);
 }
@@ -29,16 +32,15 @@ void DnsServiceSimplified::handleStartOperation(LifecycleOperation *operation)
 void DnsServiceSimplified::socketDataArrived(UdpSocket *socket, Packet *packet)
 {
     // See if it is a DNS request
-    auto request = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
-    switch (request->getOperationCode())
-    {
-    case QUERY:
-        handleQuery(packet);
-        break;
+    ChunkQueue queue("Incoming data", packet->peekData());
 
-    default:
-        handleNotImplemented(packet);
-        break;
+    while (queue.has<DnsRequest>())
+    {
+        auto request = queue.pop<const DnsRequest>();
+        if (request->getOperationCode() == QUERY)
+            handleQuery(packet, request.get());
+        else
+            handleNotImplemented(packet);
     }
 
     // Release the memory
@@ -60,14 +62,13 @@ void DnsServiceSimplified::sendResponseTo(const Packet *packet, DnsRequest *resp
 
 void DnsServiceSimplified::socketErrorArrived(UdpSocket *socket, Indication *indication)
 {
+    EV_WARN << "Ignoring UDP error report " << indication->getName() << "\n";
     delete indication;
 }
 
-void DnsServiceSimplified::handleQuery(const Packet *packet)
+void DnsServiceSimplified::handleQuery(const Packet *packet, const DnsRequest *request)
 {
     EV_DEBUG << "Handling query" << "\n";
-
-    auto request = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
     auto questionCount = request->getQuestionArraySize();
 
     // If there are no questions --> Error
@@ -89,17 +90,17 @@ void DnsServiceSimplified::handleQuery(const Packet *packet)
     for (int i = 0; i < questionCount; i++)
     {
         EV_DEBUG << "Processing query" << i << "\n";
-        auto record = processQuestion(request->getQuestion(i));
+        auto records = dnsDatabase->searchRecords(request->getQuestion(i));
 
-        if (record)
+        if (records)
         {
-            ok = allocateIfNull(ok, request.get());
+            ok = allocateIfNull(ok, request);
             ok->appendQuestion(request->getQuestion(i));
-            ok->insertAuthoritativeAnswers(*record);
+            processRecords(ok, records);
         }
         else
         {
-            error = allocateIfNull(error, request.get());
+            error = allocateIfNull(error, request);
             error->appendQuestion(request->getQuestion(i));
         }
     }
@@ -118,6 +119,17 @@ void DnsServiceSimplified::handleQuery(const Packet *packet)
     }
 }
 
+void DnsServiceSimplified::processRecords(DnsRequest *response, const std::vector<dns::ResourceRecord *> *records)
+{
+    for (const auto record : *records)
+    {
+        if (authorityMatcher.matches(record->getDomain()))
+            response->appendAuthoritativeAnswer(*record);
+        else
+            response->appendNonAuthoritativeAnswer(*record);
+    }
+}
+
 DnsRequest *DnsServiceSimplified::prepareResponse(const DnsRequest *request)
 {
     auto response = new DnsRequest();
@@ -125,15 +137,6 @@ DnsRequest *DnsServiceSimplified::prepareResponse(const DnsRequest *request)
     response->setRequestId(request->getRequestId());
     response->setIsAuthoritative(true);
     return response;
-}
-
-const ResourceRecord *DnsServiceSimplified::processQuestion(const char *domain)
-{
-    
-    if (cache->hasDomainCached(domain))
-        return &cache->getCachedDomain(domain);
-    else
-        return nullptr;
 }
 
 void DnsServiceSimplified::handleNotImplemented(const Packet *packet)

@@ -8,7 +8,8 @@ import inet.applications.contract.IApp;
 simple DnsRegistryService like IApp {
     parameters:
     	@class(dns::DnsRegistryService);
-        int mode = default(0);  // 0 for IDLE, 1 for NET_SCAN
+        int mode = default(0);              // 0 for IDLE, 1 for NET_SCAN
+        string dbPath = default("^.db");    
     gates:
         input socketIn @labels(ITransportPacket/up);
         output socketOut @labels(ITransportPacket/down);

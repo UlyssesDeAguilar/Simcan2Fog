@@ -8,6 +8,8 @@ import inet.applications.contract.IApp;
 simple DnsServiceSimplified like IApp {
     parameters:
     	@class(dns::DnsServiceSimplified);
+        string dbPath = default("^.db");
+        string authoritativeDomain = default("");
     gates:
         input socketIn @labels(ITransportPacket/up);
         output socketOut @labels(ITransportPacket/down);

@@ -1,5 +1,4 @@
-#include "DnsRegistryService.h"
-#include "DnsRegistrationRequest_m.h"
+#include "s2f/architecture/dns/registry/DnsRegistryService.h"
 
 #include "inet/common/socket/SocketTag_m.h"
 #include "inet/applications/tcpapp/GenericAppMsg_m.h"
@@ -11,8 +10,11 @@
 #include "inet/common/TimeTag_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/transportlayer/contract/tcp/TcpCommand_m.h"
+#include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 
 using namespace dns;
+using namespace omnetpp;
+using namespace inet;
 
 Define_Module(DnsRegistryService);
 
@@ -22,7 +24,7 @@ void DnsRegistryService::initialize(int stage)
 
     if (stage == INITSTAGE_LOCAL)
     {
-        cache = check_and_cast<DnsCache*>(getModuleByPath("^.cache"));
+        dnsDatabase = check_and_cast<DnsDb *>(findModuleByPath(par("dbPath")));
 
         // statistics
         msgsRcvd = msgsSent = bytesRcvd = bytesSent = 0;
@@ -37,7 +39,7 @@ void DnsRegistryService::initialize(int stage)
         const char *localAddress = par("localAddress");
         int localPort = par("localPort");
         socket.setOutputGate(gate("socketOut"));
-        socket.bind(DNS_PORT);
+        socket.bind(443);
         socket.listen();
 
         cModule *node = findContainingNode(this);
@@ -46,35 +48,35 @@ void DnsRegistryService::initialize(int stage)
         if (!isOperational)
             throw cRuntimeError("This module doesn't support starting in node DOWN state");
 
-        if ((int) par("mode") == NET_SCAN)
-            scanNetwork();
+        // if ((int) par("mode") == NET_SCAN)
+        //     scanNetwork();
     }
 }
 
-void DnsRegistryService::scanNetwork()
-{
-    cTopology topo;
-    ResourceRecord r;
-    r.type = ResourceRecord::RR_Type::A;
-
-    topo.extractByProperty("servicenode");
-
-    if (topo.getNumNodes() == 0)
-        error("Couldn't find the nodes in the topology");
-
-    for (int i = 0; i < topo.getNumNodes(); i++)
-    {
-        cTopology::Node *node = topo.getNode(i);
-        cModule *module = node->getModule();
-        L3Address address = L3AddressResolver().addressOf(module->getSubmodule("stack"));
-        const char *domain = module->par("serviceDeployed");
-
-        r.ip = address;
-        r.domain = domain;        
-        cache->insertData(r);
-        EV << "Service: \"" << domain << "\" located on: " << module->getName() << " with ip: " << address << "\n";
-    }
-}
+// void DnsRegistryService::scanNetwork()
+// {
+//     cTopology topo;
+//     ResourceRecord r;
+//     r.type = ResourceRecord::RR_Type::A;
+//
+//     topo.extractByProperty("servicenode");
+//
+//     if (topo.getNumNodes() == 0)
+//         error("Couldn't find the nodes in the topology");
+//
+//     for (int i = 0; i < topo.getNumNodes(); i++)
+//     {
+//         cTopology::Node *node = topo.getNode(i);
+//         cModule *module = node->getModule();
+//         L3Address address = L3AddressResolver().addressOf(module->getSubmodule("stack"));
+//         const char *domain = module->par("serviceDeployed");
+//
+//         r.ip = address;
+//         r.domain = domain;
+//         cache->insertData(r);
+//         EV << "Service: \"" << domain << "\" located on: " << module->getName() << " with ip: " << address << "\n";
+//     }
+// }
 
 void DnsRegistryService::sendBack(cMessage *msg)
 {
@@ -126,15 +128,20 @@ void DnsRegistryService::handleMessage(cMessage *msg)
             msgsRcvd++;
             bytesRcvd += B(request->getChunkLength()).get();
 
-            // Process each binding action
-            for (int i = 0; i < request->getBindingArraySize(); i++)
-            {
-                const DomainBinding &binding = request->getBinding(i);
-                if (!binding.unregisterIfPresent)
-                    cache->insertData(binding.record);
-                else
-                    ; // TODO: Implement an erasing method onto the dns cache
-            }
+            auto newPacket = new Packet("DnsRegistry Response");
+
+            bool ok = processRequest(request.get());
+            auto response = makeShared<RestfulResponse>();
+
+            response->setResponseCode(ok ? ResponseCode::OK : ResponseCode::INTERNAL_ERROR);
+            response->setHost(request->getHost());
+            response->setPath(request->getPath());
+
+            newPacket->addTag<SocketReq>()->setSocketId(connId);
+            newPacket->insertData(response);
+            newPacket->setKind(TCP_C_SEND);
+
+            sendBack(newPacket);
         }
         delete msg;
     }
@@ -147,6 +154,35 @@ void DnsRegistryService::handleMessage(cMessage *msg)
         // some indication -- ignore
         EV_WARN << "drop msg: " << msg->getName() << ", kind:" << msg->getKind() << "(" << cEnum::get("inet::TcpStatusInd")->getStringFor(msg->getKind()) << ")\n";
         delete msg;
+    }
+}
+
+bool DnsRegistryService::processRequest(const DnsRegistrationRequest *request)
+{
+    if (request->getVerb() == Verb::PUT)
+    {
+        EV_INFO << "Adding " << request->getRecordsArraySize() << " records\n";
+        for (int i = 0; i < request->getRecordsArraySize(); i++)
+        {
+            const ResourceRecord &record = request->getRecords(i);
+            dnsDatabase->insertRecord(record.getDomain(), &record);
+        }
+        return true;
+    }
+    else if (request->getVerb() == Verb::DELETE)
+    {
+        EV_INFO << "Removing " << request->getRecordsArraySize() << " records\n";
+        for (int i = 0; i < request->getRecordsArraySize(); i++)
+        {
+            const ResourceRecord &record = request->getRecords(i);
+            dnsDatabase->removeRecord(record.getDomain(), &record);
+        }
+        return true;
+    }
+    else
+    {
+        EV_WARN << "Unable to process request with verb: " << request->getVerb() << "\n";
+        return false;
     }
 }
 
