@@ -71,12 +71,16 @@ void DnsResolver::resolve(const char *domain, ResolverCallback *callback)
     Enter_Method("Resolving domain: %s\n", domain);
     RequestContext ctx;
 
+    DnsQuestion question;
+    question.setDomain(domain);
+    question.setQuestionType(RecordType::A);
+
     const auto &request = makeShared<DnsRequest>();
     request->setOperationCode(QUERY);
     request->setRequestId(getNewRequestId());
-    request->appendQuestion(domain);
+    request->appendQuestion(question);
 
-    auto packet = new Packet("Dns Request");
+    auto packet = new Packet("DNS Request");
     packet->insertAtBack(request);
 
     auto timeOut = new RequestTimeout();
@@ -100,7 +104,8 @@ void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
     L3Address address;
     bool resolved;
 
-    if (response->getReturnCode() == dns::ReturnCode::NOERROR)
+    // TODO: Fixme
+    /*if (response->getReturnCode() == dns::ReturnCode::NOERROR)
     {
         const ResourceRecord &rec = response->getAuthoritativeAnswers(0);
         address = rec.ip;
@@ -109,7 +114,7 @@ void DnsResolver::socketDataArrived(UdpSocket *socket, Packet *packet)
     else
     {
         resolved = false;
-    }
+    }*/
 
     invokeCallback(response->getRequestId(), address, resolved);
     delete packet;

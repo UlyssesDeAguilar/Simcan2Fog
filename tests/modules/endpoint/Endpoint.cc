@@ -16,7 +16,7 @@ void Endpoint::finish()
 
 void Endpoint::handleMessage(cMessage *msg)
 {
-    if (msg->isSelfMessage())
+    /*if (msg->isSelfMessage())
     {
         auto request = new SM_ResolverRequest();
         request->setDomainName(nameToResolve);
@@ -34,7 +34,7 @@ void Endpoint::handleMessage(cMessage *msg)
             else
                 EV << "No address was resolved" << endl;
         }
-    }
+    }*/
 
     delete msg;
 }

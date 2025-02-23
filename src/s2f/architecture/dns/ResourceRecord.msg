@@ -12,13 +12,13 @@ enum RecordType
     PTR = 4;   //!< Pointer
     MX = 5;    //!< eMail eXchange
     TXT = 6;   //!< Text string (arbitrary text)
+    ANY = 7;   //!< All records
 };
 
-class ResourceRecord
+struct ResourceRecord
 {
-    @abstract;
 	string domain;
-	RecordType type;
-    inet::L3Address ip;
     string contents;
+    inet::L3Address ip;
+	RecordType type = A;
 }

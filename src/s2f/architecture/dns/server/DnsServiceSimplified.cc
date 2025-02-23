@@ -36,18 +36,18 @@ void DnsServiceSimplified::socketDataArrived(UdpSocket *socket, Packet *packet)
 
     while (queue.has<DnsRequest>())
     {
-        auto request = queue.pop<const DnsRequest>();
+        auto request = queue.pop<DnsRequest>();
         if (request->getOperationCode() == QUERY)
-            handleQuery(packet, request.get());
+            handleQuery(packet, request);
         else
-            handleNotImplemented(packet);
+            handleNotImplemented(packet, request);
     }
 
     // Release the memory
     delete packet;
 }
 
-void DnsServiceSimplified::sendResponseTo(const Packet *packet, DnsRequest *response)
+void DnsServiceSimplified::sendResponseTo(const Packet *packet, Ptr<DnsRequest> response)
 {
     // Retrieve IP:Port from sender
     L3Address remoteAddress = packet->getTag<L3AddressInd>()->getSrcAddress();
@@ -56,7 +56,7 @@ void DnsServiceSimplified::sendResponseTo(const Packet *packet, DnsRequest *resp
     EV_DEBUG << "Sending response to: " << remoteAddress << "\n";
 
     // Process and package response
-    auto responsePacket = new Packet("DnsRequest", Ptr<DnsRequest>(response));
+    auto responsePacket = new Packet("DnsRequest", response);
     socket.sendTo(responsePacket, remoteAddress, remotePort);
 }
 
@@ -66,84 +66,66 @@ void DnsServiceSimplified::socketErrorArrived(UdpSocket *socket, Indication *ind
     delete indication;
 }
 
-void DnsServiceSimplified::handleQuery(const Packet *packet, const DnsRequest *request)
+void DnsServiceSimplified::handleQuery(const Packet *packet, Ptr<const DnsRequest> request)
 {
     EV_DEBUG << "Handling query" << "\n";
-    auto questionCount = request->getQuestionArraySize();
+    int questionCount = request->getQuestionArraySize();
+    auto response = makeShared<DnsRequest>(*request);
 
-    // If there are no questions --> Error
-    if (questionCount == 0)
+    // If there are no questions or more than the practical ones return an error
+    // Meanwhile the RFC 1035 specifies more than one question, in the real world it is either ignored or treated as an error.
+    if (questionCount == 0 || questionCount > 1)
     {
-        EV_INFO << "Query with 0 questions" << endl;
-        auto response = request->dup();
+        EV_WARN << "Query with unsopported number of questions: FORMERR" << "\n";
         response->setReturnCode(ReturnCode::FORMERR);
         sendResponseTo(packet, response);
         return;
     }
 
-    auto allocateIfNull = [this](DnsRequest *p, const DnsRequest *req) -> DnsRequest *
-    { if (!p) return prepareResponse(req); else return p; };
+    const char *domain = request->getQuestion(0).getDomain();
+    EV_DEBUG << "Processing query: " << domain << "\n";
 
-    DnsRequest *ok{};
-    DnsRequest *error{};
+    auto node = dnsDatabase->searchRecords(request->getQuestion(0));
 
-    for (int i = 0; i < questionCount; i++)
+    if (node)
     {
-        EV_DEBUG << "Processing query" << i << "\n";
-        auto records = dnsDatabase->searchRecords(request->getQuestion(i));
-
-        if (records)
-        {
-            ok = allocateIfNull(ok, request);
-            ok->appendQuestion(request->getQuestion(i));
-            processRecords(ok, records);
-        }
-        else
-        {
-            error = allocateIfNull(error, request);
-            error->appendQuestion(request->getQuestion(i));
-        }
+        processRecords(domain, response, *(node->getRecords()));
+        response->setReturnCode(ReturnCode::NOERROR);
+    }
+    else
+    {
+        response->setReturnCode(ReturnCode::NXDOMAIN);
     }
 
-    // Send the responses
-    if (ok)
-    {
-        ok->setReturnCode(ReturnCode::NOERROR);
-        sendResponseTo(packet, ok);
-    }
-
-    if (error)
-    {
-        error->setReturnCode(ReturnCode::NXDOMAIN);
-        sendResponseTo(packet, error);
-    }
+    sendResponseTo(packet, response);
 }
 
-void DnsServiceSimplified::processRecords(DnsRequest *response, const std::vector<dns::ResourceRecord *> *records)
+void DnsServiceSimplified::processRecords(const char *domain, Ptr<DnsRequest> response, const std::set<dns::ResourceRecord> &records)
 {
-    for (const auto record : *records)
+    if (authorityMatcher.matches(domain))
     {
-        if (authorityMatcher.matches(record->getDomain()))
-            response->appendAuthoritativeAnswer(*record);
-        else
-            response->appendNonAuthoritativeAnswer(*record);
+        EV_DEBUG << "This server is authoritative for: " << domain << "\n";
+        response->setIsAuthoritative(true);
+        response->setAuthoritativeAnswerArraySize(records.size());
+        int i = 0;
+        for (auto &record : records)
+            response->setAuthoritativeAnswer(i++, record);
+    }
+    else
+    {
+        EV_DEBUG << "This server is non authoritative for: " << domain << "\n";
+        response->setIsAuthoritative(false);
+        response->setNonAuthoritativeAnswerArraySize(records.size());
+        int i = 0;
+        for (auto &record : records)
+            response->setAuthoritativeAnswer(i++, record);
     }
 }
 
-DnsRequest *DnsServiceSimplified::prepareResponse(const DnsRequest *request)
-{
-    auto response = new DnsRequest();
-    response->setOperationCode(request->getOperationCode());
-    response->setRequestId(request->getRequestId());
-    response->setIsAuthoritative(true);
-    return response;
-}
-
-void DnsServiceSimplified::handleNotImplemented(const Packet *packet)
+void DnsServiceSimplified::handleNotImplemented(const inet::Packet *packet, inet::Ptr<const DnsRequest> request)
 {
     // Select the not implemented response
-    auto request = dynamic_pointer_cast<const DnsRequest>(packet->peekData());
-    auto response = request->dup();
+    auto response = makeShared<DnsRequest>(*request);
     response->setReturnCode(ReturnCode::NOTIMP);
     sendResponseTo(packet, response);
 }

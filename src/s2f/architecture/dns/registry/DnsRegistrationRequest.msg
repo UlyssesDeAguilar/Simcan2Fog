@@ -10,6 +10,7 @@ namespace dns;
 //
 class DnsRegistrationRequest extends RestfulRequest
 {
-	chunkLength = inet::B(20);		// Packet length
+	chunkLength = inet::B(20);	   // Packet length
+	string zone;				   // Zone where we can insert the records
 	ResourceRecord records[];      // Domain bindings
 }

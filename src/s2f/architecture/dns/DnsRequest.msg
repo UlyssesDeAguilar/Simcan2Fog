@@ -26,6 +26,12 @@ enum ReturnCode
     NOTZONE  = 9;  //!< Name not in zone							  (currently not used)
 };
 
+class DnsQuestion
+{
+    string domain;
+    RecordType questionType;
+};
+
 class DnsRequest extends inet::FieldsChunk
 {
 	chunkLength = inet::B(20);							// Chunk length
@@ -33,7 +39,7 @@ class DnsRequest extends inet::FieldsChunk
 	uint8_t operationCode @enum(OperationCode);			// Operation Code
 	uint8_t returnCode @enum(ReturnCode); 				// Return Code
 	bool isAuthoritative;								// Wheter the answer is from an authoritative name server
-	string question[];									// Questions
+	DnsQuestion question[];								// Questions
 	ResourceRecord nonAuthoritativeAnswer[];	        // Non authoritative answers
 	ResourceRecord authoritativeAnswer[];	        	// Authoritative answers
 }

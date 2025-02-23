@@ -1,6 +1,6 @@
 package s2f.architecture.dns;
 import inet.node.inet.StandardHost;
-import s2f.architecture.dns.cache.DnsCache;
+import s2f.architecture.dns.db.DnsDb;
 import s2f.architecture.dns.registry.DnsRegistryService;
 import s2f.architecture.dns.server.DnsServiceSimplified;
 
@@ -17,7 +17,7 @@ module DnsSimplified extends StandardHost
         dnsService: DnsServiceSimplified {
             @display("i=block/table;p=858.375,58.274998");
         }
-        cache: DnsCache;
+        db: DnsDb;
         registryService: DnsRegistryService;
     
     connections:

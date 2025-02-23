@@ -13,15 +13,13 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#ifndef SIMCAN_EX_DNSRESOLVERSERVERSERVICE_H_
-#define SIMCAN_EX_DNSRESOLVERSERVERSERVICE_H_
+#ifndef SIMCAN_EX_DNS_CLIENT_SERVICE_H_
+#define SIMCAN_EX_DNS_CLIENT_SERVICE_H_
 
 #include <omnetpp.h>
 
 #include "s2f/architecture/dns/DnsRequest_m.h"
-#include "s2f/architecture/dns/db/DnsDb.h"
 #include "s2f/architecture/dns/DnsCommon.h"
-#include "s2f/architecture/dns/resolver/Resolution.h"
 #include "s2f/architecture/dns/client/DnsClientCommand_m.h"
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 #include "inet/applications/base/ApplicationBase.h"
@@ -33,17 +31,53 @@
 
 namespace dns
 {
-
-  class DnsResolverService : public inet::ApplicationBase, inet::UdpSocket::ICallback
+  class DnsClientService : public inet::ApplicationBase, inet::UdpSocket::ICallback
   {
   protected:
-    DnsDb *dnsDatabase{};
-    inet::UdpSocket serverSocket;
-    std::map<uint16_t, Resolution> resolutions;
-    std::map<omnetpp::opp_string, uint16_t> questionMap;
-    std::map<uint16_t, std::set<uint16_t>> requestMap;
-    uint16_t lastId;
-    uint16_t lastQuestionId;
+    struct RequestContext
+    {
+      std::vector<inet::L3Address> servers;
+      int tick = 0;
+      int tries = 0;
+      int selectedAddress = 0;
+      uint16_t id = 0;
+      inet::Packet *packet = nullptr;
+
+      ~RequestContext()
+      {
+        if (packet)
+          delete packet;
+      }
+
+      RequestContext(DnsClientCommand *request) : id(request->getRequestId())
+      {
+        servers.reserve(request->getIpPoolArraySize());
+        for (int i = 0; i < request->getIpPoolArraySize(); i++)
+          servers.push_back(request->getIpPool(i));
+        packet = request->removePayload();
+      }
+
+      bool updateWithFailedAttempt(int maxAttempts)
+      {
+        if (tries >= maxAttempts)
+        {
+          selectedAddress++;
+          if (selectedAddress >= servers.size())
+            return false;
+          tries = 0;
+        }
+
+        return true;
+      }
+    };
+
+    omnetpp::cMessage *tickTimer;
+    inet::UdpSocket socket;
+    std::map<uint16_t, RequestContext> requestMap;
+    std::set<inet::L3Address> failedServers;
+    int timePerTick;
+    int ticksForTimeOut;
+    int maxAttempts;
 
     // Kernel lifecycle
     virtual int numInitStages() const override { return inet::NUM_INIT_STAGES + 1; }
@@ -57,21 +91,21 @@ namespace dns
 
     // Logic
     virtual void handleMessageWhenUp(omnetpp::cMessage *msg) override;
-    void handleRequest(inet::Packet *packet, inet::Ptr<const DnsRequest> request);
-    void handleResponse(DnsClientIndication *msg);
-
-    void processResolution(Resolution &resolution, bool recursion = false);
-    void processAuthResolution(Resolution &resolution, const DnsTreeNode *node);
-    void registerQuestion(const DnsQuestion &question, const DnsTreeNode *node, uint16_t id);
-    void markFailedResolutions(const std::set<uint16_t> &failedResolutions, ReturnCode returnCode);
-
-    void makeTransition(Resolution &resolution, ResolutionState newState);
-    void sendResponse(Resolution &resolution);
+    void handleResponse(inet::Ptr<const DnsRequest> response, inet::Packet* packet);
+    void handleRequest(DnsClientCommand *request);
+    bool sendRequest(RequestContext &context);
+    void sendResponse(uint16_t id, DnsClientResult result, inet::Packet *payload = nullptr);
+    void processRequests();
 
     // Socket callbacks
     virtual void socketDataArrived(inet::UdpSocket *socket, inet::Packet *packet) override;
     virtual void socketErrorArrived(inet::UdpSocket *socket, inet::Indication *indication) override;
     virtual void socketClosed(inet::UdpSocket *socket) override {} // Ignored, as it doesn't require any action
+
+  public:
+    // Constructor / Destructor
+    DnsClientService();
+    virtual ~DnsClientService();
   };
 
 };

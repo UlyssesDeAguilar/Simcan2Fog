@@ -2,8 +2,8 @@
 #define SIMCAN_EX_DNS_RESOLVER
 
 #include "s2f/architecture/dns/DnsRequest_m.h"
-#include "s2f/architecture/dns/DnsServiceSimplified.h"
-#include "s2f/architecture/dns/common.h"
+#include "s2f/architecture/dns/server/DnsServiceSimplified.h"
+#include "s2f/architecture/dns/DnsCommon.h"
 #include "inet/common/INETDefs.h"
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 #include "inet/applications/base/ApplicationBase.h"

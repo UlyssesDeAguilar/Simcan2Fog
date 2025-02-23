@@ -1,6 +1,6 @@
 package s2f.architecture.dns.resolver;
 
-import s2f.architecture.dns.cache.DnsCache;
+import s2f.architecture.dns.db.DnsDb;
 import inet.node.inet.StandardHost;
 
 module DnsResolverServer extends StandardHost
@@ -9,22 +9,14 @@ module DnsResolverServer extends StandardHost
         @display("i=dns");
 
     submodules:
-        dnsServer: DnsResolverService {
+        resolver: DnsResolverService {
             @display("i=block/table;p=907.19995,58.274998");
         }
-        dnsQuerier: DnsQuerierService {
-            @display("p=743.39996,55.125");
-        }
-        cache: DnsCache {
+        
+        db: DnsDb {
             @display("p=1053.6749,58.274998");
         }
     connections:
-        dnsServer.socketIn <-- at.out++;
-        dnsServer.socketOut --> at.in++;
-
-        dnsQuerier.socketIn <-- at.out++;
-        dnsQuerier.socketOut --> at.in++;
-
-        dnsServer.serverOut --> dnsQuerier.querierIn;
-        dnsQuerier.querierOut --> dnsServer.serverIn;
+        resolver.socketIn <-- at.out++;
+        resolver.socketOut --> at.in++;
 }

@@ -163,20 +163,16 @@ bool DnsRegistryService::processRequest(const DnsRegistrationRequest *request)
     {
         EV_INFO << "Adding " << request->getRecordsArraySize() << " records\n";
         for (int i = 0; i < request->getRecordsArraySize(); i++)
-        {
-            const ResourceRecord &record = request->getRecords(i);
-            dnsDatabase->insertRecord(record.getDomain(), &record);
-        }
+            dnsDatabase->insertRecord(request->getZone(), request->getRecords(i));
+
         return true;
     }
     else if (request->getVerb() == Verb::DELETE)
     {
         EV_INFO << "Removing " << request->getRecordsArraySize() << " records\n";
         for (int i = 0; i < request->getRecordsArraySize(); i++)
-        {
-            const ResourceRecord &record = request->getRecords(i);
-            dnsDatabase->removeRecord(record.getDomain(), &record);
-        }
+            dnsDatabase->removeRecord(request->getZone(),request->getRecords(i));
+
         return true;
     }
     else

@@ -1,4 +1,3 @@
-#include "s2f/messages/SM_ResolverRequest_m.h"
 #include "s2f/core/include/SIMCAN_types.h"
 #include "s2f/core/cSIMCAN_Core.h"
 #include "s2f/architecture/net/routing/RoutingInfo_m.h"

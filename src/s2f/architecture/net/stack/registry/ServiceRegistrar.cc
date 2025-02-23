@@ -3,6 +3,7 @@ Define_Module(ServiceRegistrar);
 
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/common/ModuleAccess.h"
+#include "s2f/architecture/dns/DnsCommon.h"
 
 using namespace dns;
 
@@ -79,7 +80,7 @@ void ServiceRegistrar::socketFailure(TcpSocket *socket, int code)
 
 void ServiceRegistrar::registerService(const char *domain)
 {
-    Enter_Method("Registering service %s\n", domain);
+    /*Enter_Method("Registering service %s\n", domain);
     DomainBinding binding;
     ResourceRecord record;
 
@@ -93,12 +94,12 @@ void ServiceRegistrar::registerService(const char *domain)
     request->insertBinding(binding);
 
     packet->insertAtBack(request);
-    socket.send(packet);
+    socket.send(packet);*/
 }
 
 void ServiceRegistrar::unregisterService(const char *domain)
 {
-    Enter_Method("Unregistering service %s\n", domain);
+    /*Enter_Method("Unregistering service %s\n", domain);
     DomainBinding binding;
     ResourceRecord record;
 
@@ -114,5 +115,5 @@ void ServiceRegistrar::unregisterService(const char *domain)
     request->insertBinding(binding);
 
     packet->insertAtBack(request);
-    socket.send(packet);
+    socket.send(packet);*/
 }

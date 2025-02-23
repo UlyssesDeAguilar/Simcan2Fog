@@ -37,12 +37,13 @@ OBJS = \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
-    $O/s2f/architecture/dns/DnsServiceSimplified.o \
-    $O/s2f/architecture/dns/cache/DnsCache.o \
+    $O/s2f/architecture/dns/DnsCommon.o \
+    $O/s2f/architecture/dns/client/DnsClientService.o \
+    $O/s2f/architecture/dns/db/DnsDb.o \
+    $O/s2f/architecture/dns/db/DnsTree.o \
     $O/s2f/architecture/dns/registry/DnsRegistryService.o \
-    $O/s2f/architecture/dns/resolver/DnsQuerierService.o \
     $O/s2f/architecture/dns/resolver/DnsResolverService.o \
-    $O/s2f/architecture/dns/server/DnsService.o \
+    $O/s2f/architecture/dns/server/DnsServiceSimplified.o \
     $O/s2f/architecture/messagequeue/MessageQueueManager.o \
     $O/s2f/architecture/messagequeue/internals/SinkDelegate.o \
     $O/s2f/architecture/messagequeue/internals/SourceDelegate.o \
@@ -112,6 +113,8 @@ OBJS = \
     $O/s2f/users/generators/UserGeneratorCost.o \
     $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
+    $O/s2f/architecture/dns/ResourceRecord_m.o \
+    $O/s2f/architecture/dns/client/DnsClientCommand_m.o \
     $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
     $O/s2f/architecture/net/protocol/RestfulRequest_m.o \
     $O/s2f/architecture/net/protocol/RestfulResponse_m.o \
@@ -126,7 +129,6 @@ OBJS = \
     $O/s2f/messages/SM_CloudProvider_Control_m.o \
     $O/s2f/messages/SM_CPU_Message_m.o \
     $O/s2f/messages/SM_FogIO_m.o \
-    $O/s2f/messages/SM_ResolverRequest_m.o \
     $O/s2f/messages/SM_REST_API_m.o \
     $O/s2f/messages/SM_UserAPP_m.o \
     $O/s2f/messages/SM_UserVM_m.o \
@@ -138,6 +140,8 @@ OBJS = \
 MSGFILES = \
     s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
+    s2f/architecture/dns/ResourceRecord.msg \
+    s2f/architecture/dns/client/DnsClientCommand.msg \
     s2f/architecture/dns/registry/DnsRegistrationRequest.msg \
     s2f/architecture/net/protocol/RestfulRequest.msg \
     s2f/architecture/net/protocol/RestfulResponse.msg \
@@ -152,7 +156,6 @@ MSGFILES = \
     s2f/messages/SM_CloudProvider_Control.msg \
     s2f/messages/SM_CPU_Message.msg \
     s2f/messages/SM_FogIO.msg \
-    s2f/messages/SM_ResolverRequest.msg \
     s2f/messages/SM_REST_API.msg \
     s2f/messages/SM_UserAPP.msg \
     s2f/messages/SM_UserVM.msg \

@@ -22,9 +22,8 @@ namespace dns
     protected:
         inet::UdpSocket socket;
         DnsDb *dnsDatabase{};
-        cPatternMatcher authorityMatcher;
-        DnsRequest *prepareResponse(const DnsRequest *request);
-        void processRecords(DnsRequest *response, const std::vector<dns::ResourceRecord *> *records);
+        omnetpp::cPatternMatcher authorityMatcher;
+        void processRecords(const char *domain, inet::Ptr<DnsRequest> response, const std::set<dns::ResourceRecord> &records);
 
     public:
         // Kernel lifecycle
@@ -39,9 +38,9 @@ namespace dns
 
         // Logic
         virtual void handleMessageWhenUp(omnetpp::cMessage *msg) override { socket.processMessage(msg); }
-        void handleQuery(const inet::Packet *packet, const DnsRequest *request);
-        void handleNotImplemented(const inet::Packet *request);
-        void sendResponseTo(const inet::Packet *packet, DnsRequest *request);
+        void handleQuery(const inet::Packet *packet, inet::Ptr<const DnsRequest> request);
+        void handleNotImplemented(const inet::Packet *packet, inet::Ptr<const DnsRequest> request);
+        void sendResponseTo(const inet::Packet *packet, inet::Ptr<DnsRequest> request);
 
         // Socket callbacks
         virtual void socketDataArrived(inet::UdpSocket *socket, inet::Packet *packet) override;
