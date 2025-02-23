@@ -17,14 +17,8 @@
 #define SIMCAN_EX_DNS_DB_H_
 
 #include <omnetpp.h>
+#include "s2f/architecture/dns/DnsCommon.h"
 #include "s2f/architecture/dns/db/DnsTree.h"
-
-// #include "inet/transportlayer/contract/udp/UdpSocket.h"
-// #include "inet/applications/base/ApplicationBase.h"
-// #include "inet/networklayer/common/L3AddressTag_m.h"
-// #include "inet/transportlayer/common/L4PortTag_m.h"
-// #include "inet/networklayer/common/L3Address.h"
-// #include "inet/networklayer/common/L3AddressResolver.h"
 
 namespace dns
 {
@@ -33,15 +27,16 @@ namespace dns
     {
     protected:
         DnsTree tree;
+
     public:
         // Kernel lifecycle
-        virtual void initialize() override {};
+        virtual void initialize() override;
         virtual void finish() override { tree.clear(); };
         virtual void handleMessage(omnetpp::cMessage *msg) override { error("This module doesn't take any messages"); }
 
-        void insertRecord(const char *domain, const ResourceRecord *record);
-        void removeRecord(const char *domain, const ResourceRecord *record);
-        const std::vector<ResourceRecord *> *searchRecords(const char *domain);
+        void insertRecord(const char *zone, const ResourceRecord &record);
+        void removeRecord(const char *zone, const ResourceRecord &record);
+        const DnsTreeNode *searchRecords(const DnsQuestion &question);
     };
 
 };

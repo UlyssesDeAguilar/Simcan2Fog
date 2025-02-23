@@ -1,0 +1,180 @@
+%description:
+
+Tests the functionality of the DnsTree and DnsTreeNode classes.
+Operations tested: insertion, query (best-effort), inner reflection
+
+%includes:
+#include "s2f/architecture/dns/db/DnsTree.h"
+
+%activity:
+using namespace dns;
+using namespace inet;
+
+// We have the following records
+ResourceRecord comRecord, exampleRecord, ipRecord, wildcard, cname;
+
+// TLD Record
+comRecord.domain = "a.gtld-servers.net.";
+comRecord.type = RecordType::NS;
+comRecord.ip = L3Address("1.1.1.1");
+
+// AUTH Record
+exampleRecord.domain = "ns1.example.com.";
+exampleRecord.type = RecordType::NS;
+exampleRecord.ip = L3Address("2.2.2.2");
+
+// An IP record
+ipRecord.domain ="example.com.";
+ipRecord.type = RecordType::A;
+ipRecord.ip = L3Address("3.3.3.3");
+
+// An CNAME record
+cname.domain ="test.example.com.";
+cname.type = RecordType::CNAME;
+cname.contents = "example.com";
+
+// A wildcard record
+wildcard.domain ="*.us-east-1.com.";
+wildcard.type = RecordType::A;
+wildcard.ip = L3Address("3.3.3.3");
+
+EV << "Records to be inserted" << "\n";
+EV << "Record 1: " << comRecord << "\n";
+EV << "Record 2: " << exampleRecord << "\n";
+EV << "Record 3: " << comRecord << "\n";
+EV << "Record 4: " << wildcard << "\n";
+
+DnsTree tree;
+const DnsTreeNode *node; 
+EV << "\nInserting record 1 in zone . " << "\n";
+tree.insertRecord(".", &comRecord);
+
+EV << "Query: . in the database" << "\n";
+node = tree.searchRecords("example.com");
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+EV << "\nQuery: com in the database" << "\n";
+node = tree.searchRecords("com");
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+EV << "\nQuery: example.com in the database" << "\n";
+node = tree.searchRecords("example.com");
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+
+EV << "\nInserting record 2 in zone com " << "\n";
+tree.insertRecord("com", &exampleRecord);
+
+EV << "Query: com in the database" << "\n";
+node = tree.searchRecords("com");
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+EV << "\nQuery: example.com in the database" << "\n";
+node = tree.searchRecords("example.com");
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+EV << "\nInserting record 3 in zone example.com " << "\n";
+tree.insertRecord("example.com", &ipRecord);
+
+EV << "Query: example.com in the database" << "\n";
+node = tree.searchRecords("example.com");
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+EV << "\nInserting record 4 in zone us-east-1.com " << "\n";
+tree.insertRecord("us-east-1.com", &wildcard);
+
+EV << "Query: service.us-east-1.com in the database" << "\n";
+node = tree.searchRecords("us-east-1.com");
+
+if (node)
+    EV << "Node obtained: " << *node << "\n";
+else
+    EV << "No node found on the tree\n";
+
+EV << "\nInserting record 5 in zone example.com " << "\n";
+tree.insertRecord("example.com", &cname);
+
+//EV << "Query: service.us-east-1.com in the database" << "\n";
+//node = tree.searchRecords("us-east-1.com");
+
+EV << "\nCurrent tree representation\n";
+EV << tree;
+
+%not-contains: stderr
+--
+%contains: stdout
+Records to be inserted
+Record 1: Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+Record 2: Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
+Record 3: Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+Record 4: Record :  [ domain: *.us-east-1.com. | type: A | ip: 3.3.3.3 | text:  ]
+
+Inserting record 1 in zone . 
+Query: . in the database
+Node obtained: DnsTreeNode of zone: . level:ROOT
+Records:  + Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+Children: 
+
+Query: com in the database
+Node obtained: DnsTreeNode of zone: . level:ROOT
+Records:  + Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+Children: 
+
+Query: example.com in the database
+Node obtained: DnsTreeNode of zone: . level:ROOT
+Records:  + Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+Children: 
+
+Inserting record 2 in zone com 
+Query: com in the database
+Node obtained: DnsTreeNode of zone: com level:TLD
+Records:  + Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
+Children: 
+
+Query: example.com in the database
+Node obtained: DnsTreeNode of zone: com level:TLD
+Records:  + Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
+Children: 
+
+Inserting record 3 in zone example.com 
+Query: example.com in the database
+Node obtained: DnsTreeNode of zone: example level:AUTHORITATIVE
+Records:  + Record :  [ domain: example.com. | type: A | ip: 3.3.3.3 | text:  ]
+Children: 
+
+Inserting record 4 in zone us-east-1.com 
+Query: service.us-east-1.com in the database
+Node obtained: DnsTreeNode of zone: us-east-1 level:AUTHORITATIVE
+Records:  + Record :  [ domain: *.us-east-1.com. | type: A | ip: 3.3.3.3 | text:  ]
+Children: 
+
+Inserting record 5 in zone example.com 
+
+Current tree representation
+|->.[ROOT]
+ + Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+   |->com[TLD]
+    + Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
+      |->example[AUTHORITATIVE]
+       + Record :  [ domain: example.com. | type: A | ip: 3.3.3.3 | text:  ]
+       + Record :  [ domain: test.example.com. | type: CNAME | ip: <none> | text: example.com ]
+      |->us-east-1[AUTHORITATIVE]
+       + Record :  [ domain: *.us-east-1.com. | type: A | ip: 3.3.3.3 | text:  ]

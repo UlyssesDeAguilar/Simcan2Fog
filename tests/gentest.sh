@@ -9,7 +9,7 @@ fi
 
 if [ $1 = "all" ]
 then
-    TARGETS=("unit" "simschema" "datamanager" "switch" "DNS" "dc")
+    TARGETS=("unit/*" "simschema/*" "datamanager/*" "switch/*" "DNS/*" "dc/*")
 else
     TARGETS="$@"
 fi
@@ -36,7 +36,7 @@ LIBS=\-lINET\$\(D\)\ \-lSimcan2Fog\$\(D\)\ \-lmysqlcppconn
 # Generate the test case files
 for folder in ${TARGETS[@]}
 do
-    ALL="$ALL $folder/*.test"
+    ALL="$ALL $folder"
 done
 
 echo "Targets: $ALL"

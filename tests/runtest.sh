@@ -17,7 +17,7 @@ fi
 
 for folder in ${TARGETS[@]}
 do
-    ALL="$ALL $folder/*.test"
+    ALL="$ALL $folder"
 done
 
 # Then run the tests

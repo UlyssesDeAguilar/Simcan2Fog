@@ -4,16 +4,9 @@
 using namespace dns;
 using namespace omnetpp;
 
-DnsTreeNode::~DnsTreeNode()
+void DnsTreeNode::clear()
 {
-    for (auto &child : children)
-        delete child.second;
-
     children.clear();
-
-    for (auto &record : records)
-        delete record;
-
     records.clear();
 }
 
@@ -22,108 +15,127 @@ DnsTreeNode *DnsTreeNode::getChild(const char *domain)
     auto iter = children.find(domain);
     if (iter == children.end())
         return nullptr;
-    return iter->second;
+    return &iter->second;
 }
 
 DnsTreeNode *DnsTreeNode::getChildOrCreate(const char *domain)
 {
     auto iter = children.find(domain);
     if (iter != children.end())
-        return iter->second;
+        return &iter->second;
 
-    DnsTreeNode *node = new DnsTreeNode(domain);
-    children[domain] = node;
-    return node;
+    children[domain] = DnsTreeNode(domain, (DnsLevel)(level + 1), this);
+    return &children[domain];
 }
 
-std::vector<ResourceRecord *> *DnsTree::searchRecords(const char *domain)
+DnsTreeNode *DnsTree::searchRecordsForUpdate(const char *domain)
 {
     // Tokenize the FQDN
     cStringTokenizer tokenizer(domain, ".");
     auto subdomains = tokenizer.asVector();
 
+    // Special case, if no tokens (or no children) it means "." so it goes for the root
+    if (subdomains.size() == 0 || root.getChildCount() == 0)
+        return &root;
+
     // Start from the root
-    DnsTreeNode *node = root->getChild(subdomains.back().c_str());
+    DnsTreeNode *node = root.getChild(subdomains.back().c_str());
     subdomains.pop_back();
 
     while (subdomains.size() > 0 && node != nullptr)
     {
-        auto &current = subdomains.back();
-
-        // If the node is in the last subdomain we finished
-        // If no more children, maybe we have a NS who knows
-        if (subdomains.size() == 1 || node->getChildCount() == 0)
-            return node->getRecords();
+        // If no more children, maybe we have a NS or a wildcard domain
+        if (node->getChildCount() == 0)
+            return node;
 
         // Continue the search down the tree
         node = node->getChild(subdomains.back().c_str());
-
         subdomains.pop_back();
     }
 
-    return nullptr;
+    return node;
 }
 
-void DnsTree::insertRecord(const char *domain, ResourceRecord *record)
+std::ostream &DnsTreeNode::print(std::ostream &out, int level) const
+{
+    std::string indent;
+    if (level > 0)
+        indent.append(level * 3, ' ');
+
+    out << indent << "|->" << domain << "[" << dnsLevelToString(this->level) << "]\n";
+
+    for (auto &record : records)
+        out << indent << " + " << record << "\n";
+
+    for (auto &child : children)
+        child.second.print(out, level + 1);
+    return out;
+}
+
+namespace dns
+{
+    std::ostream &operator<<(std::ostream &out, const DnsTreeNode &node)
+    {
+        out << "DnsTreeNode of zone: " << node.domain << " level:" << dnsLevelToString(node.level) << "\n";
+        out << "Records: ";
+        for (auto &record : node.records)
+            out << " + " << record << "\n";
+        out << "Children: ";
+        for (auto &child : node.children)
+            out << " + " << child.second.domain << "\n";
+        return out;
+    }
+}
+
+DnsTree::DnsTree()
+{
+    ResourceRecord record;
+    record.type = RecordType::NS;
+    record.ip = ROOT_DNS_IP;
+    record.domain = "i.root-servers.net.";
+
+    root = DnsTreeNode("", ROOT, nullptr);
+    root.addRecord(&record);
+}
+
+void DnsTree::insertRecord(const char *zone, const ResourceRecord *record)
 {
     // Tokenize the FQDN
-    cStringTokenizer tokenizer(domain, ".");
-    auto subdomains = tokenizer.asVector();
-    std::string current = std::move(subdomains.back());
-    subdomains.pop_back();
+    cStringTokenizer tokenizer(zone, ".");
+    std::vector<std::string> subdomains = tokenizer.asVector();
+
+    // Special case, if no tokens it means "." so it goes for the root
+    if (subdomains.size() == 0)
+    {
+        root.addRecord(record);
+        return;
+    }
 
     // Start from the root
-    DnsTreeNode *node = root->getChildOrCreate(current.c_str());
+    DnsTreeNode *node = root.getChildOrCreate(subdomains.back().c_str());
+    subdomains.pop_back();
 
-    while (subdomains.size() > 0)
+    for (int i = 0; i < NUM_DNS_LEVELS && subdomains.size() > 0; i++)
     {
-        current = std::move(subdomains.back());
+        node = node->getChildOrCreate(subdomains.back().c_str());
         subdomains.pop_back();
-
-        if (subdomains.size() == 1)
-            node->addRecord(record);
-        else
-            node = node->getChildOrCreate(current.c_str());
     }
+
+    node->addRecord(record);
 }
 
-bool DnsTree::removeRecord(const char *domain, const ResourceRecord *record)
+bool DnsTree::removeRecord(const char *zone, const ResourceRecord *record)
 {
-    std::vector<ResourceRecord *> *records = searchRecords(domain);
-
-    if (records == nullptr)
+    DnsTreeNode *node = searchRecordsForUpdate(zone);
+    if (!node)
         return false;
 
-    auto iter = std::find_if(records->begin(), records->end(), [record](ResourceRecord *rr)
-                             { return rr->getDomain() == record->getDomain() && rr->getType() == record->getType(); });
-
-    if (iter == records->end())
-        return false;
-
-    // Swap the records, delete and then pop back!
-    std::swap(*iter, *(records->end() - 1));
-    delete *iter;
-    records->pop_back();
-
-    return true;
+    // Search the record and destroy it
+    auto records = node->getRecords();
+    return records->erase(*record) > 0;
 }
 
 void DnsTree::clear()
 {
-    delete root;
-    root = new DnsTreeNode(".");
-}
-
-void DnsTreeNode::print(std::ostream &out, int level) const
-{
-    if (level > 3)
-    {
-        std::string indent(level - 3, ' ');
-        out << indent;
-    }
-    
-    out << "|->" << domain << "\n";
-
-    for (auto &child : children)
-        child.second->print(out, level + 3);
+    root.clear();
 }

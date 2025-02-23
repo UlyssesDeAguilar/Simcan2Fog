@@ -1,0 +1,64 @@
+%description:
+
+Tests the initialization of the DnsDb with zone configs
+
+%file: TestDnsDb.ned
+import s2f.architecture.dns.db.DnsDb;
+
+network TestDnsDb
+{
+    submodules:
+        db: DnsDb;
+}
+
+%file: zones.json
+[
+    {
+        "zone": ".",
+        "records": [
+            { "domain": "a.gtld-servers.net.", "type": "NS", "ip": "1.1.1.1"}
+        ]
+    },
+    {
+        "zone": "com",
+        "records": [
+            { "domain": "ns1.example.com.", "type": "NS", "ip": "2.2.2.2"}
+        ]
+    },
+    {
+        "zone": "example.com",
+        "records": [
+            { "domain": "example.com.", "type": "A", "ip": "3.3.3.3"},
+            { "domain": "test.example.com.", "type": "CNAME", "text": "example.com"}
+        ]
+    }
+]
+
+%inifile: omnetpp.ini
+[General]
+network = TestDnsDb
+*.db.zoneConfig = readJSON("zones.json")
+
+%not-contains: stdout
+undisposed object:
+
+%not-contains: stdout
+-- check module destructor
+
+%contains: stdout
+Loading zone configuration
+Inserting records for zone .
+Inserting record Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+Inserting records for zone com
+Inserting record Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
+Inserting records for zone example.com
+Inserting record Record :  [ domain: example.com. | type: A | ip: 3.3.3.3 | text:  ]
+Inserting record Record :  [ domain: test.example.com. | type: CNAME | ip: <none> | text: example.com ]
+DnsDb initialized
+|->.[ROOT]
+ + Record :  [ domain: a.gtld-servers.net. | type: NS | ip: 1.1.1.1 | text:  ]
+   |->com[TLD]
+    + Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
+      |->example[AUTHORITATIVE]
+       + Record :  [ domain: example.com. | type: A | ip: 3.3.3.3 | text:  ]
+       + Record :  [ domain: test.example.com. | type: CNAME | ip: <none> | text: example.com ]
