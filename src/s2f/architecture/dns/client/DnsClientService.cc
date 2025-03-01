@@ -42,6 +42,7 @@ void DnsClientService::finish()
     // Clear cache for the next run
     socket.close();
     cancelEvent(tickTimer);
+    requestMap.clear();
     ApplicationBase::finish();
 }
 
@@ -108,6 +109,8 @@ void DnsClientService::handleRequest(DnsClientCommand *request)
     }
     else
         EV_INFO << "DnsClientService: request with id: " << request->getRequestId() << " already exists\n";
+    
+    delete request;
 }
 
 bool DnsClientService::sendRequest(RequestContext &ctx)
@@ -129,7 +132,7 @@ bool DnsClientService::sendRequest(RequestContext &ctx)
 
 void DnsClientService::sendResponse(uint16_t id, DnsClientResult status, inet::Packet *packet)
 {
-    ASSERT2(status == OK && packet == nullptr, "Error, cannot send OK with empty payload!");
+    ASSERT2(status == OK && packet != nullptr, "Error, cannot send OK with empty payload!");
     auto response = new DnsClientIndication();
     response->setRequestId(id);
     response->setResult(status);

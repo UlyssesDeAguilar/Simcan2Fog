@@ -57,7 +57,7 @@ OBJS = \
     $O/s2f/architecture/net/stack/queue/PullClient.o \
     $O/s2f/architecture/net/stack/queue/PushClient.o \
     $O/s2f/architecture/net/stack/registry/ServiceRegistrar.o \
-    $O/s2f/architecture/net/stack/resolver/DnsResolver.o \
+    $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/hardwaremanagers/HardwareManager.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
@@ -121,7 +121,7 @@ OBJS = \
     $O/s2f/architecture/net/protocol/RestMsg_m.o \
     $O/s2f/architecture/net/routing/RoutingInfo_m.o \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
-    $O/s2f/architecture/net/stack/resolver/RequestTimeout_m.o \
+    $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
     $O/s2f/management/cloudprovider/NodeEvent_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
@@ -148,7 +148,7 @@ MSGFILES = \
     s2f/architecture/net/protocol/RestMsg.msg \
     s2f/architecture/net/routing/RoutingInfo.msg \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
-    s2f/architecture/net/stack/resolver/RequestTimeout.msg \
+    s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
     s2f/management/cloudprovider/NodeEvent.msg \
     s2f/messages/INET_AppMessage.msg \

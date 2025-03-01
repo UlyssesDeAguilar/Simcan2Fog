@@ -17,6 +17,7 @@ simple AppBase extends cSIMCAN_Core like IApp{
         input in;										// Input gate
         output out;										// Output gate   
         input socketIn;
-        output socketOut;   
+        output socketOut;
+        input resolver @directIn;
 }
 

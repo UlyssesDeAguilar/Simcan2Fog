@@ -26,7 +26,7 @@ void AppBase::initialize()
     // If DNS resolver is enabled
     const char *resolverPath = appModule->par("resolverPath");
     if (!opp_isempty(resolverPath))
-        resolver = check_and_cast<DnsResolver *>(getModuleByPath(resolverPath));
+        resolverGate = findModuleByPath(resolverPath)->gate("clientIn");
 
     // Init cGates
     inGate = gate("in");
@@ -74,20 +74,24 @@ void AppBase::syscallFillData(Syscall *syscall, SyscallCode code)
 
 void AppBase::handleMessage(cMessage *msg)
 {
-    auto packet = dynamic_cast<Packet *>(msg);
-    auto cmd = dynamic_cast<Message *>(msg);
+    auto arrivalGate = msg->getArrivalGate();
 
-    if (packet || cmd)
+    if (arrivalGate == inGate || msg->isSelfMessage())
+        cSIMCAN_Core::handleMessage(msg);
+    else if (arrivalGate == gate("resolver"))
+    {
+        // DNS resolver response!
+        auto response = check_and_cast<StubDnsResponse *>(msg);
+        callback->handleResolutionFinished(response->getAddress(), response->getResult() == 0);
+        delete response;
+    }
+    else
     {
         auto socket = socketMap.findSocketFor(msg);
         if (socket)
             socket->processMessage(msg);
         else
             error("Message arrived for an unregistered socket");
-    }
-    else
-    {
-        cSIMCAN_Core::handleMessage(msg);
     }
 }
 
@@ -198,7 +202,10 @@ void AppBase::abort()
 void AppBase::resolve(const char *domainName)
 {
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]" << " resolving:" << domainName << "\n";
-    resolver->resolve(domainName, this);
+    auto request = new StubDnsRequest();
+    request->setDomain(domainName);
+    request->setModuleId(getId());
+    sendDirect(request, resolverGate);
 }
 
 int AppBase::open(uint16_t localPort, ConnectionMode mode)

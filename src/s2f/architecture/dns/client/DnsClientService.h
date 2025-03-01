@@ -43,11 +43,7 @@ namespace dns
       uint16_t id = 0;
       inet::Packet *packet = nullptr;
 
-      ~RequestContext()
-      {
-        if (packet)
-          delete packet;
-      }
+      ~RequestContext() { delete packet; }
 
       RequestContext(DnsClientCommand *request) : id(request->getRequestId())
       {
@@ -91,7 +87,7 @@ namespace dns
 
     // Logic
     virtual void handleMessageWhenUp(omnetpp::cMessage *msg) override;
-    void handleResponse(inet::Ptr<const DnsRequest> response, inet::Packet* packet);
+    void handleResponse(inet::Ptr<const DnsRequest> response, inet::Packet *packet);
     void handleRequest(DnsClientCommand *request);
     bool sendRequest(RequestContext &context);
     void sendResponse(uint16_t id, DnsClientResult result, inet::Packet *payload = nullptr);

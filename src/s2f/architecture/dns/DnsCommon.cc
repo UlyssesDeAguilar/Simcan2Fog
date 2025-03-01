@@ -112,7 +112,7 @@ namespace dns
             return false;
         
         if (r_domain[0] == '*' && r_domain[1] != '\0')
-            return opp_strcmp(r_domain + 2, domain) == 0;
+            return opp_stringendswith(domain, r_domain + 1);
         else
             return opp_strcmp(r_domain, domain) == 0;
     }

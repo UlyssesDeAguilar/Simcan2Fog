@@ -38,7 +38,7 @@ void ClientEndpoint::processSelfMessage(cMessage *msg)
         {
             connect(sockFd, ip, 443);
         }
-        else if (resolver != nullptr)
+        else if (resolverGate != nullptr)
         {
             resolve(par("servingHost"));
         }

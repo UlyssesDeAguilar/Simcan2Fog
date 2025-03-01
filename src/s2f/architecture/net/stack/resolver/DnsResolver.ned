@@ -1,18 +1,37 @@
 package s2f.architecture.net.stack.resolver;
-import inet.applications.contract.IApp;
+import s2f.architecture.dns.client.DnsClientService;
+import s2f.architecture.dns.db.DnsDb;
 
 // Module for resolving addresses
 // 
 // @author Ulysses de Aguilar Gudmundsson
 // @date 2023-10-6
-simple DnsResolver like IApp {
+module DnsResolver
+{
     parameters:
-    	@class(DnsResolver);
-        string ispResolver = default("7.7.7.7");
-        int requestTimeout @unit(s) = default(5s);
-        int retryCount = default(3);
+        string ispResolver;
+        
     gates:
-		// These labels help the visualizer
-        input socketIn @labels(ITransportPacket/up);
-        output socketOut @labels(ITransportPacket/down);
+        input clientIn @directIn;
+        input socketIn;
+        output socketOut;
+    submodules:
+        stubResolver: StubDnsResolver {
+            @display("p=103,57");
+            ispResolver = parent.ispResolver;
+        }
+        dnsClient: DnsClientService {
+            @display("p=103,154");
+        }
+        db: DnsDb {
+            @display("p=178,115");
+        }
+    connections:
+        clientIn --> stubResolver.clientIn;
+
+        stubResolver.resolverOut --> dnsClient.clientIn;
+        dnsClient.clientOut --> stubResolver.resolverIn;
+
+        dnsClient.socketOut --> socketOut;
+        dnsClient.socketIn <-- socketIn;
 }

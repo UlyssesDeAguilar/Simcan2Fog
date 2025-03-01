@@ -11,7 +11,7 @@ void DnsServiceSimplified::initialize(int stage)
     if (stage == INITSTAGE_APPLICATION_LAYER)
     {
         dnsDatabase = check_and_cast<DnsDb *>(findModuleByPath(par("dbPath")));
-        authorityMatcher.setPattern(par("domainAuthority"), true, false, false);
+        authorityMatcher.setPattern(par("authoritativeDomain"), true, false, false);
     }
     ApplicationBase::initialize(stage);
 }

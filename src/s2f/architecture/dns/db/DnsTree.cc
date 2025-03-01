@@ -89,13 +89,7 @@ namespace dns
 
 DnsTree::DnsTree()
 {
-    ResourceRecord record;
-    record.type = RecordType::NS;
-    record.ip = ROOT_DNS_IP;
-    record.domain = "i.root-servers.net.";
-
     root = DnsTreeNode("", ROOT, nullptr);
-    root.addRecord(&record);
 }
 
 void DnsTree::insertRecord(const char *zone, const ResourceRecord *record)
@@ -115,7 +109,7 @@ void DnsTree::insertRecord(const char *zone, const ResourceRecord *record)
     DnsTreeNode *node = root.getChildOrCreate(subdomains.back().c_str());
     subdomains.pop_back();
 
-    for (int i = 0; i < NUM_DNS_LEVELS && subdomains.size() > 0; i++)
+    for (int i = 0; i < (NUM_DNS_LEVELS - 2) && subdomains.size() > 0; i++)
     {
         node = node->getChildOrCreate(subdomains.back().c_str());
         subdomains.pop_back();

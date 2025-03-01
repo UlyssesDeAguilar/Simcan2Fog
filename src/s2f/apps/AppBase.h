@@ -1,7 +1,7 @@
 #ifndef __SIMCAN_2_0_USER_APP_BASE_H_
 #define __SIMCAN_2_0_USER_APP_BASE_H_
 
-#include "s2f/architecture/net/stack/resolver/DnsResolver.h"
+#include "s2f/architecture/net/stack/resolver/StubDnsRequest_m.h"
 #include "s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.h"
 #include "s2f/core/cSIMCAN_Core.h"
 #include "s2f/os/hypervisors/common.h"
@@ -21,7 +21,7 @@ using namespace inet;
  * @author Alberto N&uacute;&ntilde;ez Covarrubias
  * @date 2016-07-01
  */
-class AppBase : public cSIMCAN_Core, public TcpSocket::ICallback, public UdpSocket::ICallback, public DnsResolver::ResolverCallback
+class AppBase : public cSIMCAN_Core, public TcpSocket::ICallback, public UdpSocket::ICallback
 {
 protected:
    enum Event
@@ -33,7 +33,7 @@ protected:
    uint32_t vmId;            //!< Virtual machine id
    simtime_t operationStart; //!< Timestamp of the starting of an operation
 
-   DnsResolver *resolver{};
+   cGate *resolverGate{};
    SocketMap socketMap;
 
    const char *parentPath{}; // TODO: Move this to the IoT apps
@@ -111,14 +111,6 @@ public:
    virtual void socketFailure(TcpSocket *socket, int code) override;
    virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) override {}
    virtual void socketDeleted(TcpSocket *socket) override {}
-
-   // DNS RESOLVER
-   virtual void handleResolverReturned(const L3Address &address, bool resolved) override
-   {
-      Enter_Method_Silent();
-      callback->handleResolutionFinished(address, resolved);
-   }
-
    void setReturnCallback(ICallback *callback) { this->callback = callback; }
 
 private:
