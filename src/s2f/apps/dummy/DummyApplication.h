@@ -16,7 +16,7 @@
 class DummyApplication : public AppBase
 {
 protected:
-	string testParameter;
+	const char* testParameter;
 	virtual void initialize() override;
 	virtual void finish() override;
 	virtual void scheduleExecStart() override {}

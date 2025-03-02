@@ -5,30 +5,19 @@
 #include <omnetpp.h>
 
 #include "s2f/core/simdata/DataManager.h"
-#include "s2f/management/cloudprovider/NodeEvent_m.h"
-#include "inet/common/packet/Packet.h"
+#include "s2f/management/cloudprovider/NodeUpdate_m.h"
+#include "s2f/management/cloudprovider/NodeDb.h"
 #include "s2f/messages/SM_UserVM.h"
 #include "s2f/messages/SM_UserAPP.h"
 #include "s2f/messages/SM_CloudProvider_Control_m.h"
 
 /**
- * Class that parses information about the data-centres.
- *
+ * @brief This class models the behaviour of a cloud provider
+ * @details It will attempt to allocate VMs to users by redirecting them to the right node
  */
 class CloudProvider : public cSimpleModule
 {
-
 protected:
-    /**
-     * @brief Keeps track of registered resources for the cloud provider
-     * @details In the future it could hold more information and help tracking for availability (heart-beat)
-     */
-    struct Node
-    {
-        uint64_t availableCores;
-        opp_string topic;
-    };
-
     struct QueueElement
     {
         SM_UserVM *request;
@@ -36,18 +25,13 @@ protected:
         QueueElement(SM_UserVM *r, cMessage *to) : request(r), timeOut(to) {}
     };
 
-    using NodePool = std::vector<Node>;
-    using NodeCoresMap = std::map<opp_string, int>;
-    using CoresNodeMap = std::map<uint64_t, std::set<int>>;
     using RequestQueue = std::deque<QueueElement>;
 
-    NodePool nodePool;        //!< Holds the registered nodes and their status
-    DataManager *dataManager; //!< Reference to the data manager
-    NodeCoresMap nodeMap;     //!< Keeps track of the node (topic) - available cores relation
-    CoresNodeMap coresMap;    //!< Keeps a set of nodes (topic) of related core counts
-    RequestQueue queue;       //!< Queue of the requests that are waiting to be handled
-    bool dispatchPriority;    //!< Whether priority users skip the queue or not
-    int listenerGate;         //!< Holds the id of the listener gate
+    DataManager *dataManager{}; //!< Reference to the data manager
+    NodeDb *nodeDb{};           //!< Reference to the node database
+    RequestQueue queue;         //!< Queue of the requests that are waiting to be handled
+    bool dispatchPriority;      //!< Whether priority users skip the queue or not
+    const char *defaultZone;    //!< Default zone where to dispatch the requests
 
     virtual void initialize() override;
     virtual void handleMessage(cMessage *msg) override;
@@ -55,7 +39,7 @@ protected:
     /**
      * @brief Handle a node update or registration
      */
-    void handleNodeUpdate(inet::Packet *update);
+    void handleNodeUpdate(NodeUpdate *update);
 
     /* Handler methods*/
 
@@ -91,12 +75,20 @@ protected:
     void attemptDispatching();
 
     /**
-     * @brief Selects a node from the pool which will satisfy the request
-     * @details It also updates the resource in the selected node accordingly
+     * @brief Selects and allocates a node for the request
      * @param request The request to examine
-     * @return const opp_string* The topic if sucessfull or nullptr in other case
+     * @return const char* The topic if sucessfull or nullptr in other case
      */
-    const opp_string *selectNode(const SM_UserVM *request);
+    const char *selectNode(const SM_UserVM *request);
+
+    /**
+     * @brief Selects and allocates a node from a node pool for the request
+     * 
+     * @param request The request to examine
+     * @param pool The pool where to allocate the resources
+     * @return const char* The topic if sucessfull or nullptr in other case
+     */
+    const char *selectNodeInPool(const SM_UserVM *request, const std::set<int> &pool);
 
     /**
      * @brief Recovers the user type by it's id

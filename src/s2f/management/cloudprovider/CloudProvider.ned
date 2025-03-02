@@ -2,7 +2,6 @@ package s2f.management.cloudprovider;
 
 import s2f.architecture.net.stack.queue.QueuePullClient;
 import s2f.architecture.net.stack.queue.QueuePushClient;
-import s2f.architecture.net.stack.listener.UdpListener;
 import inet.node.inet.StandardHost;
 
 // Handles the dispatching of user requests
@@ -19,11 +18,6 @@ module CloudProvider extends StandardHost
     submodules:
         cpService: CloudProviderService {
             @display("p=998,33");
-        }
-
-        listenerSocket: UdpListener {
-            @display("p=997,93");
-            localPort = 8446;
         }
 
         pushClient: QueuePushClient {
@@ -44,14 +38,8 @@ module CloudProvider extends StandardHost
         pushClient.socketIn <-- at.out++;
         pushClient.socketOut --> at.in++;
 
-        listenerSocket.socketIn <-- at.out++;
-        listenerSocket.socketOut --> at.in++;
-
         // Incoming and outgoing from SMQ
         pullClient.queueOut --> cpService.queueIn;
         cpService.queueOut --> pushClient.queueIn;
-
-        // Incoming updates from nodes
-        listenerSocket.trafficOut --> cpService.listener;
 }
 

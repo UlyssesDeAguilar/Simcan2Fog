@@ -64,15 +64,12 @@ void DcManager::initialize(int stage)
 
         if (par("hasCloudEvents"))
         {
-            // Prepare the event message template for cloud provider
+            // Prepare the event message template and send to the cloud provider
             const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
-            eventTemplate.setChunkLength(inet::B(20));
-            eventTemplate.setNodeTopic(topic);
+            eventTemplate.setDestinationTopic("CloudProvider");
+            eventTemplate.setReturnTopic(topic);
             eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-
-            // Allow for init
-            Packet *packet = buildUpdateEvent();
-            sendDelayed(packet, 1, gate("eventOut"));
+            sendRequestMessage(eventTemplate.dup(), gate("networkOut"));
         }
     }
 }
@@ -82,11 +79,6 @@ void DcManager::finish()
     // Delete the events
     cancelAndDelete(cpuManageMachinesMessage);
     cancelAndDelete(cpuStatusMessage);
-}
-
-Packet *DcManager::buildUpdateEvent()
-{
-    return new Packet("Update Event", makeShared<NodeEvent>(eventTemplate));
 }
 
 cGate *DcManager::getOutGate(cMessage *msg)
@@ -227,8 +219,7 @@ void DcManager::handleVmRequestFits(SIMCAN_Message *sm)
 
         // Update the cloud provider to "uncommit" the resources
         eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-        Packet *packet = buildUpdateEvent();
-        send(packet, gate("eventOut"));
+        send(eventTemplate.dup(), gate("networkOut"));
     }
 
     // Set response and operation type
@@ -262,8 +253,7 @@ void DcManager::handleVmSubscription(SIMCAN_Message *sm)
 
         // Update the cloud provider to "uncommit" the resources
         eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-        Packet *packet = buildUpdateEvent();
-        send(packet, gate("eventOut"));
+        send(eventTemplate.dup(),gate("networkOut"));
     }
 
     // Set response and operation type
@@ -277,7 +267,7 @@ void DcManager::handleVmSubscription(SIMCAN_Message *sm)
 
 bool DcManager::checkVmUserFit(SM_UserVM *&userVM_Rq)
 {
-    assert_msg(userVM_Rq != nullptr, "checkVmUserFit nullptr guard failed\n");
+    ASSERT2(userVM_Rq != nullptr, "checkVmUserFit nullptr guard failed\n");
 
     int nRequestedVms = userVM_Rq->getVmArraySize();
     std::string userId = userVM_Rq->getUserId();
@@ -368,6 +358,5 @@ void DcManager::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
 
     // Notifiy the Cloud provider that the resources were finally freed
     eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-    Packet *packet = buildUpdateEvent();
-    send(packet, gate("eventOut"));
+    send(eventTemplate.dup(), gate("networkOut"));
 }

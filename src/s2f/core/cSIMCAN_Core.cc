@@ -27,7 +27,7 @@ void cSIMCAN_Core::initialize()
 
 	// Show the initial parameters
 	if (showInitValues)
-		EV_DEBUG << initialParametersToString() << endl;
+		EV_DEBUG << initialParametersToString() << "\n";
 }
 
 void cSIMCAN_Core::handleMessage(cMessage *msg)
@@ -51,8 +51,8 @@ void cSIMCAN_Core::handleMessage(cMessage *msg)
 
 		// Debug (Trace)
 		if (debugSimcanCore)
-			EV_TRACE << "(handleMessage): Updating trace and inserting in queue." << endl
-					 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+			EV_TRACE << "(handleMessage): Updating trace and inserting in queue." << "\n"
+					 << sm->contentsToString(showMessageContents, showMessageTrace) << "\n";
 
 		// Update message trace
 		updateMessageTrace(sm);
@@ -85,8 +85,8 @@ void cSIMCAN_Core::sendRequestMessage(SIMCAN_Message *sm, int gateId)
 
 	// Debug (Trace)
 	if (debugSimcanCore)
-		EV_TRACE << "(sendRequestMessage): Sending request message." << endl
-				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+		EV_TRACE << "(sendRequestMessage): Sending request message." << "\n"
+				 << sm->contentsToString(showMessageContents, showMessageTrace) << "\n";
 
 	// Send the message!
 	send(sm, gateId);
@@ -99,7 +99,7 @@ void cSIMCAN_Core::sendResponseMessage(SIMCAN_Message *sm)
 {
 	// Stop condition -- Fix magic number ?
 	if (sm->getResult() == 10008)
-		EV_INFO << "Parar" << endl;
+		EV_INFO << "Parar" << "\n";
 
 	// Get the gateId to send back the message
 	auto gateId = sm->getLastGateId();
@@ -109,8 +109,8 @@ void cSIMCAN_Core::sendResponseMessage(SIMCAN_Message *sm)
 
 	// Debug (Trace)
 	if (debugSimcanCore)
-		EV_TRACE << "(sendResponseMessage): Sending response message. Last module removed from trace." << endl
-				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+		EV_TRACE << "(sendResponseMessage): Sending response message. Last module removed from trace." << "\n"
+				 << sm->contentsToString(showMessageContents, showMessageTrace) << "\n";
 
 	// Send back the message
 	send(sm, gateId);
@@ -126,8 +126,8 @@ void cSIMCAN_Core::updateMessageTrace(SIMCAN_Message *sm)
 
 	// Debug (Trace)
 	if (debugSimcanCore)
-		EV_TRACE << "(updateMessageTrace): Before updating the trace." << endl
-				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+		EV_TRACE << "(updateMessageTrace): Before updating the trace." << "\n"
+				 << sm->contentsToString(showMessageContents, showMessageTrace) << "\n";
 
 	cGate *selection = getOutGate(sm);
 
@@ -145,8 +145,8 @@ void cSIMCAN_Core::updateMessageTrace(SIMCAN_Message *sm)
 
 	// Debug (Trace)
 	if (debugSimcanCore)
-		EV_TRACE << "(updateMessageTrace): After updating the trace." << endl
-				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+		EV_TRACE << "(updateMessageTrace): After updating the trace." << "\n"
+				 << sm->contentsToString(showMessageContents, showMessageTrace) << "\n";
 }
 
 void cSIMCAN_Core::processCurrentRequestMessage()
@@ -159,7 +159,7 @@ void cSIMCAN_Core::processCurrentRequestMessage()
 	{
 		// Debug (Trace)
 		if (debugSimcanCore)
-			EV_TRACE << "(processCurrentRequestMessage): No pending requests and queue is empty" << endl;
+			EV_TRACE << "(processCurrentRequestMessage): No pending requests and queue is empty" << "\n";
 		return;
 	}
 
@@ -169,8 +169,8 @@ void cSIMCAN_Core::processCurrentRequestMessage()
 
 	// Debug (Trace)
 	if (debugSimcanCore)
-		EV_TRACE << "(processCurrentRequestMessage): Pop message for processing." << endl
-				 << sm->contentsToString(showMessageContents, showMessageTrace) << endl;
+		EV_TRACE << "(processCurrentRequestMessage): Pop message for processing." << "\n"
+				 << sm->contentsToString(showMessageContents, showMessageTrace) << "\n";
 
 	// Process the request
 	processRequestMessage(sm);
@@ -182,7 +182,7 @@ void cSIMCAN_Core::processCurrentRequestMessage()
 	//
 	//		    // Debug (Trace)
 	//            if (debugSimcanCore)
-	//                EV_TRACE << "(processCurrentRequestMessage): There is a pending requests..."<< endl;
+	//                EV_TRACE << "(processCurrentRequestMessage): There is a pending requests..."<< "\n";
 	//		}
 }
 
@@ -196,39 +196,30 @@ bool cSIMCAN_Core::isPendingRequest()
 	return latencyMessage->isScheduled();
 }
 
-string cSIMCAN_Core::initialParametersToString()
+std::string cSIMCAN_Core::initialParametersToString()
 {
-
-	std::ostringstream info, unit;
-	unsigned int i, numParameters;
+	std::ostringstream out;
 
 	// Init
-	info << endl;
-	info << "Showing main parameters of " << this->getFullPath() << endl;
-
-	// Get number of parameters
-	numParameters = getNumParams();
+	out << "\n";
+	out << "Showing main parameters of " << this->getFullPath() << "\n";
 
 	// For each parameter
-	for (i = 0; i < numParameters; i++)
+	for (int i = 0, numParameters = getNumParams(); i < numParameters; i++)
 	{
-
 		// Get the parameter
 		cPar &currentParameter = par(i);
-
-		// Clear stream
-		unit.str("");
-		unit.clear();
-
+		
+		out << "\t+ " << currentParameter.getName() << " = " << currentParameter.str();
+		
 		// Set the units
 		if (currentParameter.getUnit() != nullptr)
 		{
-			unit << " in " << currentParameter.getUnit();
+			out << " in " << currentParameter.getUnit();
 		}
 
-		// Build the output
-		info << "\t+ " << currentParameter.getName() << " = " << currentParameter.str() << unit.str() << endl;
+		out << "\n";
 	}
 
-	return info.str();
+	return out.str();
 }

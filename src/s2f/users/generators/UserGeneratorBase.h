@@ -39,7 +39,7 @@ protected:
     bool activeCycles;         // ??
 
     VM_Request::InstanceRequestTimes timeoutsTemplate; // The "maximum" times acceptable by users
-    string strUserTraceFilePath;
+    const char* strUserTraceFilePath;
 
     int userTraceMaxVms;
 
@@ -96,7 +96,7 @@ protected:
      *
      * @return String containing the current status of the users vector.
      */
-    virtual string usersIstancesToString();
+    virtual std::string usersIstancesToString();
 
     virtual CloudUserInstance *createCloudUserInstance(const CloudUser *ptrUser, unsigned int totalUserInstance, unsigned int userNumber, int currentInstanceIndex, int totalUserInstances);
 

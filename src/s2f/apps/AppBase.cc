@@ -12,10 +12,10 @@ void AppBase::initialize()
     connectionDelay = par("connectionDelay");
     isDistributedApp = par("isDistributedApp");
     myRank = (unsigned int)par("myRank");
-    testID = par("testID").stdstringValue();
-    appInstance = par("appInstance").stdstringValue();
-    vmInstance = par("vmInstance").stdstringValue();
-    userInstance = par("userInstance").stdstringValue();
+    testID = par("testID");
+    appInstance = par("appInstance");
+    vmInstance = par("vmInstance");
+    userInstance = par("userInstance");
     debugUserAppBase = par("debugUserAppBase");
 
     // Get the information from the "wrapper module"
@@ -135,7 +135,7 @@ void AppBase::execute(double MIs)
 
     // Prepare the cpu request
     sm_cpu->setOperation(SM_ExecCpu);
-    sm_cpu->setAppInstance(appInstance.c_str());
+    sm_cpu->setAppInstance(appInstance);
     sm_cpu->setUseMis(true);
     sm_cpu->setMisToExecute(MIs);
     sm_cpu->updateLength();
@@ -154,7 +154,7 @@ void AppBase::execute(simtime_t cpuTime)
 
     // Prepare the cpu request
     sm_cpu->setOperation(SM_ExecCpu);
-    sm_cpu->setAppInstance(appInstance.c_str());
+    sm_cpu->setAppInstance(appInstance);
     sm_cpu->setUseTime(true);
     sm_cpu->setCpuTime(cpuTime);
     sm_cpu->updateLength();

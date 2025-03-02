@@ -49,7 +49,6 @@ module DataCentre
         }
         
         stack: NetworkStack {
-			hasCloudEvents = default(true);
             @display("p=71,137");
         }
         // Blades of the Datacentre
@@ -68,7 +67,6 @@ module DataCentre
         // Connections between Data-Centre manager and Data-centre outside
         dcManager.networkOut --> stack.queueIn;
         dcManager.networkIn <-- stack.queueOut;
-		dcManager.eventOut --> stack.eventsIn;
 
 		// Connect the main switch with the Manager
         switch.manager <--> dcManager.localNetwork;

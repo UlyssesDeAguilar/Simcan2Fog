@@ -9,10 +9,7 @@
 #include "s2f/management/utils/LogUtils.h"
 #include "s2f/messages/SM_CPU_Message.h"
 
-#define assert_msg(exp, msg) assert(((void)msg, exp))
 using namespace omnetpp;
-using std::string;
-using std::vector;
 
 enum SimCanInitStages
 {
@@ -130,7 +127,7 @@ protected:
 	 * Returns a string containing the values of each parameter.
 	 * If the module that extends this class needs to show more data structures, it should override this method.
 	 */
-	virtual string initialParametersToString();
+	virtual std::string initialParametersToString();
 };
 
 #endif /*cSIMCAN_Base_H_*/

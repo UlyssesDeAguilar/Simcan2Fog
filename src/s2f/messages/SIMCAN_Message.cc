@@ -95,31 +95,6 @@ void SIMCAN_Message::copy(const SIMCAN_Message &other)
 	*/
 }
 
-void SIMCAN_Message::addNewIp(inet::L3Address addr)
-{
-	// Defer allocation to when really needed
-	if (ipStack == nullptr)
-		ipStack = new IpStack();
-
-	ipStack->push(addr);
-}
-
-void SIMCAN_Message::popIp()
-{
-	if (ipStack == nullptr || ipStack->empty())
-		throw cRuntimeError("IpStack null or empty in message of type %s \n", getClassName());
-	
-	ipStack->pop();
-}
-
-inet::L3Address SIMCAN_Message::getNextIp()
-{
-	if (ipStack == nullptr || ipStack->empty())
-		throw cRuntimeError("IpStack null or empty in message of type %s \n", getClassName());
-	
-	return ipStack->top();
-}
-
 void SIMCAN_Message::setTraceArraySize(size_t size)
 {
 	trace.reserve(size);

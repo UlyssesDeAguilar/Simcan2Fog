@@ -72,12 +72,6 @@ public:
 	 */
 	virtual SIMCAN_Message *dup() const { return new SIMCAN_Message(*this); }
 
-	void addNewIp(inet::L3Address addr);
-
-	void popIp();
-
-	inet::L3Address getNextIp();
-
 	/**
 	 * Reserve space for the trace
 	 */

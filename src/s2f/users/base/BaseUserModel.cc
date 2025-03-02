@@ -209,7 +209,7 @@ void BaseUserModel::deleteIfEphemeralMessage(SIMCAN_Message *msg)
 {
     SM_UserVM *userVm = dynamic_cast<SM_UserVM *>(msg);
     SM_UserAPP *userApp = dynamic_cast<SM_UserAPP *>(msg);
-    string strVmId;
+    const char* strVmId;
 
     if (userVm != nullptr)
         strVmId = userVm->getVmId();
@@ -217,6 +217,6 @@ void BaseUserModel::deleteIfEphemeralMessage(SIMCAN_Message *msg)
     if (userApp != nullptr)
         strVmId = userApp->getVmId();
 
-    if (!strVmId.empty())
+    if (opp_isempty(strVmId))
         delete msg;
 }

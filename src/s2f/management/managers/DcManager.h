@@ -2,7 +2,7 @@
 #define __SIMCAN_2_0_DATACENTREMANAGERBASE_H_
 
 #include "s2f/management/dataClasses/Users/CloudUserInstance.h"
-#include "s2f/management/cloudprovider/NodeEvent_m.h"
+#include "s2f/management/cloudprovider/NodeUpdate_m.h"
 #include "s2f/management/managers/ManagerBase.h"
 #include "s2f/management/managers/ResourceManager.h"
 #include "s2f/management/managers/selection/Strategies.h"
@@ -22,7 +22,7 @@ protected:
     template <class T>
     using StrMap = std::map<std::string, T *>;
 
-    NodeEvent eventTemplate;
+    NodeUpdate eventTemplate;
 
     ResourceManager *resourceManager;
     dc::SelectionStrategy *nodeSelectionStrategy;
@@ -78,7 +78,6 @@ protected:
     bool checkVmUserFit(SM_UserVM *&userVM_Rq);
 
     // Helpers
-    inet::Packet * buildUpdateEvent();
     hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return acceptedVMsMap.at(vmId); }
     SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return handlingAppsRqMap.at(userId); }
     

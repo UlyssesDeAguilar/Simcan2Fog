@@ -14,8 +14,8 @@ void LocalApplication::initialize()
 	outputDataSize = (int)par("outputDataSize");
 	MIs = par("MIs");
 	iterations = par("iterations");
-	inputFile = par("inputFile").stdstringValue();
-	outputFile = par("outputFile").stdstringValue();
+	inputFile = par("inputFile");
+	outputFile = par("outputFile");
 
 	// Service times
 	total_service_IO = total_service_CPU = 0.0;

@@ -19,20 +19,15 @@ module NetworkStack extends StandardHost
 {
     parameters:
         @display("i=device/card;bgb=1255.1174,837.4274");     	// We have to make an icon (default is a PC)
-        string nodeTopic = default(""); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment  
-
-        string cpIp = default("10.0.1.1");
+        string nodeTopic; 										// The topic that will be used in the Message Queue (must be unique) 
         string smqIp = default("10.0.2.1");
         string dns = default("10.1.0.1");
-
-        bool hasCloudEvents = default(false);	// Whether the module sends events to the cloud provider
         bool enableQueue = default(true);		// Whether to instatiate or not the queue push/pull clients
 
         dnsResolver.ispResolver = dns;
     gates:
         input queueIn @loose;
         output queueOut @loose;
-        input eventsIn @loose;	// If hasCloudEvents is true this should be connected!
 
         input ssIn[];
         output ssOut[];
@@ -52,12 +47,6 @@ module NetworkStack extends StandardHost
             connectAddress = smqIp;
         }
 
-        eventsSocket: UdpSocketIo if hasCloudEvents {
-            destAddress = cpIp;
-            destPort = 8446;
-            @display("p=579,70");
-        }
-
     connections:
 		// Connect dns resolver
         dnsResolver.socketIn <-- at.out++;
@@ -70,9 +59,6 @@ module NetworkStack extends StandardHost
         pushClient.socketIn <-- at.out++ if enableQueue;
         pushClient.socketOut --> at.in++ if enableQueue;
 
-        eventsSocket.socketIn <-- at.out++ if hasCloudEvents;
-        eventsSocket.socketOut --> at.in++ if hasCloudEvents;
-
         // Interconnect possible apps to the tcp/udp layer
         for i=0..sizeof(ssIn)-1 {
             ssIn[i] --> at.in++;
@@ -82,7 +68,4 @@ module NetworkStack extends StandardHost
 		// Incoming and outgoing from SMQ
         pullClient.queueOut --> queueOut if enableQueue;
         queueIn --> pushClient.queueIn if enableQueue;
-
-        // Outgoing to the cloud provider
-        eventsIn --> eventsSocket.trafficIn if hasCloudEvents;
 }

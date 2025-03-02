@@ -11,5 +11,4 @@ simple CloudProviderService
     gates:
         input queueIn;
         output queueOut;
-        input listener;
 }

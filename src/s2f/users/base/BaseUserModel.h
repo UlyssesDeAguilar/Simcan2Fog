@@ -19,7 +19,7 @@ protected:
     void deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
     virtual bool decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance);
 
-    // FIX ME: Not a priority, but really should check the "ephemeral" messages
+    // FIXME: Not a priority, but really should check the "ephemeral" messages
     void deleteIfEphemeralMessage(SIMCAN_Message *msg);
 
 public:

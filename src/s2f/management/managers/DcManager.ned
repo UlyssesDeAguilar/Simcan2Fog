@@ -20,6 +20,5 @@ simple DcManager extends cSIMCAN_Core {
     gates:
         input networkIn;
         output networkOut;
-        output eventOut;
         inout localNetwork;
 }

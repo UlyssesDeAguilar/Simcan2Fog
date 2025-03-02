@@ -27,6 +27,9 @@ const std::string Timer_Deadline = "Timer: Deadline";
 // -------------------- Queue Operations -------------------- //
 constexpr int SM_QueueAck = 100;
 
+// -------------------- Cloud Operations -------------------- //
+constexpr int SM_Node_Update = 200;
+
 // -------------------- Fog Operations -------------------- //
 constexpr int SM_Fog_Write = 600;
 constexpr int SM_Fog_Read = 601;

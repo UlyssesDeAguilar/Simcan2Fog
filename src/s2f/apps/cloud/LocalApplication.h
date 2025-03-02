@@ -23,8 +23,8 @@ protected:
 	unsigned int outputDataSize; //!< Size of the data to be written (in bytes)
 	unsigned int MIs;			 //!< Number of MIs to be executed
 	unsigned int iterations;	 //!< Number of iterations to be performed
-	string inputFile;			 //!< Input file name
-	string outputFile;			 //!< Output file name
+	const char* inputFile;			 //!< Input file name
+	const char* outputFile;			 //!< Output file name
 
 	unsigned int currentRemainingMIs; //!< Number of MIs remaining to be executed
 	unsigned int currentIteration;	  //!< Current iteration

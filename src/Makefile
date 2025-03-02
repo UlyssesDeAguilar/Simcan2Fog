@@ -50,7 +50,6 @@ OBJS = \
     $O/s2f/architecture/messagequeue/services/PullService.o \
     $O/s2f/architecture/messagequeue/services/PushService.o \
     $O/s2f/architecture/net/hub/CheckingHubModule.o \
-    $O/s2f/architecture/net/stack/listener/UdpListener.o \
     $O/s2f/architecture/net/stack/proxy/AppProxy.o \
     $O/s2f/architecture/net/stack/proxy/ServiceTable.o \
     $O/s2f/architecture/net/stack/proxy/Session.o \
@@ -69,6 +68,8 @@ OBJS = \
     $O/s2f/core/simdata/engine/JsonDataEngine.o \
     $O/s2f/core/simdata/engine/MySqlDataEngine.o \
     $O/s2f/management/cloudprovider/CloudProvider.o \
+    $O/s2f/management/cloudprovider/NodeDb.o \
+    $O/s2f/management/cloudprovider/NodeTable.o \
     $O/s2f/management/dataClasses/Applications/AppInstance.o \
     $O/s2f/management/dataClasses/Applications/AppInstanceCollection.o \
     $O/s2f/management/dataClasses/Applications/Application.o \
@@ -96,7 +97,6 @@ OBJS = \
     $O/s2f/messages/INET_AppMessage.o \
     $O/s2f/messages/SIMCAN_Message.o \
     $O/s2f/messages/SM_CPU_Message.o \
-    $O/s2f/messages/SM_FogIO.o \
     $O/s2f/messages/SM_UserAPP.o \
     $O/s2f/messages/SM_UserVM.o \
     $O/s2f/messages/VMRequest.o \
@@ -123,12 +123,11 @@ OBJS = \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
-    $O/s2f/management/cloudprovider/NodeEvent_m.o \
+    $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
     $O/s2f/messages/SM_CloudProvider_Control_m.o \
     $O/s2f/messages/SM_CPU_Message_m.o \
-    $O/s2f/messages/SM_FogIO_m.o \
     $O/s2f/messages/SM_REST_API_m.o \
     $O/s2f/messages/SM_UserAPP_m.o \
     $O/s2f/messages/SM_UserVM_m.o \
@@ -150,12 +149,11 @@ MSGFILES = \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
-    s2f/management/cloudprovider/NodeEvent.msg \
+    s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \
     s2f/messages/SM_CloudProvider_Control.msg \
     s2f/messages/SM_CPU_Message.msg \
-    s2f/messages/SM_FogIO.msg \
     s2f/messages/SM_REST_API.msg \
     s2f/messages/SM_UserAPP.msg \
     s2f/messages/SM_UserVM.msg \

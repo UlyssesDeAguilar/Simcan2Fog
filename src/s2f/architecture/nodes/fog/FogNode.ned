@@ -49,7 +49,6 @@ module FogNode
         stack: RoutingNetworkStack {
             hasTcp=true;
             hasUdp=true;
-			hasCloudEvents = true;
             @display("p=71,137");
         }
         
@@ -69,7 +68,6 @@ module FogNode
         // Connections between Data-Centre manager and Data-centre outside
         dcManager.networkOut --> stack.queueIn;
         dcManager.networkIn <-- stack.queueOut;
-		dcManager.eventOut --> stack.eventsIn;
 
 		// Connect the main switch with the Manager
         switch.manager <--> dcManager.localNetwork;

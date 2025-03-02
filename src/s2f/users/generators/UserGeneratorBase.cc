@@ -1,6 +1,6 @@
 #include "UserGeneratorBase.h"
 
-static void parse_swf(vector<Job_t> *jobs, const char *swf_file);
+static void parse_swf(std::vector<Job_t> *jobs, const char *swf_file);
 
 UserGeneratorBase::~UserGeneratorBase()
 {
@@ -273,7 +273,7 @@ void UserGeneratorBase::generateShuffledUsers()
             << "\n";
 }
 
-string UserGeneratorBase::usersIstancesToString()
+std::string UserGeneratorBase::usersIstancesToString()
 {
     // Main text
     std::ostringstream info;
@@ -320,8 +320,8 @@ CloudUser *UserGeneratorBase::createUserTraceType()
 void UserGeneratorBase::parseTraceFile()
 {
     SM_UserVM *userVm;
-    string strPath;
-    vector<Job_t> jobs;
+    std::string strPath;
+    std::vector<Job_t> jobs;
     Job_t singleJob;
     CloudUserInstance *newUser;
     int nJobs, nTotalUserInstance;
@@ -333,7 +333,7 @@ void UserGeneratorBase::parseTraceFile()
 
     // DONE: Esto se debe sacar de un parametro omnet, con = par.
     // strPath = "/home/pablo/applics/omnetpp-5.0/projects/SIMCAN-2.0/src/Management/traces/LPC.swf";
-    parse_swf(&jobs, strUserTraceFilePath.c_str());
+    parse_swf(&jobs, strUserTraceFilePath);
     nJobs = jobs.size();
     nTotalUserInstance = 0;
 
@@ -400,7 +400,7 @@ void UserGeneratorBase::parseTraceFile()
 // only "sane" jobs are read, the rest are filtered out. a sane job is a jon
 // with a positive and and a nonnegative runtime.
 //------------------------------------------------------------------------------
-static void parse_swf(vector<Job_t> *jobs, const char *swf_file)
+static void parse_swf(std::vector<Job_t> *jobs, const char *swf_file)
 {
     // 1- open the SWFfile
     std::ifstream swf(swf_file);
@@ -412,7 +412,7 @@ static void parse_swf(vector<Job_t> *jobs, const char *swf_file)
 
         // 3- go!
         int insane = 0;
-        for (string line; !getline(swf, line).eof();)
+        for (std::string line; !getline(swf, line).eof();)
         {
             Job_t job;
             if (job.read(line.c_str()))

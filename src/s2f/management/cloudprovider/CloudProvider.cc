@@ -7,8 +7,8 @@ void CloudProvider::initialize()
 {
   cModule *module = getModuleByPath("simData.manager");
   dataManager = check_and_cast<DataManager *>(module);
+  nodeDb = check_and_cast<NodeDb *>(getModuleByPath("^.nodeDb"));
   dispatchPriority = par("dispatchPriority");
-  listenerGate = gate("listener")->getId();
 }
 
 void CloudProvider::handleMessage(cMessage *msg)
@@ -19,59 +19,28 @@ void CloudProvider::handleMessage(cMessage *msg)
     handleSubscriptionTimeout(msg);
     return;
   }
-  else if (msg->getArrivalGate()->getId() == listenerGate)
-  {
-    handleNodeUpdate(check_and_cast<Packet *>(msg));
-    return;
-  }
 
   // Then it should be a request
-  auto sm = check_and_cast<SM_UserVM *>(msg);
+  auto sm = check_and_cast<SIMCAN_Message *>(msg);
 
-  switch (sm->getOperation())
-  {
-  case SM_VM_Req:
-    handleVmRequest(sm);
-    break;
-  case SM_VM_Sub:
-    handleVmSubscription(sm);
-    break;
-  default:
-    error("Unexpected message kind");
-    break;
-  }
+  if (sm->getOperation() == SM_VM_Req)
+    handleVmRequest(check_and_cast<SM_UserVM *>(msg));
+  else if (sm->getOperation() == SM_VM_Sub)
+    handleVmSubscription(check_and_cast<SM_UserVM *>(msg));
+  else if (sm->getOperation() == SM_Node_Update)
+    handleNodeUpdate(check_and_cast<NodeUpdate *>(msg));
+  else
+    error("Unexpected message kind with code %d", sm->getOperation());
 }
 
-void CloudProvider::handleNodeUpdate(Packet *update)
+void CloudProvider::handleNodeUpdate(NodeUpdate *update)
 {
-  auto nodeEvent = check_and_cast<const NodeEvent *>(update->peekData().get());
-  auto iter = nodeMap.find(nodeEvent->getNodeTopic());
-
-  if (iter == nodeMap.end())
-  {
-    // If the node wasn't registered before
-    Node newNode;
-    newNode.topic = nodeEvent->getNodeTopic();
-    newNode.availableCores = nodeEvent->getAvailableCores();
-
-    nodePool.push_back(newNode);
-    coresMap[newNode.availableCores].insert(nodePool.size()-1);
-    nodeMap[newNode.topic] = nodePool.size()-1;
-
-    EV << "(CP) Added node to resource pool with topic: " << newNode.topic
-       << " with: " << newNode.availableCores << " available cores";
-  }
-  else
-  {
-    // Update the node
-    Node &nodeInfo = nodePool[iter->second];
-    nodeInfo.availableCores = nodeEvent->getAvailableCores();
-
-    EV << "(CP) Updated: " << nodeInfo.topic
-       << " with: " << nodeInfo.availableCores << " available cores";
-  }
-
   // As the invariants have changed, check the queue to see if a deployment is now possible
+  nodeDb->addOrUpdateNode(update->getReturnTopic(),
+                          update->getZone(),
+                          update->getAvailableCores(),
+                          update->getAvailableRam(),
+                          update->getAvailableDisk());
   attemptDispatching();
   delete update;
 }
@@ -93,7 +62,8 @@ void CloudProvider::handleVmRequest(SM_UserVM *request)
     return;
   }
 
-  const opp_string *destinationTopic = selectNode(request);
+  const char *destinationTopic = selectNode(request);
+
   // No suitable node found
   if (destinationTopic == nullptr)
   {
@@ -104,7 +74,7 @@ void CloudProvider::handleVmRequest(SM_UserVM *request)
   // Forward to corresponding topic
   EV << "Request by user: " << request->getUserId() << " dispatched to node topic: " << *destinationTopic << "\n";
   request->setAutoSourceTopic(false);
-  request->setDestinationTopic(destinationTopic->c_str());
+  request->setDestinationTopic(destinationTopic);
   send(request, "queueOut");
 }
 
@@ -153,38 +123,43 @@ void CloudProvider::handleSubscriptionTimeout(cMessage *msg)
   send(request, "queueOut");
 }
 
-const opp_string *CloudProvider::selectNode(const SM_UserVM *request)
+const char *CloudProvider::selectNode(const SM_UserVM *request)
+{
+  const char *zone = request->getZone();
+  const std::set<int> *nodesInZone = nodeDb->findNodesByZone(zone);
+  const char *topic{};
+
+  if (nodesInZone && (topic = selectNodeInPool(request, *nodesInZone)) != nullptr)
+    return topic;
+
+  EV << "No suitable nodes found in zone: " << zone << " defaulting to zone: " << defaultZone << "\n";
+  nodesInZone = nodeDb->findNodesByZone(defaultZone);
+
+  if (!nodesInZone)
+    error("No nodes found in default zone! %s", defaultZone);
+    
+  if ((topic = selectNodeInPool(request, *nodesInZone)) != nullptr)
+    return topic;
+  
+  return nullptr;
+}
+
+const char *CloudProvider::selectNodeInPool(const SM_UserVM *request, const std::set<int> &nodesInZone)
 {
   uint64_t totalCores = calculateRequestedCores(request);
-  auto iter = coresMap.lower_bound(totalCores);
-
-  // Couldn't find a node with greater or equal core count available
-  if (iter == coresMap.end())
-    return nullptr;
-
-  // Retrieve the first node in the set
-  auto first = iter->second.begin();
-  if (first == iter->second.end())
-    error("Empty pool!");
-
-  //Node *node = const_cast<Node *>(*first);
-  Node &node = nodePool[*first];
-
-  // Update
-  node.availableCores -= totalCores;
-
-  // Insert into map (if no pool existing then create one)
-  coresMap[node.availableCores].insert(*first);
-  iter->second.erase(first);
-
-  // If the pool got to zero then erase
-  if (iter->second.size() == 0)
-    coresMap.erase(iter);
-  
-  EV << "Estimating " << totalCores << " allocated for " << node.topic << "\n";
-  EV << "New available core count: " << node.availableCores << "\n";
-
-  return &node.topic;
+  for (auto &nodeId : nodesInZone)
+  {
+    auto &node = nodeDb->getNode(nodeId);
+    if (node.availableCores >= totalCores)
+    {
+      const char *topic = nodeDb->getTopicForNode(node);
+      EV << "Estimating " << totalCores << " allocated for node in: " << topic << "\n";
+      node.availableCores -= totalCores;
+      EV << "New available core count: " << node.availableCores << "\n";
+      return topic;
+    }
+  }
+  return nullptr;
 }
 
 uint64_t CloudProvider::calculateRequestedCores(const SM_UserVM *request)
@@ -201,7 +176,6 @@ uint64_t CloudProvider::calculateRequestedCores(const SM_UserVM *request)
 void CloudProvider::rejectVmRequest(SM_UserVM *userVM_Rq)
 {
   EV_INFO << "Rejecting VM request from user:" << userVM_Rq->getUserId() << '\n';
-
   userVM_Rq->setIsResponse(true);
   userVM_Rq->setOperation(SM_VM_Req);
   userVM_Rq->setResult(SM_VM_Res_Reject);
@@ -211,7 +185,7 @@ void CloudProvider::rejectVmRequest(SM_UserVM *userVM_Rq)
 
 void CloudProvider::attemptDispatching()
 {
-  const opp_string *topic = nullptr;
+  const char *topic = nullptr;
 
   while (queue.size() > 0)
   {
@@ -222,7 +196,7 @@ void CloudProvider::attemptDispatching()
     {
       cancelAndDelete(element.timeOut);
       element.request->setAutoSourceTopic(false);
-      element.request->setDestinationTopic(topic->c_str());
+      element.request->setDestinationTopic(topic);
       send(element.request, "queueOut");
       queue.pop_front();
     }
@@ -239,7 +213,7 @@ const CloudUser *CloudProvider::findUserTypeById(const std::string &userId)
   size_t toPos = userId.find_first_of('[');
 
   // If we could parse the user type within the Id
-  if (fromPos != string::npos && toPos != string::npos && fromPos < toPos)
+  if (fromPos != std::string::npos && toPos != std::string::npos && fromPos < toPos)
   {
     std::string userType = userId.substr(fromPos + 1, toPos - fromPos - 1);
     return dataManager->searchUser(userType);

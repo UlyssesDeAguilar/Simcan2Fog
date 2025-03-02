@@ -40,10 +40,10 @@ protected:
    double startDelay;      //!< Starting time delay
    double connectionDelay; //!< Connection delay time
    unsigned int myRank;    //!< Rank of the application's process
-   string testID;          //!< Test ID
-   string appInstance;     //!< Name of the application's instance
-   string vmInstance;      //!< Name of the vm's instance
-   string userInstance;    //!< Name of the user's instance
+   const char* testID;          //!< Test ID
+   const char* appInstance;     //!< Name of the application's instance
+   const char* vmInstance;      //!< Name of the vm's instance
+   const char* userInstance;    //!< Name of the user's instance
    bool isDistributedApp;  //!< Is a distributed application?
    bool debugUserAppBase;  //!< Show log messages of UserAppBase (for deep-debugging purpose only)
 

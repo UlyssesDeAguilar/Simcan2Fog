@@ -20,7 +20,7 @@ void DcDriver::initialize()
     };
 
     request->createNewVmRequest("VM_small", "vm1", times);
-    request->addNewIp(dcAddress);
+    //request->addNewIp(dcAddress);
 
     scheduleAt(0.0, new cMessage("StartTest"));
     cSIMCAN_Core::initialize();

@@ -24,24 +24,18 @@ import inet.node.inet.Router;
 module RoutingNetworkStack extends Router
 {
     parameters:
-        string nodeTopic = default(""); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment
-        string cpIp = default("10.0.1.1");
+        string nodeTopic; 						// The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment
         string smqIp = default("10.0.2.1");
-        bool hasCloudEvents = default(false);	// Wheter the module sends events to the cloud provider
         bool enableQueue = default(true);		// Wheter to instatiate or not the queue push/pull clients
         string dns = default("10.1.0.1");
-        string tld = default("com");
-
 		dnsResolver.ispResolver = dns;
     gates:
         input queueIn @loose;
         output queueOut @loose;
-        input eventsIn @loose;	// If hasCloudEvents is true this should be connected!
 		input ssIn[];
 		output ssOut[];
 		
     submodules:
-
         dnsResolver: DnsResolver {
             @display("p=1140.396,65.598");
         }
@@ -74,9 +68,6 @@ module RoutingNetworkStack extends Router
         pushClient.socketIn <-- at.out++ if enableQueue;
         pushClient.socketOut --> at.in++ if enableQueue;
 
-        eventsSocket.socketIn <-- at.out++ if hasCloudEvents;
-        eventsSocket.socketOut --> at.in++ if hasCloudEvents;
-
         // Interconnect possible apps to the tcp/udp layer
         for i=0..sizeof(ssIn)-1 {
             ssIn[i] --> at.in++;
@@ -86,7 +77,4 @@ module RoutingNetworkStack extends Router
 		// Incoming and outgoing from SMQ
         pullClient.queueOut --> queueOut if enableQueue;
         queueIn --> pushClient.queueIn if enableQueue;
-
-        // Outgoing to the cloud provider
-        eventsIn --> eventsSocket.trafficIn if hasCloudEvents;
 }

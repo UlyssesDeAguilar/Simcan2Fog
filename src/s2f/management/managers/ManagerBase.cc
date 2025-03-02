@@ -94,7 +94,7 @@ const CloudUser *ManagerBase::findUserTypeById(const std::string &userId)
     size_t toPos = userId.find_first_of('[');
 
     // If we could parse the user type within the Id
-    if (fromPos != string::npos && toPos != string::npos && fromPos < toPos)
+    if (fromPos != std::string::npos && toPos != std::string::npos && fromPos < toPos)
     {
         std::string userType = userId.substr(fromPos + 1, toPos - fromPos - 1);
         return dataManager->searchUser(userType);
