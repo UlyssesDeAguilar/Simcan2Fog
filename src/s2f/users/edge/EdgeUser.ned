@@ -1,15 +1,21 @@
 package s2f.users.edge;
 
-import inet.applications.contract.IApp;
-
-simple EdgeUserModelDriver like IApp {
+simple EdgeUser
+{
     parameters:
-        @class(EdgeUserModelDriver);
-
-        // Signals 
-        @signal[failedRequests](type=long);
-        @signal[totalRequests](type=long);
+        @class(users::EdgeUser);
+		string deploymentZone;
+		object vms;
+		object remoteApps;
+		object localApps;
+		object sensors;
+		int startupTime @unit(seconds) = default(1s);
+		string controllerHostName = default("localhost");
+        @display("i=user,,0");
     gates:
-        input socketIn;
-        output socketOut;
+        input queueIn @loose;
+        input serialIn;
+
+        output queueOut @loose;
+        output serialOut;
 }

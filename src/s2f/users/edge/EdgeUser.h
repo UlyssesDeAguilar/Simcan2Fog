@@ -7,34 +7,38 @@
 #include "inet/applications/tcpapp/TcpServerHostApp.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/common/socket/SocketMap.h"
+#include "s2f/users/edge/EdgeUsersControl_m.h"
 
-class EdgeUserModelDriver : public inet::ApplicationBase, public inet::TcpSocket::ICallback
+using namespace omnetpp;
+
+namespace users
 {
-protected:
-    inet::L3Address address;
-    inet::TcpSocket localNet;
-    inet::SocketMap globalNet;
+    class EdgeUser : public cSimpleModule
+    {
+    protected:
+        std::vector<cModule *> managedSensors;
+        std::map<opp_string, users::Vm> managedVms;
+        std::map<opp_string, users::App> remoteApps;
+        std::vector<users::App> localApps;
+        
+        const char *deploymentZone;
+        GateInfo serialGates;
+        opp_string userId;
 
-    // Lifecycle
-    virtual void initialize(int stage) override;
-    virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-    virtual void handleMessageWhenUp(cMessage *msg) override {}
-    virtual void finish() override;
+        virtual void initialize() override;
+        virtual void handleMessage(cMessage *msg) override;
+        virtual void finish() override;
 
-    // Callbacks for the socket ICallback interface
-    virtual void socketDataArrived(inet::TcpSocket *socket, inet::Packet *packet, bool urgent) override { throw cRuntimeError("Unexpected data"); }
-    virtual void socketAvailable(inet::TcpSocket *socket, inet::TcpAvailableInfo *availableInfo) override { error("what?"); }
-    virtual void socketClosed(inet::TcpSocket *socket) override{};
-    virtual void socketEstablished(inet::TcpSocket *socket) override {}
-    virtual void socketPeerClosed(inet::TcpSocket *socket) override {}
-    virtual void socketFailure(inet::TcpSocket *socket, int code) override {}
-    virtual void socketStatusArrived(inet::TcpSocket *socket, inet::TcpStatusInfo *status) override {}
-    virtual void socketDeleted(inet::TcpSocket *socket) override {} // del socket
+        virtual void startup();
+        virtual void handleVmUpdate(SM_UserVM *update);
+        virtual void handleAppEvent(SM_UserAPP *update);
+        virtual void processSerialEvent(cMessage *msg);
 
-    // Handlers for the general module lifetime simulation
-    virtual void handleStartOperation(inet::LifecycleOperation *operation) override;
-    virtual void handleStopOperation(inet::LifecycleOperation *operation) override;
-    virtual void handleCrashOperation(inet::LifecycleOperation *operation) override;
-};
+        virtual void turnSensorsOn();
+        virtual void turnSensorsOff();
+        virtual users::Vm *findPlatform(const char *name);
+        opp_string generateUniqueId(const char *name);
+    };
+}
 
 #endif

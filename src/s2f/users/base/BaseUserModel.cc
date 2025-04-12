@@ -77,8 +77,6 @@ void BaseUserModel::handleResponseSubscription(SM_UserVM *vmRequest, CloudUserIn
         // Emit statistics
         driver.emit(driver.timeoutSignal[vmRequest->getVmId()], userInstance.getNId());
     }
-
-    // deleteIfEphemeralMessage(vmRequest); WEIRDCHECK1: If well done, should not be possible!
 }
 
 void BaseUserModel::handleResponseAppRequest(SM_UserAPP *appRequest, CloudUserInstance &userInstance)
@@ -140,13 +138,12 @@ void BaseUserModel::handleVmExtendRequest(SM_VmExtend *extensionOffer, CloudUser
 void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {
     UserAppBuilder builder;
-    int i;
 
     /*
       Bear in mind that the CloudUserInstance checks that for each app collection there's an vmInstance
       It's entirely possible that there aren't enough app collections, so they are the limiting factor here
      */
-    for (i = 0; i < userInstance.getNumberAppCollections(); i++)
+    for (int i = 0; i < userInstance.getNumberAppCollections(); i++)
     {
         AppInstanceCollection *appCollection = userInstance.getAppCollection(i);
         const VM_Request &vmRq = vmRequest->getVm(i);
@@ -178,45 +175,30 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
             }
             else
             {
-                builder.createNewAppRequest(instanceId + vmRq.vmId, type, vmAllocation->ip, vmRq.vmId, vmAllocation->startTime);
+                builder.createNewAppRequest((instanceId + vmRq.vmId).c_str(), type.c_str(), vmRq.vmId.c_str(), vmAllocation->startTime);
             }
         }
     }
 
     // For each vm which is unmapped, mark as already finished
-    for (; i < vmRequest->getVmArraySize(); i++)
+    for (int i = 0; i < vmRequest->getVmArraySize(); i++)
     {
         const VM_Request &vmRq = vmRequest->getVm(i);
         userInstance.updateVmInstanceStatus(vmRq.vmId.c_str(), vmFinished);
     }
 
     // Finish building the deployment
-    std::vector<SM_UserAPP *> *appRequests = builder.finish(vmRequest->getUserId(), vmRequest->getReturnTopic());
+    std::vector<SM_UserAPP *> *appRequests = builder.finish(vmRequest->getUserId());
 
     // For each different "ServiceURL" we deploy the vms we requested
-    for (auto request : *appRequests)
+    for (auto request : *appRequests){
+    	request->setDestinationTopic(vmRequest->getReturnTopic());
         driver.sendRequestMessage(request, driver.toCloudProviderGate);
-
+    }
     delete appRequests;
 }
 
 bool BaseUserModel::decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance)
 {
     return ((double)rand() / (RAND_MAX)) <= driver.offerAcceptanceRate;
-}
-
-void BaseUserModel::deleteIfEphemeralMessage(SIMCAN_Message *msg)
-{
-    SM_UserVM *userVm = dynamic_cast<SM_UserVM *>(msg);
-    SM_UserAPP *userApp = dynamic_cast<SM_UserAPP *>(msg);
-    const char* strVmId;
-
-    if (userVm != nullptr)
-        strVmId = userVm->getVmId();
-
-    if (userApp != nullptr)
-        strVmId = userApp->getVmId();
-
-    if (opp_isempty(strVmId))
-        delete msg;
 }

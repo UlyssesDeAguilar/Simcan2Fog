@@ -18,10 +18,6 @@ protected:
     // Helpers
     void deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInstance);
     virtual bool decidesToRescueVm(SM_VmExtend *extensionOffer, CloudUserInstance &userInstance);
-
-    // FIXME: Not a priority, but really should check the "ephemeral" messages
-    void deleteIfEphemeralMessage(SIMCAN_Message *msg);
-
 public:
     friend class UserGenerator_simple;
     BaseUserModel(UserGenerator_simple &driver) : driver(driver) {}
