@@ -21,7 +21,7 @@ void IotApplication::initialize()
 
     setReturnCallback(this);
 
-    cModule *edgeTile = getModuleByPath(parentPath);
+    cModule *edgeTile = getModuleByPath(par("parentPath"));
     endpointName = edgeTile->par("serviceName");
     cModule *actuator = edgeTile->getSubmodule("actuator", 0);
     int vectorSize = actuator->getVectorSize();

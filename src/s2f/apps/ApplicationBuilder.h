@@ -14,10 +14,10 @@ class ApplicationBuilder
 public:
     struct Context
     {
-        const Application *schema;      // Definition of the app structure (template)
-        const std::string *vmId;        // The VM ID (where it will be executed)
-        const std::string *appId;       // The Instance ID 
-        const std::string *userId;      // The User ID (the user who launched the app)
+        const Application *schema; //!< Definition of the app structure (template)
+        const char *vmId;          //!< The VM ID (where it will be executed)
+        const char *appId;         //!< The Instance ID
+        const char *userId;        //!< The User ID (the user who launched the app)
     };
 
     /**
@@ -28,12 +28,12 @@ public:
      * @return omnetpp::cModule* A pointer to the application module
      */
     virtual omnetpp::cModule *build(omnetpp::cModule *parent, const Context &context);
-    void deleteApp(cModule * parent);
+    void deleteApp(cModule *parent);
 
 protected:
     omnetpp::cModule *searchAndCreate(cModule *parent, const Context &context);
     virtual void initParameters(cModule *appModule, const Context &context);
-    virtual void connectApp(cModule * parent, cModule *app);
+    virtual void connectApp(cModule *parent, cModule *app);
     omnetpp::cModule *buildAndStart(omnetpp::cModule *app);
 };
 

@@ -36,7 +36,6 @@ protected:
    cGate *resolverGate{};
    SocketMap socketMap;
 
-   const char *parentPath{}; // TODO: Move this to the IoT apps
    double startDelay;      //!< Starting time delay
    double connectionDelay; //!< Connection delay time
    unsigned int myRank;    //!< Rank of the application's process

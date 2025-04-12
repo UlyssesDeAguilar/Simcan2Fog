@@ -26,7 +26,7 @@ void AppBase::initialize()
     // If DNS resolver is enabled
     const char *resolverPath = appModule->par("resolverPath");
     if (!opp_isempty(resolverPath))
-        resolverGate = findModuleByPath(resolverPath)->gate("clientIn");
+        resolverGate = getModuleByPath(resolverPath)->gate("clientIn");
 
     // Init cGates
     inGate = gate("in");

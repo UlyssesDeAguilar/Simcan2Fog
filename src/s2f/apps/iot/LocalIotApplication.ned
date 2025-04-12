@@ -8,7 +8,9 @@ import s2f.apps.AppBase;
 simple LocalIotApplication extends AppBase{
     parameters:
         @class(LocalIotApplication);
-        int processingMIs = default(10);				    // Number of MIs to execute in each iteration
-        int listeningPort = default(1000);					// The port where it will listen (UDP)	
-        int pingsThreshold = default(5);                    // The number of pings where it will start processing
+        string parentPath = default("^.^.^.^.");
+        string actuatorPattern = default("lamp*");
+        int processingMIs;				    // Number of MIs to execute in each iteration
+        int listeningPort;					// The port where it will listen (UDP)	
+        int pingsThreshold;                 // The number of pings where it will start processing
 }

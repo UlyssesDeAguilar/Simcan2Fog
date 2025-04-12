@@ -17,9 +17,9 @@ void LocalIotApplication::initialize()
     serviceUp = false;
     setReturnCallback(this);
 
-    cModule *edgeTile = getModuleByPath(parentPath);
+    cModule *edgeTile = getModuleByPath(par("parentPath"));
     // endpointName = edgeTile->par("serviceName");
-    cPatternMatcher matcher("lamp*", true, true, true);
+    cPatternMatcher matcher(par("actuatorPattern"), true, true, true);
     EV_INFO << edgeTile->getFullName() << "\n";
 
     for (cModule::SubmoduleIterator it(edgeTile); !it.end(); ++it)

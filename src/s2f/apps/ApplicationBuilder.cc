@@ -21,8 +21,9 @@ cModule *ApplicationBuilder::build(cModule *parent, const Context &context)
 cModule *ApplicationBuilder::searchAndCreate(cModule *parent, const Context &context)
 {
     // Get type from schema
-    auto schema = context.schema;
-    cModuleType *moduleType = cModuleType::get(schema->getPath().c_str());
+    const Application* schema = context.schema;
+    std::string fullPath = schema->getPath() + "." + schema->getType();
+    cModuleType *moduleType = cModuleType::get(fullPath.c_str());
 
     // Reserve the necessary space (if needed)
     if ((bool)parent->par("defaultInitialized"))
@@ -37,9 +38,9 @@ cModule *ApplicationBuilder::searchAndCreate(cModule *parent, const Context &con
 void ApplicationBuilder::initParameters(cModule *appModule, const Context &context)
 {
     // Init context parameters
-    appModule->par("appInstance") = *context.appId;
-    appModule->par("vmInstance") = *context.vmId;
-    appModule->par("userInstance") = *context.userId;
+    appModule->par("appInstance") = context.appId;
+    appModule->par("vmInstance") = context.vmId;
+    appModule->par("userInstance") = context.userId;
 
     // Initialize all the "free" parameters
     for (const auto &iter : context.schema->getAllParameters())

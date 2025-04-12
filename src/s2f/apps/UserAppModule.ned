@@ -11,7 +11,7 @@ module UserAppModule
         int vmId = default(0);                                  // VM ID of the application
         string resolverPath = default("");                         // If empty, implies no resolver available
         string userAppName = default("DummyApplication");		// Name of the application
-        volatile bool defaultInitialized = default(true);
+        volatile bool defaultInitialized @mutable = default(true);
         @display("bgb=221,131");
     gates:
         input fromHub;			// Input gate from ModuleHub
