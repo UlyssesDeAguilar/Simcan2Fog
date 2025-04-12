@@ -7,6 +7,9 @@ simple ResourceManager{
     parameters:
         @display("i=block/cogwheel");
         @class(DcResourceManager);
+        string nodePoolPath;
+        string dataManagerPath;
+        string selectionStrategy;
         
         // Signals emmited from the model
         
@@ -21,7 +24,6 @@ simple ResourceManager{
         @signal[allocatedDisk](type=double);
         @signal[allocatedCores](type=long);
         @signal[allocatedVms](type=long);
-        
 
         // Characteristical statistics
         @statistic[maxRam](unit=GB; record=last);

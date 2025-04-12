@@ -10,12 +10,12 @@
 class VirtualMachine
 {
 private:
-    std::string type; // Name of the VM in the SIMCAN repository
-    double cost;      // Cost (per hour)
-    int numCores;     // Number of cores
-    double scu;       // Scientific Computing Units
-    double diskGB;    // Disk space (in GB)
-    double memoryGB;  // Memory space (in GB)
+    std::string type;   //!< Name of the VM in the SIMCAN repository
+    uint32_t numCores;  //!< Number of cores
+    uint32_t diskMiB;   //!< Disk space (in GB)
+    uint32_t memoryMiB; //!< Memory space (in GB)
+    double cost;        //!< Cost (per hour)
+    double scu;         //!< Scientific Computing Units
 
 public:
     /**
@@ -25,10 +25,15 @@ public:
      * @param cost Cost per hour.
      * @param numCores Number of cores.
      * @param scu Computing units.
-     * @param diskGB Amount of disk space (in GB)
-     * @param memoryGB Amount of RAM memory (in GB)
+     * @param diskMiB Amount of disk space (in MiB)
+     * @param memoryMiB Amount of RAM memory (in MiB)
      */
-    VirtualMachine(std::string type, double cost, int numCores, double scu, double diskGB, double memoryGB);
+    VirtualMachine(const char *type,
+                   uint32_t numCores,
+                   uint32_t diskMiB,
+                   uint32_t memoryMiB,
+                   double cost,
+                   double scu) : type(type), numCores(numCores), diskMiB(diskMiB), memoryMiB(memoryMiB), cost(cost), scu(scu) {};
 
     /**
      * Gets the cost of this VM.
@@ -47,44 +52,44 @@ public:
     /**
      * Gets the amount of disk space of this VM.
      *
-     * @return Amount of disk space of this VM
+     * @return Amount of disk space of this VM (in MiB)
      */
-    double getDiskGb() const { return diskGB; }
+    uint32_t getDiskMiB() const { return diskMiB; }
 
     /**
      * Sets a new amount of disk space for this VM.
      *
      * @param diskGb New amount of disk space for this VM
      */
-    void setDiskGb(double diskGb) { diskGB = diskGb; }
+    void setDiskMiB(uint32_t diskMiB) { this->diskMiB = diskMiB; }
 
     /**
      * Gets the amount of RAM memory (in GB) of this VM.
      *
      * @return Amount of RAM memory (in GB) of this VM
      */
-    double getMemoryGb() const { return memoryGB; }
+    uint32_t getMemoryMiB() const { return memoryMiB; }
 
     /**
      * Sets a new amount of RAM memory (in GB) for this VM.
      *
      * @param memoryGb New amount of RAM memory (in GB) for this VM
      */
-    void setMemoryGb(double memoryGb) { memoryGB = memoryGb; }
+    void setMemoryGb(uint32_t memoryMiB) { this->memoryMiB = memoryMiB; }
 
     /**
      * Gets the number of CPU cores of this VM.
      *
      * @return Number of CPU cores of this VM.
      */
-    int getNumCores() const { return numCores; }
+    uint32_t getNumCores() const { return numCores; }
 
     /**
      * Sets a new number of CPU cores for this VM.
      *
      * @param numCores New number of CPU cores for this VM.
      */
-    void setNumCores(int numCores) { this->numCores = numCores; }
+    void setNumCores(uint32_t numCores) { this->numCores = numCores; }
 
     /**
      * Gets the computing units of this VM.

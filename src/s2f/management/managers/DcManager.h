@@ -5,7 +5,6 @@
 #include "s2f/management/cloudprovider/NodeUpdate_m.h"
 #include "s2f/management/managers/ManagerBase.h"
 #include "s2f/management/managers/ResourceManager.h"
-#include "s2f/management/managers/selection/Strategies.h"
 #include "s2f/os/hypervisors/DcHypervisor.h"
 #include "s2f/messages/SM_VmExtend_m.h"
 #include "inet/common/packet/Packet.h"
@@ -23,9 +22,7 @@ protected:
     using StrMap = std::map<std::string, T *>;
 
     NodeUpdate eventTemplate;
-
     ResourceManager *resourceManager;
-    dc::SelectionStrategy *nodeSelectionStrategy;
     bool showDataCentreConfig;   /** Show information of DataCentres */
     bool forecastActiveMachines; /** Activate forecasting */
 
@@ -43,11 +40,11 @@ protected:
     GateInfo networkGates;
     GateInfo localNetworkGates;
 
-    virtual ~DcManager();
-    virtual void initialize(int stage) override;
     virtual int numInitStages() const override { return inet::INITSTAGE_APPLICATION_LAYER + 1; }
-    virtual cGate *getOutGate(cMessage *msg) override;
+    virtual void initialize(int stage) override;
+    virtual void finish() override;
 
+    virtual cGate *getOutGate(cMessage *msg) override;
     virtual void initializeSelfHandlers() override;
     virtual void initializeRequestHandlers() override;
     virtual void initializeResponseHandlers() override;
@@ -76,20 +73,11 @@ protected:
 
     // Helpers
     bool checkVmUserFit(SM_UserVM *&userVM_Rq);
+    void sendUpdateToCloudProvider();
 
     // Helpers
     hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return acceptedVMsMap.at(vmId); }
     SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return handlingAppsRqMap.at(userId); }
-    
-    /**
-     * Calculates the statistics of the experiment.
-     */
-    virtual void finish() override;
-
-    friend class dc::SelectionStrategy;
-    friend class dc::FirstFit;
-    friend class dc::BestFit;
-    //friend class dc::CostFit;
 };
 
 #endif

@@ -1,4 +1,5 @@
 #include "ResourceManager.h"
+#include "s2f/core/include/signals.h"
 
 using namespace omnetpp;
 
@@ -6,43 +7,26 @@ Define_Module(ResourceManager);
 
 void ResourceManager::initialize(int stage)
 {
-    switch (stage)
+    if (stage == LOCAL)
     {
-    case LOCAL:
-    {
-        totalCores = 0;        //!< Total cpus in the datacentre
-        availableCores = 0;    //!< Cpus available in the datacentre
-        machinesInUse = 0;     //!< Nodes in use
-        activeMachines = 0;    //!< Active nodes (powered on)
-        minActiveMachines = 0; //!< Minimum required active nodes
-        reservedNodes = 0;     //!< Number of reserved nodes
-        
-        // Register the signals for statistical recording
-        signals.maxCores = registerSignal("maxCores");
-        signals.maxRam = registerSignal("maxRam");
-        signals.maxDisk = registerSignal("maxDisk");
-        signals.maxVms = registerSignal("maxVms");
-
-        signals.allocatedCores = registerSignal("allocatedCores");
-        signals.allocatedRam = registerSignal("allocatedRam");
-        signals.allocatedDisk = registerSignal("allocatedDisk");
-        signals.allocatedVms = registerSignal("allocatedVms");
-
-        // Reserve the necessary control data
-        int numBlades = getParentModule()->par("numBlades");
-        nodes.resize(numBlades);
-        break;
+        machinesInUse = 0;
+        activeMachines = 0;
+        minActiveMachines = 0;
+        defaultNodePool = check_and_cast<NodePool *>(findModuleByPath(par("nodePoolPath")));
+        selectionStrategy = check_and_cast<dc::SelectionStrategy *>(createOne(par("selectionStrategy")));
+        dataManager = check_and_cast<DataManager *>(getModuleByPath(par("dataManagerPath")));
     }
-    case MANAGER:
+    else if (stage == MANAGER)
     {
-        // Initialize buckets and reservations
-        initBucketsAndReservations();
-        // Mark all cores as available
-        availableCores = totalCores;
-        break;
-    }
-    default:
-        break;
+        this->activeMachines = 0;
+        this->machinesInUse = 0;
+
+        // Emit the overall registered resources
+        auto &resources = defaultNodePool->getTotalResources();
+        emit(maxCores, resources.cores);
+        emit(maxDisk, resources.diskMiB / 1024.0);
+        emit(maxRam, resources.memoryMiB / 1024.0);
+        emit(maxVms, resources.vms);
     }
 }
 
@@ -50,8 +34,7 @@ void ResourceManager::finish()
 {
     // Cpu usage times! -> emit signal instad of printing? Global cpu view like the hypervisor?
     // HardwareManager should "expose" the cpuState array!
-    coresHypervisor.clear();
-    reservedCoresHypervisor.clear();
+
     // Give the allocation signals a ending point
     // emit(signals.allocatedCores, 0);
     // emit(signals.allocatedVms, 0);
@@ -59,121 +42,24 @@ void ResourceManager::finish()
     // emit(signals.allocatedRam, 0.0);
 }
 
-void ResourceManager::registerNode(uint32_t ip, const NodeResources &resources)
-{
-    // Insert the hypervisor to the correct bucket
-    totalCores += resources.cores;
+uint64_t ResourceManager::getAvailableCores() const { return defaultNodePool->getTotalResources().cores; }
+uint64_t ResourceManager::getAvailableDiskMiB() const { return defaultNodePool->getTotalResources().diskMiB; }
+uint64_t ResourceManager::getAvailableRamMiB() const { return defaultNodePool->getTotalResources().memoryMiB; }
 
-    // Register state
-    nodes[ip] = {.availableResources = resources, .ip = ip, .state = 0};
+double ResourceManager::getAggregateCpuUsage() const
+{
+    PoolResources total = defaultNodePool->getTotalResources();
+    PoolResources available = defaultNodePool->getAvailableResources();
+    return ((total.cores - available.cores) / (double)total.cores) * 100.0;
 }
 
-void ResourceManager::initBucketsAndReservations()
+size_t ResourceManager::addNode(int adress, const NodeResources &resources)
 {
-    auto registerNode = [](CoreHypervisorsMap &map, Node &node) -> void
-    {
-        map[node.availableResources.cores].push_back(node.ip);
-    };
-
-    this->activeMachines = 0;
-    this->machinesInUse = 0;
-    uint32_t reservedCounter = 0;
-
-    // For statistics
-    double maxRam = 0.0;
-    double maxDisk = 0.0;
-    uint64_t maxVMs = 0;
-
-    for (auto &node : nodes)
-    {
-        // Accumulate
-        maxRam += node.availableResources.memory;
-        maxDisk += node.availableResources.disk;
-        maxVMs += node.availableResources.vms;
-
-        // Activate the node
-        if (this->activeMachines < this->minActiveMachines)
-            activateNode(node.ip);
-
-        if (reservedCounter < this->reservedNodes)
-        {
-            // Mark as reserved and store in correct bucket
-            node.state |= Node::RESERVED;
-            registerNode(reservedCoresHypervisor, node);
-            reservedCounter++;
-        }
-        else
-            registerNode(coresHypervisor, node);
-    }
-
-    // Sanity checks
-    if (reservedCounter < this->reservedNodes)
-        error("Unable to reserve %d nodes because there are %d total or active nodes", this->reservedNodes, nodes.size());
-
-    if (this->activeMachines < this->minActiveMachines)
-        error("Unable to activate the minimum %d required nodes because there are %d total nodes", this->minActiveMachines, nodes.size());
-
-    // Emit the overall registered resources
-    emit(signals.maxCores, totalCores);
-    emit(signals.maxDisk, maxDisk);
-    emit(signals.maxRam, maxRam);
-    emit(signals.maxVms, maxVMs);
+    Enter_Method_Silent();
+    return defaultNodePool->addNode(adress, resources);
 }
 
-void ResourceManager::setActiveMachines(uint32_t activeMachines)
-{
-    // Bounds check
-    if (activeMachines < minActiveMachines)
-        activeMachines = minActiveMachines;
-
-    // Scale up or scale down
-    if (this->activeMachines < activeMachines)
-    {
-        // Start from the lowest core count hypervisors
-        for (auto &bucket : coresHypervisor)
-        {
-            for (auto &nodeIp : bucket.second)
-            {
-                if (!nodes[nodeIp].isActive())
-                    activateNode(nodeIp);
-
-                // Check if we hit our target
-                if (this->activeMachines >= activeMachines)
-                    return;
-            }
-        }
-    }
-    else if (this->activeMachines > activeMachines)
-    {
-        // Start from the highest core count hypervisors
-        for (auto ritMap = coresHypervisor.rbegin(); ritMap != coresHypervisor.rend(); ++ritMap)
-        {
-            for (auto &nodeIp : ritMap->second)
-            {
-                if (!nodes[nodeIp].inUse())
-                    deactivateNode(nodeIp);
-
-                // Check if we hit our target
-                if (this->activeMachines <= activeMachines)
-                    return;
-            }
-        }
-    }
-}
-
-void ResourceManager::activateNode(uint32_t nodeIp)
-{
-    getHypervisor(nodeIp)->powerOn(true);
-    nodes[nodeIp].state |= Node::ACTIVE;
-    this->activeMachines++;
-}
-
-void ResourceManager::deactivateNode(uint32_t nodeIp)
-{
-    getHypervisor(nodeIp)->powerOn(false);
-    nodes[nodeIp].state &= ~(Node::ACTIVE);
-    this->activeMachines--;
-}
+void ResourceManager::setActiveMachines(uint32_t activeMachines) { error("To be reimplemented"); }
 
 hypervisor::DcHypervisor *const ResourceManager::getHypervisor(uint32_t nodeIp)
 {
@@ -185,98 +71,82 @@ hypervisor::DcHypervisor *const ResourceManager::getHypervisor(uint32_t nodeIp)
 void ResourceManager::emitSignals(const VirtualMachine *vmTemplate, bool allocation)
 {
     // Emit statistical signals -- Heuristic for considering if there may be a listening configuration
-    if (!mayHaveListeners(signals.allocatedVms))
+    if (!mayHaveListeners(allocatedVms))
         return;
 
     if (allocation)
     {
-        emit(signals.allocatedVms, 1);
-        emit(signals.allocatedCores, vmTemplate->getNumCores());
-        emit(signals.allocatedRam, vmTemplate->getMemoryGb());
-        emit(signals.allocatedDisk, vmTemplate->getDiskGb());
+        emit(allocatedVms, 1);
+        emit(allocatedCores, vmTemplate->getNumCores());
+        emit(allocatedRam, vmTemplate->getMemoryMiB() / 1024.0);
+        emit(allocatedDisk, vmTemplate->getDiskMiB() / 1024.0);
     }
     else
     {
-        emit(signals.allocatedVms, -1);
-        emit(signals.allocatedCores, -vmTemplate->getNumCores());
-        emit(signals.allocatedRam, -vmTemplate->getMemoryGb());
-        emit(signals.allocatedDisk, -vmTemplate->getDiskGb());
+        emit(allocatedVms, -1);
+        emit(allocatedCores, -vmTemplate->getNumCores());
+        emit(allocatedRam, -vmTemplate->getMemoryMiB() / 1024.0);
+        emit(allocatedDisk, -vmTemplate->getMemoryMiB() / 1024.0);
     }
 }
 
-void ResourceManager::confirmNodeAllocation(const uint32_t &ip, const VirtualMachine *vmTemplate)
+void ResourceManager::confirmNodeDeallocation(size_t nodeId, const VirtualMachine *vmTemplate)
 {
-    this->availableCores -= vmTemplate->getNumCores();
-    emitSignals(vmTemplate, true);
-
-    // Mark node in use and increment machinesInUse (if previously not set)
-    if ((nodes[ip].state & Node::IN_USE) == 0)
-    {
-        nodes[ip].state |= Node::IN_USE;
-        machinesInUse++;
-    }
-
-    // Check if the node is exhausted
-    if (nodes[ip].availableResources.isExhausted())
-        nodes[ip].state |= Node::MAXED_OUT;
-}
-
-void ResourceManager::confirmNodeDeallocation(const uint32_t &ip, const VirtualMachine *vmTemplate, bool idleNode)
-{
-    this->availableCores += vmTemplate->getNumCores();
+    defaultNodePool->deallocateResources(nodeId, vmTemplate);
     emitSignals(vmTemplate, false);
-
-    // If no longer in use
-    if (idleNode)
-    {
-        nodes[ip].state &= ~(Node::IN_USE);
-        machinesInUse--;
-    }
-
-    // Relocate the resources -> update the buckets!
-    updateNode(ip, vmTemplate, false);
-
-    // Check if the node is no longer exhausted
-    if (!nodes[ip].availableResources.isExhausted())
-        nodes[ip].state &= ~(Node::MAXED_OUT);
 }
 
-void ResourceManager::updateNode(uint32_t nodeIp, const VirtualMachine *vm, bool allocate)
+const NodeResources &ResourceManager::getNodeAvailableResources(size_t nodeId) const
 {
-    // Recover resources
-    NodeResources &resources = getNodeResources(nodeIp);
+    return defaultNodePool->getNode(nodeId).availableResources;
+}
 
-    // Recover bucket
-    auto bucketIter = coresHypervisor.find(resources.cores);
-    std::vector<uint32_t> &oldBucket = bucketIter->second;
-
-    // Swap with last element in bucket and pop back O(1)
-    auto pos = std::find(oldBucket.begin(), oldBucket.end(), nodeIp);
-    std::swap(*pos, oldBucket.back());
-    oldBucket.pop_back();
-
-    // If there are no more nodes, then delete the bucket
-    if (oldBucket.size() == 0)
-        coresHypervisor.erase(bucketIter);
-
-    if (allocate)
+SM_UserVM *ResourceManager::allocateVms(SM_UserVM *request)
+{
+    // This record table will hold the relation vm <-> node
+    struct NodeVmRecord
     {
-        // Allocate the resources
-        resources.cores -= vm->getNumCores();
-        resources.disk -= vm->getDiskGb();
-        resources.memory -= vm->getMemoryGb();
-        resources.vms--;
+        size_t nodeIndex;
+        const VirtualMachine *vmTemplate;
+    };
+
+    std::vector<NodeVmRecord> allocRecords;
+    uint64_t cores, ram, disk = 0;
+    bool ok = true;
+
+    for (int i = 0, n = request->getVmArraySize(); i < n && ok; i++)
+    {
+        size_t nodeIndex;
+        VM_Request &vm = request->getVmForUpdate(i);
+        const VirtualMachine *vmTemplate = dataManager->searchVm(vm.vmType);
+
+        if (!selectionStrategy->selectNode(vmTemplate, defaultNodePool->getNodes(), nodeIndex))
+            ok = false;
+        else
+        {
+            // Also add it as a response
+            defaultNodePool->allocateResources(nodeIndex, vmTemplate);
+            allocRecords.push_back({nodeIndex, vmTemplate});
+
+            // Accumulate
+            cores += vmTemplate->getNumCores();
+            ram += vmTemplate->getMemoryMiB();
+            disk += vmTemplate->getDiskMiB();
+        }
     }
+
+    // In case of failure, restore the resources
+    if (!ok)
+        for (const auto record : allocRecords)
+            defaultNodePool->deallocateResources(record.nodeIndex, record.vmTemplate);
     else
     {
-        // Deallocate the resources
-        resources.cores += vm->getNumCores();
-        resources.disk += vm->getDiskGb();
-        resources.memory += vm->getMemoryGb();
-        resources.vms++;
+        // Emit the allocation signals
+        emit(allocatedVms, request->getVmArraySize());
+        emit(allocatedCores, cores);
+        emit(allocatedRam, ram / 1024.0);
+        emit(allocatedDisk, disk / 1024.0);
     }
 
-    // Push in the correct bucket
-    std::vector<uint32_t> &newBucket = coresHypervisor[resources.cores];
-    newBucket.push_back(nodeIp);
+    return ok ? request : nullptr;
 }

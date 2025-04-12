@@ -1,14 +1,5 @@
-#include "../../../management/dataClasses/VirtualMachines/VirtualMachine.h"
+#include "s2f/management/dataClasses/VirtualMachines/VirtualMachine.h"
 
-VirtualMachine::VirtualMachine(std::string type, double cost, int numCores, double scu, double diskGB, double memoryGB)
-{
-    this->type = type;
-    this->cost = cost;
-    this->numCores = numCores;
-    this->scu = scu;
-    this->diskGB = diskGB;
-    this->memoryGB = memoryGB;
-}
 
 std::ostream &operator<<(std::ostream &os, const VirtualMachine &obj)
 {
@@ -17,6 +8,6 @@ std::ostream &operator<<(std::ostream &os, const VirtualMachine &obj)
               << "Cost (h):    " << obj.cost << "\n"
               << "Cores (#):   " << obj.numCores << "\n"
               << "SCU (#):     " << obj.scu << "\n"
-              << "Disk (GB):   " << obj.diskGB << "\n"
-              << "Memory (GB): " << obj.memoryGB << "\n";
+              << "Disk (GB):   " << obj.diskMiB / 1024.0 << "\n"
+              << "Memory (GB): " << obj.memoryMiB / 1024.0 << "\n";
 }

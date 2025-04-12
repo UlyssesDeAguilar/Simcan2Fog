@@ -1,20 +1,12 @@
 #include "DcManager.h"
 
 #include "s2f/management/utils/LogUtils.h"
-#include "s2f/management/utils/LogUtils.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
 using namespace inet;
 using namespace hypervisor;
 
 Define_Module(DcManager);
-
-DcManager::~DcManager()
-{
-    acceptedVMsMap.clear();
-    acceptedUsersRqMap.clear();
-    handlingAppsRqMap.clear();
-}
 
 void DcManager::initialize(int stage)
 {
@@ -48,28 +40,18 @@ void DcManager::initialize(int stage)
         // Locate the ResourceManager
         resourceManager = check_and_cast<ResourceManager *>(getModuleByPath("^.resourceManager"));
         resourceManager->setMinActiveMachines(par("minActiveMachines"));
-        resourceManager->setReservedNodes(par("reservedNodes"));
-
-        nodeSelectionStrategy = dc::SelectionStrategy::newStrategy(par("selectionStrategy"));
-
-        if (nodeSelectionStrategy == nullptr)
-            error("Unknown selection strategy");
-
-        nodeSelectionStrategy->setResourceManager(resourceManager);
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
         // Set the global DC address into the resource manager
-        resourceManager->setGlobalAddress(L3AddressResolver().addressOf(getModuleByPath("^.stack")));
-
         if (par("hasCloudEvents"))
         {
             // Prepare the event message template and send to the cloud provider
             const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
             eventTemplate.setDestinationTopic("CloudProvider");
             eventTemplate.setReturnTopic(topic);
-            eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-            sendRequestMessage(eventTemplate.dup(), gate("networkOut"));
+            // TODO: Set the zone of the DC/FOG node
+            sendUpdateToCloudProvider();
         }
     }
 }
@@ -79,6 +61,9 @@ void DcManager::finish()
     // Delete the events
     cancelAndDelete(cpuManageMachinesMessage);
     cancelAndDelete(cpuStatusMessage);
+    acceptedVMsMap.clear();
+    acceptedUsersRqMap.clear();
+    handlingAppsRqMap.clear();
 }
 
 cGate *DcManager::getOutGate(cMessage *msg)
@@ -140,7 +125,7 @@ void DcManager::initializeResponseHandlers()
 void DcManager::handleCpuStatus(cMessage *msg)
 {
     const char *strName = getParentModule()->getName();
-    EV_FATAL << "#___cpuUsage#" << strName << " " << simTime().dbl() << " " << resourceManager->getAggregatedCpuUsage() << "\n";
+    EV_FATAL << "#___cpuUsage#" << strName << " " << simTime().dbl() << " " << resourceManager->getAggregateCpuUsage() << "\n";
 
     // If not finished, reuse the same message CPU_STATUS
     if (!bFinished)
@@ -218,8 +203,7 @@ void DcManager::handleVmRequestFits(SIMCAN_Message *sm)
         request->setResult(SM_VM_Res_Reject);
 
         // Update the cloud provider to "uncommit" the resources
-        eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-        send(eventTemplate.dup(), gate("networkOut"));
+        sendUpdateToCloudProvider();
     }
 
     // Set response and operation type
@@ -253,7 +237,7 @@ void DcManager::handleVmSubscription(SIMCAN_Message *sm)
 
         // Update the cloud provider to "uncommit" the resources
         eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-        send(eventTemplate.dup(),gate("networkOut"));
+        send(eventTemplate.dup(), gate("networkOut"));
     }
 
     // Set response and operation type
@@ -268,63 +252,14 @@ void DcManager::handleVmSubscription(SIMCAN_Message *sm)
 bool DcManager::checkVmUserFit(SM_UserVM *&userVM_Rq)
 {
     ASSERT2(userVM_Rq != nullptr, "checkVmUserFit nullptr guard failed\n");
-
-    int nRequestedVms = userVM_Rq->getVmArraySize();
-    std::string userId = userVM_Rq->getUserId();
-
-    EV_DEBUG << "checkVmUserFit- checking for free space, " << nRequestedVms << " Vm(s) for the user" << userId << '\n';
-
-    // Before starting the process, it is neccesary to check if the
-    int nTotalRequestedCores = calculateTotalCoresRequested(userVM_Rq);
-    int nAvailableCores = resourceManager->getAvailableCores();
-
-    if (nTotalRequestedCores > nAvailableCores)
+    if (resourceManager->allocateVms(userVM_Rq))
     {
-        EV_DEBUG << "checkVmUserFit - There isn't enough space: [" << userVM_Rq->getUserId() << nTotalRequestedCores
-                 << " vs Available [" << nAvailableCores << "/" << resourceManager->getTotalCores() << "]" << '\n';
+        const char *userId = userVM_Rq->getUserId();
+        acceptedUsersRqMap[userId] = userVM_Rq->getReturnTopic();
+        return true;
+    }
+    else
         return false;
-    }
-
-    int nTotalCores = resourceManager->getTotalCores();
-    EV_DEBUG << "checkVmUserFit - There is available space: [" << userVM_Rq->getUserId() << nTotalRequestedCores
-             << " vs Available [" << nAvailableCores << "/" << nTotalCores << "]" << '\n';
-
-    // Start the deployment
-    VmDeployment deployment(resourceManager, userVM_Rq);
-
-    EV_DEBUG << "Attempting deployment" << "\n";
-    // Process all the vms
-    for (int i = 0; i < nRequestedVms; i++)
-    {
-        // Retrieve vm and select candidate
-        VM_Request &vmRequest = userVM_Rq->getVmForUpdate(i);
-        auto vmSpecs = dataManager->searchVm(vmRequest.vmType);
-        if (vmSpecs == nullptr)
-            error("VmType %s not found in virtual machine definitions", vmRequest.vmType.c_str());
-
-        // Select a node to deploy
-        uint32_t nodeIp = nodeSelectionStrategy->selectNode(*vmSpecs);
-
-        if (nodeIp != UINT32_MAX)
-        {
-            // Found, add to the deployment
-            deployment.addNode(nodeIp, vmRequest, vmSpecs);
-        }
-        else
-        {
-            // Unable to allocate, rollback changes
-            deployment.rollback();
-            return false;
-        }
-    }
-    EV_DEBUG << "Deployment was succesfull" << "\n";
-
-    // Store request as accepted -- In case of renting extenion this will be useful !
-    acceptedUsersRqMap[userId] = userVM_Rq->getReturnTopic();
-    deployment.commit();
-
-    // The deployment was allocated successfully
-    return true;
 }
 
 void DcManager::handleVmRentTimeout(SIMCAN_Message *sm)
@@ -343,7 +278,7 @@ void DcManager::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
        << response->getVmId() << " for " << response->getExtensionTime() << "\n";
 
     auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
-    resourceManager->resumeVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
+    //resourceManager->resumeVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
     delete response;
 }
 
@@ -353,10 +288,18 @@ void DcManager::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
     EV << "User: " << response->getUserId() << " decided to not extend vm " << response->getVmId() << ". Freeing resources\n";
 
     auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
-    resourceManager->deallocateVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId());
+    //resourceManager->deallocateVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId());
     delete response;
 
     // Notifiy the Cloud provider that the resources were finally freed
     eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+    send(eventTemplate.dup(), gate("networkOut"));
+}
+
+void DcManager::sendUpdateToCloudProvider()
+{
+    eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
+    eventTemplate.setAvailableRam(resourceManager->getAvailableRamMiB());
+    eventTemplate.setAvailableDisk(resourceManager->getAvailableDiskMiB());
     send(eventTemplate.dup(), gate("networkOut"));
 }

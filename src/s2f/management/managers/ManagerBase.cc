@@ -65,7 +65,7 @@ void ManagerBase::processRequestMessage(SIMCAN_Message *sm)
         catch (std::out_of_range &e)
         {
             EV_WARN << e.what() << "\n";
-            error("Recieved request with code: %s which has no handler\n", sm->getOperation());
+            error("Recieved request with code: %d which has no handler\n", sm->getOperation());
         }
     }
 }
