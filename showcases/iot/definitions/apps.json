@@ -1,0 +1,12 @@
+[
+    {
+        "name": "LightController",
+        "model": "LocalIotApplication",
+        "package": "s2f.apps.iot",
+        "parameters": {
+            "processingMIs": "100",
+            "listeningPort": "1000",
+            "pingsThreshold": "5"
+        }
+    }
+]
