@@ -49,6 +49,8 @@ OBJS = \
     $O/s2f/architecture/messagequeue/internals/SourceDelegate.o \
     $O/s2f/architecture/messagequeue/services/PullService.o \
     $O/s2f/architecture/messagequeue/services/PushService.o \
+    $O/s2f/architecture/net/card/NetworkCard.o \
+    $O/s2f/architecture/net/db/SimpleNetDb.o \
     $O/s2f/architecture/net/hub/CheckingHubModule.o \
     $O/s2f/architecture/net/stack/proxy/AppProxy.o \
     $O/s2f/architecture/net/stack/proxy/ServiceTable.o \
@@ -58,10 +60,11 @@ OBJS = \
     $O/s2f/architecture/net/stack/registry/ServiceRegistrar.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
-    $O/s2f/architecture/nodes/hardwaremanagers/HardwareManager.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
+    $O/s2f/core/include/signals.o \
+    $O/s2f/core/logic/LogicDemuxHub.o \
     $O/s2f/core/simdata/DataManager.o \
     $O/s2f/core/simdata/DataRepository.o \
     $O/s2f/core/simdata/engine/DataEngine.o \
@@ -86,28 +89,30 @@ OBJS = \
     $O/s2f/management/dataClasses/VirtualMachines/VmInstance.o \
     $O/s2f/management/managers/DcManager.o \
     $O/s2f/management/managers/ManagerBase.o \
+    $O/s2f/management/managers/Node.o \
+    $O/s2f/management/managers/NodePool.o \
     $O/s2f/management/managers/ResourceManager.o \
-    $O/s2f/management/managers/VmDeployment.o \
-    $O/s2f/management/managers/selection/BestFit.o \
-    $O/s2f/management/managers/selection/CostFit.o \
-    $O/s2f/management/managers/selection/FirstFit.o \
-    $O/s2f/management/managers/selection/SelectionStrategy.o \
+    $O/s2f/management/managers/selection/Strategies.o \
     $O/s2f/management/utils/LogUtils.o \
-    $O/s2f/messages/AppRequest.o \
-    $O/s2f/messages/INET_AppMessage.o \
     $O/s2f/messages/SIMCAN_Message.o \
     $O/s2f/messages/SM_CPU_Message.o \
     $O/s2f/messages/SM_UserAPP.o \
     $O/s2f/messages/SM_UserVM.o \
     $O/s2f/messages/VMRequest.o \
+    $O/s2f/os/control/ControlEntries.o \
+    $O/s2f/os/control/ProcessDemux.o \
+    $O/s2f/os/control/VmControlTable.o \
+    $O/s2f/os/hardwaremanagers/DcHardwareManager.o \
+    $O/s2f/os/hardwaremanagers/EdgeHardwareManager.o \
+    $O/s2f/os/hardwaremanagers/HardwareManager.o \
+    $O/s2f/os/hardwaremanagers/NodeResources.o \
     $O/s2f/os/hypervisors/DcHypervisor.o \
     $O/s2f/os/hypervisors/EdgeHypervisor.o \
     $O/s2f/os/hypervisors/Hypervisor.o \
-    $O/s2f/os/hypervisors/OsCore.o \
     $O/s2f/os/schedulers/CpuSchedulerRR.o \
     $O/s2f/users/base/BaseUserModel.o \
     $O/s2f/users/cloud/CloudUserModel.o \
-    $O/s2f/users/edge/EdgeUserModelDriver.o \
+    $O/s2f/users/edge/EdgeUser.o \
     $O/s2f/users/generators/UserGenerator_simple.o \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
@@ -116,6 +121,7 @@ OBJS = \
     $O/s2f/architecture/dns/ResourceRecord_m.o \
     $O/s2f/architecture/dns/client/DnsClientCommand_m.o \
     $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
+    $O/s2f/architecture/net/protocol/L2Protocol_m.o \
     $O/s2f/architecture/net/protocol/RestfulRequest_m.o \
     $O/s2f/architecture/net/protocol/RestfulResponse_m.o \
     $O/s2f/architecture/net/protocol/RestMsg_m.o \
@@ -128,12 +134,12 @@ OBJS = \
     $O/s2f/messages/SIMCAN_Message_m.o \
     $O/s2f/messages/SM_CloudProvider_Control_m.o \
     $O/s2f/messages/SM_CPU_Message_m.o \
-    $O/s2f/messages/SM_REST_API_m.o \
     $O/s2f/messages/SM_UserAPP_m.o \
     $O/s2f/messages/SM_UserVM_m.o \
     $O/s2f/messages/SM_UserVM_Cost_m.o \
     $O/s2f/messages/SM_VmExtend_m.o \
-    $O/s2f/messages/Syscall_m.o
+    $O/s2f/messages/Syscall_m.o \
+    $O/s2f/users/edge/EdgeUsersControl_m.o
 
 # Message files
 MSGFILES = \
@@ -142,6 +148,7 @@ MSGFILES = \
     s2f/architecture/dns/ResourceRecord.msg \
     s2f/architecture/dns/client/DnsClientCommand.msg \
     s2f/architecture/dns/registry/DnsRegistrationRequest.msg \
+    s2f/architecture/net/protocol/L2Protocol.msg \
     s2f/architecture/net/protocol/RestfulRequest.msg \
     s2f/architecture/net/protocol/RestfulResponse.msg \
     s2f/architecture/net/protocol/RestMsg.msg \
@@ -154,12 +161,12 @@ MSGFILES = \
     s2f/messages/SIMCAN_Message.msg \
     s2f/messages/SM_CloudProvider_Control.msg \
     s2f/messages/SM_CPU_Message.msg \
-    s2f/messages/SM_REST_API.msg \
     s2f/messages/SM_UserAPP.msg \
     s2f/messages/SM_UserVM.msg \
     s2f/messages/SM_UserVM_Cost.msg \
     s2f/messages/SM_VmExtend.msg \
-    s2f/messages/Syscall.msg
+    s2f/messages/Syscall.msg \
+    s2f/users/edge/EdgeUsersControl.msg
 
 # SM files
 SMFILES =

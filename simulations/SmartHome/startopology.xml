@@ -1,7 +1,0 @@
-<config>
-	<interface hosts="controller.ns" names="wlan0" address="10.0.0.1" netmask="255.255.x.x"/>
-	<interface hosts="controller.ns" names="eth0" address="11.0.0.2" netmask="255.255.x.x"/>
-	<interface hosts="**" address="10.0.x.x" netmask="255.255.x.x"/>
-	<route hosts="controller.ns" interface="wlan0" destination="*" gateway="*"/>
-	<route hosts="lamp* sensor*" destination="*" gateway="10.0.0.1"/>
-</config>
