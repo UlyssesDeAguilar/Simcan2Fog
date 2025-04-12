@@ -10,7 +10,8 @@ module DnsResolver
 {
     parameters:
         string ispResolver;
-        
+
+        @display("i=block/circle,,0;bgb=,,,,0");
     gates:
         input clientIn @directIn;
         input socketIn;

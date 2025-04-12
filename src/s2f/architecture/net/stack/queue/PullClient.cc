@@ -24,7 +24,9 @@ PullClient::PullClient()
 {
     signal = new SIMCAN_Message();
     signal->setOperation(SM_QueueAck);
-    ackTemplate = new Packet("Queue Pull Client Request", makeShared<INET_AppMessage>(signal));
+    auto payload = makeShared<INET_AppMessage>();
+    payload->setAppMessage(signal);
+    ackTemplate = new Packet("Queue Pull Client Request", payload);
 }
 
 PullClient::~PullClient() 
@@ -66,7 +68,7 @@ void PullClient::handleMessage(cMessage *msg)
 
     // We recieved a package from the queue, we must unwrap it
     auto packet = check_and_cast<Packet *>(msg);
-    auto payload = const_cast<SIMCAN_Message *>(check_and_cast<const INET_AppMessage *>(packet->peekData().get())->getAppMessage());
+    auto payload = const_pointer_cast<INET_AppMessage>(dynamic_pointer_cast<const INET_AppMessage>(packet->peekData()))->removeAppMessage();
 
     // Send to the module
     take(payload);

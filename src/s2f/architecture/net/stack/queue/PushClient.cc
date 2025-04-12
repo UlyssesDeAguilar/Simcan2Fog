@@ -44,7 +44,9 @@ void PushClient::handleMessage(cMessage *msg)
         sm->setAutoSourceTopic(true);
 
     // Wrap into a packet
-    auto packet = new Packet("Queue Push Client Request", makeShared<INET_AppMessage>(sm));
+    auto payload = makeShared<INET_AppMessage>();
+    payload->setAppMessage(sm);
+    auto packet = new Packet("Queue Push Client Request", payload);
     // Send to the socket
     send(packet, "netOut");
 }

@@ -1,39 +1,39 @@
-#include "../../net/switch/Switch.h"
+#include "s2f/architecture/net/switch/Switch.h"
+
+using namespace omnetpp;
 
 Define_Module(Switch);
 
 void Switch::initialize()
 {
-    // Get gates information
-    manager.inBaseId = gateBaseId("manager$i");
-    manager.outBaseId = gateBaseId("manager$o");
-    network.inBaseId = gateBaseId("netStack$i");
-    network.outBaseId = gateBaseId("netStack$o");
-    lower.inBaseId = gateBaseId("comm$i");
-    lower.outBaseId = gateBaseId("comm$o");
+}
+
+void Switch::finish()
+{
+    commutationTable.clear();
 }
 
 void Switch::handleMessage(cMessage *msg)
 {
-    auto routingInfo = check_and_cast<RoutingInfo *>(msg->getControlInfo());
-    auto requestUrl = routingInfo->getDestinationUrl();
+    auto packet = check_and_cast<L2Protocol *>(msg);
 
-    // If it hasn't a local ip set up
-    if (~(requestUrl.getState()) & ServiceURL::LOCAL)
-        error("Message doesn't contain at least the LocalIp");
+    if (packet->getDestination() == -1)
+    {
+        cGate *gate = packet->getArrivalGate();
+        EV_INFO << "Registering announcement for L2Address: " << packet->getOrigin()
+                << " at gate: " << gate->getId() << "\n";
 
-    // Log details of routing!
-    EV << "(Switch) Sending message of type: " << msg->getClassName()
-       << " to: " << routingInfo->getDestinationUrl()
-       << " from: " << routingInfo->getSourceUrl() << "\n";
-
-    // Retrieve destination address
-    uint32_t address = requestUrl.getLocalAddress().getInt();
-    
-    if (address == DC_MANAGER_LOCAL_ADDR)
-        send(msg, manager.outBaseId);
-    /*else if( address == DC_NETWORK_STACK)
-        send(msg, network.outBaseId);*/
+        commutationTable[packet->getOrigin()] = gate->getOtherHalf()->getId();
+        delete packet;
+    }
     else
-        send(msg, lower.outBaseId + address);
+    {
+        int gateId = commutationTable.at(packet->getDestination());
+
+        // Log details of commutation!
+        EV_DEBUG << " Sending payload of type: " << packet->getPayload()->getClassName()
+                 << " to: " << packet->getDestination()
+                 << " from: " << packet->getOrigin() << "\n";
+        send(packet, gate(gateId));
+    }
 }

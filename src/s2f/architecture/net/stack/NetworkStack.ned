@@ -18,7 +18,7 @@ import inet.node.inet.StandardHost;
 module NetworkStack extends StandardHost
 {
     parameters:
-        @display("i=device/card;bgb=1255.1174,837.4274");     	// We have to make an icon (default is a PC)
+        @display("i=device/card;bgb=2287.1833,1180.7639");     	// We have to make an icon (default is a PC)
         string nodeTopic; 										// The topic that will be used in the Message Queue (must be unique) 
         string smqIp = default("10.0.2.1");
         string dns = default("10.1.0.1");
@@ -34,16 +34,16 @@ module NetworkStack extends StandardHost
 
     submodules:
         dnsResolver: DnsResolver {
-            @display("p=1140.396,65.598");
+            @display("p=1434.4094,78.71759");
         }
 
         pushClient: QueuePushClient if enableQueue {
-            @display("p=857.81995,68.962");
+            @display("p=1858.6099,343.29617");
             connectAddress = smqIp;
         }
 
         pullClient: QueuePullClient if enableQueue {
-            @display("p=973.878,75.689995");
+            @display("p=1749.2798,192.42078");
             connectAddress = smqIp;
         }
 
