@@ -35,4 +35,5 @@ message Syscall extends SIMCAN_Message {
 message DiskSyscall extends Syscall
 {
     double bufferSize;
+    bool abortIOs = false;
 }
