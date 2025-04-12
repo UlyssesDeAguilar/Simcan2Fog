@@ -226,11 +226,11 @@ VirtualMachine *MySqlDataEngine::searchVm(const std::string &name)
     auto type = res->getString("type");
     auto cost = res->getDouble("cost");
     auto cores = res->getInt("cores");
-    auto scu = res->getDouble("scu");
-    auto disk = res->getDouble("disk");
-    auto memory = res->getDouble("memory");
+    auto scu = res->getInt("scu");
+    auto disk = res->getInt("disk");
+    auto memory = res->getInt("memory");
 
-    VirtualMachine vmTemplate(type, cost, cores, scu, disk, memory);
+    VirtualMachine vmTemplate(type.c_str(), cost, cores, scu, disk, memory);
     VirtualMachine &vm = repository->insertInMap(type.c_str(), vmTemplate);
 
     return &vm;

@@ -8,46 +8,40 @@
 
 using namespace omnetpp;
 
-/* Conventions */
-
-// Translates to 0xFFFFFFFF, which is 255.255.255.255
-static const uint32_t DC_MANAGER_LOCAL_ADDR = UINT32_MAX;
-static const uint32_t DC_NETWORK_STACK = UINT32_MAX - 1;
-
 /************************* Constants *************************/
 
 // ---------- SIMCAN units, size and lengths ---------- //
 
 /** Kilo byte */
-static const int KB = 1024u;
+constexpr int KB = 1024u;
 
 /** Mega byte */
-static const int MB = KB * KB;
+constexpr int MB = KB * KB;
 
 /** Giga byte */
-static const int GB = MB * KB;
+constexpr int GB = MB * KB;
 
 /** Maximum name size */
-static const int SC_NameSize = 1 * KB;
+constexpr int SC_NameSize = 1 * KB;
 
 /** Maximum line size */
-static const int SC_LineSize = 2 * KB;
+constexpr int SC_LineSize = 2 * KB;
 
 // ---------- SIMCAN Message init ---------- //
 
 /** Unset value */
-static const int SM_UnsetValue = -1;
+constexpr int SM_UnsetValue = -1;
 
 /** Null operation (used for initialization purposes) */
-static const int SM_NullOperation = 0;
+constexpr int SM_NullOperation = 0;
 
 // ---------- SIMCAN constants ---------- //
 
 /** No gate ID */
-static const int SC_UnsetGateID = -5;
+constexpr int SC_UnsetGateID = -5;
 
 /** Not found */
-static const int SC_NotFound = -4;
+constexpr int SC_NotFound = -4;
 
 /** All OK */
 #define SC_OK 0
@@ -98,7 +92,7 @@ static const int SC_NotFound = -4;
 // #define DELAY_BCAST_MSG "delay-bcast-message"
 
 /** Number of bytes per sector */
-// static const int SC_BytesPerSector = 512;
+// constexpr int SC_BytesPerSector = 512;
 
 //
 ///** File not found */
@@ -237,6 +231,17 @@ struct GateInfo
 {
 	int inBaseId;  //!< Base Id of the input vector
 	int outBaseId; //!< Base Id of the output vector
+};
+
+enum SimCanInitStages
+{
+	LOCAL,			  //!< Strictly read from parameters given to module
+	NEAR,			  //!< For modules that cooperate closely, pass configuration around
+	BLADE,			  //!< Blade registering in Fog/Node
+	MANAGER,		  //!< Manager final processing of nodes registered
+	DC,				  //!< DataCentre registering in CP DB
+	CP,				  //!< CloudProvider processing Data Centres registrations
+	TOTAL_INIT_STAGES //!< Constant that indicates the total number of init stages
 };
 
 #endif /*SIMCANTYPES_H_*/

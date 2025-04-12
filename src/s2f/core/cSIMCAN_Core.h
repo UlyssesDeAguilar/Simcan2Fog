@@ -11,17 +11,6 @@
 
 using namespace omnetpp;
 
-enum SimCanInitStages
-{
-	LOCAL,			  //!< Strictly read from parameters given to module
-	NEAR,			  //!< For modules that cooperate closely, pass configuration around
-	BLADE,			  //!< Blade registering in Fog/Node
-	MANAGER,		  //!< Manager final processing of nodes registered
-	DC,				  //!< DataCentre registering in CP DB
-	CP,				  //!< CloudProvider processing Data Centres registrations
-	TOTAL_INIT_STAGES //!< Constant that indicates the total number of init stages
-};
-
 /**
  * @class cSIMCAN_Core cSIMCAN_Core.h "cSIMCAN_Core.h"
  *
