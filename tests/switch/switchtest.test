@@ -1,0 +1,94 @@
+%description:
+Tests the correct behaviour of the Switch and NetworkCard implementation
+
+%inifile: omnetpp.ini
+[General]
+network = EchoNet1
+sim-time-limit = 10s
+cmdenv-log-prefix="[%l]\t%C for %E: %|"
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
+%contains: stdout
+** Event #1  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[INFO]	(Switch)EchoNet1.sw for (L2Protocol):       Registering announcement for L2Address: 1024 at gate: 1048576
+** Event #2  t=0  0% completed  (0% total)   EchoNet1.main.mod (Echo, id=10)
+** Event #3  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[INFO]	(Switch)EchoNet1.sw for (L2Protocol):       Registering announcement for L2Address: 0 at gate: 1048577
+** Event #4  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[INFO]	(Switch)EchoNet1.sw for (L2Protocol):       Registering announcement for L2Address: 1 at gate: 1048578
+** Event #5  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[INFO]	(Switch)EchoNet1.sw for (L2Protocol):       Registering announcement for L2Address: 2 at gate: 1048579
+** Event #6  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[INFO]	(Switch)EchoNet1.sw for (L2Protocol):       Registering announcement for L2Address: 3 at gate: 1048580
+** Event #7  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[INFO]	(Switch)EchoNet1.sw for (L2Protocol):       Registering announcement for L2Address: 4 at gate: 1048581
+** Event #8  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #9  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #10  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #11  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #12  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #13  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 0 from: 1024
+** Event #14  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 1 from: 1024
+** Event #15  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 2 from: 1024
+** Event #16  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 3 from: 1024
+** Event #17  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 4 from: 1024
+** Event #18  t=0  0% completed  (0% total)   EchoNet1.vec[0].netCard (NetworkCard, id=11)
+** Event #19  t=0  0% completed  (0% total)   EchoNet1.vec[1].netCard (NetworkCard, id=13)
+** Event #20  t=0  0% completed  (0% total)   EchoNet1.vec[2].netCard (NetworkCard, id=15)
+** Event #21  t=0  0% completed  (0% total)   EchoNet1.vec[3].netCard (NetworkCard, id=17)
+** Event #22  t=0  0% completed  (0% total)   EchoNet1.vec[4].netCard (NetworkCard, id=19)
+** Event #23  t=0  0% completed  (0% total)   EchoNet1.vec[0].mod (Echo, id=12)
+[INFO]	(Echo)EchoNet1.vec[0].mod for (L2Protocol): Host: mod received ping from: 1024
+** Event #24  t=0  0% completed  (0% total)   EchoNet1.vec[1].mod (Echo, id=14)
+[INFO]	(Echo)EchoNet1.vec[1].mod for (L2Protocol): Host: mod received ping from: 1024
+** Event #25  t=0  0% completed  (0% total)   EchoNet1.vec[2].mod (Echo, id=16)
+[INFO]	(Echo)EchoNet1.vec[2].mod for (L2Protocol): Host: mod received ping from: 1024
+** Event #26  t=0  0% completed  (0% total)   EchoNet1.vec[3].mod (Echo, id=18)
+[INFO]	(Echo)EchoNet1.vec[3].mod for (L2Protocol): Host: mod received ping from: 1024
+** Event #27  t=0  0% completed  (0% total)   EchoNet1.vec[4].mod (Echo, id=20)
+[INFO]	(Echo)EchoNet1.vec[4].mod for (L2Protocol): Host: mod received ping from: 1024
+** Event #28  t=0  0% completed  (0% total)   EchoNet1.vec[0].netCard (NetworkCard, id=11)
+** Event #29  t=0  0% completed  (0% total)   EchoNet1.vec[1].netCard (NetworkCard, id=13)
+** Event #30  t=0  0% completed  (0% total)   EchoNet1.vec[2].netCard (NetworkCard, id=15)
+** Event #31  t=0  0% completed  (0% total)   EchoNet1.vec[3].netCard (NetworkCard, id=17)
+** Event #32  t=0  0% completed  (0% total)   EchoNet1.vec[4].netCard (NetworkCard, id=19)
+** Event #33  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 1024 from: 0
+** Event #34  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 1024 from: 1
+** Event #35  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 1024 from: 2
+** Event #36  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 1024 from: 3
+** Event #37  t=0  0% completed  (0% total)   EchoNet1.sw (Switch, id=3)
+[DEBUG]	(Switch)EchoNet1.sw for (L2Protocol):       Sending payload of type: omnetpp::cMessage to: 1024 from: 4
+** Event #38  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #39  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #40  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #41  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #42  t=0  0% completed  (0% total)   EchoNet1.main.netCard (NetworkCard, id=9)
+** Event #43  t=0  0% completed  (0% total)   EchoNet1.main.mod (Echo, id=10)
+[INFO]	(Echo)EchoNet1.main.mod for (L2Protocol):   Received reply from host: 0
+** Event #44  t=0  0% completed  (0% total)   EchoNet1.main.mod (Echo, id=10)
+[INFO]	(Echo)EchoNet1.main.mod for (L2Protocol):   Received reply from host: 1
+** Event #45  t=0  0% completed  (0% total)   EchoNet1.main.mod (Echo, id=10)
+[INFO]	(Echo)EchoNet1.main.mod for (L2Protocol):   Received reply from host: 2
+** Event #46  t=0  0% completed  (0% total)   EchoNet1.main.mod (Echo, id=10)
+[INFO]	(Echo)EchoNet1.main.mod for (L2Protocol):   Received reply from host: 3
+** Event #47  t=0  0% completed  (0% total)   EchoNet1.main.mod (Echo, id=10)
+[INFO]	(Echo)EchoNet1.main.mod for (L2Protocol):   Received reply from host: 4
+** Event #48  t=10  100% completed  (100% total)   
+
+<!> Simulation time limit reached -- at t=10s, event #48
+
+Calling finish() at end of Run #0...
+[INFO]	(Echo)EchoNet1.main.mod for (omnetpp::cEndSimulationEvent)endsimulation: Number of ack's received: 5

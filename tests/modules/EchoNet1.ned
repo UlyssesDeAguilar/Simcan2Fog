@@ -1,25 +1,26 @@
 import s2f.architecture.net.switch.Switch;
-import echo.Echo;
+import s2f.architecture.net.card.NetworkCard;
+import echo.EchoModule;
 
 network EchoNet1 {
     parameters:
         int vecSize = default(5);
     submodules:
-        main: Echo{
+        main: EchoModule{
             ip = 1024;
             recvMode = false;
-            addressRange = vecSize;
+            addressRange = parent.vecSize;
         }
 
         sw: Switch;
         
-        vec[vecSize]: Echo{
+        vec[vecSize]: EchoModule{
             ip = index;
             recvMode = true;
         }
 
     connections:
-        main.comm <--> sw.manager;
+        main.comm <--> sw.comm++;
 
         for i=0..vecSize-1 {
             sw.comm++ <--> vec[i].comm;
