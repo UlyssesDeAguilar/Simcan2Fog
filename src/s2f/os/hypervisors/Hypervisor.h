@@ -1,32 +1,27 @@
-#ifndef SIMCAN_EX_HYPERVISOR
-#define SIMCAN_EX_HYPERVISOR
+#ifndef SIMCAN_EX_HYPERVISOR_H__
+#define SIMCAN_EX_HYPERVISOR_H__
 
 #include "s2f/management/dataClasses/Applications/Application.h"
 #include "s2f/os/hypervisors/common.h"
-#include "s2f/os/hypervisors/OsCore.h"
 #include "s2f/os/schedulers/CpuSchedulerRR.h"
+#include "s2f/os/control/VmControlTable.h"
+#include "s2f/architecture/net/protocol/L2Protocol_m.h"
 
 namespace hypervisor
 {
-    class Hypervisor : public cSIMCAN_Core
+    class Hypervisor : public cSimpleModule
     {
     protected:
-        HardwareManager *hardwareManager;        //!< Reference to the hardwareManager
-        DataManager *dataManager;                //!< Reference to the dataManager
-        OsCore osCore;                           //!< The core operating system utilities
-        ControlTable<VmControlBlock> vmsControl; //!< Control table for vms
-        uint32_t maxAppsPerVm;                   //!< Max number of vms per vm -> TODO: Check out the values
-        std::map<opp_string, uint32_t> vmIdMap;  //!< Map that translates the general VM Id to the local VM Id
+        HardwareManager *hardwareManager; //!< Reference to the hardwareManager
+        DataManager *dataManager;         //!< Reference to the dataManager
+        VmControlTable *controlTable;     //!< Virtual machine control table
+        ApplicationBuilder appBuilder;    //!< Application builder
+        uint32_t maxAppsPerVm;            //!< Max number of vms per vm -> TODO: Check out the values
 
         GateInfo appGates;       //!< General info for appGates
         GateInfo schedulerGates; //!< General info for schedulerGates
         GateInfo networkGates;   //!< General info for network gates
 
-        uint32_t takePid(uint32_t vmId) { return vmsControl[vmId].apps.takeId(); }
-        void releasePid(uint32_t vmId, uint32_t pid) { vmsControl[vmId].apps.releaseId(pid); }
-
-        AppControlBlock &getAppControlBlock(uint32_t vmId, uint32_t pid) { return vmsControl[vmId].apps[pid]; }
-        virtual void handleAppRequest(SM_UserAPP *sm);
         virtual void handleVmTimeout(VmControlBlock &vm) { error("Default vm timeout not implemented"); }
 
         // Subclass interface section
@@ -38,33 +33,28 @@ namespace hypervisor
          * @return cModule* Pointer to the AppModule module
          */
         virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) = 0;
+        virtual CpuSchedulerRR *getScheduler(uint32_t vmId) = 0;
 
-        /**
-         * @brief Locates the hardware manager in the simulation topology
-         * @return HardwareManager* Pointer to the hardware manager for direct communication
-         */
-        virtual HardwareManager *locateHardwareManager() = 0;
-
-        /**
-         * @brief Translates the global vm id into the inner vmId
-         * @param vmId The global VM ID
-         * @return uint32_t The local vmId or UINT32_MAX if not found
-         */
-        virtual uint32_t resolveGlobalVmId(const std::string &vmId) = 0;
-
-        virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return NEAR + 1; }
+        virtual void initialize() override;
         virtual void finish() override;
-        
-        virtual cGate *getOutGate(cMessage *msg) override;
-        virtual void processSelfMessage(cMessage *msg) override;
-        virtual void processRequestMessage(SIMCAN_Message *sm) override;
-        virtual void processResponseMessage(SIMCAN_Message *sm) override;
+        virtual void handleMessage(cMessage *msg) override;
 
-    public:
-        // The OsCore must be able to query the context
-        friend class OsCore;
+        virtual void processSyscallStart(Syscall *request);
+        virtual void processSyscallEnd(Syscall *request);
+        virtual void processCommand(SIMCAN_Message *sm);
+
+        virtual void sendEvent(cMessage *sm) = 0;
+        virtual void sendToNetwork(cMessage *msg, int destination);
+        virtual void sendOrBufferToApp(Syscall *syscall);
+        virtual void sendToApp(cMessage *msg, int vmId, int pid);
+
+        virtual bool messageIsCommand(SIMCAN_Message *sm);
+        virtual void handleAppTermination(int pid, int vmId, tApplicationState exitStatus);
+        virtual void handleAppRequest(SM_UserAPP *sm);
+        virtual void handleVmRequest(SM_UserVM *sm);
+        virtual void handleVmExtension(SM_VmExtend *msg);
+        virtual void deallocateVmResources(int vmId);
     };
 };
 
-#endif /*SIMCAN_EX_HYPERVISOR*/
+#endif /*SIMCAN_EX_HYPERVISOR_H__*/

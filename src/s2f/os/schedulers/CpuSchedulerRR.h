@@ -20,8 +20,6 @@ public:
 	void setIsRunning(bool bRunning);
 	unsigned int getManagedCpuCores() const;
 	void setManagedCpuCores(unsigned int managedCpuCores);
-	bool *getIsCpuIdle() const;
-	void setIsCpuIdle(bool *isCpuIdle);
 
 protected:
 	unsigned int numCpuCores;	  // Number of CPU cores in the CPU processor 
@@ -30,7 +28,7 @@ protected:
 	bool isVirtualHardware;		  // Indicates if this blade allows virtualization 
 	bool bRunning;				  // Flag that indicates if this scheduler is currently used 
 
-	bool *isCPU_Idle;	 		  // Array to show the CPU with an idle state 
+	std::vector<bool> cores;	  // Array to show the CPU with an idle state 
 	unsigned int *cpuCoreIndex;	  // Array that indicates the CPU cores managed by this schedulers 
 
 	/** Request queue array */
@@ -48,11 +46,6 @@ protected:
 
 	/** Input gates from checking Hub. */
 	cGate *fromHubGate;
-
-	/**
-	 * Destructor.
-	 */
-	~CpuSchedulerRR();
 
 	virtual void initialize() override;
 	virtual void finish() override;

@@ -2,12 +2,6 @@
 
 Define_Module(CpuSchedulerRR);
 
-CpuSchedulerRR::~CpuSchedulerRR()
-{
-    requestsQueue.clear();
-    abortsQueue.clear();
-}
-
 void CpuSchedulerRR::initialize()
 {
     // Init the super-class
@@ -39,31 +33,17 @@ void CpuSchedulerRR::initialize()
     // Non-virtual hardware. Using all the cpu cores
     if (!isVirtualHardware)
     {
-
+        setManagedCpuCores(numCpuCores);
         bRunning = true;
-
-        managedCpuCores = numCpuCores;
-
-        // State of CPUs
-        isCPU_Idle = new bool[numCpuCores];
-
-        // Init state to idle!
-        for (int i = 0; i < numCpuCores; i++)
-            isCPU_Idle[i] = true;
 
         // Index of each CPU core
         cpuCoreIndex = new unsigned int[numCpuCores];
-
-        // Init state to idle!
         for (int i = 0; i < numCpuCores; i++)
             cpuCoreIndex[i] = i;
     }
-
-    // Using virtual hardware.
     else
     {
         bRunning = false;
-        isCPU_Idle = nullptr;
         cpuCoreIndex = nullptr;
         managedCpuCores = 0;
     }
@@ -77,8 +57,9 @@ void CpuSchedulerRR::initialize()
 
 void CpuSchedulerRR::finish()
 {
-
     // Finish the super-class
+    requestsQueue.clear();
+    abortsQueue.clear();
     cSIMCAN_Core::finish();
 }
 
@@ -153,7 +134,7 @@ void CpuSchedulerRR::processRequestMessage(SIMCAN_Message *sm)
         sm_cpu->setNextModuleIndex(cpuCoreIndex[cpuIndex]);
 
         // Update state!
-        isCPU_Idle[cpuIndex] = false;
+        cores[cpuIndex] = false;
 
         EV_DEBUG << "(processRequestMessage) CPU idle found..." << endl
                  << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
@@ -216,7 +197,7 @@ void CpuSchedulerRR::processResponseMessage(SIMCAN_Message *sm)
         delete (sm);
         return;
     }
-    
+
     // Update CPU state!
     int realCpuIndex = sm_cpu->getNextModuleIndex();
     int virtualCpuIndex = getVirtualCpuIndex(realCpuIndex);
@@ -225,7 +206,7 @@ void CpuSchedulerRR::processResponseMessage(SIMCAN_Message *sm)
     if ((virtualCpuIndex >= managedCpuCores) || (virtualCpuIndex < 0))
         error("\nCPU index error:%d. There are %d CPUs attached. %s\n", realCpuIndex, managedCpuCores, sm_cpu->contentsToString(showMessageContents, showMessageTrace).c_str());
     else
-        isCPU_Idle[virtualCpuIndex] = true;
+        cores[virtualCpuIndex] = true;
 
     EV_DEBUG << "(processResponseMessage) Arrives a message from CPU core:" << realCpuIndex << endl
              << sm_cpu->contentsToString(showMessageContents, showMessageTrace) << endl;
@@ -266,7 +247,7 @@ void CpuSchedulerRR::processResponseMessage(SIMCAN_Message *sm)
     nextRequest->setNextModuleIndex(realCpuIndex);
 
     // Update state of CPU and prepare quantum
-    isCPU_Idle[virtualCpuIndex] = false;
+    cores[virtualCpuIndex] = false;
     auto sm_cpuNext = check_and_cast<SM_CPU_Message *>(nextRequest);
     sm_cpuNext->setQuantum(quantum);
 
@@ -286,15 +267,9 @@ int CpuSchedulerRR::getVirtualCpuIndex(unsigned int realCpuIndex)
             return i;
     return -1;
 }
-unsigned int *CpuSchedulerRR::getCpuCoreIndex() const
-{
-    return cpuCoreIndex;
-}
+unsigned int *CpuSchedulerRR::getCpuCoreIndex() const { return cpuCoreIndex; }
 
-void CpuSchedulerRR::setCpuCoreIndex(unsigned int *cpuCoreIndex)
-{
-    this->cpuCoreIndex = cpuCoreIndex;
-}
+void CpuSchedulerRR::setCpuCoreIndex(unsigned int *cpuCoreIndex) { this->cpuCoreIndex = cpuCoreIndex; }
 
 bool CpuSchedulerRR::isRunning() const
 {
@@ -315,23 +290,18 @@ unsigned int CpuSchedulerRR::getManagedCpuCores() const
 
 void CpuSchedulerRR::setManagedCpuCores(unsigned int managedCpuCores)
 {
+    Enter_Method_Silent("Set the managed CPU cores");
+    if (bRunning)
+        error("Cannot change the number of CPU cores while the scheduler is running");
     this->managedCpuCores = managedCpuCores;
-}
-
-bool *CpuSchedulerRR::getIsCpuIdle() const
-{
-    return isCPU_Idle;
-}
-
-void CpuSchedulerRR::setIsCpuIdle(bool *isCpuIdle)
-{
-    isCPU_Idle = isCpuIdle;
+    cores.clear();
+    cores.resize(managedCpuCores, true);
 }
 
 int CpuSchedulerRR::searchIdleCPU()
 {
     for (int i = 0; i < managedCpuCores; i++)
-        if (isCPU_Idle[i])
+        if (cores[i])
             return i;
 
     return SC_NotFound;
@@ -341,7 +311,7 @@ void CpuSchedulerRR::stopAllProcess()
 {
     requestsQueue.clear();
     for (unsigned int i = 0; i < managedCpuCores; i++)
-        if (!isCPU_Idle[i])
+        if (!cores[i])
             stopCpu(i);
 }
 

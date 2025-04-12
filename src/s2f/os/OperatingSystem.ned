@@ -1,6 +1,7 @@
 package s2f.os;
 import s2f.os.hypervisors.IHypervisor;
 import s2f.os.schedulers.CpuSchedulersVector;
+import s2f.os.control.VmControlTable;
 import s2f.apps.AppsVector;
 
 // Module that simulates the Operating System in a computer.
@@ -17,20 +18,21 @@ module OperatingSystem
         int maxUsers;
         int numCpuCores;												// Number of CPU cores in the CPU processor
 
-        string cpuSchedulerType;										// CPU Scheduler type
-		*.maxVMs = maxVMs;
+        *.maxVMs = maxVMs;
         *.isVirtualHardware = isVirtualHardware;
         hypervisor.maxApps = numApps;
         @display("bgb=532.53,430.68002");
     gates:
-        inout comm;                 // Input gate from network
-        input fromCpu;				// Input gate from the CPU schedulers vector
-        output toCpu;				// Output gate to the CPU schedulers vector
-		input fromDisk;
-		output toDisk;
-		input socketIn[];
-		output socketOut[];
-		
+        input fromNetwork;
+        input fromCpu;
+        input fromDisk;
+        input socketIn[];
+
+        output toNetwork;
+        output toCpu;
+        output toDisk;
+        output socketOut[];
+
     submodules:
 
         // Hypervisor module
@@ -44,15 +46,15 @@ module OperatingSystem
                 toApps[sizeof(toApps)];
         }
 
+        controlTable: VmControlTable {
+            @display("p=251,315");
+        }
         // Vector of CPU schedulers
         cpuSchedVector: CpuSchedulersVector {
-
             parameters:
                 staticAppAssignment = staticAppAssignment;
                 numSchedulers = maxVMs;
                 numCpuCores = numCpuCores;
-                // isVirtualHardware = isVirtualHardware;
-                schedulerType = cpuSchedulerType;
                 @display("p=423.89,181.39001;i=scheduler");
         }
 
@@ -61,7 +63,6 @@ module OperatingSystem
             parameters:
                 vmId = index;
                 numApps = numApps;
-                staticAppAssignment = staticAppAssignment;
                 @display("p=90.21001,181.39001,c,120;i=user");
         }
 
@@ -78,20 +79,21 @@ module OperatingSystem
             hypervisor.toCpuScheduler++ --> ned.IdealChannel --> cpuSchedVector.fromHypervisor++;
             hypervisor.fromCpuScheduler++ <-- ned.IdealChannel <-- cpuSchedVector.toHypervisor++;
         }
-        
+
         for i=0..maxUsers-1, for j=0..numApps-1 {
-            appsVectors[i].socketIn++ <-- {@display("ls=,0");} <-- socketIn++;
-            appsVectors[i].socketOut++ --> {@display("ls=,0");} --> socketOut++;
+            appsVectors[i].socketIn++ <-- { @display("ls=,0"); } <-- socketIn++;
+            appsVectors[i].socketOut++ --> { @display("ls=,0"); } --> socketOut++;
         }
 
         // Connection between the CPU schedulers vector and the CPU module
         cpuSchedVector.toCpu --> ned.IdealChannel --> toCpu;
         cpuSchedVector.fromCpu <-- ned.IdealChannel <-- fromCpu;
-		
-		// Connections to the disk manager
-		hypervisor.toDisk --> toDisk;
-		fromDisk --> hypervisor.fromDisk;
-		
+
+        // Connections to the disk manager
+        hypervisor.toDisk --> toDisk;
+        fromDisk --> hypervisor.fromDisk;
+
         // Connection in/out from network to hypervisor
-        hypervisor.networkComm <--> comm;
+        hypervisor.toNetwork --> toNetwork;
+        hypervisor.fromNetwork <-- fromNetwork;
 }

@@ -9,10 +9,8 @@
 #ifndef SIMCAN_EX_EDGE_HYPERVISOR
 #define SIMCAN_EX_EDGE_HYPERVISOR
 
-#include "s2f/architecture/nodes/hardwaremanagers/HardwareManager.h"
 #include "s2f/core/cSIMCAN_Core.h"
 #include "s2f/management/dataClasses/Applications/Application.h"
-#include "s2f/os/hypervisors/OsCore.h"
 #include "s2f/os/hypervisors/common.h"
 #include "s2f/os/hypervisors/Hypervisor.h"
 
@@ -25,14 +23,13 @@ namespace hypervisor
     class EdgeHypervisor : public Hypervisor
     {
     protected:
-        cModule *appsVector;
-        const char *starterApps;
-        SM_UserAPP *sam{};
+        cModule *appsVector{};
+        cGate *serialOut{};
         virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return inet::INITSTAGE_LAST + 1; }
-        virtual HardwareManager *locateHardwareManager() override { return check_and_cast<HardwareManager *>(getModuleByPath("^.hwm")); }
+        virtual int numInitStages() const override { return NEAR + 1; }
+        virtual void sendEvent(cMessage *msg) override;
         virtual cModule *getApplicationModule(uint32_t vmId, uint32_t pid) override { return appsVector->getSubmodule("appModule", pid); }
-        virtual uint32_t resolveGlobalVmId(const std::string &vmId) override { return 0; }
+        virtual CpuSchedulerRR *getScheduler(uint32_t vmId) override { return nullptr; } 
     };
 }
 

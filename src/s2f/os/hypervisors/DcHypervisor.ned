@@ -17,13 +17,21 @@ simple DcHypervisor extends cSIMCAN_Core like IHypervisor
         int maxVMs;					// Maximum number of VMs allocated in this computer 
 		int maxApps;				// Maximum number of Apps allocated per vm in this computer
         int powerOnTime @unit(s) = default(60s);
-    gates:
-        inout networkComm;	        // Input/Output from/to network (either local or the internet)
-        input fromDisk;
-        input fromApps[];			// Input gates from Applications
-        input fromCpuScheduler[];	// Input gates from CPU schedulers vector
+        string netDbPath;
+        string hostName;
+        string controlTablePath;
+        string hardwareManagerPath;
+        string dataManagerPath;
+        int maxAppsPerVm;
 
+    gates:  	    
+		input fromNetwork;
+		input fromDisk;
+        input fromApps[];			// Input gates from Applications 
+        input fromCpuScheduler[];	// Input gates from CPU schedulers vector
+        
+        output toNetwork;
+        output toDisk;
         output toApps[];			// Output gates to Applications
         output toCpuScheduler[];	// Output gates to CPU schedulers vector
-        output toDisk;	
 }
