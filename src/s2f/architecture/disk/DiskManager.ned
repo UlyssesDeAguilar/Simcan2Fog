@@ -20,6 +20,7 @@ simple DiskManager like IDiskManager
     parameters:
         @class(DiskManager);
         @display("i=device/disk");
+        int numVms;
         double diskReadBandwidth @unit(Mbps);
         double diskWriteBandwidth @unit(Mbps);
     gates:

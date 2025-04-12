@@ -38,8 +38,7 @@ protected:
 
   std::vector<DiskQueue> queueTable;
 
-  virtual int numInitStages() const override { return NEAR + 1; }
-  virtual void initialize(int stage) override;
+  virtual void initialize() override;
   virtual void finish() override;
   virtual void handleMessage(cMessage *msg) override;
 

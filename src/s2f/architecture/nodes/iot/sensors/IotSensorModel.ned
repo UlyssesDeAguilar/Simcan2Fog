@@ -10,8 +10,9 @@ simple IotSensorModel like IApp
         volatile double value;
         string unit;
         int updatePeriod @unit(s) = default(10s);
-        string controllerInterface = default("eth0");
-        string controllerPath = default("^.^.controller.ns");
+        string controllerInterface;
+        string controllerPath;
+        volatile bool powerOn @mutable;
         volatile int messageLength @unit(B) = 20B; // length of messages to generate, in bytes
         string localAddress = default("");
         int localPort = default(-1);

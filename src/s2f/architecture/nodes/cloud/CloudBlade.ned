@@ -1,10 +1,11 @@
 package s2f.architecture.nodes.cloud;
 import s2f.architecture.disk.IDiskManager;
-import s2f.architecture.nodes.hardwaremanagers.IHardwareManager;
-import s2f.architecture.nodes.hardwaremanagers.HardwareManager;
+import s2f.os.hardwaremanagers.IHardwareManager;
+import s2f.os.hardwaremanagers.DcHardwareManager;
 import s2f.os.OperatingSystem;
 import s2f.os.hypervisors.DcHypervisor;
 import s2f.architecture.cpu.CpuProcessor;
+import s2f.architecture.net.card.NetworkCard;
 
 //
 // Module that represents a blade. Generally, this module is used in racks, 
@@ -34,11 +35,9 @@ module CloudBlade
         double diskSize @unit(GB);
         double diskReadBandwidth @unit(Mbps);
         double diskWriteBandwidth @unit(Mbps);
-		int numApps = default(5);									// Number of applications in this vector
-			
+        int numApps = default(5);									// Number of applications in this vector
 
-        string hardwareManagerType = default("HardwareManager");	// Hardware manager type
-        string hypervisorType = default("DcHypervisor");            // Hypervisor type
+
         string cpuSchedulerType = default("CpuSchedulerRR");		// CPU Scheduler type
         string cpuCoreType = default("CpuCore");					// Type of the CPU cores
 
@@ -74,25 +73,28 @@ module CloudBlade
                 // numCpuCores = numCpuCores;
                 cpuCoreType = cpuCoreType;
                 staticAppAssignment = staticAppAssignment;
-                @display("p=417,125;i=cpu");
+                @display("p=420,145;i=cpu");
         }
 
-        hardwareManager: <hardwareManagerType> like IHardwareManager {
+        hardwareManager: <default("DcHardwareManager")> like IHardwareManager {
             parameters:
                 memorySize = memorySize;
                 diskSize = diskSize;
-                @display("p=85,125;i=hardwareConfig");
+                @display("p=96,145;i=hardwareConfig");
         }
 
         osModule: OperatingSystem {
             parameters:
                 staticAppAssignment = staticAppAssignment;
-                cpuSchedulerType = cpuSchedulerType;
-                @display("p=257,125;i=os");
+                @display("p=259,145;i=os");
         }
 
         disk: <default("DiskManager")> like IDiskManager {
             @display("p=259,262;is=vl");
+        }
+
+        netCard: NetworkCard {
+            @display("p=259,49");
         }
     connections:
         // Connections between OS and CPU
@@ -102,13 +104,16 @@ module CloudBlade
         // Connections between OS and Disk
         osModule.toDisk --> disk.diskIn;
         osModule.fromDisk <-- disk.diskOut;
-        
+
         for i=0..(maxUsers * numApps)-1 {
-        	osModule.socketIn++ <-- {@display("ls=,0");} <-- socketIn++;
-            osModule.socketOut++ --> {@display("ls=,0");} --> socketOut++;
+            osModule.socketIn++ <-- { @display("ls=,0"); } <-- socketIn++;
+            osModule.socketOut++ --> { @display("ls=,0"); } --> socketOut++;
         }
 
         // In/Out connection of the Operating System with the data centre network
-        osModule.comm <--> comm;
+        osModule.fromNetwork <-- netCard.cardOut;
+        osModule.toNetwork --> netCard.cardIn;
+
+        netCard.comm <--> comm;
 }
 

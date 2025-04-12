@@ -40,7 +40,7 @@ void PushService::handleMessage(cMessage *msg)
         {
             auto m = dynamic_pointer_cast<const INET_AppMessage>(chunk);
             auto p = new Packet(packet->getName(), m);
-            const char *topic = m->getAppMessage()->getDestinationTopic();
+            const char *topic = check_and_cast<const SIMCAN_Message*>(m->getAppMessage())->getDestinationTopic();
             manager->publishToTopic(topic, p);
         }
 
@@ -51,7 +51,7 @@ void PushService::handleMessage(cMessage *msg)
     {
         auto payload = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
         // Recover the destination topic
-        const char *topic = payload->getAppMessage()->getDestinationTopic();
+        const char *topic = check_and_cast<const SIMCAN_Message*>(payload->getAppMessage())->getDestinationTopic();
         manager->publishToTopic(topic, packet);
     }
 }

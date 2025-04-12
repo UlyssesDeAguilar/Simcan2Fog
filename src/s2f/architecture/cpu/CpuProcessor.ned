@@ -26,7 +26,7 @@ module CpuProcessor
         cpuHub: CheckingHubModule {       								// Hub that manages incoming messages 
 
             parameters:
-                staticAppAssignment = staticAppAssignment;
+                staticAppAssignment = parent.staticAppAssignment;
                 @display("p=209,156;i=device/hub");
         }
 

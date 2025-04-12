@@ -18,7 +18,7 @@
 
 #include <omnetpp.h>
 
-#include "s2f/messages/INET_AppMessage.h"
+#include "s2f/messages/INET_AppMessage_m.h"
 #include "s2f/messages/SIMCAN_Message.h"
 #include "s2f/architecture/messagequeue/MessageQueueManager.h"
 

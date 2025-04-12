@@ -19,6 +19,9 @@ moduleinterface IDiskManager
 {
     parameters:
         @display("i=device/disk");
+        int numVms;
+        double diskReadBandwidth @unit(Mbps);
+        double diskWriteBandwidth @unit(Mbps);
     gates:
         input diskIn;
         output diskOut;

@@ -15,33 +15,19 @@
 
 #include "DiskManager.h"
 
-#include "s2f/architecture/nodes/hardwaremanagers/HardwareManager.h"
+#include "s2f/os/hardwaremanagers/HardwareManager.h"
 #include "s2f/os/hypervisors/common.h"
 
 using namespace hypervisor;
 Define_Module(DiskManager);
 
-void DiskManager::initialize(int stage)
+void DiskManager::initialize()
 {
-    switch (stage)
-    {
-    case LOCAL:
-    {
-        diskSpecs.readBandwidth = par("diskReadBandwidth");
-        diskSpecs.writeBandwidth = par("diskWriteBandwidth");
-        break;
-    }
-    case NEAR:
-    {
-        auto hwm = check_and_cast<HardwareManager *>(getParentModule()->getSubmodule("hardwareManager"));
-        queueTable.resize(hwm->getTotalResources().vms);
-        for (auto &entry : queueTable)
-            entry.ioFinished.setContextPointer(&entry);
-        break;
-    }
-    default:
-        break;
-    }
+    diskSpecs.readBandwidth = par("diskReadBandwidth");
+    diskSpecs.writeBandwidth = par("diskWriteBandwidth");
+    queueTable.resize(par("numVms"));
+    for (auto &entry : queueTable)
+        entry.ioFinished.setContextPointer(&entry);
 }
 
 void DiskManager::finish()

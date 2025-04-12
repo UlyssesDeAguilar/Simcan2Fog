@@ -31,7 +31,8 @@ void PullService::handleMessage(cMessage *msg)
     auto payload = check_and_cast<const INET_AppMessage *>(packet->peekData().get());
     
     // Recover the destination topic
-    const char *topic = payload->getAppMessage()->getDestinationTopic();
+    auto sm = check_and_cast<const SIMCAN_Message*>(payload->getAppMessage());
+    const char *topic = sm->getDestinationTopic();
 
     if (msg->getArrivalGate()->getId() == delegateInId)
     {
@@ -41,7 +42,7 @@ void PullService::handleMessage(cMessage *msg)
     }
     else
     {
-        if (topicEstablished && payload->getAppMessage()->getOperation() == SM_QueueAck)
+        if (topicEstablished && sm->getOperation() == SM_QueueAck)
         {
             // Client got the last message, we can prepare the next one
             delegate->enableClientReady();

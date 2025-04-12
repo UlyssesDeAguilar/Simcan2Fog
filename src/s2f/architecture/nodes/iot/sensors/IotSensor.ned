@@ -3,6 +3,9 @@ import inet.node.inet.WirelessHost;
 
 module IotSensor extends WirelessHost
 {
+    parameters:
+        volatile bool powerOn @mutable = default(false);
+        model.powerOn = this.powerOn;
     submodules:
         model: IotSensorModel;
     connections:
