@@ -46,7 +46,10 @@ void ApplicationBuilder::initParameters(cModule *appModule, const Context &conte
     for (const auto &iter : context.schema->getAllParameters())
     {
         cPar &param = appModule->par(iter.first.c_str());
-        param.parse(iter.second.c_str());
+        if (param.getType() == cPar::STRING)
+            param.setStringValue(iter.second.c_str());
+        else
+            param.parse(iter.second.c_str());
     }
 
     // Finalize the parameters

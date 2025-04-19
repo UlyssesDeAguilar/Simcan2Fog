@@ -69,8 +69,9 @@ void JsonDataEngine::loadVms()
         double scu = definition->get("scu");
         double memory = definition->get("memory");
         double disk = definition->get("disk");
-
-        VirtualMachine vmTemplate(name, cost, cores, scu, disk, memory);
+        size_t diskMiB = uint32_t(std::ceil(disk * 1024));
+        size_t memoryMiB = uint32_t(std::ceil(memory * 1024));
+        VirtualMachine vmTemplate(name, cores, diskMiB, memoryMiB, cost, scu);
         repository->insertInMap(name, vmTemplate);
     }
 }

@@ -9,7 +9,6 @@ void DcHardwareManager::initialize(int stage)
     {
         resourceManager = check_and_cast<ResourceManager *>(getModuleByPath(par("resourceManagerPath")));
         networkCard = check_and_cast<NetworkCard *>(getModuleByPath(par("networkCardPath")));
-        HardwareManager::initialize();
     }
     else if (stage == SimCanInitStages::NEAR)
     {
@@ -17,12 +16,12 @@ void DcHardwareManager::initialize(int stage)
     }
     else if (stage == SimCanInitStages::BLADE)
     {
-        total.memoryMiB = par("memoryMiB");
-        total.diskMiB = par("diskMiB");
-        total.cores = par("cores");
-        total.vms = par("vms");
-
-        // Check node config
+        total.memoryMiB = uint32_t(std::ceil(par("memorySize").doubleValue()));
+        total.diskMiB = uint32_t(std::ceil(par("diskSize").doubleValue()));
+        total.cores = par("numCpuCores");
+        total.vms = par("maxVMs");
+        total.users = par("maxUsers");
+        HardwareManager::initialize();
         checkNodeSetup(total);
 
         // Register node

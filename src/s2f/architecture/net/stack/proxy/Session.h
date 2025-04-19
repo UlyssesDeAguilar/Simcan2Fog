@@ -28,7 +28,7 @@ enum SessionState
  */
 class Session
 {
-    int socketId;                            //!< The socket id of the endpoint
+    int socketId = -1;                       //!< The socket id of the endpoint
     int gateIndex = -1;                      //!< The gate index of the endpoint
     SessionState state = INIT;               //!< The state of the session
     inet::Message *socketInd = nullptr;      //!< Must be the original TCP_I_AVAILABLE intercepted
@@ -78,6 +78,12 @@ public:
      * @return SessionState The state
      */
     SessionState getState() { return state; }
+
+    /**
+     * @brief Get the socket id of the endpoint
+     * @return int The socket id
+     */
+    int getSocketId() { return socketId; }
 };
 
 #endif // SIMCAN_EX_SESSION

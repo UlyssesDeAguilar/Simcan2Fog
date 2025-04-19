@@ -21,19 +21,19 @@
 #include "s2f/messages/INET_AppMessage_m.h"
 #include "s2f/messages/SIMCAN_Message.h"
 #include "inet/common/packet/Packet.h"
+#include "inet/common/packet/ChunkQueue.h"
 
 using namespace omnetpp;
 
 class PullClient : public cSimpleModule
 {
 private:
-  std::string parentTopic;
+  const char* topic;
   SIMCAN_Message *signal;
   inet::Packet *ackTemplate;
 
 protected:
-  virtual void initialize(int stage) override;
-  virtual int numInitStages() const override { return SimCanInitStages::LOCAL + 1; }
+  virtual void initialize() override;
   virtual void handleMessage(cMessage *msg) override;
 
 public:

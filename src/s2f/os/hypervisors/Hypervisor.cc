@@ -45,8 +45,12 @@ void Hypervisor::processCommand(SIMCAN_Message *msg)
         handleAppRequest(check_and_cast<SM_UserAPP *>(msg));
     else if (msg->getOperation() == SM_VM_Req)
         handleVmRequest(check_and_cast<SM_UserVM *>(msg));
-    else
+    else if (msg->getOperation() == SM_ExtensionOffer)
         handleVmExtension(check_and_cast<SM_VmExtend *>(msg));
+    else if (msg->getOperation() == SM_App_Set)
+        handleAppSettings(check_and_cast<SM_AppSettings *>(msg));
+    else
+        error("Unexpected command %s with code %d", msg->getClassName() ,msg->getOperation());
 }
 
 void Hypervisor::handleAppRequest(SM_UserAPP *sm)
@@ -104,6 +108,8 @@ void Hypervisor::handleVmRequest(SM_UserVM *request)
         pVmScheduler->setCpuCoreIndex(cpuCoreIndex);
         pVmScheduler->setIsRunning(true);
     }
+
+    delete request;
 }
 
 void Hypervisor::handleVmExtension(SM_VmExtend *sm)
@@ -124,6 +130,8 @@ void Hypervisor::handleVmExtension(SM_VmExtend *sm)
     }
     else
         deallocateVmResources(vmId);
+    
+    delete sm;
 }
 
 void Hypervisor::processSyscallStart(Syscall *request)
@@ -167,6 +175,26 @@ void Hypervisor::processSyscallEnd(Syscall *response)
     sendOrBufferToApp(response);
 }
 
+void Hypervisor::handleAppSettings(SM_AppSettings *settings) 
+{
+	EV_DEBUG << "Refresh settings for app\n";
+    int vmId = controlTable->getLocalVmId(settings->getVmId());
+    int pid = controlTable->getPidFromServiceName(vmId, settings->getAppName());
+    cModule *app = getApplicationModule(vmId, pid)->getSubmodule("app");
+    
+    for (int i = 0, size = settings->getParametersArraySize(); i < size; i++)
+    {
+        auto &set = settings->getParameters(i);
+        cPar &param = app->par(set.name.c_str());
+        if (param.getType() == cPar::STRING)
+            param.setStringValue(set.value.c_str());
+        else
+            param.parse(set.value.c_str());
+    }
+
+    delete settings;
+}
+
 void Hypervisor::handleAppTermination(int pid, int vmId, tApplicationState exitStatus)
 {
     auto &vmControl = controlTable->getVmControlBlock(vmId);
@@ -183,9 +211,6 @@ void Hypervisor::handleAppTermination(int pid, int vmId, tApplicationState exitS
     if (userRequest->allAppsFinished())
     {
         auto update = userRequest->dup();
-        auto routingInfo = new RoutingInfo();
-
-        // Global routing
         update->setDestinationTopic(userRequest->getReturnTopic());
         update->setResult(SM_APP_Res_Accept);
         update->setVmId(controlTable->getGlobalVmId(vmId));
@@ -198,7 +223,8 @@ bool Hypervisor::messageIsCommand(SIMCAN_Message *msg)
 {
     return msg->getOperation() == SM_APP_Req ||
            msg->getOperation() == SM_VM_Req ||
-           msg->getOperation() == SM_ExtensionOffer;
+           msg->getOperation() == SM_ExtensionOffer ||
+           msg->getOperation() == SM_App_Set;
 }
 
 void Hypervisor::sendToApp(cMessage *msg, int vmId, int pid) { send(msg, appGates.outBaseId + vmId); }

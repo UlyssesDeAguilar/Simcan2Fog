@@ -5,9 +5,8 @@ Define_Module(CloudProvider);
 
 void CloudProvider::initialize()
 {
-  cModule *module = getModuleByPath("simData.manager");
-  dataManager = check_and_cast<DataManager *>(module);
-  nodeDb = check_and_cast<NodeDb *>(getModuleByPath("^.nodeDb"));
+  dataManager = check_and_cast<DataManager *>(getModuleByPath(par("dataManagerPath")));
+  nodeDb = check_and_cast<NodeDb *>(getModuleByPath(par("nodeDbPath")));
   dispatchPriority = par("dispatchPriority");
 }
 
@@ -72,7 +71,7 @@ void CloudProvider::handleVmRequest(SM_UserVM *request)
   }
 
   // Forward to corresponding topic
-  EV << "Request by user: " << request->getUserId() << " dispatched to node topic: " << *destinationTopic << "\n";
+  EV << "Request by user: " << request->getUserId() << " dispatched to node topic: " << destinationTopic << "\n";
   request->setAutoSourceTopic(false);
   request->setDestinationTopic(destinationTopic);
   send(request, "queueOut");

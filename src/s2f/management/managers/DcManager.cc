@@ -20,13 +20,14 @@ void DcManager::initialize(int stage)
         nCpuStatusInterval = par("cpuStatusInterval");
         nActiveMachinesThreshold = par("activeMachinesThreshold");
         forecastActiveMachines = par("forecastActiveMachines");
-
+        zone = par("zone");
+        nodeName = par("nodeName");
+        
         // Get gates
         networkGates.inBaseId = gate("networkIn")->getId();
         networkGates.outBaseId = gate("networkOut")->getId();
-
-        localNetworkGates.inBaseId = gateHalf("localNetwork", cGate::INPUT)->getId();
-        localNetworkGates.outBaseId = gateHalf("localNetwork", cGate::OUTPUT)->getId();
+        queueGates.inBaseId = gate("queueIn")->getId();
+        queueGates.outBaseId = gate("queueOut")->getId();
 
         // TODO: Study if these are really neccessary
         // Create and schedule auto events
@@ -38,8 +39,10 @@ void DcManager::initialize(int stage)
     else if (stage == NEAR)
     {
         // Locate the ResourceManager
-        resourceManager = check_and_cast<ResourceManager *>(getModuleByPath("^.resourceManager"));
+        resourceManager = check_and_cast<ResourceManager *>(getModuleByPath(par("resourceManagerPath")));
+        netDb = check_and_cast<SimpleNetDb *>(getModuleByPath(par("netDbPath")));
         resourceManager->setMinActiveMachines(par("minActiveMachines"));
+        netDb->registerHost("manager", getModuleByPath(par("netCardPath"))->par("L2Address"));
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
@@ -48,9 +51,9 @@ void DcManager::initialize(int stage)
         {
             // Prepare the event message template and send to the cloud provider
             const char *topic = getParentModule()->getSubmodule("stack")->par("nodeTopic");
-            eventTemplate.setDestinationTopic("CloudProvider");
+            eventTemplate.setDestinationTopic("cloudProvider");
             eventTemplate.setReturnTopic(topic);
-            // TODO: Set the zone of the DC/FOG node
+            eventTemplate.setZone(zone);
             sendUpdateToCloudProvider();
         }
     }
@@ -63,7 +66,11 @@ void DcManager::finish()
     cancelAndDelete(cpuStatusMessage);
     acceptedVMsMap.clear();
     acceptedUsersRqMap.clear();
-    handlingAppsRqMap.clear();
+}
+
+void DcManager::handleMessage(cMessage *msg)
+{
+    ManagerBase::handleMessage(L2Protocol::tryDecapsulate(msg));
 }
 
 cGate *DcManager::getOutGate(cMessage *msg)
@@ -73,8 +80,8 @@ cGate *DcManager::getOutGate(cMessage *msg)
     // Check from which network the request came from
     if (gateId == networkGates.inBaseId)
         return gate(networkGates.outBaseId);
-    else if (gateId == localNetworkGates.inBaseId)
-        return gate(localNetworkGates.outBaseId);
+    else if (gateId == queueGates.inBaseId)
+        return gate(queueGates.outBaseId);
     else
         error("Message received from an unknown gate [%s]", msg->getName());
 
@@ -92,10 +99,8 @@ void DcManager::initializeSelfHandlers()
 
 void DcManager::initializeRequestHandlers()
 {
-    auto forwardRequest = [this](SIMCAN_Message *msg) -> void
-    { sendRequestMessage(msg, localNetworkGates.outBaseId); };
-
-    requestHandlers[SM_APP_Req] = forwardRequest;
+    requestHandlers[SM_APP_Req] = [this](SIMCAN_Message *msg) -> void
+    { return handleApplicationRequest(msg); };
 
     requestHandlers[SM_VM_Req] = [this](SIMCAN_Message *msg) -> void
     { return handleVmRequestFits(msg); };
@@ -236,8 +241,7 @@ void DcManager::handleVmSubscription(SIMCAN_Message *sm)
         userVM_Rq->setResult(SM_APP_Sub_Reject);
 
         // Update the cloud provider to "uncommit" the resources
-        eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-        send(eventTemplate.dup(), gate("networkOut"));
+        sendUpdateToCloudProvider();
     }
 
     // Set response and operation type
@@ -252,14 +256,68 @@ void DcManager::handleVmSubscription(SIMCAN_Message *sm)
 bool DcManager::checkVmUserFit(SM_UserVM *&userVM_Rq)
 {
     ASSERT2(userVM_Rq != nullptr, "checkVmUserFit nullptr guard failed\n");
-    if (resourceManager->allocateVms(userVM_Rq))
-    {
-        const char *userId = userVM_Rq->getUserId();
-        acceptedUsersRqMap[userId] = userVM_Rq->getReturnTopic();
-        return true;
-    }
-    else
+    const std::vector<ResourceManager::NodeVmRecord> *allocRecords = resourceManager->allocateVms(userVM_Rq);
+
+    if (!allocRecords)
         return false;
+    
+    acceptedUsersRqMap[userVM_Rq->getUserId()] = userVM_Rq->getReturnTopic();
+
+    if (allocRecords->size() == 1)
+        dispatchVm(allocRecords->at(0), userVM_Rq);
+    else
+    {
+        dispatchVms(allocRecords, userVM_Rq);
+    }
+
+    delete allocRecords;
+    return true;
+}
+
+void DcManager::dispatchVm(const ResourceManager::NodeVmRecord &record, SM_UserVM *userVM_Rq)
+{
+    auto &node = resourceManager->getNode(record.nodeIndex);
+    auto &response = userVM_Rq->getVmForUpdate(0).response;
+    response.state = VM_Response::ACCEPTED;
+    response.startTime = simTime().dbl();
+    response.ip = generateHypervisorUrl(netDb->getHostName(node.address)).c_str();
+    sendToLocalNetwork(userVM_Rq->dup(), record.nodeIndex);
+}
+
+void DcManager::dispatchVms(const std::vector<ResourceManager::NodeVmRecord> *allocRecords, SM_UserVM *userVM_Rq)
+{
+    std::map<int, SM_UserVM *> hyperVmMap;
+    int i = 0;
+
+    for (auto &record : *allocRecords)
+    {
+        auto &node = resourceManager->getNode(record.nodeIndex);
+        auto &response = userVM_Rq->getVmForUpdate(i).response;
+        response.state = VM_Response::ACCEPTED;
+        response.startTime = simTime().dbl();
+        response.ip = generateHypervisorUrl(netDb->getHostName(node.address)).c_str();
+
+        auto iter = hyperVmMap.find(record.nodeIndex);
+        if (iter == hyperVmMap.end())
+        {
+            auto pair = hyperVmMap.insert(std::pair<int, SM_UserVM *>(record.nodeIndex, new SM_UserVM()));
+            pair.first->second->appendVm(userVM_Rq->getVm(i));
+        }
+        else
+            iter->second->appendVm(userVM_Rq->getVm(i));
+        i++;
+    }
+
+    for (auto hyper : hyperVmMap)
+        sendToLocalNetwork(hyper.second, hyper.first);
+}
+
+void DcManager::handleApplicationRequest(SIMCAN_Message *sm)
+{
+    EV_INFO << LogUtils::prettyFunc(__FILE__, __func__) << " - Received Application Request" << '\n';
+    auto appRequest = check_and_cast<SM_UserAPP *>(sm);
+    int address = resolveHypervisorUrl(appRequest->getHypervisorUrl());
+    sendToLocalNetwork(appRequest, address);
 }
 
 void DcManager::handleVmRentTimeout(SIMCAN_Message *sm)
@@ -268,7 +326,7 @@ void DcManager::handleVmRentTimeout(SIMCAN_Message *sm)
     auto extensionOffer = check_and_cast<SM_VmExtend *>(sm);
     // Send back to the corresponding user the extension request
     extensionOffer->setDestinationTopic(acceptedUsersRqMap.at(extensionOffer->getUserId()).c_str());
-    sendRequestMessage(extensionOffer, gate("networkOut"));
+    sendRequestMessage(extensionOffer, queueGates.outBaseId);
 }
 
 void DcManager::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
@@ -277,9 +335,8 @@ void DcManager::handleExtendVmAndResumeExecution(SIMCAN_Message *sm)
     EV << "User: " << response->getUserId() << " accepted the extension of vm: "
        << response->getVmId() << " for " << response->getExtensionTime() << "\n";
 
-    auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
-    //resourceManager->resumeVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId(), response->getExtensionTime());
-    delete response;
+    int address = resolveHypervisorUrl(response->getHypervisorUrl());
+    sendToLocalNetwork(response, address);
 }
 
 void DcManager::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
@@ -287,13 +344,11 @@ void DcManager::handleEndVmAndAbortExecution(SIMCAN_Message *sm)
     auto response = check_and_cast<SM_VmExtend *>(sm);
     EV << "User: " << response->getUserId() << " decided to not extend vm " << response->getVmId() << ". Freeing resources\n";
 
-    auto routingInfo = check_and_cast<RoutingInfo *>(response->getControlInfo());
-    //resourceManager->deallocateVm(routingInfo->getDestinationUrl().getLocalAddress().getInt(), response->getVmId());
-    delete response;
+    int address = resolveHypervisorUrl(response->getHypervisorUrl());
+    sendToLocalNetwork(response, address);
 
     // Notifiy the Cloud provider that the resources were finally freed
-    eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
-    send(eventTemplate.dup(), gate("networkOut"));
+    sendUpdateToCloudProvider();
 }
 
 void DcManager::sendUpdateToCloudProvider()
@@ -301,5 +356,37 @@ void DcManager::sendUpdateToCloudProvider()
     eventTemplate.setAvailableCores(resourceManager->getAvailableCores());
     eventTemplate.setAvailableRam(resourceManager->getAvailableRamMiB());
     eventTemplate.setAvailableDisk(resourceManager->getAvailableDiskMiB());
-    send(eventTemplate.dup(), gate("networkOut"));
+    send(eventTemplate.dup(), queueGates.outBaseId);
+}
+
+void DcManager::sendToLocalNetwork(cMessage *msg, int destinationAddress)
+{
+    send(L2Protocol::encapsulate(msg, destinationAddress), networkGates.outBaseId);
+}
+
+opp_string DcManager::generateHypervisorUrl(const char *hostName)
+{
+    return opp_string(nodeName) + opp_string("::") + hostName;
+}
+
+int DcManager::resolveHypervisorUrl(const char *hypervisorUrl)
+{
+    if (!hypervisorUrl)
+        error("Invalid hypervisor url: %s", hypervisorUrl);
+    
+    cStringTokenizer tokenizer(hypervisorUrl, "::");
+    if (!tokenizer.hasMoreTokens())
+        error("Invalid hypervisor url: %s", hypervisorUrl);
+
+    const char *nodeName = tokenizer.nextToken();
+
+    if (!tokenizer.hasMoreTokens())
+        error("Invalid hypervisor url: %s", hypervisorUrl);
+
+    const char *hostName = tokenizer.nextToken();
+
+    if (strcmp(nodeName, nodeName) != 0)
+        error("Wrong node (%s) for this hypervisor URL: %s", nodeName, hypervisorUrl);
+
+    return netDb->getAddress(hostName);
 }

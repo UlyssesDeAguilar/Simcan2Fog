@@ -15,5 +15,5 @@ simple LocalApplication extends AppBase{
         string outputFile = default ("/outputFile_0.dat");	// Output file
         int MIs = default (100);							// Number of MIs to execute in each iteration
         int iterations = default (5);						// Number of iterations to be performed
-        bool initialized = default(false);					// True after application is initialized the first time
+        bool initialized @mutable = default(false);		    // True after application is initialized the first time
 }

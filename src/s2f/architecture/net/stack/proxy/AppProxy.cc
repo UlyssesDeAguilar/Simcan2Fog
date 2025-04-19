@@ -18,17 +18,15 @@ Define_Module(AppProxy);
 
 void AppProxy::initialize(int stage)
 {
-    cSimpleModule::initialize(stage);
-
     if (stage == INITSTAGE_LOCAL)
-    {
-    }
-    else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
         inGateBase = gate("appIn", 0)->getBaseId();
         outGateBase = gate("appOut", 0)->getBaseId();
         transportGateIn = gate("transportIn")->getBaseId();
         transportGateOut = gate("transportOut")->getBaseId();
+    }
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
 
         serverSocket.setOutputGate(gate(transportGateOut));
         serverSocket.bind(par("localPort"));
@@ -195,38 +193,59 @@ void AppProxy::handleTransportPacket(inet::Packet *packet)
     {
         send(packet, outGateBase + findSocketGateIndex(socketId));
     }
-    // Case for when a session hasn't been bound yet to an endpoint
     else if (session->second.getState() == SessionState::INIT)
     {
+        // Case for when a session hasn't been bound yet to an endpoint
         Session &session = socketToSessionMap.at(socketId);
         std::string serviceName = getServiceName(packet);
         auto iter = serviceTable->findService(serviceName.c_str());
 
         if (iter == serviceTable->endOfServiceMap())
-            error("Service '%s' not found", serviceName.c_str());
-
-        // Select the endpoint ip + get the corresponding gate index
-        int index = selectIp(iter->second);
-        int ip = iter->second[index].getIp();
-        int port = iter->second[index].getPort();
-
-        Connection *connection = findConnection(ip, port);
-        if (!connection)
-            error("Connection not found: ip = %d, port = %d", ip, port);
-        
-        // Update the session entry
-        inet::Message *message = session.setSessionPending(index);
-        message->getTagForUpdate<SocketInd>()->setSocketId(connection->socketId);
-        // Send a request to the endpoint to open a socket (we're using the same socketId)
-        send(message, outGateBase + connection->gateIndex);
-        // Keep the request in the pending queue
-        session.pushToPendingQueue(packet);
+            sendServiceUnavailable(session.getSocketId(), packet);
+        else
+            handleSessionInitialize(session, iter->second, packet);
     }
     else
     {
         // Connection pending, buffer the packet
         session->second.pushToPendingQueue(packet);
     }
+}
+
+void AppProxy::handleSessionInitialize(Session &session, std::vector<ServiceEntry> &entries, inet::Packet *packet)
+{
+    // Select the endpoint ip + get the corresponding gate index
+    int index = selectIp(entries);
+    int ip = entries[index].getIp();
+    int port = entries[index].getPort();
+
+    Connection *connection = findConnection(ip, port);
+    if (!connection)
+        error("Connection not found: ip = %d, port = %d", ip, port);
+    
+    // Update the session entry
+    inet::Message *message = session.setSessionPending(index);
+    message->getTagForUpdate<SocketInd>()->setSocketId(connection->socketId);
+    // Send a request to the endpoint to open a socket (we're using the same socketId)
+    send(message, outGateBase + connection->gateIndex);
+    // Keep the request in the pending queue
+    session.pushToPendingQueue(packet);
+}
+
+void AppProxy::sendServiceUnavailable(int socketId, inet::Packet *packet)
+{
+    auto httpResponse = makeShared<RestfulResponse>();
+    auto httpRequest = packet->peekData<RestfulRequest>();
+    httpResponse->setHost(httpRequest->getHost());
+    httpResponse->setPath(httpRequest->getPath());
+    httpResponse->setResponseCode(ResponseCode::INTERNAL_ERROR);
+
+    auto response = new inet::Packet("Service Unavailable", inet::TCP_C_SEND);
+    response->insertData(httpResponse);
+    response->addTag<SocketReq>()->setSocketId(socketId);
+    response->addTag<DispatchProtocolReq>()->setProtocol(&Protocol::tcp);
+    send(response, transportGateOut);
+    delete packet;
 }
 
 void AppProxy::handleTransportIndication(inet::Message *message)

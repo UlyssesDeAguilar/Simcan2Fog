@@ -51,7 +51,7 @@ AppInstance* AppInstanceCollection::getInstance(int nInstance)
 std::string AppInstanceCollection::toString (bool showParameters){
 
     std::ostringstream info;
-    int i, currentParameter;
+    int i;
 
         info << "# Instances:" << appInstances.size() << " of " << appBase->getName() << "(" << appBase->getType() << ")" << "\n";
 

@@ -1,0 +1,59 @@
+[
+    {
+        "name": "AppCPUIntensive",
+        "model": "LocalApplication",
+        "package": "s2f.apps.cloud",
+        "parameters": {
+            "inputDataSize": "10MiB",
+            "outputDataSize": "5MiB",
+            "inputFile": "/inputFile_0.dat",
+            "outputFile": "/outputFile_0.dat",
+            "MIs": "79200000",
+            "iterations": "5"
+        }
+    },
+    {
+        "name": "AppDataIntensive",
+        "model": "LocalApplication",
+        "package": "s2f.apps.cloud",
+        "parameters": {
+            "inputDataSize": "50MiB",
+            "outputDataSize": "75MiB",
+            "inputFile": "/inputFile_0.dat",
+            "outputFile": "/outputFile_0.dat",
+            "MIs": "1000",
+            "iterations": "5"
+        }
+    },
+    {
+        "name": "AppSmall",
+        "model": "LocalApplication",
+        "package": "s2f.apps.cloud",
+        "parameters": {
+            "inputDataSize": "1MiB",
+            "outputDataSize": "1MiB",
+            "inputFile": "/inputFile_0.dat",
+            "outputFile": "/outputFile_0.dat",
+            "MIs": "79200000",
+            "iterations": "5"
+        }
+    },
+    {
+        "name": "ProbingEndpoint",
+        "model": "ProbingClient",
+        "package": "s2f.apps.endpoints",
+        "parameters": {
+            "serviceName": "",
+            "pollingInterval": "5s"
+        }
+    },
+    {
+        "name": "ServiceEndpoint",
+        "model": "ServerEndpoint",
+        "package": "s2f.apps.endpoints",
+        "parameters": {
+            "useAppIdAsServiceName": "true",
+            "serviceName": ""
+        }
+    }
+]

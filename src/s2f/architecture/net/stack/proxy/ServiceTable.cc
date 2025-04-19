@@ -8,6 +8,7 @@ Define_Module(ServiceTable);
 void ServiceTable::initialize()
 {
     domain = par("domain");
+    EV_INFO << "Initializing service table for domain " << domain << "\n";
 }
 
 void ServiceTable::finish()

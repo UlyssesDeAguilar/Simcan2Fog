@@ -13,8 +13,8 @@ module CpuSchedulersVector
         bool isVirtualHardware;			// True if this computer allows virtualization and False in another case
         int numSchedulers;				// Number of schedulers in this vector
         int numCpuCores;				// Number of CPU cores in the CPU processor
-        
-        @display("bgb=621,225");
+
+        @display("bgb=334,173");
     gates:
         input fromHypervisor[];				// Input gates from the Hypervisor
         input fromCpu;						// Input gate from the CPU
@@ -27,15 +27,15 @@ module CpuSchedulersVector
             parameters:
                 isVirtualHardware = parent.isVirtualHardware;
                 numCpuCores = parent.numCpuCores;
-                @display("p=306,126,r,120;i=scheduler");
+                @display("p=253,88,r,120;i=scheduler");
         }
 
         schedHub: CheckingHubModule {       												// Hub that manages incoming messages 
             parameters:
                 staticAppAssignment = parent.staticAppAssignment;
-                @display("p=306,24;i=device/hub");
+                @display("p=82,88;i=device/hub");
         }
-        
+
     connections:
 
         // Connections between the vector outside and each scheduler

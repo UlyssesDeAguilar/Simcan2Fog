@@ -19,6 +19,7 @@ simple PushClient
 {
 	parameters:
         @class(PushClient);
+        string topic;
     gates:
         input netIn;
         output netOut;

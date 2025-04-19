@@ -18,9 +18,26 @@ module OperatingSystem
         int maxUsers;
         int numCpuCores;												// Number of CPU cores in the CPU processor
 
-        *.maxVMs = maxVMs;
-        *.isVirtualHardware = isVirtualHardware;
-        hypervisor.maxApps = numApps;
+        *.maxVMs = this.maxVMs;
+        *.isVirtualHardware = this.isVirtualHardware;
+        hypervisor.maxApps = this.numApps;
+        
+        // App parameters
+        appsVectors[*].numApps = this.numApps;
+        *.staticAppAssignment = this.staticAppAssignment;
+
+
+        // Hypervisor setup
+        hypervisor.active = default(true);
+        hypervisor.maxAppsPerVm = this.numApps;
+        hypervisor.controlTablePath = "^.controlTable";
+        hypervisor.hardwareManagerPath = "^.^.hardwareManager";
+		controlTable.numVMs = this.maxVMs;
+		controlTable.numAppsPerVm = this.numApps;
+		
+		cpuSchedVector.numSchedulers = this.maxVMs;
+        cpuSchedVector.numCpuCores = this.numCpuCores;
+        
         @display("bgb=532.53,430.68002");
     gates:
         input fromNetwork;
@@ -39,11 +56,6 @@ module OperatingSystem
         hypervisor: <default("DcHypervisor")> like IHypervisor {
             parameters:
                 @display("p=251.23001,181.39001;i=hypervisor");
-            gates:
-                fromCpuScheduler[maxVMs];
-                toCpuScheduler[maxVMs];
-                fromApps[sizeof(fromApps)];
-                toApps[sizeof(toApps)];
         }
 
         controlTable: VmControlTable {
@@ -52,9 +64,6 @@ module OperatingSystem
         // Vector of CPU schedulers
         cpuSchedVector: CpuSchedulersVector {
             parameters:
-                staticAppAssignment = staticAppAssignment;
-                numSchedulers = maxVMs;
-                numCpuCores = numCpuCores;
                 @display("p=423.89,181.39001;i=scheduler");
         }
 
@@ -62,8 +71,7 @@ module OperatingSystem
         appsVectors[maxUsers]: AppsVector {
             parameters:
                 vmId = index;
-                numApps = numApps;
-                @display("p=90.21001,181.39001,c,120;i=user");
+                @display("p=90.21001,181.39001,c,120");
         }
 
     connections:

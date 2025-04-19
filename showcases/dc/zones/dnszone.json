@@ -1,0 +1,12 @@
+[
+    {
+        "zone": "us-east-1.com",
+        "records": [
+            {
+                "domain": "*.us-east-1.com",
+                "type": "A",
+                "ip": "10.0.0.4"
+            }
+        ]
+    }
+]

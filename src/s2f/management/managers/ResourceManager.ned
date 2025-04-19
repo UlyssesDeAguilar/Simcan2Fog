@@ -6,7 +6,7 @@ package s2f.management.managers;
 simple ResourceManager{
     parameters:
         @display("i=block/cogwheel");
-        @class(DcResourceManager);
+        @class(ResourceManager);
         string nodePoolPath;
         string dataManagerPath;
         string selectionStrategy;
@@ -22,8 +22,8 @@ simple ResourceManager{
         // Actual live data
         @signal[allocatedRam](type=double);
         @signal[allocatedDisk](type=double);
-        @signal[allocatedCores](type=long);
-        @signal[allocatedVms](type=long);
+        @signal[allocatedCores](type=unsigned long);
+        @signal[allocatedVms](type=unsigned long);
 
         // Characteristical statistics
         @statistic[maxRam](unit=GB; record=last);

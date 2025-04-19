@@ -47,14 +47,14 @@ module MessageQueue extends StandardHost
         // Job publishing service
         pushServer: TcpServerApp {
             listener.localPort = 8444;
-            listener.serverConnectionModuleType = "s2f.Architecture.Network.MessageQueue.PushServer";
+            listener.serverConnectionModuleType = "s2f.architecture.messagequeue.services.PushServer";
             @display("p=785.2,79.299995");
         }
 
 		// Job consumtion service
         pullServer: TcpServerApp {
             listener.localPort = 8443;
-            listener.serverConnectionModuleType = "s2f.Architecture.Network.MessageQueue.PullServer";
+            listener.serverConnectionModuleType = "s2f.architecture.messagequeue.services.PullServer";
             @display("p=652.6,78");
         }
 

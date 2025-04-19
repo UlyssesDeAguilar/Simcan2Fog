@@ -14,14 +14,14 @@
 // 
 
 package s2f.architecture.messagequeue.internals;
+import inet.queueing.source.EmptyPacketSource;
 import inet.queueing.contract.IActivePacketSource;
 
-simple SourceDelegate like IActivePacketSource
+simple SourceDelegate extends EmptyPacketSource like IActivePacketSource
 {
     parameters:
         @class(SourceDelegate);
         @display("i=block/source");
     gates:
         input in;
-        output out @labels(push);
 }

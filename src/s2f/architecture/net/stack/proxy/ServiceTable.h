@@ -134,18 +134,18 @@ protected:
     /**
      * @brief Initialize the service table.
      */
-    void initialize() override;
+    virtual void initialize() override;
 
     /**
      * @brief Does the cleanup in order to finish the simulation
      */
-    void finish() override;
+    virtual void finish() override;
 
     /**
      * @brief Handle a message (not implemented).
      * @param msg The message to handle.
      */
-    void handleMessage(omnetpp::cMessage *msg) override { error("This module doesn't take messages"); }
+    virtual void handleMessage(omnetpp::cMessage *msg) override { error("This module doesn't take messages"); }
 };
 
 #endif /* SIMCAN_EX_SERVICE_TABLE */

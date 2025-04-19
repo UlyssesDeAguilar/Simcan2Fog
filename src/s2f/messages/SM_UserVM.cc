@@ -5,17 +5,8 @@
  *      Author: pablo
  */
 
-#include "../messages/SM_UserVM.h"
-
-#include <algorithm>
-#include "../management/utils/LogUtils.h"
-
-void SM_UserVM::copy(const SM_UserVM &other)
-{
-  // Base info already copied from superclass!
-  // Copy the requests vector
-  this->vmRequests = other.vmRequests;
-}
+#include "s2f/messages/SM_UserVM.h"
+#include "s2f/management/utils/LogUtils.h"
 
 SM_UserVM &SM_UserVM::operator=(const SM_UserVM &other)
 {
@@ -28,47 +19,43 @@ SM_UserVM &SM_UserVM::operator=(const SM_UserVM &other)
 
 SM_UserVM *SM_UserVM::dup(const std::string &vmId) const
 {
-  // Find vm by id
-  auto selector = [vmId](const VM_Request &vm) -> bool
-  { return vmId == vm.vmId; };
-
-  auto iter = std::find_if(vmRequests.begin(), vmRequests.end(), selector);
-
-  // If found then construct
-  if (iter != vmRequests.end())
+  for (int i = 0, size = getVmArraySize(); i < size; i++)
   {
-    auto duplicate = new SM_UserVM();
-    duplicate->SM_UserVM_Base::operator=(*this);
-    duplicate->appendVm(*iter);
+    if (getVm(i).vmId == vmId)
+    {
+      auto duplicate = new SM_UserVM();
+      duplicate->SM_UserVM_Base::operator=(*this);
+      duplicate->appendVm(getVm(i));
+      return duplicate;
+    }
   }
-
   return nullptr;
 }
 
 void SM_UserVM::createNewVmRequest(const std::string &type, const std::string &instanceId, const VM_Request::InstanceRequestTimes &times)
 {
   // Fill the request
-  vmRequests.emplace_back();
-  VM_Request &vmReq = vmRequests.back();
+  VM_Request vmReq;
   vmReq.vmId = instanceId;
   vmReq.vmType = type;
   vmReq.times = times;
+  appendVm(vmReq);
 }
 
 std::ostream &operator<<(std::ostream &os, const SM_UserVM &obj)
 {
   os << "User id:        " << obj.userId << '\n';
-  os << "Total requests: " << obj.vmRequests.size() << '\n';
+  os << "Total requests: " << obj.getVmArraySize() << '\n';
 
-  for (const auto &request : obj.vmRequests)
-    os << request << '\n';
+  for (int i = 0, size = obj.getVmArraySize(); i < size; i++)
+    os << obj.getVm(i) << '\n';
 
   return os;
 }
 
 void SM_UserVM::createResponse(int index, bool accepted, double time, const std::string &ip, int price)
 {
-  auto &response = vmRequests.at(index).response;
+  auto &response = getVmForUpdate(index).response;
 
   if (accepted)
     response.state = VM_Response::ACCEPTED;
@@ -80,17 +67,11 @@ void SM_UserVM::createResponse(int index, bool accepted, double time, const std:
   response.price = price;
 }
 
-bool SM_UserVM::getResponse(int index, VM_Response **const response)
+const VM_Response *SM_UserVM::getResponse(int index) const
 {
-  auto &r = vmRequests.at(index).response;
-  if (r.state == VM_Response::ACCEPTED)
-  {
-    *response = &r;
-    return true;
-  }
+  const VM_Request &request = getVm(index);
+  if (request.response.state == VM_Response::ACCEPTED)
+    return &request.response;
   else
-  {
-    *response = nullptr;
-    return false;
-  }
+    return nullptr;
 }

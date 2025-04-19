@@ -148,8 +148,8 @@ void BaseUserModel::deployApps(SM_UserVM *vmRequest, CloudUserInstance &userInst
         AppInstanceCollection *appCollection = userInstance.getAppCollection(i);
         const VM_Request &vmRq = vmRequest->getVm(i);
 
-        VM_Response *vmAllocation;
-        if (!vmRequest->getResponse(i, &vmAllocation))
+        const VM_Response *vmAllocation = vmRequest->getResponse(i);
+        if (!vmAllocation)
             driver.error("Error in model: The transactional deployment did not work?");
 
         int appsForVm = userInstance.getAppCollectionSize(i);

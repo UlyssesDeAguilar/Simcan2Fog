@@ -20,16 +20,12 @@ private:
 	void copy(const SM_UserAPP &other)
 	{
 	}
-	int findRequestIndex(const char *service);
-
-public:
-	SM_UserAPP(const char *name = nullptr, short kind = 0) : SM_UserAPP_Base(name, kind)
-	{
-	}
-	SM_UserAPP(const SM_UserAPP &other) : SM_UserAPP_Base(other)
-	{
-		copy(other);
-	}
+	
+	public:
+	SM_UserAPP(const char *name = nullptr, short kind = 0) : SM_UserAPP_Base(name, kind) {}
+	SM_UserAPP(const SM_UserAPP &other) : SM_UserAPP_Base(other) { copy(other); }
+	virtual SM_UserAPP *dup() const override { return new SM_UserAPP(*this); }
+	
 	SM_UserAPP &operator=(const SM_UserAPP &other)
 	{
 		if (this == &other)
@@ -38,13 +34,10 @@ public:
 		copy(other);
 		return *this;
 	}
-	virtual SM_UserAPP *dup() const override
-	{
-		return new SM_UserAPP(*this);
-	}
-
-	void createNewAppRequest(const char *name, const char *type, double startRentTime);
 	
+	void createNewAppRequest(const char *name, const char *type, double startRentTime);
+	int findRequestIndex(const char *service);
+
 	void changeState(const char *service, tApplicationState eNewState);
 	void changeStateByIndex(int nIndex, tApplicationState eNewState);
 

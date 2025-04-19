@@ -50,8 +50,8 @@ void DcDriver::processResponseMessage(SIMCAN_Message *sm)
 
     for (int i = 0; i < vmRequest->getVmArraySize(); i++)
     {
-        VM_Response *response;
-        if (vmRequest->getResponse(i, &response))
+        const VM_Response *response = vmRequest->getResponse(i);
+        if (response)
             EV << "Got response for: " << vmRequest->getVm(i).vmId << " assigned service-url: " << response->ip << '\n';
         else
             EV << "Got no response for: " << vmRequest->getVm(i).vmId << '\n';

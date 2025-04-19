@@ -49,7 +49,7 @@ SinkDelegate * MessageQueueManager::registerOrBindTopic(const std::string &topic
         error("For the time being the binding of topics is 1 to 1");
     
     // Build the topic queue
-    cModuleType *moduleType = cModuleType::get("s2f.architecture.messagequeue.SMQueue");
+    cModuleType *moduleType = cModuleType::get("s2f.architecture.messagequeue.internals.SMQueue");
     cModule *parentModule = getParentModule();
 
     // Create inside the vector (first resize so it will fit)
@@ -60,6 +60,7 @@ SinkDelegate * MessageQueueManager::registerOrBindTopic(const std::string &topic
     // Finish initializing and building inside
     connection->finalizeParameters();
     connection->buildInside();
+    //connection->scheduleStart(simTime());
     connection->callInitialize();
 
     // Recover output submodule and bind the gate

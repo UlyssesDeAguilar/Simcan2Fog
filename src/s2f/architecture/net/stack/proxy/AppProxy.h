@@ -17,6 +17,7 @@
 #include "s2f/architecture/net/stack/proxy/ServiceTable.h"
 #include "s2f/architecture/net/stack/proxy/Session.h"
 #include "s2f/architecture/net/protocol/RestfulRequest_m.h"
+#include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 
 /**
  * @brief Defines the connection type
@@ -119,6 +120,10 @@ protected:
      * @param packet The packet to be forwarded 
      */
     void handleTransportPacket(inet::Packet *packet);
+
+    void handleSessionInitialize(Session &session, std::vector<ServiceEntry> &entries, inet::Packet *packet);
+
+    void sendServiceUnavailable(int socketId, inet::Packet *packet);
 
     /**
      * @brief Selects randomly (uniform distribution)an IP based on the entries

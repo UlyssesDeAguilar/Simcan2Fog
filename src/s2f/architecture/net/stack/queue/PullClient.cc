@@ -20,7 +20,7 @@ using namespace inet;
 
 Define_Module(PullClient);
 
-PullClient::PullClient() 
+PullClient::PullClient()
 {
     signal = new SIMCAN_Message();
     signal->setOperation(SM_QueueAck);
@@ -29,29 +29,18 @@ PullClient::PullClient()
     ackTemplate = new Packet("Queue Pull Client Request", payload);
 }
 
-PullClient::~PullClient() 
+PullClient::~PullClient()
 {
     delete ackTemplate;
-    delete signal;
 }
 
-void PullClient::initialize(int stage)
+void PullClient::initialize()
 {
     // Retrieve the topic from the parent
-    cPar &parameter = getParentModule()->getParentModule()->par("nodeTopic");
-    const char *parentTopic = parameter;
-
-    // If it was empty then fill in with the module Id
-    if (*parentTopic == '\0')
-    {
-        parameter.setStringValue(std::to_string(getId()).c_str());
-        parentTopic = parameter;
-    }
-
-    this->parentTopic = parentTopic;
+    topic = par("topic");
 
     // Prepare the ack template
-    signal->setDestinationTopic(parentTopic);
+    signal->setDestinationTopic(topic);
 
     // Schedule auto init
     scheduleAt(simTime(), ackTemplate->dup());
@@ -68,11 +57,17 @@ void PullClient::handleMessage(cMessage *msg)
 
     // We recieved a package from the queue, we must unwrap it
     auto packet = check_and_cast<Packet *>(msg);
-    auto payload = const_pointer_cast<INET_AppMessage>(dynamic_pointer_cast<const INET_AppMessage>(packet->peekData()))->removeAppMessage();
+    packet->peekData<INET_AppMessage>();
 
-    // Send to the module
-    take(payload);
-    send(payload, gate("queueOut"));
+    ChunkQueue queue("Queue", packet->peekData());
+
+    while (queue.has<INET_AppMessage>())
+    {
+        auto encapPayload = queue.pop<INET_AppMessage>();
+        auto payload = encapPayload->getAppMessage()->dup();
+        take(payload);
+        send(payload, gate("queueOut"));
+    }
 
     // Send ACK, next message will come after (if there is one)
     send(ackTemplate->dup(), gate("netOut"));

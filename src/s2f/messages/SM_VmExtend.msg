@@ -7,6 +7,7 @@ message SM_VmExtend extends SIMCAN_Message
     operation = SM_ExtensionOffer;
     string userId;      // Owner of the vm
     string vmId;        // The vm we are talking about
+    string hypervisorUrl;
     bool accepted;      // If the extension offer is accepted by the client (only makes sense as a request)
     int extensionTime;  // The time to extend the renting, in seconds
 }

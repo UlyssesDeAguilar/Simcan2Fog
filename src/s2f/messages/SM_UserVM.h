@@ -13,8 +13,7 @@
 class SM_UserVM : public SM_UserVM_Base
 {
 private:
-     std::vector<VM_Request> vmRequests;
-     void copy(const SM_UserVM &other);
+     void copy(const SM_UserVM &other) {};
 
 public:
      SM_UserVM(const char *name = "SM_UserVM", short kind = 0) : SM_UserVM_Base(name, kind) {}
@@ -45,28 +44,14 @@ public:
      void createResponse(int nIndex, bool accepted, double time, const std::string &ip, int price);
 
      /**
-      * @brief Get the response for a given VM request
-      *
-      * @param index The position of the VM request
-      * @param response Pointer to a pointer that will hold the reference to the response
-      * @return true If there is a response
-      * @return false If there isn't a response (*response is nullptr also)
+      * @brief Get the response for the given index
+      * @param index Index of the request
+      * @return The response or nullptr if not found
       */
-     bool getResponse(int index, VM_Response **const response);
+     const VM_Response *getResponse(int index) const;
 
-     VM_Request::InstanceRequestTimes &getInstanceRequestTimes(int index) { return vmRequests.at(index).times; }
-
-     virtual void appendVm(const VM_Request& vm) override { vmRequests.push_back(vm); }
-     virtual void setVmArraySize(size_t size) override { vmRequests.resize(size); }
-     virtual size_t getVmArraySize() const override { return vmRequests.size(); }
-     virtual const VM_Request &getVm(size_t k) const override { return vmRequests.at(k); }
-
+     VM_Request::InstanceRequestTimes &getInstanceRequestTimes(int index) { return getVmForUpdate(index).times; }
      friend std::ostream &operator<<(std::ostream &os, const SM_UserVM &obj);
-
-private:
-     virtual void setVm(size_t k, const VM_Request &vm) override {}
-     virtual void insertVm(size_t k, const VM_Request &vm) override {};
-     virtual void eraseVm(size_t k) override {};
 };
 
 #endif /* SM_USERVM_H_ */

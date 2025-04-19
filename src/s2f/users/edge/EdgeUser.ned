@@ -11,6 +11,7 @@ simple EdgeUser
 		object sensors;
 		int startupTime @unit(seconds) = default(1s);
 		string controllerHostName = default("localhost");
+        bool makeServiceNameUnique = default(true);
         @display("i=user,,0");
     gates:
         input queueIn @loose;

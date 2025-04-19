@@ -36,7 +36,9 @@ cplusplus(cc) {{
 ///
 message SM_UserAPP extends SIMCAN_Message{
     @customize(true);
+    operation = SM_APP_Req;
     string vmId;    
+    string hypervisorUrl;
     string userId;		         // ID of the user instance
     AppRequest app[];            // List of applications
     int nFinishedApps = 0;	         // Number of finished applications.  

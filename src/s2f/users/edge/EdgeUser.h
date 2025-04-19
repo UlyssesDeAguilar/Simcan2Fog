@@ -18,9 +18,8 @@ namespace users
     protected:
         std::vector<cModule *> managedSensors;
         std::map<opp_string, users::Vm> managedVms;
-        std::map<opp_string, users::App> remoteApps;
         std::vector<users::App> localApps;
-        
+
         const char *deploymentZone;
         GateInfo serialGates;
         opp_string userId;
@@ -38,6 +37,7 @@ namespace users
         virtual void turnSensorsOff();
         virtual users::Vm *findPlatform(const char *name);
         opp_string generateUniqueId(const char *name);
+        void sendServiceIsUp(const char *localApp, const App &service, const char* zone);
     };
 }
 

@@ -31,6 +31,7 @@ OBJS = \
     $O/s2f/apps/cloud/LocalApplication.o \
     $O/s2f/apps/dummy/DummyApplication.o \
     $O/s2f/apps/endpoints/ClientEndpoint.o \
+    $O/s2f/apps/endpoints/ProbingClient.o \
     $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
@@ -132,6 +133,7 @@ OBJS = \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
+    $O/s2f/messages/SM_AppSettings_m.o \
     $O/s2f/messages/SM_CloudProvider_Control_m.o \
     $O/s2f/messages/SM_CPU_Message_m.o \
     $O/s2f/messages/SM_UserAPP_m.o \
@@ -159,6 +161,7 @@ MSGFILES = \
     s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \
+    s2f/messages/SM_AppSettings.msg \
     s2f/messages/SM_CloudProvider_Control.msg \
     s2f/messages/SM_CPU_Message.msg \
     s2f/messages/SM_UserAPP.msg \

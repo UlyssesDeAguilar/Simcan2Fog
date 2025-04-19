@@ -7,6 +7,7 @@ message L2Protocol
 
 cplusplus(L2Protocol){{
 static L2Protocol * encapsulate(cMessage *payload, int origin, int destination);
+static L2Protocol * encapsulate(cMessage *payload, int destination);
 static cMessage * tryDecapsulate(cMessage *msg);
 }}
 
@@ -16,6 +17,14 @@ L2Protocol * L2Protocol::encapsulate(cMessage *payload, int origin, int destinat
 {
     auto packet = new L2Protocol();
     packet->setOrigin(origin);
+    packet->setDestination(destination);
+    packet->setPayload(payload);
+    return packet;
+}
+
+L2Protocol * L2Protocol::encapsulate(cMessage *payload, int destination)
+{
+    auto packet = new L2Protocol();
     packet->setDestination(destination);
     packet->setPayload(payload);
     return packet;

@@ -35,7 +35,6 @@ int VmControlTable::allocateVm(const VirtualMachine *vmType, const char *userId)
     {
         if (vmTable[i].isFree())
         {
-            int j = 0;
             vmTable[i].initialize(i, vmType, userId, par("numAppsPerVm"));
             vmTable[i].setRunning();
             return i;
@@ -53,7 +52,7 @@ int VmControlTable::allocateApp(int vmId, int deploymentIndex)
     {
         if (vmTable[vmId].apps[i].isFree())
         {
-            vmTable[vmId].apps[i].initialize(vmId, i);
+            vmTable[vmId].apps[i].initialize(vmId, i, deploymentIndex);
             return i;
         }
     }
@@ -127,4 +126,10 @@ void VmControlTable::associateDeploymentToVm(int vmId, SM_UserAPP *request)
     ASSERT2(vmId >= 0 && vmId < vmTable.size(), "Invalid vmId, out of bounds");
     take(request);
     vmTable[vmId].request = request;
+}
+
+int VmControlTable::getPidFromServiceName(int vmId, const char *serviceName)
+{
+    ASSERT2(vmId >= 0 && vmId < vmTable.size(), "Invalid vmId, out of bounds");
+    return vmTable[vmId].request->findRequestIndex(serviceName);
 }

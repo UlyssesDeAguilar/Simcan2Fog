@@ -6,6 +6,7 @@
 #include "s2f/os/schedulers/CpuSchedulerRR.h"
 #include "s2f/os/control/VmControlTable.h"
 #include "s2f/architecture/net/protocol/L2Protocol_m.h"
+#include "s2f/messages/SM_AppSettings_m.h"
 
 namespace hypervisor
 {
@@ -51,6 +52,7 @@ namespace hypervisor
         virtual bool messageIsCommand(SIMCAN_Message *sm);
         virtual void handleAppTermination(int pid, int vmId, tApplicationState exitStatus);
         virtual void handleAppRequest(SM_UserAPP *sm);
+        virtual void handleAppSettings(SM_AppSettings *sm);
         virtual void handleVmRequest(SM_UserVM *sm);
         virtual void handleVmExtension(SM_VmExtend *msg);
         virtual void deallocateVmResources(int vmId);

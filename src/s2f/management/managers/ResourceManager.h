@@ -3,7 +3,7 @@
 
 #include "omnetpp.h"
 
-//#include "s2f/architecture/nodes/hardwaremanagers/HardwareManager.h"
+// #include "s2f/architecture/nodes/hardwaremanagers/HardwareManager.h"
 #include "s2f/messages/SM_UserVM.h"
 #include "s2f/os/hypervisors/DcHypervisor.h"
 #include "s2f/management/managers/NodePool.h"
@@ -32,6 +32,12 @@ protected:
     hypervisor::DcHypervisor *const getHypervisor(uint32_t nodeIp);
 
 public:
+    struct NodeVmRecord
+    {
+        size_t nodeIndex;
+        const VirtualMachine *vmTemplate;
+    };
+
     void emitSignals(const VirtualMachine *vmTemplate, bool allocation);
 
     /**
@@ -42,10 +48,11 @@ public:
     size_t addNode(int address, const NodeResources &resources);
     void confirmNodeDeallocation(size_t nodeId, const VirtualMachine *vmTemplate);
     const NodeResources &getNodeAvailableResources(size_t nodeId) const;
-    SM_UserVM *allocateVms(SM_UserVM *request);
+    const Node &getNode(size_t nodeId) const { return defaultNodePool->getNode(nodeId); }
+    const std::vector<NodeVmRecord> *allocateVms(SM_UserVM *request);
 
-    //void resumeVm(uint32_t ip, const char *vmId, int extensionTime) { getHypervisor(ip)->extendVm(std::string(vmId), extensionTime); }
-    //void deallocateVm(uint32_t ip, const char *vmId) { getHypervisor(ip)->deallocateVmResources(std::string(vmId)); }
+    // void resumeVm(uint32_t ip, const char *vmId, int extensionTime) { getHypervisor(ip)->extendVm(std::string(vmId), extensionTime); }
+    // void deallocateVm(uint32_t ip, const char *vmId) { getHypervisor(ip)->deallocateVmResources(std::string(vmId)); }
 
     /**
      * @brief Scans through the nodes and activates or deactivates them to match the objective count

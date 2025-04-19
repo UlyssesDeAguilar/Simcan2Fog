@@ -25,9 +25,9 @@ module CloudBlade
 {
     parameters:
         @labels(node,ethernet-node);
-        int address;                                                // Local Ip
-        bool staticAppAssignment;									// True if the assignment of applications is static or False in another case
-        bool isVirtualHardware;										// True if this blade allows virtualization and False in another case
+        int address = default(-1);                                  // Local Ip
+        bool staticAppAssignment = default(true);				    // True if the assignment of applications is static or False in another case
+        bool isVirtualHardware = default(true);						// True if this blade allows virtualization and False in another case
         int maxUsers;												// Maximum number of users allowed to launch applications (For cloud environments, maxUsers=maxVMs)
         int maxVMs;													// Maximum number of VMs allocated in this blade (For non-cloud environments, use maxVMs=1)
         int numCpuCores;											// Number of CPU cores  
@@ -45,20 +45,28 @@ module CloudBlade
         // osModule.hypervisor.typename = hypervisorType;
 
         // Forwarding parameters
-        *.numCpuCores = numCpuCores;
-        *.maxVMs = maxVMs;
-        *.isVirtualHardware = isVirtualHardware;
-        osModule.numApps = numApps;
-        hardwareManager.address = address;
-        disk.diskReadBandwidth = diskReadBandwidth;
-        disk.diskWriteBandwidth = diskWriteBandwidth;
+        *.numCpuCores = this.numCpuCores;
+        *.maxVMs = this.maxVMs;
+        *.isVirtualHardware = this.isVirtualHardware;
+        **.staticAppAssignment = this.staticAppAssignment;
+        osModule.numApps = this.numApps;
+        osModule.hypervisor.hostName = fullName();
+
+        cpu.cpuCoreType = this.cpuCoreType;
+        netCard.L2Address = this.address;
+
+        disk.numVms = this.maxVMs;
+        disk.diskReadBandwidth = this.diskReadBandwidth;
+        disk.diskWriteBandwidth = this.diskWriteBandwidth;
 
         // Select function selects value from a list given an index (starts at 0)
         // Converting a boolean gives us 0/1 for false/true
         // This way we can enforce the policy of the class as a fail-safe for bad configurations!
-        hardwareManager.maxUsers = select(int(isVirtualHardware), maxUsers, maxVMs);
-        osModule.maxUsers = select(int(isVirtualHardware), maxUsers, maxVMs);
-
+        hardwareManager.maxUsers = select(int(isVirtualHardware), this.maxUsers, this.maxVMs);
+		hardwareManager.networkCardPath = "^.netCard";
+        hardwareManager.memorySize = this.memorySize;
+        hardwareManager.diskSize = this.diskSize;
+        osModule.maxUsers = select(int(isVirtualHardware), this.maxUsers, this.maxVMs);
         @display("bgb=521,326,,black,3;i=device/device");
 
     gates:
@@ -70,22 +78,16 @@ module CloudBlade
 
         cpu: CpuProcessor {
             parameters:
-                // numCpuCores = numCpuCores;
-                cpuCoreType = cpuCoreType;
-                staticAppAssignment = staticAppAssignment;
                 @display("p=420,145;i=cpu");
         }
 
         hardwareManager: <default("DcHardwareManager")> like IHardwareManager {
             parameters:
-                memorySize = memorySize;
-                diskSize = diskSize;
                 @display("p=96,145;i=hardwareConfig");
         }
 
         osModule: OperatingSystem {
             parameters:
-                staticAppAssignment = staticAppAssignment;
                 @display("p=259,145;i=os");
         }
 

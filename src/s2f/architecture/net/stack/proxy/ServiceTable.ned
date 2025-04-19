@@ -4,8 +4,10 @@ package s2f.architecture.net.stack.proxy;
 // 
 // @author Ulysses de Aguilar Gudmundsson
 // @date 2024-01-12
-simple ServiceTable {
+simple ServiceTable
+{
     parameters:
-    	@class(ServiceTable);
+        @class(ServiceTable);
         string domain = default("localdomain");
+        @display("i=block/table2,,0");
 }

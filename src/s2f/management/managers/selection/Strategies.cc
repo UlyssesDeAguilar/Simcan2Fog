@@ -14,17 +14,18 @@ Register_Class(BestFit);
 
 bool FirstFit::selectNode(const VirtualMachine *vmSpecs, const std::vector<Node> &nodes, size_t &index)
 {
-    // Filter to get the first hypervisor which has at least the minimum needed
-    auto filter = [vmSpecs](const Node &node) -> bool
-    { return *vmSpecs <= node.availableResources; };
-
-    auto iter = std::find_if(nodes.begin(), nodes.end(), filter);
-
-    // Found the candidate
-    if (iter != nodes.end())
+    size_t i = 0;
+    
+    EV_DEBUG << "Specs to fit: " << *vmSpecs << "\n";
+    for (auto &node : nodes)
     {
-        index = std::distance(nodes.begin(), iter);
-        return true;
+        EV_DEBUG << "Trying node with resources " << node.availableResources << "\n";
+        if (*vmSpecs <= node.availableResources)
+        {
+            index = i;
+            return true;
+        }
+        i++;
     }
 
     // Not found

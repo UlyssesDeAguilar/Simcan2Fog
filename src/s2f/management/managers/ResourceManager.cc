@@ -101,17 +101,10 @@ const NodeResources &ResourceManager::getNodeAvailableResources(size_t nodeId) c
     return defaultNodePool->getNode(nodeId).availableResources;
 }
 
-SM_UserVM *ResourceManager::allocateVms(SM_UserVM *request)
+const std::vector<ResourceManager::NodeVmRecord> *ResourceManager::allocateVms(SM_UserVM *request)
 {
-    // This record table will hold the relation vm <-> node
-    struct NodeVmRecord
-    {
-        size_t nodeIndex;
-        const VirtualMachine *vmTemplate;
-    };
-
-    std::vector<NodeVmRecord> allocRecords;
-    uint64_t cores, ram, disk = 0;
+    auto allocRecords = new std::vector<NodeVmRecord>();
+    uint64_t cores = 0, ram = 0, disk = 0;
     bool ok = true;
 
     for (int i = 0, n = request->getVmArraySize(); i < n && ok; i++)
@@ -119,14 +112,16 @@ SM_UserVM *ResourceManager::allocateVms(SM_UserVM *request)
         size_t nodeIndex;
         VM_Request &vm = request->getVmForUpdate(i);
         const VirtualMachine *vmTemplate = dataManager->searchVm(vm.vmType);
-
+        
+        EV_DEBUG << "Trying to allocate VM " << vm.vmId << " of type " << vm.vmType << " index " << i << " of total " << n << "\n";
+        
         if (!selectionStrategy->selectNode(vmTemplate, defaultNodePool->getNodes(), nodeIndex))
             ok = false;
         else
         {
             // Also add it as a response
             defaultNodePool->allocateResources(nodeIndex, vmTemplate);
-            allocRecords.push_back({nodeIndex, vmTemplate});
+            allocRecords->push_back({nodeIndex, vmTemplate});
 
             // Accumulate
             cores += vmTemplate->getNumCores();
@@ -137,8 +132,12 @@ SM_UserVM *ResourceManager::allocateVms(SM_UserVM *request)
 
     // In case of failure, restore the resources
     if (!ok)
-        for (const auto record : allocRecords)
+    {
+        for (const auto record : *allocRecords)
             defaultNodePool->deallocateResources(record.nodeIndex, record.vmTemplate);
+        delete allocRecords;
+        allocRecords = nullptr;
+    }
     else
     {
         // Emit the allocation signals
@@ -148,5 +147,5 @@ SM_UserVM *ResourceManager::allocateVms(SM_UserVM *request)
         emit(allocatedDisk, disk / 1024.0);
     }
 
-    return ok ? request : nullptr;
+    return allocRecords;
 }

@@ -4,11 +4,13 @@ package s2f.architecture.net.stack.proxy;
 // 
 // @author Ulysses de Aguilar Gudmundsson
 // @date 2023-10-6
-simple AppProxy {
+simple AppProxy
+{
     parameters:
-    	@class(AppProxy);
+        @class(AppProxy);
         int localPort = default(443);
         string serviceTablePath = default("^.serviceTable");
+        @display("i=block/join,,0");
     gates:
         input transportIn @labels(ITransportPacket/up);
         output transportOut @labels(ITransportPacket/down);

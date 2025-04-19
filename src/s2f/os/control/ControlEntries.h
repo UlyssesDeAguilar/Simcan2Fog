@@ -19,10 +19,11 @@ struct AppControlBlock
     // tApplicationState status; //!< The exit status (0 - OK, 1 - ERROR, 2 - FORCED_EXIT, 3 - RUNNING)
     // std::map<int, ConnectionMode> sockets; //!< Map that contains the application sockets
 
-    void initialize(int vmId, int pid)
+    void initialize(int vmId, int pid, int deploymentIndex)
     {
         this->pid = pid;
         this->vmId = vmId;
+        this->deploymentIndex = deploymentIndex;
     }
 
     void free() { this->pid = -1; }

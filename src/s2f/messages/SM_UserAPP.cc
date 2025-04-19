@@ -88,7 +88,6 @@ void SM_UserAPP::abortAllApps()
                     << " in VM " << vmId
                     << " has been aborted by timeout" << '\n';
         }
-        i++;
     }
 }
 

@@ -28,10 +28,9 @@ using namespace omnetpp;
 class PushClient : public cSimpleModule
 {
 private:
-  const char *parentTopic;
+  const char *topic;
 protected:
-  virtual void initialize(int stage) override;
-  virtual int numInitStages() const override { return SimCanInitStages::NEAR + 1; }
+  virtual void initialize() override;
   virtual void handleMessage(cMessage *msg) override;
 };
 

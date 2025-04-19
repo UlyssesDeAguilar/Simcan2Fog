@@ -44,6 +44,7 @@ constexpr int SM_Syscall_Req = 800;
 constexpr int SM_VM_Req = 500;
 constexpr int SM_VM_Sub = 502;
 constexpr int SM_APP_Req = 503;
+constexpr int SM_App_Set = 504;
 
 // TODO: PD: No tengo NPI de donde se ponen los resultados de las operaciones, las pongo aqui.
 // Y despues ya las movemos ...

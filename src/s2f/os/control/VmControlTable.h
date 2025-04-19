@@ -25,6 +25,7 @@ public:
     void createMapping(const char *globalVmId, int localVmId);
     const char *getGlobalVmId(int localVmId) { return localToGlobalVmIdMap.at(localVmId).c_str(); }
     int getLocalVmId(const char *globalVmId) { return globalToLocalVmIdMap.at(globalVmId); }
+    int getPidFromServiceName(int vmId, const char *serviceName);
     
     int allocateVm(const VirtualMachine *vmType = nullptr, const char *userId = nullptr);
     void deallocateVm(int vmId);

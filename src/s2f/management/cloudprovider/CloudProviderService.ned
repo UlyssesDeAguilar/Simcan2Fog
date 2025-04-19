@@ -7,6 +7,8 @@ simple CloudProviderService
 {
     parameters:
         @class(CloudProvider);
+        string dataManagerPath;
+        string nodeDbPath;
         bool dispatchPriority = default(false); // Whether priority users skip the queue
     gates:
         input queueIn;

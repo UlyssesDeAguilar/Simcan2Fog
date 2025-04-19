@@ -24,5 +24,6 @@ simple ServerEndpoint extends AppBase
 {
     parameters:
         @class(ServerEndpoint);
+        bool useAppIdAsServiceName = default(false);
         string serviceName;		// Name of the service, used for HTTP/REST requests
 }

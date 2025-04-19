@@ -24,6 +24,11 @@ void ServerEndpoint::initialize()
     AppBase::initialize();
     setReturnCallback(this);
     
+    if (par("useAppIdAsServiceName"))
+        serviceName = this->appInstance;
+    else
+        serviceName = par("serviceName");
+    
     // Open the socket and listen for incoming comms
     sockFd = open(443, SOCK_STREAM);
     listen(sockFd);
@@ -34,7 +39,7 @@ void ServerEndpoint::processSelfMessage(cMessage *msg)
     if (event == msg)
     {
         // Register the service
-        registerService(par("serviceName"), sockFd);
+        registerService(serviceName, sockFd);
     }
     else
         delete msg;
@@ -49,7 +54,7 @@ void ServerEndpoint::handleDataArrived(int sockFd, Packet *p)
     
     auto request = makeShared<RestfulResponse>();
     request->setResponseCode(ResponseCode::OK);
-    request->setHost(par("serviceName"));
+    request->setHost(serviceName);
     request->setPath(dynamic_pointer_cast<const RestfulRequest>(p->peekData())->getPath());
     packet->insertData(request);
     _send(sockFd, packet);

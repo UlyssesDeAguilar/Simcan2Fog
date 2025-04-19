@@ -7,6 +7,7 @@
 #include "s2f/management/managers/ResourceManager.h"
 #include "s2f/os/hypervisors/DcHypervisor.h"
 #include "s2f/messages/SM_VmExtend_m.h"
+#include "s2f/architecture/net/db/SimpleNetDb.h"
 #include "inet/common/packet/Packet.h"
 
 /**
@@ -23,6 +24,9 @@ protected:
 
     NodeUpdate eventTemplate;
     ResourceManager *resourceManager;
+    SimpleNetDb *netDb;
+    const char *zone;
+    const char *nodeName;
     bool showDataCentreConfig;   /** Show information of DataCentres */
     bool forecastActiveMachines; /** Activate forecasting */
 
@@ -35,10 +39,9 @@ protected:
 
     StrMap<hypervisor::DcHypervisor> acceptedVMsMap; // Map of the accepted VMs
     opp_string_map acceptedUsersRqMap;            // Map of the accepted users (keeps the topic to return messages)
-    StrMap<SM_UserAPP> handlingAppsRqMap;            // Map of the accepted applications
 
     GateInfo networkGates;
-    GateInfo localNetworkGates;
+    GateInfo queueGates;
 
     virtual int numInitStages() const override { return inet::INITSTAGE_APPLICATION_LAYER + 1; }
     virtual void initialize(int stage) override;
@@ -48,7 +51,8 @@ protected:
     virtual void initializeSelfHandlers() override;
     virtual void initializeRequestHandlers() override;
     virtual void initializeResponseHandlers() override;
-
+    virtual void handleMessage(cMessage *msg) override;
+    
     // Self handlers
     void handleCpuStatus(cMessage *msg);
     void handleManageMachines(cMessage *msg);
@@ -59,7 +63,7 @@ protected:
     void handleVmSubscription(SIMCAN_Message *sm);
     void handleExtendVmAndResumeExecution(SIMCAN_Message *sm);
     void handleEndVmAndAbortExecution(SIMCAN_Message *sm);
-    
+    void handleApplicationRequest(SIMCAN_Message *sm);
     // Response handlers
 
     /**
@@ -73,11 +77,12 @@ protected:
 
     // Helpers
     bool checkVmUserFit(SM_UserVM *&userVM_Rq);
+    void dispatchVm(const ResourceManager::NodeVmRecord &record, SM_UserVM *request);
+    void dispatchVms(const std::vector<ResourceManager::NodeVmRecord> *allocRecords, SM_UserVM *request);
     void sendUpdateToCloudProvider();
-
-    // Helpers
-    hypervisor::DcHypervisor *getNodeHypervisorByVm(const std::string &vmId) { return acceptedVMsMap.at(vmId); }
-    SM_UserAPP *getUserAppRequestPerUser(const std::string &userId) { return handlingAppsRqMap.at(userId); }
+    void sendToLocalNetwork(cMessage *msg, int destinationAddress);
+    int resolveHypervisorUrl(const char *hypervisorUrl);
+    opp_string generateHypervisorUrl(const char *hostName);
 };
 
 #endif

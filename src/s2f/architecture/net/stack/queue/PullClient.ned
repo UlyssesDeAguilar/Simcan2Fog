@@ -19,6 +19,7 @@ simple PullClient
 {
     parameters:
         @class(PullClient);
+        string topic;
     gates:
         input netIn;
         output netOut;

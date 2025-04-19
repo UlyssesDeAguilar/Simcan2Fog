@@ -18,17 +18,9 @@
 Define_Module(PushClient);
 using namespace inet;
 
-void PushClient::initialize(int stage)
+void PushClient::initialize()
 {
-    switch (stage)
-    {
-    case SimCanInitStages::NEAR:
-        // Retrieve the topic from the parent
-        this->parentTopic = getParentModule()->getParentModule()->par("nodeTopic");
-        break;
-    default:
-        break;
-    }
+    topic = par("topic");
 }
 
 void PushClient::handleMessage(cMessage *msg)
@@ -39,7 +31,7 @@ void PushClient::handleMessage(cMessage *msg)
 
     // Set the return topic if specified, otherwise reset to default settings
     if (sm->getAutoSourceTopic())
-        sm->setReturnTopic(parentTopic);
+        sm->setReturnTopic(topic);
     else
         sm->setAutoSourceTopic(true);
 

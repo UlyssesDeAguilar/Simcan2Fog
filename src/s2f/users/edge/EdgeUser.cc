@@ -1,4 +1,5 @@
 #include "EdgeUser.h"
+#include "s2f/messages/SM_AppSettings_m.h"
 
 using namespace users;
 Define_Module(EdgeUser);
@@ -6,6 +7,7 @@ Define_Module(EdgeUser);
 void EdgeUser::initialize()
 {
     // Build the userId
+    opp_string_map dependencies;
     userId = generateUniqueId(getFullName()).c_str();
     deploymentZone = par("deploymentZone");
 
@@ -22,22 +24,6 @@ void EdgeUser::initialize()
         EV_DEBUG << "Loaded VM " << vm.getName() << " of type " << vm.getType() << "\n";
     }
 
-    auto remoteAppsArray = check_and_cast<cValueArray *>(par("remoteApps").objectValue());
-
-    for (int i = 0, size = remoteAppsArray->size(); i < size; i++)
-    {
-        auto appDefinition = check_and_cast<cValueMap *>(remoteAppsArray->get(i).objectValue());
-        const char *name = appDefinition->get("name");
-        const char *type = appDefinition->get("type");
-        const char *platform = appDefinition->get("platform");
-
-        auto &app = remoteApps[generateUniqueId(name).c_str()];
-        app.setName(name);
-        app.setType(type);
-        app.setPlatform(findPlatform(platform));
-        EV_DEBUG << "Loaded App " << app.getName() << " of type " << app.getType() << " to be deployed on VM " << app.getPlatform()->getName() << "\n";
-    }
-
     auto localAppsArray = check_and_cast<cValueArray *>(par("localApps").objectValue());
     for (int i = 0, size = localAppsArray->size(); i < size; i++)
     {
@@ -49,7 +35,31 @@ void EdgeUser::initialize()
         auto &app = localApps.back();
         app.setName(name);
         app.setType(type);
+
+        if (appDefinition->containsKey("dependsOn"))
+            dependencies[(const char *)appDefinition->get("dependsOn")] = name;
+
         EV_DEBUG << "Loaded Local App " << app.getName() << " of type " << app.getType() << "\n";
+    }
+
+    auto remoteAppsArray = check_and_cast<cValueArray *>(par("remoteApps").objectValue());
+    for (int i = 0, size = remoteAppsArray->size(); i < size; i++)
+    {
+        auto appDefinition = check_and_cast<cValueMap *>(remoteAppsArray->get(i).objectValue());
+        const char *name = appDefinition->get("name");
+        const char *type = appDefinition->get("type");
+        const char *platform = appDefinition->get("platform");
+
+        App app;
+        auto iter = dependencies.find(name);
+        if (iter != dependencies.end())
+            app.setDependant(iter->second.c_str());
+        
+        app.setName(par("makeServiceNameUnique") ? generateUniqueId(name).c_str() : name);
+        app.setType(type);
+        findPlatform(platform)->appendApp(app);
+
+        EV_DEBUG << "Loaded App " << app.getName() << " of type " << app.getType() << " to be deployed on VM " << platform << "\n";
     }
 
     cModule *zone = getParentModule();
@@ -71,16 +81,15 @@ void EdgeUser::initialize()
     auto startMsg = new cMessage("User start");
     scheduleAt(par("startupTime"), startMsg);
 
-    //WATCH_MAP(managedVms);
-    //WATCH_MAP(remoteApps);
-    //WATCH_VECTOR(localApps);
+    // WATCH_MAP(managedVms);
+    // WATCH_MAP(remoteApps);
+    // WATCH_VECTOR(localApps);
     WATCH(userId);
 }
 
 void EdgeUser::finish()
 {
     managedVms.clear();
-    remoteApps.clear();
     localApps.clear();
     managedSensors.clear();
 }
@@ -112,32 +121,50 @@ void EdgeUser::handleMessage(cMessage *msg)
 
 void EdgeUser::startup()
 {
-	EV_DEBUG << "Starting deployment of vms. #vms: " << managedVms.size() << "\n";
+    EV_DEBUG << "Starting deployment of vms. #vms: " << managedVms.size() << "\n";
+
     for (auto &vmEntry : managedVms)
     {
+        Vm &vm = vmEntry.second;
+
+        // TODO: Accept this as a customizable parameter
+        VM_Request::InstanceRequestTimes times;
+        times.maxStartTime = 1000;
+        times.rentTime = 3600;
+        times.maxSubTime = 1000;
+        times.maxSubscriptionTime = 1000;
+
         auto request = new SM_UserVM();
         request->setOperation(SM_VM_Req);
         request->setUserId(userId.c_str());
         request->setZone(deploymentZone);
-        // TODO: Put in place the rest of the details -> name, type, sla, etc ...
+        request->createNewVmRequest(vm.getType(), vmEntry.first.c_str(), times);
         request->setDestinationTopic("cloudProvider");
+
+        // Compatibility with SIMCAN modules
+        request->addNodeToTrace(getFullPath());
+        request->addModuleToTrace(getId(), gate("queueOut")->getId(), 0);
         send(request, "queueOut");
     }
 
-    EV_DEBUG << "Starting deployment of local apps. #apps " << localApps.size() << "\n";
-    // Deploy local applications
-    auto appRequest = new SM_UserAPP();
-    appRequest->setOperation(SM_APP_Req);
-    appRequest->setUserId(userId.c_str());
-    appRequest->setVmId(par("controllerHostName"));
+    if (localApps.size() > 0)
+    {
+        // Deploy local applications
+        EV_DEBUG << "Starting deployment of local apps. #apps " << localApps.size() << "\n";
+        auto appRequest = new SM_UserAPP();
+        appRequest->setOperation(SM_APP_Req);
+        appRequest->setUserId(userId.c_str());
+        appRequest->setVmId(par("controllerHostName"));
 
-    for (auto &appEntry : localApps)
-        appRequest->createNewAppRequest(appEntry.getName(), appEntry.getType(), 0.0);
-    
-    send(appRequest, serialGates.outBaseId);
+        for (auto &appEntry : localApps)
+            appRequest->createNewAppRequest(appEntry.getName(), appEntry.getType(), 0.0);
+
+        send(appRequest, serialGates.outBaseId);
+    }
 
     // Also turn the sensors on
-    turnSensorsOn();
+    if (managedSensors.size() > 0)
+        turnSensorsOn();
 }
 
 void EdgeUser::processSerialEvent(cMessage *msg)
@@ -151,13 +178,38 @@ void EdgeUser::handleVmUpdate(SM_UserVM *update)
 {
     for (int i = 0, size = update->getVmArraySize(); i < size; i++)
     {
-        VM_Response *response;
-        auto &vmDefinition = managedVms[update->getVm(i).vmId];
-        if (update->getResponse(i, &response))
+        const char *vmId = update->getVm(i).vmId.c_str();
+        const VM_Response *response = update->getResponse(i);
+        Vm &vmDefinition = managedVms[vmId];
+
+        if (response)
         {
-            // Should probably redesing the VM request message
-            // Right now what's needed is (1) return topic and (2) HypervisorURL
-            // And adding the applications (of course)
+            EV_DEBUG << "Vm is ready: " << vmDefinition.getName() << "\n";
+            vmDefinition.setState(State::UP);
+
+            const char *topic = update->getReturnTopic();
+            const char *hypervisorUrl = response->ip.c_str();
+            auto request = new SM_UserAPP();
+            request->setVmId(vmId);
+            request->setDestinationTopic(topic);
+            request->setHypervisorUrl(hypervisorUrl);
+            request->setUserId(userId.c_str());
+            request->setHypervisorUrl(response->ip.c_str());
+
+            for (int i = 0, size = vmDefinition.getAppArraySize(); i < size; i++)
+            {
+                auto &app = vmDefinition.getAppForUpdate(i);
+                request->createNewAppRequest(app.getName(), app.getType(), simTime().dbl());
+                app.setState(State::UP);
+
+                if (app.getDependant())
+                    sendServiceIsUp(app.getDependant(), app, update->getZone());
+            }
+
+            // Compatibility with SIMCAN modules
+            request->addNodeToTrace(getFullPath());
+            request->addModuleToTrace(getId(), gate("queueOut")->getId(), 0);
+            send(request, "queueOut");
         }
         else
         {
@@ -204,4 +256,20 @@ users::Vm *EdgeUser::findPlatform(const char *name)
 
     error("Could not find platform %s", name);
     return nullptr;
+}
+
+void EdgeUser::sendServiceIsUp(const char *localApp, const App &service, const char *zone)
+{
+    opp_string route = service.getName();
+    route = route + opp_string(".") + zone + ".com";
+
+    AppParameter param;
+    param.name = "serviceName";
+    param.value = route;
+
+    auto request = new SM_AppSettings();
+    request->setAppName(localApp);
+    request->setVmId(par("controllerHostName"));
+    request->appendParameters(param);
+    send(request, serialGates.outBaseId);
 }

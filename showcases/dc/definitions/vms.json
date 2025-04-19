@@ -1,0 +1,82 @@
+[
+    {
+        "name": "VM_4xlarge",
+        "cost": 23.0,
+        "cores": 16,
+        "scu": 16.0,
+        "disk": 1000.0,
+        "memory": 64.0
+    },
+    {
+        "name": "VM_2xlarge",
+        "cost": 23.0,
+        "cores": 8,
+        "scu": 8.0,
+        "disk": 1000.0,
+        "memory": 32.0
+    },
+    {
+        "name": "VM_xlarge",
+        "cost": 23.0,
+        "cores": 4,
+        "scu": 4.0,
+        "disk": 1000.0,
+        "memory": 16.0
+    },
+    {
+        "name": "VM_large",
+        "cost": 23.0,
+        "cores": 4,
+        "scu": 4.0,
+        "disk": 1000.0,
+        "memory": 8.0
+    },
+    {
+        "name": "VM_medium",
+        "cost": 15.0,
+        "cores": 2,
+        "scu": 2.0,
+        "disk": 500.0,
+        "memory": 4.0
+    },
+    {
+        "name": "VM_small",
+        "cost": 15.0,
+        "cores": 1,
+        "scu": 1.0,
+        "disk": 250.0,
+        "memory": 2.0
+    },
+    {
+        "name": "VM_micro",
+        "cost": 15.0,
+        "cores": 1,
+        "scu": 1.0,
+        "disk": 100.0,
+        "memory": 1
+    },
+    {
+        "name": "VM_nanoHD",
+        "cost": 15.0,
+        "cores": 1,
+        "scu": 1.0,
+        "disk": 500.0,
+        "memory": 0.5
+    },
+    {
+        "name": "VM_nanoRAM",
+        "cost": 15.0,
+        "cores": 1,
+        "scu": 1.0,
+        "disk": 100.0,
+        "memory": 2.0
+    },
+    {
+        "name": "VM_nano",
+        "cost": 15.0,
+        "cores": 1,
+        "scu": 1.0,
+        "disk": 100.0,
+        "memory": 0.5
+    }
+]

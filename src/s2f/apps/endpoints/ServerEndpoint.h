@@ -28,6 +28,7 @@ class ServerEndpoint : public AppBase, public AppBase::ICallback
 {
 protected:
   int sockFd;
+  const char *serviceName;
   virtual void initialize() override;
   virtual void processSelfMessage(cMessage *msg) override;
 public:
