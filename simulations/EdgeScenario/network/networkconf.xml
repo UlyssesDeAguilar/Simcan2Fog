@@ -1,0 +1,7 @@
+<config>
+	<interface hosts='messageQueue' address='10.0.0.1'/>
+	<interface hosts='dns' address='10.0.0.2'/>
+	<interface hosts='dc' address='10.0.0.3'/>
+	<interface hosts='fg' address='10.0.0.4'/>
+	<interface hosts='**' address='10.x.x.x' netmask='255.x.x.x'/>
+</config>

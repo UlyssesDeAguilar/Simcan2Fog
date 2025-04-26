@@ -1,12 +1,15 @@
-package s2f.users.edge;
+package s2f.tiles;
 
 // Wired comms
 import inet.node.ethernet.Eth100M;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.EthernetSwitch;
+import s2f.architecture.net.stack.NetworkStack;
 
 // Architectural components from SimCan2Fog models
 import s2f.architecture.nodes.iot.controllers.EdgeNode;
 import s2f.architecture.nodes.iot.sensors.LuminositySensor;
+import s2f.users.edge.EdgeUser;
+
 import inet.node.inet.Router;
 import inet.node.inet.WirelessHost;
 
@@ -25,17 +28,17 @@ module LightEdgeTile like ITile
         inout ethernet;
 
     submodules:
-        ap: EtherSwitch {
-            @display("i=device/accesspoint;p=6.485207,11.029586");
+        ap: EthernetSwitch {
+            @display("i=device/accesspoint;p=6.485207,12.023668");
             @display("p=6.3905325,11.786983");
         }
-        
-        user: EdgeUserModel {
-            @display("p=4.6973147,6.008193");
+
+        user: EdgeUser {
+            @display("p=2.745562,5.0177517");
         }
 
         controller: EdgeNode {
-            @display("p=4.733728,15.668639");
+            @display("p=6.485207,5.0177517");
         }
 
         router: Router {
@@ -52,9 +55,17 @@ module LightEdgeTile like ITile
             @display("i=status/bulb;p=10.8,7.6");
         }
 
+        netStack: NetworkStack {
+            @display("p=2.745562,10.508876");
+        }
+
     connections:
-        controller.comm <--> Eth100M <--> ap.ethg++;
-        user.ethg++ <--> Eth100M <--> ap.ethg++;
+
+        user.serialIn <-- controller.serialOut;
+        user.serialOut --> controller.serialIn;
+
+        user.queueIn <-- netStack.queueOut;
+        user.queueOut --> netStack.queueIn;
 
         for i=0..sensors-1 {
             sensor[i].ethg++ <--> Eth100M <--> ap.ethg++;
@@ -63,8 +74,9 @@ module LightEdgeTile like ITile
         for i=0..actuators-1 {
             actuator[i].ethg++ <--> Eth100M <--> ap.ethg++;
         }
-		
-		//ap.ethg++ <--> ethernet;
+
+        netStack.ethg++ <--> Eth100M <--> ap.ethg++;
+        controller.ethg++ <--> Eth100M <--> ap.ethg++;
         router.ethg++ <--> Eth100M <--> ap.ethg++;
         router.ethg++ <--> ethernet;
 }

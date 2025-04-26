@@ -1,0 +1,22 @@
+[
+    {
+        "zone": "fog.com",
+        "records": [
+            {
+                "domain": "*.fog.com",
+                "type": "A",
+                "ip": "10.0.0.4"
+            }
+        ]
+    },
+    {
+        "zone": "dc.com",
+        "records": [
+            {
+                "domain": "*.dc.com",
+                "type": "A",
+                "ip": "10.0.0.3"
+            }
+        ]
+    }
+]

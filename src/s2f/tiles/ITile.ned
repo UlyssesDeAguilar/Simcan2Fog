@@ -1,4 +1,4 @@
-package s2f.users.edge;
+package s2f.tiles;
 
 moduleinterface ITile {
     parameters:

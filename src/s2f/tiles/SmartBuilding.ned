@@ -1,8 +1,8 @@
-package s2f.users.edge;
+package s2f.tiles;
 
 // Wired comms
-import inet.node.ethernet.Eth100M;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.Eth1G;
+import inet.node.ethernet.EthernetSwitch;
 import inet.node.inet.Router;
 
 // Architectural components from SimCan2Fog models
@@ -14,57 +14,57 @@ import s2f.architecture.nodes.iot.actuators.*;
 //	Represents an "Edge Scenario" as an reusable "mini bubble" in the
 //	grand scheme of the simulation.
 //
-module SmartHouse like ITile
+module SmartBuilding like ITile
 {
     parameters:
-        @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s;bgu=m");
+        @display("i=misc/building;bgb=29.76,24.16;bgu=m");
         string serviceName;
-        int sensors = 2;
-        int actuators = 2;
+        int sensors = 4;
+        int actuators = 1;
     gates:
         inout ethernet;
 
     submodules:
-        ap: EtherSwitch {
+        ap: EthernetSwitch {
             @display("i=device/accesspoint;p=6.485207,11.029586");
             @display("p=6.3905325,11.786983");
         }
-        
-        user: EdgeUserModel {
+
+        user: EdgeUser {
             @display("p=4.6973147,6.008193");
         }
 
         controller: Raspberry5 {
-            hy.apps = "SmartHomeAppEndToEnd";
-            @display("p=4.733728,15.668639");
+            hy.apps = "BuildingApp";
+            @display("p=7.04,15.76");
         }
 
         router: Router {
             @display("p=1.8206645,13.254438");
         }
 
-        sensor[sensors]: LuminositySensor {
+        sensor[sensors]: IpCamera {
             numWlanInterfaces = 0;
-            @display("p=12.744652,12.853891");
+            @display("p=18.16,11.52");
         }
 
-        actuator[actuators]: SmartBulb {
+        actuator[actuators]: AutomaticWatering {
             numWlanInterfaces = 0;
-            @display("p=10.8,7.6");
+            @display("p=17.6,5.04");
         }
 
     connections:
-        controller.comm <--> Eth100M <--> ap.ethg++;
-        user.ethg++ <--> Eth100M <--> ap.ethg++;
+        controller.comm <--> Eth1G <--> ap.ethg++;
+        user.ethg++ <--> Eth1G <--> ap.ethg++;
 
         for i=0..sensors-1 {
-            sensor[i].ethg++ <--> Eth100M <--> ap.ethg++;
+            sensor[i].ethg++ <--> Eth1G <--> ap.ethg++;
         }
 
         for i=0..actuators-1 {
-            actuator[i].ethg++ <--> Eth100M <--> ap.ethg++;
+            actuator[i].ethg++ <--> Eth1G <--> ap.ethg++;
         }
-		
-        router.ethg++ <--> Eth100M <--> ap.ethg++;
+
+        router.ethg++ <--> Eth1G <--> ap.ethg++;
         router.ethg++ <--> ethernet;
 }

@@ -16,19 +16,24 @@
 package s2f.simulations.EdgeScenario;
 
 import s2f.core.simdata.SimData;
-import s2f.architecture.nodes.cloud.DataCentre;
-import s2f.architecture.nodes.fog.FogNode;
 import s2f.architecture.dns.DnsSimplified;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
-import inet.node.internetcloud.InternetCloud;
+import s2f.architecture.messagequeue.MessageQueue;
+
+import s2f.management.cloudprovider.CloudProvider;
+import s2f.architecture.nodes.cloud.DataCentre;
+import s2f.architecture.nodes.fog.FogNode;
 
 import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100G;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.EthernetSwitch;
+import inet.node.internetcloud.InternetCloud;
 
+import s2f.users.edge.EdgeUser;
+import s2f.architecture.net.stack.NetworkStack;
 import s2f.architecture.nodes.iot.sensors.HumiditySensor;
 import s2f.architecture.nodes.iot.actuators.AutomaticWatering;
 import s2f.architecture.nodes.iot.controllers.Raspberry5;
@@ -46,16 +51,30 @@ network SimpleFogNetwork
             @display("p=752.745,27.135");
         }
         configurator: Ipv4NetworkConfigurator {
-
             @display("p=675.36,27.135");
         }
 
+        cloudProvider: CloudProvider {
+
+            @display("p=483,308");
+        }
+        messageQueue: MessageQueue {
+
+            @display("p=483,173");
+        }
+        user: EdgeUser {
+            @display("p=180,46");
+        }
+
+        netStack: NetworkStack {
+            @display("p=180.90001,124.62");
+        }
         dns: DnsSimplified {
-            @display("p=628.125,191.955");
+            @display("p=613.05,173.865");
         }
 
         dc: DataCentre {
-            @display("p=645.21,288.435");
+            @display("p=613.05,277.38");
         }
 
         fg: FogNode {
@@ -76,28 +95,38 @@ network SimpleFogNetwork
 
         sensor: HumiditySensor {
             numWlanInterfaces = 0;
-            @display("p=218.085,127.635");
+            @display("p=105.525,248.235");
         }
         controller: Raspberry5 {
 
-            @display("p=107.535,107.535");
+            @display("p=84.42,87.435005");
         }
-        ap: EtherSwitch {
+        ap: EthernetSwitch {
             @display("i=device/accesspoint, p=144.72,199.99501");
         }
         actuator[1]: AutomaticWatering {
             numWlanInterfaces = 0;
-            @display("i=faucet64;p=52.260002,195.975");
+            @display("i=faucet64;p=42.21,189.945");
         }
     connections:
+
+        user.serialOut --> controller.serialIn;
+        user.serialIn <-- controller.serialOut;
+        user.queueIn <-- netStack.queueOut;
+        user.queueOut --> netStack.queueIn;
+
         sensor.ethg++ <--> Eth100M <--> ap.ethg++;
-        controller.comm <--> Eth100M <--> ap.ethg++;
+        controller.ethg++ <--> Eth100M <--> ap.ethg++;
+        netStack.ethg++ <--> Eth100M <--> ap.ethg++;
         actuator[0].ethg++ <--> Eth100M <--> ap.ethg++;
 
         ap.ethg++ <--> Eth10G <--> local.ethg++;
         local.ethg++ <--> Eth10G <--> fg.comm++;
         metropolitan.ethg++ <--> Eth10G <--> fg.comm++;
         metropolitan.ethg++ <--> Eth100G <--> backbone.ethg++;
+
         backbone.ethg++ <--> Eth100G <--> dc.comm++;
         backbone.ethg++ <--> Eth100G <--> dns.ethg++;
+        backbone.ethg++ <--> Eth100G <--> cloudProvider.ethg++;
+        backbone.ethg++ <--> Eth100G <--> messageQueue.ethg++;
 }

@@ -15,8 +15,7 @@
 package s2f.architecture.net.stack;
 
 import s2f.architecture.net.stack.resolver.DnsResolver;
-import s2f.architecture.net.stack.queue.QueuePullClient;
-import s2f.architecture.net.stack.queue.QueuePushClient;
+import s2f.architecture.net.stack.queue.QueueClient;
 import inet.applications.udpapp.UdpSocketIo;
 import inet.node.inet.StandardHost;
 import inet.node.inet.Router;
@@ -25,9 +24,9 @@ module RoutingNetworkStack extends Router
 {
     parameters:
         string nodeTopic; 						// The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment
-        string smqIp = default("10.0.2.1");
+        string smqIp;
+        string dns;
         bool enableQueue = default(true);		// Wheter to instatiate or not the queue push/pull clients
-        string dns = default("10.1.0.1");
 		dnsResolver.ispResolver = dns;
     gates:
         input queueIn @loose;
@@ -40,16 +39,11 @@ module RoutingNetworkStack extends Router
             @display("p=1140.396,65.598");
         }
 
-        pushClient: QueuePushClient if enableQueue {
-            @display("p=857.81995,68.962");
-            connectAddress = smqIp;
+        queueClient: QueueClient if enableQueue
+        {
+            @display("p=1858.6099,343.29617");
         }
-
-        pullClient: QueuePullClient if enableQueue {
-            @display("p=973.878,75.689995");
-            connectAddress = smqIp;
-        }
-
+        
         eventsSocket: UdpSocketIo if hasCloudEvents {
             destAddress = cpIp;
             destPort = 8446;
@@ -62,11 +56,8 @@ module RoutingNetworkStack extends Router
         dnsResolver.socketOut --> at.in++;
 
         // Connect both push/pull clients if enabled
-        pullClient.socketIn <-- at.out++ if enableQueue;
-        pullClient.socketOut --> at.in++ if enableQueue;
-
-        pushClient.socketIn <-- at.out++ if enableQueue;
-        pushClient.socketOut --> at.in++ if enableQueue;
+        queueClient.socketIn <-- at.out++ if enableQueue;
+        queueClient.socketOut --> at.in++ if enableQueue;
 
         // Interconnect possible apps to the tcp/udp layer
         for i=0..sizeof(ssIn)-1 {
@@ -75,6 +66,6 @@ module RoutingNetworkStack extends Router
         }
 
 		// Incoming and outgoing from SMQ
-        pullClient.queueOut --> queueOut if enableQueue;
-        queueIn --> pushClient.queueIn if enableQueue;
+        queueClient.queueOut --> queueOut if enableQueue;
+        queueClient.queueIn <-- queueIn if enableQueue;
 }

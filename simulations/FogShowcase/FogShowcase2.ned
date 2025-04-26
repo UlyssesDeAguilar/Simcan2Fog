@@ -19,7 +19,7 @@ package s2f.simulations.FogShowcase;
 import s2f.core.simdata.SimData;
 import s2f.architecture.messagequeue.MessageQueue;
 import inet.node.inet.Router;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.EthernetSwitch;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100G;
 
@@ -57,7 +57,7 @@ network FogShowcase2
             @display("p=70.4,639.232;is=l");
         }
 
-        switch: EtherSwitch {
+        switch: EthernetSwitch {
 
             @display("p=315.392,247.80801");
         }

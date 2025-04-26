@@ -1,5 +1,0 @@
-<internetCloud symmetric="true">
-  <parameters name="good">
-    <traffic src="**" dest="**" delay="max(20ms,truncnormal(20ms,4ms))" datarate="10Gbps" drop="uniform(0,100) &lt; 0.001" />
-  </parameters>
-</internetCloud>
