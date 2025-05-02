@@ -1,7 +1,9 @@
 <config>
-	<interface hosts='messageQueue' address='10.0.0.1'/>
-	<interface hosts='dns' address='10.0.0.2'/>
-	<interface hosts='dc' address='10.0.0.3'/>
-	<interface hosts='fg' address='10.0.0.4'/>
-	<interface hosts='**' address='10.x.x.x' netmask='255.x.x.x'/>
+	<interface hosts='*.messageQueue' address='10.0.0.1'/>
+	<interface hosts='*.dns' address='10.0.0.2'/>
+	<interface hosts='*.dc.stack' address='10.0.0.3'/>
+	<interface hosts='*.cloudProvider' address='10.0.0.4'/>
+	<interface hosts='*.fg.stack' address='10.0.1.4' names="eth0"/>
+	<interface hosts='*.fg.stack' address='10.0.2.4' names="eth1"/>
+	<interface hosts='**' address='10.1.1.x' netmask='255.255.255.x'/>
 </config>

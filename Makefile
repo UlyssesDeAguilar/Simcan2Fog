@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for Simcan2Fog
 #
 # This file was generated with the command:
-#  opp_makemake -f -O out -KINET4_5_PROJ=../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lSimcan2Fog$$\(D\) -lmysqlcppconn -lINET$$\(D\) -d src -X.
+#  opp_makemake -f -O out -KINET4_5_PROJ=../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lSimcan2Fog$$\(D\) -lINET$$\(D\) -d src -X.
 #
 
 # Name of target to be created (-o option)
@@ -22,7 +22,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(QTENV_LIBS) $(CMDENV_LIBS)
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET4_5_PROJ)/src $(LDFLAG_LIBPATH)out/$(CONFIGNAME)/src  -lSimcan2Fog$(D) -lmysqlcppconn -lINET$(D)
+LIBS = $(LDFLAG_LIBPATH)$(INET4_5_PROJ)/src $(LDFLAG_LIBPATH)out/$(CONFIGNAME)/src  -lSimcan2Fog$(D) -lINET$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = out

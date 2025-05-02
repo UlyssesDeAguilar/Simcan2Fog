@@ -1,5 +1,6 @@
 #include "MySqlDataEngine.h"
 
+#ifdef WITH_SQL_DATA_ENGINE
 using namespace s2f::data;
 using namespace omnetpp;
 
@@ -417,3 +418,5 @@ MySqlDataEngine::searchUserVms(const std::string &user)
     else
         return res;
 }
+
+#endif

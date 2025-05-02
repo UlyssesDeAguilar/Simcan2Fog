@@ -37,5 +37,24 @@
             "MIs": "79200000",
             "iterations": "5"
         }
+    },
+    {
+        "name": "SmallIotApp",
+        "model": "IotApplication",
+        "package": "s2f.apps.iot",
+        "parameters": {
+            "serviceName": "",
+            "synthSize": "40B",
+            "pingsThreshold": "5"
+        }
+    },
+    {
+        "name": "SmallIotService",
+        "model": "IotService",
+        "package": "s2f.apps.services",
+        "parameters": {
+            "replySize": "40B",
+            "responseDelay": "40ms"
+        }
     }
 ]

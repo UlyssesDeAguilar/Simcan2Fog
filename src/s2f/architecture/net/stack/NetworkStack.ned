@@ -35,12 +35,11 @@ module NetworkStack extends StandardHost
 
     submodules:
         dnsResolver: DnsResolver {
-            @display("p=1434.4094,78.71759");
+            @display("p=973.675,74.4575");
         }
 
-        queueClient: QueueClient if enableQueue
-        {
-            @display("p=1858.6099,343.29617");
+        queueClient: QueueClient if enableQueue {
+            @display("p=1219.9575,74.4575");
         }
 
     connections:

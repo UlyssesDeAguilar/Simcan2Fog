@@ -2,6 +2,8 @@
 
 #include "s2f/apps/services/SimServiceReq_m.h"
 #include "inet/applications/tcpapp/GenericAppMsg_m.h"
+#include "s2f/architecture/net/protocol/RestfulRequest_m.h"
+#include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 #include "inet/common/TimeTag_m.h"
 
 Define_Module(IotApplication);
@@ -11,8 +13,7 @@ using namespace iot;
 
 simsignal_t roundTripTime = cComponent::registerSignal("roundTripTime");
 
-void IotApplication::initialize()
-{
+void IotApplication::initialize() {
     // Init the super-class
     AppBase::initialize();
 
@@ -22,15 +23,14 @@ void IotApplication::initialize()
     setReturnCallback(this);
 
     cModule *edgeTile = getModuleByPath(par("parentPath"));
-    endpointName = edgeTile->par("serviceName");
     cModule *actuator = edgeTile->getSubmodule("actuator", 0);
     int vectorSize = actuator->getVectorSize();
-    
-    for (int i = 0; i < vectorSize; i++)
-    {
+
+    for (int i = 0; i < vectorSize; i++) {
         actuator = edgeTile->getSubmodule("actuator", i);
         actuators.push_back(L3AddressResolver().addressOf(actuator));
-        EV << "Detected actuator" << i << "with address:" << actuators.back();
+        EV << "Detected actuator " << i << " with address: " << actuators.back()
+                  << "\n";
     }
 
     // Record times
@@ -38,82 +38,88 @@ void IotApplication::initialize()
     runStartTime = time(nullptr);
 }
 
-void IotApplication::processSelfMessage(cMessage *msg)
-{
-    // Open connection on listening port for starting the simulation
-    udpSocket = open(listeningPort, SOCK_DGRAM);
-
-    // Resolve the service name
-    resolve(endpointName);
+void IotApplication::processSelfMessage(cMessage *msg) {
+    if (msg->getKind() == EXEC_START) {
+        // Open connection on listening port for starting the simulation
+        udpSocket = open(listeningPort, SOCK_DGRAM, par("localInterface"));
+    } else if (msg->getKind() == POLL) {
+        sendPoll();
+    }
 }
 
-void IotApplication::handleResolutionFinished(const L3Address ip, bool resolved)
-{
+void IotApplication::handleResolutionFinished(const L3Address ip,
+        bool resolved) {
     if (!resolved)
-        error("Unexpected unavailability of service: %s", endpointName);
+        error("Unexpected unavailability of service: %s", serviceName);
 
     endpointIp = ip;
 
-    EV << "Resolving service: " << endpointName << " yielded: " << endpointIp << "\n";
+    EV << "Resolving service: " << serviceName << " yielded: " << endpointIp
+              << "\n";
     EV << "Starting connection with service: ..." << "\n";
-    tcpSocket = open(-1, SOCK_STREAM);
+
+    tcpSocket = open(-1, SOCK_STREAM, par("externalInterface"));
     connect(tcpSocket, endpointIp, 443);
 }
 
-void IotApplication::handleConnectReturn(int sockFd, bool connected)
-{
+void IotApplication::handleConnectReturn(int sockFd, bool connected) {
     recordScalar("connected to endpoint", 1.0);
     if (!connected)
         error("Unable to connect to endpoint");
 
-    serviceUp = true;
+    if (sockFd == tcpSocket)
+        sendPoll();
+    //serviceUp = true;
 }
 
-void IotApplication::handleDataArrived(int sockFd, Packet *p)
-{
-    if (sockFd == udpSocket)
-    {
+void IotApplication::handleDataArrived(int sockFd, Packet *p) {
+
+    if (sockFd == udpSocket) {
         EV << "Recieved packet: " << p->getName() << "\n";
         numPings++;
-        if (numPings > (int)par("pingsThreshold") && serviceUp)
-        {
+        if (numPings > (int) par("pingsThreshold") && serviceUp) {
             execute(processingMIs);
             numPings = 0;
         }
-    }
-    else if (sockFd == tcpSocket)
-    {
-        EV << "Got response from the server\n";
+    } else if (sockFd == tcpSocket) {
 
-        chronometer = simTime().dbl() - chronometer;
-        emit(packetReceivedSignal, p);
-        emit(roundTripTime, chronometer);
-        
-        if (actuators.size() > 0)
-            sendActuator();
+        if (!serviceUp) {
+            auto httpResponse = p->peekData<RestfulResponse>();
+            if (httpResponse->getResponseCode() == ResponseCode::OK){
+                EV_INFO << "Service " << serviceName << " is up\n";
+                serviceUp = true;
+            }else {
+                EV_INFO << "Service " << serviceName
+                               << " is not ready yet, waiting to poll again\n";
+                event->setKind(POLL);
+                scheduleAt(simTime() + par("pollingInterval"), event);
+            }
+        } else {
+            EV << "Got response from the server\n";
+            chronometer = simTime().dbl() - chronometer;
+            emit(packetReceivedSignal, p);
+            emit(roundTripTime, chronometer);
+
+            if (actuators.size() > 0)
+                sendActuator();
+        }
     }
 
     delete p;
 }
 
-void IotApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)
-{
+void IotApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) {
     EV << "Processing finished, sending to server ..." << "\n";
     sendServer();
 }
 
-void IotApplication::sendServer()
-{
-    Packet *packet = new Packet("Controller command");
-    auto payload = new SimServiceReq();
+void IotApplication::sendServer() {
+    Packet *packet = new Packet("Controller data");
+    auto payload = makeShared<RestfulRequest>();
 
     payload->addTag<CreationTimeTag>()->setCreationTime(simTime());
     payload->setChunkLength(B(par("synthSize")));
-    payload->setServerClose(par("serverClosesOnReturn"));
-    payload->setExpectedReplyLength(B(par("replySize")));
-    payload->setReplyDelay(par("replyDelay"));
-    payload->setVmType(par("vmType"));
-    packet->insertAtBack(Ptr<GenericAppMsg>(payload));
+    packet->insertData(payload);
 
     emit(packetSentSignal, packet);
     chronometer = simTime().dbl();
@@ -121,8 +127,18 @@ void IotApplication::sendServer()
     _send(tcpSocket, packet);
 }
 
-void IotApplication::sendActuator()
-{
+void IotApplication::sendPoll() {
+    // Send a request to the service
+    auto packet = new Packet("Request (Probe)");
+    auto request = makeShared<RestfulRequest>();
+    request->setVerb(Verb::HEAD);
+    request->setHost(serviceName);
+    request->setPath("/");
+    packet->insertData(request);
+    _send(tcpSocket, packet);
+}
+
+void IotApplication::sendActuator() {
     int randAcutator = intuniform(0, actuators.size() - 1);
     int on = intuniform(0, 1);
 
@@ -137,24 +153,34 @@ void IotApplication::sendActuator()
     payload->setUnit("");
     packet->insertAtBack(payload);
 
-    _send(udpSocket, packet, actuators[randAcutator].toIpv4().getInt(), listeningPort);
+    _send(udpSocket, packet, actuators[randAcutator].toIpv4().getInt(),
+            listeningPort);
 }
 
-bool IotApplication::handlePeerClosed(int sockFd) 
-{
+void IotApplication::handleParameterChange(const char *parameterName) {
+    if (strcmp(parameterName, "serviceName") == 0
+            && !opp_isempty(par("serviceName")) && !serviceUp){
+        serviceName = par("serviceName");
+        resolve(serviceName);
+    }
+}
+
+bool IotApplication::handlePeerClosed(int sockFd) {
     error("Here");
-    return true; 
+    return true;
 }
 
-void IotApplication::finish()
-{
+void IotApplication::finish() {
     // Calculate the total runtime
     double runtime = difftime(time(nullptr), runStartTime);
 
     // Log results
     EV_INFO << "Execution results:" << '\n';
-    EV_INFO << " + Total simulation time (simulated):" << (simTime().dbl() - simStartTime.dbl()) << " seconds " << '\n';
-    EV_INFO << " + Total execution time (real):" << runtime << " seconds" << '\n';
+    EV_INFO << " + Total simulation time (simulated):"
+                   << (simTime().dbl() - simStartTime.dbl()) << " seconds "
+                   << '\n';
+    EV_INFO << " + Total execution time (real):" << runtime << " seconds"
+                   << '\n';
     // EV_INFO << " + Time for CPU:" << total_service_CPU.dbl() << '\n';
 
     // Finish the super-class

@@ -74,7 +74,7 @@ network SimpleFogNetwork
         }
 
         dc: DataCentre {
-            @display("p=613.05,277.38");
+            @display("p=613.05,295.47");
         }
 
         fg: FogNode {
@@ -90,9 +90,12 @@ network SimpleFogNetwork
         }
 
         backbone: InternetCloud {
-            @display("p=531.645,247.23001");
+            @display("p=500.49002,248.235");
         }
+        sw: EthernetSwitch {
 
+            @display("p=555.765,246.225");
+        }
         sensor: HumiditySensor {
             numWlanInterfaces = 0;
             @display("p=105.525,248.235");
@@ -125,8 +128,9 @@ network SimpleFogNetwork
         metropolitan.ethg++ <--> Eth10G <--> fg.comm++;
         metropolitan.ethg++ <--> Eth100G <--> backbone.ethg++;
 
-        backbone.ethg++ <--> Eth100G <--> dc.comm++;
-        backbone.ethg++ <--> Eth100G <--> dns.ethg++;
-        backbone.ethg++ <--> Eth100G <--> cloudProvider.ethg++;
-        backbone.ethg++ <--> Eth100G <--> messageQueue.ethg++;
+        backbone.ethg++ <--> Eth100G <--> sw.ethg++;
+        sw.ethg++ <--> Eth100G <--> dc.comm++;
+        sw.ethg++ <--> Eth100G <--> dns.ethg++;
+        sw.ethg++ <--> Eth100G <--> cloudProvider.ethg++;
+        sw.ethg++ <--> Eth100G <--> messageQueue.ethg++;
 }

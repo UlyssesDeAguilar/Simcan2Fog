@@ -10,9 +10,8 @@ simple FarmApp extends IotApplication{
         processingMIs = default(10);				 // Number of MIs to execute in each iteration
         synthSize @unit(B) = default(70B);          // The payload that'll be sent
 
-        replyDelay @unit(s) = default(0.1s);         // The time the server should take to process the request
-        replySize  @unit(B) = default(20B);          // The expected size of the reply
-        
-        vmType = default("VM_small");
+        //replyDelay @unit(s) = default(0.1s);         // The time the server should take to process the request
+        //replySize  @unit(B) = default(20B);          // The expected size of the reply
+        //vmType = default("VM_small");
         pingsThreshold = default(10);                // The number of pings where it will start processing
 }

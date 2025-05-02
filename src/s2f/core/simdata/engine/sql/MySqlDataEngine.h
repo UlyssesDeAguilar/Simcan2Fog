@@ -10,6 +10,7 @@
 #ifndef SIMCAN_EX_SIM_SCHEMA_MYSQL
 #define SIMCAN_EX_SIM_SCHEMA_MYSQL
 
+#ifdef WITH_SQL_DATA_ENGINE
 // Interface contract
 #include <cstdlib>
 
@@ -122,5 +123,7 @@ namespace s2f
         };
     };
 };
+
+#endif
 
 #endif /*SIMCAN_EX_SIM_SCHEMA_MYSQL*/

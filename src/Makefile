@@ -35,6 +35,7 @@ OBJS = \
     $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
+    $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
@@ -70,7 +71,7 @@ OBJS = \
     $O/s2f/core/simdata/DataRepository.o \
     $O/s2f/core/simdata/engine/DataEngine.o \
     $O/s2f/core/simdata/engine/JsonDataEngine.o \
-    $O/s2f/core/simdata/engine/MySqlDataEngine.o \
+    $O/s2f/core/simdata/engine/sql/MySqlDataEngine.o \
     $O/s2f/management/cloudprovider/CloudProvider.o \
     $O/s2f/management/cloudprovider/NodeDb.o \
     $O/s2f/management/cloudprovider/NodeTable.o \

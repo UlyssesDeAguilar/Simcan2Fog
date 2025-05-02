@@ -26,7 +26,9 @@ class AppBase : public cSIMCAN_Core, public TcpSocket::ICallback, public UdpSock
 protected:
    enum Event
    {
-      EXEC_START
+      EXEC_START,
+      POLL,
+      SEND_DELAYED
    };
 
    uint32_t pid;             //!< Process id
@@ -68,7 +70,7 @@ protected:
    void read(double bytes);
    void write(double bytes);
    void resolve(const char *domainName);
-   int open(uint16_t localPort, ConnectionMode mode);
+   int open(uint16_t localPort, ConnectionMode mode, const char* interfaceName = nullptr);
    void connect(int socketFd, const L3Address &destIp, const uint16_t &destPort);
    void listen (int socketFd);
    void registerService(const char *serviceName, int sockFd);

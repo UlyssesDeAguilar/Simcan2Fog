@@ -27,27 +27,24 @@ module RoutingNetworkStack extends Router
         string smqIp;
         string dns;
         bool enableQueue = default(true);		// Wheter to instatiate or not the queue push/pull clients
-		dnsResolver.ispResolver = dns;
+
+        dnsResolver.ispResolver = dns;
+        queueClient.topic = nodeTopic;
+        queueClient.connectAddress = smqIp;
+        @display("bgb=1542.214,1124.484");
     gates:
         input queueIn @loose;
         output queueOut @loose;
-		input ssIn[];
-		output ssOut[];
-		
+        input ssIn[];
+        output ssOut[];
+
     submodules:
         dnsResolver: DnsResolver {
-            @display("p=1140.396,65.598");
+            @display("p=672.88403,74.514");
         }
 
-        queueClient: QueueClient if enableQueue
-        {
-            @display("p=1858.6099,343.29617");
-        }
-        
-        eventsSocket: UdpSocketIo if hasCloudEvents {
-            destAddress = cpIp;
-            destPort = 8446;
-            @display("p=579,70");
+        queueClient: QueueClient if enableQueue {
+            @display("p=1357.058,97.094");
         }
 
     connections:

@@ -1,23 +1,23 @@
 package s2f.apps.iot;
 import s2f.apps.AppBase;
 
-// Application that is executed in a single computer.
+// Application model for IoT controller logic
 //
-// @author Alberto N&uacute;&ntilde;ez Covarrubias
-// @date 2016-05-01
+// @author Ulysses de Aguilar
+// @date 2025-05-01
+// @version 2.0
 simple IotApplication extends AppBase{
     parameters:
         @class(IotApplication);
+        string parentPath = default("^.^.^.^.");
         int processingMIs = default(1);				         // Number of MIs to execute in each iteration
         int listeningPort = default(1000);					 // The port where it will listen (UDP)	
         int synthSize @unit(B) = default(40B);               // The payload that'll be sent
-
-        bool serverClosesOnReturn = default(false);          // If the conexion should terminate once the response is back
-        double replyDelay @unit(s) = default(0.04s);         // The time the server should take to process the request
-        int replySize  @unit(B) = default(20B);              // The expected size of the reply
-        
-        string vmType = default("VM_small");
         int pingsThreshold = default(5);                     // The number of pings where it will start processing
+        string localInterface = default("");
+        string externalInterface = default("");
+        string serviceName @mutable;
+        double pollingInterval @unit(s) = default(5s);
 
         // These signals are only registering the output and input traffic from the endpoint
         @signal[packetSent](type=inet::Packet);
