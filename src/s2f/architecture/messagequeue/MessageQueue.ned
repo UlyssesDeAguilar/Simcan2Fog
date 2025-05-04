@@ -29,32 +29,17 @@ module MessageQueue extends StandardHost
     parameters:
         @display("i=smq");
     submodules:
-        // The main manager, creates and resolves queues for services
-        manager: MessageQueueManager {
-
-            @display("p=899.32495,75.6");
-        }
-        // There will be dynamic allocation of queues
-        queues[0]: SMQueue {
-            @display("p=1015.3,78");
-        }
-
-        // Helps optimizing storage across multiple queues
-        buffer: PacketBuffer {
-            @display("p=1123.2,79.299995");
-        }
 
         // Job publishing service
-        pushServer: TcpServerApp {
-            listener.localPort = 8444;
-            listener.serverConnectionModuleType = "s2f.architecture.messagequeue.services.PushServer";
-            @display("p=785.2,79.299995");
+        pushServer: MessageQueueIn {
+            localPort = 8444;
+            messageQueueOutPath = "^.pullServer";
+            @display("p=855.78204,74.514");
         }
 
 		// Job consumtion service
-        pullServer: TcpServerApp {
-            listener.localPort = 8443;
-            listener.serverConnectionModuleType = "s2f.architecture.messagequeue.services.PullServer";
+        pullServer: MessageQueueOut {
+            localPort = 8443;
             @display("p=652.6,78");
         }
 

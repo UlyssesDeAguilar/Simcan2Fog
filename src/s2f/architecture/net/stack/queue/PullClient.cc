@@ -57,8 +57,6 @@ void PullClient::handleMessage(cMessage *msg)
 
     // We recieved a package from the queue, we must unwrap it
     auto packet = check_and_cast<Packet *>(msg);
-    packet->peekData<INET_AppMessage>();
-
     ChunkQueue queue("Queue", packet->peekData());
 
     while (queue.has<INET_AppMessage>())
