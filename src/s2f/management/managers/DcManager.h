@@ -27,6 +27,7 @@ protected:
     SimpleNetDb *netDb;
     const char *zone;
     const char *nodeName;
+    const char *domain;
     bool showDataCentreConfig;   /** Show information of DataCentres */
     bool forecastActiveMachines; /** Activate forecasting */
 

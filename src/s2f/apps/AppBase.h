@@ -28,6 +28,7 @@ protected:
    {
       EXEC_START,
       POLL,
+      POLL_TIMEOUT,
       SEND_DELAYED
    };
 

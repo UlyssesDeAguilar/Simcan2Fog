@@ -19,7 +19,7 @@ import inet.queueing.sink.ActivePacketSink;
 simple SinkDelegate extends ActivePacketSink
 {
     parameters:
-        collectionInterval @unit(s) = default(5s);   // Default check for queue contents
+        collectionInterval @unit(s) = default(50ms);   // Default check for queue contents
         @class(SinkDelegate);    
     gates:
         output out @directIn;

@@ -21,6 +21,7 @@ simple DcManager extends cSIMCAN_Core {
         string netCardPath = default("^.netCard");
         string nodeName;
         string zone;
+        string domain;
     gates:
         input networkIn;
         input queueIn;

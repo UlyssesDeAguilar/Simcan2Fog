@@ -31,10 +31,11 @@ module DataCentre
         //string serviceDeployed;
         int numBlades;
         string zone;
-        string domain = default(zone + ".com");
+        string domain = default(fullName() + "-" + zone + ".com");
         dcManager.minActiveMachines = numBlades;
 		dcManager.nodeName = fullName();
 		dcManager.zone = this.zone;
+		dcManager.domain = this.domain;
 		**.netDbPath = fullPath() + ".netDb";
 		**.resolverPath = fullPath() + ".stack.dnsResolver";
 		**.resourceManagerPath = fullPath() + ".resourceManager";

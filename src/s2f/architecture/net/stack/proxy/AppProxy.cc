@@ -138,14 +138,17 @@ void AppProxy::handleAppCommand(inet::Message *message)
         if (it == socketToSessionMap.end())
             error("Connection not found: socketId = %d", socketReqId);
 
-        cQueue *queue = it->second.setSessionEstablished();
+        Session& session = it->second;
+        cQueue *queue = session.setSessionEstablished();
         if (queue != nullptr)
         {
             while (!queue->isEmpty())
-                send(check_and_cast<cMessage *>(queue->pop()), outGateBase + it->second.getGateIndex());
+                send(check_and_cast<cMessage *>(queue->pop()), outGateBase + session.getGateIndex());
             delete queue;
         }
         delete message;
+
+        EV_DEBUG << "Session established for session socket: " << session.getSocketId() << " on gateIndex: " << session.getGateIndex();
     }
     // Closing socket -- Could be associated to a connection or session!
     else if (message->getKind() == TCP_C_CLOSE)
@@ -199,10 +202,13 @@ void AppProxy::handleTransportPacket(inet::Packet *packet)
         Session &session = socketToSessionMap.at(socketId);
         std::string serviceName = getServiceName(packet);
         auto iter = serviceTable->findService(serviceName.c_str());
+        EV_DEBUG << "Establishing connection for service: " << serviceName << "\n";
 
         if (iter == serviceTable->endOfServiceMap())
+        {
+            EV_DEBUG << "Service: " << serviceName << " not yet registered\n";
             sendServiceUnavailable(session.getSocketId(), packet);
-        else
+        }else
             handleSessionInitialize(session, iter->second, packet);
     }
     else
@@ -219,17 +225,20 @@ void AppProxy::handleSessionInitialize(Session &session, std::vector<ServiceEntr
     int ip = entries[index].getIp();
     int port = entries[index].getPort();
 
+    EV_DEBUG << "Selected IP:PORT for service session -> " << ip << ":" << port << "\n";
     Connection *connection = findConnection(ip, port);
     if (!connection)
         error("Connection not found: ip = %d, port = %d", ip, port);
     
     // Update the session entry
-    inet::Message *message = session.setSessionPending(index);
+    inet::Message *message = session.setSessionPending(connection->gateIndex);
     message->getTagForUpdate<SocketInd>()->setSocketId(connection->socketId);
     // Send a request to the endpoint to open a socket (we're using the same socketId)
     send(message, outGateBase + connection->gateIndex);
     // Keep the request in the pending queue
     session.pushToPendingQueue(packet);
+
+    EV_DEBUG << "Session corresponds to socketId: " << connection->socketId << " on gateIndex: " << connection->gateIndex << "\n";
 }
 
 void AppProxy::sendServiceUnavailable(int socketId, inet::Packet *packet)

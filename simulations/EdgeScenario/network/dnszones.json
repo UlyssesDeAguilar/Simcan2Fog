@@ -1,19 +1,19 @@
 [
     {
-        "zone": "fg.com",
+        "zone": "fg-edge.com",
         "records": [
             {
-                "domain": "*.fg.com",
+                "domain": "*.fg-edge.com",
                 "type": "A",
                 "ip": "10.0.1.4"
             }
         ]
     },
     {
-        "zone": "dc.com",
+        "zone": "dc-cloud.com",
         "records": [
             {
-                "domain": "*.dc.com",
+                "domain": "*.dc-cloud.com",
                 "type": "A",
                 "ip": "10.0.0.3"
             }

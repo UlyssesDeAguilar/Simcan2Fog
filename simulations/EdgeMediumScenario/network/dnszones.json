@@ -1,0 +1,52 @@
+[
+    {
+        "zone": "fg1-edge.com",
+        "records": [
+            {
+                "domain": "*.fg1-edge.com",
+                "type": "A",
+                "ip": "10.0.1.1"
+            }
+        ]
+    },
+    {
+        "zone": "fg2-edge.com",
+        "records": [
+            {
+                "domain": "*.fg2-edge.com",
+                "type": "A",
+                "ip": "10.0.1.2"
+            }
+        ]
+    },
+    {
+        "zone": "fg3-edge.com",
+        "records": [
+            {
+                "domain": "*.fg3-edge.com",
+                "type": "A",
+                "ip": "10.0.1.3"
+            }
+        ]
+    },
+    {
+        "zone": "fg4-edge.com",
+        "records": [
+            {
+                "domain": "*.fg4-edge.com",
+                "type": "A",
+                "ip": "10.0.1.4"
+            }
+        ]
+    },
+    {
+        "zone": "dc-cloud.com",
+        "records": [
+            {
+                "domain": "*.dc-cloud.com",
+                "type": "A",
+                "ip": "10.0.0.4"
+            }
+        ]
+    }
+]

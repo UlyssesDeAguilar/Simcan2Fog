@@ -17,6 +17,7 @@ void IotApplication::initialize() {
     // Init the super-class
     AppBase::initialize();
 
+    state = INIT;
     processingMIs = par("processingMIs");
     listeningPort = par("listeningPort");
 
@@ -42,8 +43,17 @@ void IotApplication::processSelfMessage(cMessage *msg) {
     if (msg->getKind() == EXEC_START) {
         // Open connection on listening port for starting the simulation
         udpSocket = open(listeningPort, SOCK_DGRAM, par("localInterface"));
+
+        if (state == ENDPOINT_AVAILABLE)
+            resolve(serviceName);
+        else
+            state = RUNNING;
+
     } else if (msg->getKind() == POLL) {
         sendPoll();
+    } else if (msg->getKind() == POLL_TIMEOUT){
+        EV_DEBUG << "Poll timed out, re-sending again\n";
+        //sendPoll();
     }
 }
 
@@ -56,7 +66,7 @@ void IotApplication::handleResolutionFinished(const L3Address ip,
 
     EV << "Resolving service: " << serviceName << " yielded: " << endpointIp
               << "\n";
-    EV << "Starting connection with service: ..." << "\n";
+    EV << "Starting connection with service" << "\n";
 
     tcpSocket = open(-1, SOCK_STREAM, par("externalInterface"));
     connect(tcpSocket, endpointIp, 443);
@@ -67,13 +77,13 @@ void IotApplication::handleConnectReturn(int sockFd, bool connected) {
     if (!connected)
         error("Unable to connect to endpoint");
 
+    EV_INFO << "Connected with service: " << serviceName << "\n";
     if (sockFd == tcpSocket)
         sendPoll();
     //serviceUp = true;
 }
 
 void IotApplication::handleDataArrived(int sockFd, Packet *p) {
-
     if (sockFd == udpSocket) {
         EV << "Recieved packet: " << p->getName() << "\n";
         numPings++;
@@ -87,10 +97,15 @@ void IotApplication::handleDataArrived(int sockFd, Packet *p) {
             auto httpResponse = p->peekData<RestfulResponse>();
             if (httpResponse->getResponseCode() == ResponseCode::OK){
                 EV_INFO << "Service " << serviceName << " is up\n";
+                cancelEvent(event);
                 serviceUp = true;
             }else {
                 EV_INFO << "Service " << serviceName
                                << " is not ready yet, waiting to poll again\n";
+
+                if (event->isScheduled() && event->getKind() == POLL_TIMEOUT)
+                    cancelEvent(event);
+
                 event->setKind(POLL);
                 scheduleAt(simTime() + par("pollingInterval"), event);
             }
@@ -128,6 +143,10 @@ void IotApplication::sendServer() {
 }
 
 void IotApplication::sendPoll() {
+    EV_DEBUG << "Sending poll message\n";
+    //event->setKind(POLL_TIMEOUT);
+    //scheduleAt(simTime() + par("pollingInterval"), event);
+
     // Send a request to the service
     auto packet = new Packet("Request (Probe)");
     auto request = makeShared<RestfulRequest>();
@@ -161,7 +180,14 @@ void IotApplication::handleParameterChange(const char *parameterName) {
     if (strcmp(parameterName, "serviceName") == 0
             && !opp_isempty(par("serviceName")) && !serviceUp){
         serviceName = par("serviceName");
-        resolve(serviceName);
+        EV_DEBUG << "Updated parameter: " << parameterName << "\n";
+
+        if (state == RUNNING || state == ENDPOINT_AVAILABLE)
+        {
+            EV_DEBUG << "Starting resolution for service: " << serviceName << "\n";
+            resolve(serviceName);
+        }else
+            state = ENDPOINT_AVAILABLE;
     }
 }
 

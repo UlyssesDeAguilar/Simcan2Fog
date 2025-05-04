@@ -9,6 +9,12 @@
 class IotApplication : public AppBase, public AppBase::ICallback
 {
 protected:
+    enum States{
+        INIT = 0,
+        RUNNING = 1,
+        ENDPOINT_AVAILABLE = 2
+    } state;
+
     unsigned int processingMIs;       //!< Number of MIs to be executed
     const char *serviceName{};        //!< Domain of the endpoint
     L3Address endpointIp{};           //!< Remote endpoint ip

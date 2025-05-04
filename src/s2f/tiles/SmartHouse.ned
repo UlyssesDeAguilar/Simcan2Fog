@@ -21,9 +21,17 @@ module SmartHouse like ITile
 {
     parameters:
         @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s;bgu=m");
-        string serviceName;
         int sensors = 2;
         int actuators = 2;
+
+		// Preloading the user configuration
+        user.vms = default([{"name":"my-vm", "type":"VM_small"}]);
+        user.remoteApps = default([{"name":"my-service", "type": "SmallIotService","platform":"my-vm"}]);
+        user.localApps = default([{"name":"local", "type": "SmallIotApp", "dependsOn":"my-service"}]);
+        user.sensors = default(["sensor*"]);    
+        sensor*.model.controllerPath = default("^.^.controller");
+        sensor*.model.controllerInterface = default("eth0");
+        netStack.nodeTopic = fullName();
     gates:
         inout ethernet;
 

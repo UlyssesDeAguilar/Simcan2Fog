@@ -24,7 +24,7 @@ simple IotService extends AppBase
 {
     parameters:
         @class(IotService);
-        double responseDelay @unit(ms) = default(40ms);
+        double responseDelay @unit(s) = default(40ms);
         int replySize @unit(B) = default(20B);
         
 }

@@ -17,6 +17,7 @@ message SM_UserVM extends SIMCAN_Message
     string vmId;                    // Technically used for app timeouts ?
     string userId;			        // ID of the user instance
     string zone;                    // Zone for the deployment
+    string domain;					// Domain where the services are deployed
     VM_Request vm[];    	        // List of the Virtual machines
 }
 

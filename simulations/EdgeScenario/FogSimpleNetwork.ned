@@ -42,7 +42,6 @@ network SimpleFogNetwork
 {
     parameters:
         int edgeTiles = default(1);
-        string serviceName = default("service");
 
         @display("bgb=800,400;bgg=50");
     submodules:

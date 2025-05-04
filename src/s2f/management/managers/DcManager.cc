@@ -22,6 +22,7 @@ void DcManager::initialize(int stage)
         forecastActiveMachines = par("forecastActiveMachines");
         zone = par("zone");
         nodeName = par("nodeName");
+        domain = par("domain");
         
         // Get gates
         networkGates.inBaseId = gate("networkIn")->getId();
@@ -211,9 +212,11 @@ void DcManager::handleVmRequestFits(SIMCAN_Message *sm)
         sendUpdateToCloudProvider();
     }
 
-    // Set response and operation type
+    // Set response, operation type and zone
     request->setIsResponse(true);
     request->setOperation(SM_VM_Req);
+    request->setZone(zone);
+    request->setDomain(domain);
 
     // Send response
     request->setDestinationTopic(request->getReturnTopic());

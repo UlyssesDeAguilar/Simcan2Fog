@@ -1,6 +1,8 @@
 #include "AppBase.h"
 
 using namespace hypervisor;
+#include "inet/common/socket/SocketTag_m.h"
+
 
 void AppBase::initialize() {
     // Init the super-class
@@ -83,8 +85,11 @@ void AppBase::handleMessage(cMessage *msg) {
         auto socket = socketMap.findSocketFor(msg);
         if (socket)
             socket->processMessage(msg);
-        else
-            error("Message arrived for an unregistered socket");
+        else{
+            auto packet = dynamic_cast<Packet*>(msg);
+            int socketId = packet->getTag<SocketInd>()->getSocketId();
+            error("Message arrived for an unregistered socket %d", socketId);
+        }
     }
 }
 
@@ -310,15 +315,13 @@ void AppBase::socketAvailable(TcpSocket *socket,
 
 void AppBase::socketDataArrived(UdpSocket *socket, Packet *packet) {
     int socketFd = socket->getSocketId();
-    EV << "Incoming message for socket: " << socketFd
-              << " pushing into the queue\n";
+    EV << "Incoming message for udp socket: " << socketFd << "\n";
     callback->handleDataArrived(socketFd, packet);
 }
 
 void AppBase::socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent) {
     int socketFd = socket->getSocketId();
-    EV << "Incoming message for socket: " << socketFd
-              << " pushing into the queue\n";
+    EV << "Incoming message for tcp socket: " << socketFd << "\n";
     callback->handleDataArrived(socketFd, msg);
 }
 
