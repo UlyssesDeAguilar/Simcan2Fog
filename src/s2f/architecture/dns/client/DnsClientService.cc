@@ -58,7 +58,7 @@ void DnsClientService::handleMessageWhenUp(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
-        rescheduleAt(simTime() + simtime_t(timePerTick, SIMTIME_MS), tickTimer);
+        scheduleAt(simTime() + simtime_t(timePerTick, SIMTIME_MS), tickTimer);
         processRequests();
         return;
     }
@@ -88,6 +88,9 @@ void DnsClientService::socketDataArrived(UdpSocket *socket, Packet *packet)
         {
             sendResponse(dnsPacket->getRequestId(), OK, packet);
             requestMap.erase(iter);
+
+            if (requestMap.size() == 0)
+                cancelEvent(tickTimer);
             return;
         }
         else
@@ -99,10 +102,14 @@ void DnsClientService::socketDataArrived(UdpSocket *socket, Packet *packet)
 
 void DnsClientService::handleRequest(DnsClientCommand *request)
 {
+    if (!tickTimer->isScheduled())
+        scheduleAt(simTime() + simtime_t(timePerTick, SIMTIME_MS), tickTimer);
+
     // Push onto the map
     auto iter = requestMap.emplace(request->getRequestId(), request);
     if (iter.second)
     {
+        EV_DEBUG << "Created new context\n";
         // Send the request
         DnsClientService::RequestContext &ctx = iter.first->second;
         sendRequest(ctx);
@@ -123,6 +130,7 @@ bool DnsClientService::sendRequest(RequestContext &ctx)
 
     if (shouldContinue)
     {
+        EV_DEBUG << "Starting or retrying request with id: " << ctx.id << "\n";
         socket.sendTo(ctx.packet->dup(), ctx.servers[ctx.selectedAddress], DNS_PORT);
         ctx.tries++;
     }
@@ -146,6 +154,7 @@ void DnsClientService::processRequests()
     for (auto iter = requestMap.begin(); iter != requestMap.end();)
     {
         iter->second.tick++;
+        EV_DEBUG << "Request with id: " << iter->second.id << " has " << iter->second.tick << "/" << ticksForTimeOut << " ticks\n";
 
         // In case we timed out
         if (iter->second.tick == ticksForTimeOut)

@@ -146,7 +146,9 @@ const char *CloudProvider::selectNode(const SM_UserVM *request)
 const char *CloudProvider::selectNodeInPool(const SM_UserVM *request, const std::set<int> &nodesInZone)
 {
   uint64_t totalCores = calculateRequestedCores(request);
-  for (auto &nodeId : nodesInZone)
+
+  // TODO: This is actually FirstFit strategy! Maybe in the future include it as an option?
+  /*for (auto &nodeId : nodesInZone)
   {
     auto &node = nodeDb->getNode(nodeId);
     if (node.availableCores >= totalCores)
@@ -157,7 +159,32 @@ const char *CloudProvider::selectNodeInPool(const SM_UserVM *request, const std:
       EV << "New available core count: " << node.availableCores << "\n";
       return topic;
     }
+  }*/
+
+  int bestCandidate = 0;
+  int selectedNodeId = -1;
+
+  for (auto &nodeId : nodesInZone)
+  {
+      auto &node = nodeDb->getNode(nodeId);
+      uint64_t availableCores = node.availableCores;
+      if (availableCores >= totalCores && availableCores > bestCandidate)
+      {
+          selectedNodeId = nodeId;
+          bestCandidate = availableCores;
+      }
   }
+
+  if (selectedNodeId != -1)
+  {
+      auto &node = nodeDb->getNode(selectedNodeId);
+      const char *topic = nodeDb->getTopicForNode(node);
+      EV << "Estimating " << totalCores << " allocated for node in: " << topic << "\n";
+      node.availableCores -= totalCores;
+      EV << "New available core count: " << node.availableCores << "\n";
+      return topic;
+  }
+
   return nullptr;
 }
 
