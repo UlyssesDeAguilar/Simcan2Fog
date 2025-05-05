@@ -19,7 +19,7 @@ import s2f.core.simdata.SimData;
 import s2f.architecture.dns.DnsSimplified;
 import s2f.architecture.nodes.cloud.DataCentre;
 import s2f.architecture.nodes.fog.FogNode;
-import s2f.users.edge.ITile;
+import s2f.tiles.ITile;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.internetcloud.InternetCloud;
@@ -28,7 +28,7 @@ import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.Eth10G;
 import inet.node.ethernet.Eth100G;
-import inet.node.ethernet.EtherSwitch;
+import inet.node.ethernet.EthernetSwitch;
 
 network BigNet
 {
