@@ -56,5 +56,65 @@
             "replySize": "40B",
             "responseDelay": "40ms"
         }
+    },
+    {
+        "name": "FarmApp",
+        "model": "IotApplication",
+        "package": "s2f.apps.iot",
+        "parameters": {
+            "serviceName": "",
+            "synthSize": "70B",
+            "pingsThreshold": "10",
+            "processingMIs": "10"
+        }
+    },
+    {
+        "name": "FarmManager",
+        "model": "IotService",
+        "package": "s2f.apps.services",
+        "parameters": {
+            "replySize": "20B",
+            "responseDelay": "100ms"
+        }
+    },
+    {
+        "name": "FactoryApp",
+        "model": "IotApplication",
+        "package": "s2f.apps.iot",
+        "parameters": {
+            "serviceName": "",
+            "synthSize": "100B",
+            "pingsThreshold": "10",
+            "processingMIs": "10"
+        }
+    },
+    {
+        "name": "RiskAnalyzer",
+        "model": "IotService",
+        "package": "s2f.apps.services",
+        "parameters": {
+            "replySize": "20B",
+            "responseDelay": "400ms"
+        }
+    },
+    {
+        "name": "BuildingApp",
+        "model": "IotApplication",
+        "package": "s2f.apps.iot",
+        "parameters": {
+            "serviceName": "",
+            "synthSize": "3MB",
+            "pingsThreshold": "10",
+            "processingMIs": "100"
+        }
+    },
+    {
+        "name": "MotionDetection",
+        "model": "IotService",
+        "package": "s2f.apps.services",
+        "parameters": {
+            "replySize": "20B",
+            "responseDelay": "400ms"
+        }
     }
 ]

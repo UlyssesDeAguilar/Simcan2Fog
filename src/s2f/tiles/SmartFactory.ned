@@ -26,7 +26,7 @@ module SmartFactory like ITile
 
          // Preloading the user configuration
         user.vms = default([{"name":"my-vm", "type":"VM_medium"}]);
-        user.remoteApps = default([{"name":"my-service", "type": "FactoryService","platform":"my-vm"}]);
+        user.remoteApps = default([{"name":"my-service", "type": "RiskAnalyzer","platform":"my-vm"}]);
         user.localApps = default([{"name":"local", "type": "FactoryApp", "dependsOn":"my-service"}]);
         user.sensors = default(["tsensor*"]);
         *sensor*.model.controllerPath = default("^.^.controller");

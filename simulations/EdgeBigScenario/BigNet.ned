@@ -39,153 +39,176 @@ network BigNet
         int numD = 20;
         int numE = 20;
 
-        @display("bgb=1000,800;bgg=50;bgu=km");
+        @display("bgb=1263.8881,943.896;bgg=50;bgu=km");
 
     submodules:
+        swA: EthernetSwitch {
+            @display("p=175.272,747.72003");
+        }
+        swB: EthernetSwitch {
+            @display("p=159.192,305.52");
+        }
+        swC: EthernetSwitch {
+            @display("p=561.192,104.52");
+        }
+        swD: EthernetSwitch {
+            @display("p=976.056,279.792");
+        }
+        swE: EthernetSwitch {
+            @display("p=927.816,734.856");
+        }
+        swBackbone: EthernetSwitch {
+
+            @display("p=551.544,501.696");
+        }
         configurator: Ipv4NetworkConfigurator {
-            @display("p=906.912,51.456");
+            @display("p=1178.6641,49.848");
         }
 
         simData: SimData {
-            @display("p=785.91003,50.25");
+            @display("p=1050.024,49.848");
         }
 
         dns: DnsSimplified {
-            @display("p=541.896,553.152");
+            @display("p=611.04,749.328");
         }
 
         dc: DataCentre {
-            @display("p=437.376,551.544");
+            @display("p=506.52,749.328");
         }
 
         fgA1: FogNode {
-            @display("p=311.952,556.368");
+            @display("p=368.232,685.008");
         }
         fgA2: FogNode {
-            @display("p=199.392,484.008");
+            @display("p=255.672,612.648");
         }
         fgA3: FogNode {
-            @display("p=292.656,472.752");
+            @display("p=348.936,601.392");
         }
 
         fgB1: FogNode {
-            @display("p=246.024,202.608");
+            @display("p=302.30402,331.24802");
         }
         fgB2: FogNode {
-            @display("p=210.648,307.128");
+            @display("p=266.928,435.768");
         }
         fgB3: FogNode {
 
-            @display("p=305.52,279.792");
+            @display("p=361.8,408.432");
         }
         fgC1: FogNode {
-            @display("p=458.28,120.6");
+            @display("p=514.56,249.24");
         }
         fgC2: FogNode {
-            @display("p=566.016,120.6");
+            @display("p=622.296,249.24");
         }
         fgC3: FogNode {
 
-            @display("p=504.912,197.784");
+            @display("p=561.192,326.424");
         }
         fgD1: FogNode {
-            @display("p=709.128,172.056");
+            @display("p=765.408,300.696");
         }
         fgD2: FogNode {
-            @display("p=762.192,247.632");
+            @display("p=818.472,376.272");
         }
         fgD3: FogNode {
-
-            @display("p=668.928,252.456");
+            @display("p=725.208,381.096");
         }
         fgE1: FogNode {
-            @display("p=696.264,561.192");
+            @display("p=750.936,689.83203");
         }
         fgE2: FogNode {
-            @display("p=779.88,450.24");
+            @display("p=836.16,578.88");
         }
         fgE3: FogNode {
-
-            @display("p=675.36,471.144");
+            @display("p=731.64,599.784");
         }
         usersA[numA]: <> like ITile {
-            @display("p=117.384,685.008");
+            @display("p=80.4,779.88");
         }
         usersB[numB]: <> like ITile {
-            @display("p=82.008,144.72");
+            @display("p=80.4,249.24");
         }
         usersC[numC]: <> like ITile {
-            @display("p=368.232,36.984");
+            @display("p=561.192,32.16");
         }
         usersD[numD]: <> like ITile {
-            @display("p=903.696,236.376");
+            @display("p=1077.36,242.808");
         }
         usersE[numE]: <> like ITile {
-            @display("p=868.32,633.552");
+            @display("p=1014.648,773.448");
         }
 
         localA: InternetCloud {
-            @display("p=194.568,594.96");
+            @display("p=249.24,723.6");
         }
 
         localB: InternetCloud {
-            @display("p=165.62401,225.12");
+            @display("p=221.904,353.76");
         }
 
         localC: InternetCloud {
-            @display("p=514.56,38.592");
+            @display("p=561.192,176.88");
         }
 
         localD: InternetCloud {
-            @display("p=824.904,178.488");
+            @display("p=881.184,307.128");
         }
 
         localE: InternetCloud {
-            @display("p=791.136,566.016");
+            @display("p=847.416,694.656");
         }
 
         metroA: InternetCloud {
-            @display("p=356.976,403.608");
+            @display("p=413.256,532.248");
         }
 
         metroB: InternetCloud {
-            @display("p=398.784,289.44");
+            @display("p=455.064,418.08");
         }
         metroC: InternetCloud {
-            @display("p=496.872,279.792");
+            @display("p=553.152,408.432");
         }
         metroD: InternetCloud {
-            @display("p=586.92,278.184");
+            @display("p=643.2,406.824");
         }
         metroE: InternetCloud {
 
-            @display("p=611.04,387.528");
+            @display("p=667.32,516.168");
         }
         backbone: InternetCloud {
-            @display("p=493.656,402");
+            @display("p=561.192,599.784");
         }
     connections:
 
         // Users - Regional
         for i=0..sizeof(usersA)-1 {
-            usersA[i].ethernet <--> Eth10G <--> localA.ethg++;
+            usersA[i].ethernet <--> Eth10G <--> swA.ethg++;
         }
 
         for i=0..sizeof(usersB)-1 {
-            usersB[i].ethernet <--> Eth10G <--> localB.ethg++;
+            usersB[i].ethernet <--> Eth10G <--> swB.ethg++;
         }
 
         for i=0..sizeof(usersC)-1 {
-            usersC[i].ethernet <--> Eth10G <--> localC.ethg++;
+            usersC[i].ethernet <--> Eth10G <--> swC.ethg++;
         }
 
         for i=0..sizeof(usersD)-1 {
-            usersD[i].ethernet <--> Eth10G <--> localD.ethg++;
+            usersD[i].ethernet <--> Eth10G <--> swD.ethg++;
         }
 
         for i=0..sizeof(usersE)-1 {
-            usersE[i].ethernet <--> Eth10G <--> localE.ethg++;
+            usersE[i].ethernet <--> Eth10G <--> swE.ethg++;
         }
+
+        swA.ethg++ <--> Eth10G <--> localA.ethg++;
+        swB.ethg++ <--> Eth10G <--> localB.ethg++;
+        swC.ethg++ <--> Eth10G <--> localC.ethg++;
+        swD.ethg++ <--> Eth10G <--> localD.ethg++;
+        swE.ethg++ <--> Eth10G <--> localE.ethg++;
 
         // Regional - Fog Nodes
         localA.ethg++ <--> Eth10G <--> fgA1.comm++;
@@ -223,11 +246,13 @@ network BigNet
         fgD3.comm++ <--> Eth10G <--> metroD.ethg++;
         fgE3.comm++ <--> Eth10G <--> metroE.ethg++;
 
-        metroA.ethg++ <--> Eth100G <--> backbone.ethg++;
-        metroB.ethg++ <--> Eth100G <--> backbone.ethg++;
-        metroC.ethg++ <--> Eth100G <--> backbone.ethg++;
-        metroD.ethg++ <--> Eth100G <--> backbone.ethg++;
-        metroE.ethg++ <--> Eth100G <--> backbone.ethg++;
+        metroA.ethg++ <--> Eth100G <--> swBackbone.ethg++;
+        metroB.ethg++ <--> Eth100G <--> swBackbone.ethg++;
+        metroC.ethg++ <--> Eth100G <--> swBackbone.ethg++;
+        metroD.ethg++ <--> Eth100G <--> swBackbone.ethg++;
+        metroE.ethg++ <--> Eth100G <--> swBackbone.ethg++;
+
+        swBackbone.ethg++ <--> Eth100G <--> backbone.ethg++;
 
         backbone.ethg++ <--> Eth100G <--> dc.comm++;
         backbone.ethg++ <--> Eth100G <--> dns.ethg++;

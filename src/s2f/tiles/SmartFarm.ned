@@ -27,7 +27,7 @@ module SmartFarm like ITile
 
         // Preloading the user configuration
         user.vms = default([{"name":"my-vm", "type":"VM_small"}]);
-        user.remoteApps = default([{"name":"my-service", "type": "FarmService","platform":"my-vm"}]);
+        user.remoteApps = default([{"name":"my-service", "type": "FarmManager","platform":"my-vm"}]);
         user.localApps = default([{"name":"local", "type": "FarmApp", "dependsOn":"my-service"}]);
         user.sensors = default(["hsensor*", "tsensor*"]);
         *sensor*.model.controllerPath = default("^.^.controller");

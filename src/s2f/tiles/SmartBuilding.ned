@@ -26,7 +26,7 @@ module SmartBuilding like ITile
 
         // Preloading the user configuration
         user.vms = default([{"name":"my-vm", "type":"VM_Large"}]);
-        user.remoteApps = default([{"name":"my-service", "type": "BuildingService","platform":"my-vm"}]);
+        user.remoteApps = default([{"name":"my-service", "type": "MotionDetection","platform":"my-vm"}]);
         user.localApps = default([{"name":"local", "type": "BuildingApp", "dependsOn":"my-service"}]);
         user.sensors = default(["sensor*"]);
         sensor*.model.controllerPath = default("^.^.controller");
