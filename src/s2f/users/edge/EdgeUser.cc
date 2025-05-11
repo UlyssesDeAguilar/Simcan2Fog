@@ -209,7 +209,7 @@ void EdgeUser::handleVmUpdate(SM_UserVM *update) {
                         simTime().dbl());
                 app.setState(State::UP);
 
-                if (app.getDependant())
+                if (!opp_isempty(app.getDependant()))
                     sendServiceIsUp(app.getDependant(), app,
                             update->getDomain());
             }
