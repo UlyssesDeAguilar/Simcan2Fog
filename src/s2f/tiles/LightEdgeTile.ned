@@ -24,6 +24,7 @@ module LightEdgeTile like ITile
         string serviceName = default("service");
         int sensors;
         int actuators;
+        bool enableRouterAsUplink = default(true);
     gates:
         inout ethernet;
 

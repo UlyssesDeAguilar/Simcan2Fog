@@ -1,41 +1,151 @@
 [
     {
-        "zone": "fg1-edge.com",
+        "zone": "fgA1-edge-a.com",
         "records": [
             {
-                "domain": "*.fg1-edge.com",
+                "domain": "*.fgA1-edge-a.com",
                 "type": "A",
-                "ip": "10.0.1.1"
+                "ip": "10.1.0.1"
             }
         ]
     },
     {
-        "zone": "fg2-edge.com",
+        "zone": "fgA2-edge-a.com",
         "records": [
             {
-                "domain": "*.fg2-edge.com",
+                "domain": "*.fgA2-edge-a.com",
                 "type": "A",
-                "ip": "10.0.1.2"
+                "ip": "10.1.0.2"
             }
         ]
     },
     {
-        "zone": "fg3-edge.com",
+        "zone": "fgA3-edge-a.com",
         "records": [
             {
-                "domain": "*.fg3-edge.com",
+                "domain": "*.fgA3-edge-a.com",
                 "type": "A",
-                "ip": "10.0.1.3"
+                "ip": "10.1.0.3"
             }
         ]
     },
     {
-        "zone": "fg4-edge.com",
+        "zone": "fgB1-edge-b.com",
         "records": [
             {
-                "domain": "*.fg4-edge.com",
+                "domain": "*.fgB1-edge-b.com",
                 "type": "A",
-                "ip": "10.0.1.4"
+                "ip": "10.2.0.1"
+            }
+        ]
+    },
+    {
+        "zone": "fgB2-edge-b.com",
+        "records": [
+            {
+                "domain": "*.fgB2-edge-b.com",
+                "type": "A",
+                "ip": "10.2.0.2"
+            }
+        ]
+    },
+    {
+        "zone": "fgB3-edge-b.com",
+        "records": [
+            {
+                "domain": "*.fgB3-edge-b.com",
+                "type": "A",
+                "ip": "10.2.0.3"
+            }
+        ]
+    },
+    {
+        "zone": "fgC1-edge-c.com",
+        "records": [
+            {
+                "domain": "*.fgC1-edge-c.com",
+                "type": "A",
+                "ip": "10.3.0.1"
+            }
+        ]
+    },
+    {
+        "zone": "fgC2-edge-c.com",
+        "records": [
+            {
+                "domain": "*.fgC2-edge-c.com",
+                "type": "A",
+                "ip": "10.3.0.2"
+            }
+        ]
+    },
+    {
+        "zone": "fgC3-edge-c.com",
+        "records": [
+            {
+                "domain": "*.fgC3-edge-c.com",
+                "type": "A",
+                "ip": "10.3.0.3"
+            }
+        ]
+    },
+    {
+        "zone": "fgD1-edge-d.com",
+        "records": [
+            {
+                "domain": "*.fgD1-edge-d.com",
+                "type": "A",
+                "ip": "10.4.0.1"
+            }
+        ]
+    },
+    {
+        "zone": "fgD2-edge-d.com",
+        "records": [
+            {
+                "domain": "*.fgD2-edge-d.com",
+                "type": "A",
+                "ip": "10.4.0.2"
+            }
+        ]
+    },
+    {
+        "zone": "fgD3-edge-d.com",
+        "records": [
+            {
+                "domain": "*.fgD3-edge-d.com",
+                "type": "A",
+                "ip": "10.4.0.3"
+            }
+        ]
+    },
+    {
+        "zone": "fgE1-edge-e.com",
+        "records": [
+            {
+                "domain": "*.fgE1-edge-e.com",
+                "type": "A",
+                "ip": "10.5.0.1"
+            }
+        ]
+    },
+    {
+        "zone": "fgE2-edge-e.com",
+        "records": [
+            {
+                "domain": "*.fgE2-edge-e.com",
+                "type": "A",
+                "ip": "10.5.0.2"
+            }
+        ]
+    },
+    {
+        "zone": "fgE3-edge-e.com",
+        "records": [
+            {
+                "domain": "*.fgE3-edge-e.com",
+                "type": "A",
+                "ip": "10.5.0.3"
             }
         ]
     },

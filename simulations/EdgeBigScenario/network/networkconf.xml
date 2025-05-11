@@ -1,13 +1,51 @@
 <config>
+	<!-- Backbone settings -->
 	<interface hosts='*.messageQueue' address='10.0.0.1'/>
 	<interface hosts='*.dns' address='10.0.0.2'/>
 	<interface hosts='*.cloudProvider' address='10.0.0.3'/>
 	<interface hosts='*.dc.stack' address='10.0.0.4'/>
 	<interface among="messageQueue dns cloudProvider dc.stack backbone" address='10.0.0.x' netmask='255.255.255.x'/>
-	<interface hosts='*.fg1.stack' address='10.0.1.1'/>
-	<interface hosts='*.fg2.stack' address='10.0.1.2'/>
-	<interface hosts='*.fg3.stack' address='10.0.1.3'/>
-	<interface hosts='*.fg4.stack' address='10.0.1.4'/>
-	<interface among="fg*.stack local metropolitan" address='10.0.1.x' netmask='255.255.255.x'/>
-	<interface hosts='**' address='10.0.2.x' netmask='255.255.255.x'/>
+	
+	<!-- Backbone to metro settings -->
+	<interface among="backbone metro*" address='10.0.1.x' netmask='255.255.255.x'/>
+	
+	<!-- ZONE A settings -->
+	<interface hosts='*.fgA1.stack' address='10.1.0.1' names="eth0"/>
+	<interface hosts='*.fgA2.stack' address='10.1.0.2' names="eth0"/>
+	<interface hosts='*.fgA3.stack' address='10.1.0.3' names="eth0"/>
+	<interface among="fgA*.stack localA" address='10.1.0.x' netmask='255.255.255.x'/>
+	<interface among="usersA[*].** localA" address='10.1.1.x' netmask='255.255.255.x'/>
+	<interface among="fgA*.stack metroA" address='10.1.2.x' netmask='255.255.255.x'/>
+	
+	<!-- ZONE B settings -->
+	<interface hosts='*.fgB1.stack' address='10.2.0.1' names="eth0"/>
+	<interface hosts='*.fgB2.stack' address='10.2.0.2' names="eth0"/>
+	<interface hosts='*.fgB3.stack' address='10.2.0.3' names="eth0"/>
+	<interface among="fgB*.stack localB" address='10.2.0.x' netmask='255.255.255.x'/>
+	<interface among="usersB[*].** localB" address='10.2.1.x' netmask='255.255.255.x'/>
+	<interface among="fgB*.stack metroB" address='10.2.2.x' netmask='255.255.255.x'/>
+	
+	<!-- ZONE C settings -->
+	<interface hosts='*.fgC1.stack' address='10.3.0.1' names="eth0"/>
+	<interface hosts='*.fgC2.stack' address='10.3.0.2' names="eth0"/>
+	<interface hosts='*.fgC3.stack' address='10.3.0.3' names="eth0"/>
+	<interface among="fgC*.stack localC" address='10.3.0.x' netmask='255.255.255.x'/>
+	<interface among="usersC[*].** localC" address='10.3.1.x' netmask='255.255.255.x'/>
+	<interface among="fgC*.stack metroC" address='10.3.2.x' netmask='255.255.255.x'/>
+	
+	<!-- ZONE D settings -->
+	<interface hosts='*.fgD1.stack' address='10.4.0.1' names="eth0"/>
+	<interface hosts='*.fgD2.stack' address='10.4.0.2' names="eth0"/>
+	<interface hosts='*.fgD3.stack' address='10.4.0.3' names="eth0"/>
+	<interface among="fgD*.stack localD" address='10.4.0.x' netmask='255.255.255.x'/>
+	<interface among="usersD[*].** localD" address='10.4.1.x' netmask='255.255.255.x'/>
+	<interface among="fgD*.stack metroD" address='10.4.2.x' netmask='255.255.255.x'/>
+	
+	<!-- ZONE E settings -->
+	<interface hosts='*.fgE1.stack' address='10.5.0.1' names="eth0"/>
+	<interface hosts='*.fgE2.stack' address='10.5.0.2' names="eth0"/>
+	<interface hosts='*.fgE3.stack' address='10.5.0.3' names="eth0"/>
+	<interface among="fgE*.stack localE" address='10.5.0.x' netmask='255.255.255.x'/>
+	<interface among="usersE[*].** localE" address='10.5.1.x' netmask='255.255.255.x'/>
+	<interface among="fgE*.stack metroE" address='10.5.2.x' netmask='255.255.255.x'/>
 </config>

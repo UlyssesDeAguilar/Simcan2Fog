@@ -20,18 +20,18 @@ module SmartBuilding like ITile
 {
     parameters:
         @display("i=misc/building;bgb=29.76,24.16;bgu=m");
-        string serviceName;
         int sensors = 4;
         int actuators = 1;
 
         // Preloading the user configuration
-        user.vms = default([{"name":"my-vm", "type":"VM_Large"}]);
+        user.vms = default([{"name":"my-vm", "type":"VM_large"}]);
         user.remoteApps = default([{"name":"my-service", "type": "MotionDetection","platform":"my-vm"}]);
         user.localApps = default([{"name":"local", "type": "BuildingApp", "dependsOn":"my-service"}]);
         user.sensors = default(["sensor*"]);
         sensor*.model.controllerPath = default("^.^.controller");
         sensor*.model.controllerInterface = default("eth0");
         netStack.nodeTopic = fullName();
+        bool enableRouterAsUplink = default(true);
     gates:
         inout ethernet;
 
@@ -84,7 +84,9 @@ module SmartBuilding like ITile
         for i=0..actuators-1 {
             actuator[i].ethg++ <--> Eth1G <--> ap.ethg++;
         }
-
-        router.ethg++ <--> Eth1G <--> ap.ethg++;
-        router.ethg++ <--> ethernet;
+        
+        router.ethg++ <--> Eth1G <--> ap.ethg++ if enableRouterAsUplink;
+        router.ethg++ <--> ethernet if enableRouterAsUplink;
+        
+        ap.ethg++ <--> ethernet if !enableRouterAsUplink;
 }

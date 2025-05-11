@@ -30,6 +30,7 @@ class IotService : public AppBase, public AppBase::ICallback
   protected:
     const char *serviceName;
     int sockFd;
+    std::map<int, ChunkQueue> connectionQueue;
     virtual void initialize() override;
     virtual void processSelfMessage(cMessage *msg) override;
 

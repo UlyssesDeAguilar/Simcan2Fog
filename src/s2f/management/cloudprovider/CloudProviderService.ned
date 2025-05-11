@@ -10,6 +10,7 @@ simple CloudProviderService
         string dataManagerPath;
         string nodeDbPath;
         bool dispatchPriority = default(false); // Whether priority users skip the queue
+        string defaultZone;
     gates:
         input queueIn;
         output queueOut;

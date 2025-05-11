@@ -8,6 +8,7 @@ void CloudProvider::initialize()
   dataManager = check_and_cast<DataManager *>(getModuleByPath(par("dataManagerPath")));
   nodeDb = check_and_cast<NodeDb *>(getModuleByPath(par("nodeDbPath")));
   dispatchPriority = par("dispatchPriority");
+  defaultZone = par("defaultZone");
 }
 
 void CloudProvider::handleMessage(cMessage *msg)
@@ -194,7 +195,10 @@ uint64_t CloudProvider::calculateRequestedCores(const SM_UserVM *request)
   for (int i = 0; i < request->getVmArraySize(); i++)
   {
     const VM_Request &vmRequest = request->getVm(i);
-    total += dataManager->searchVm(vmRequest.vmType)->getNumCores();
+    const VirtualMachine *vm = dataManager->searchVm(vmRequest.vmType);
+    if (!vm)
+        error("Did not find vm of type %s", vmRequest.vmType.c_str());
+    total += vm->getNumCores();
   }
   return total;
 }

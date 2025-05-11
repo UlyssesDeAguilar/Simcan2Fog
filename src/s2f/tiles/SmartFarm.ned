@@ -33,6 +33,7 @@ module SmartFarm like ITile
         *sensor*.model.controllerPath = default("^.^.controller");
         *sensor*.model.controllerInterface = default("eth0");
         netStack.nodeTopic = fullName();
+        bool enableRouterAsUplink = default(true);
     gates:
         inout ethernet;
 
@@ -95,7 +96,9 @@ module SmartFarm like ITile
         for i=0..actuators-1 {
             actuator[i].ethg++ <--> Eth100M <--> ap.ethg++;
         }
-
-        router.ethg++ <--> Eth100M <--> ap.ethg++;
-        router.ethg++ <--> ethernet;
+        
+        router.ethg++ <--> Eth100M <--> ap.ethg++ if enableRouterAsUplink;
+        router.ethg++ <--> ethernet if enableRouterAsUplink;
+        
+        ap.ethg++ <--> ethernet if !enableRouterAsUplink;
 }

@@ -23,7 +23,7 @@ Define_Module(IotService);
 void IotService::initialize() {
     AppBase::initialize();
     setReturnCallback(this);
-
+    connectionQueue.clear();
     serviceName = this->appInstance;
 
     // Open the socket and listen for incoming comms
@@ -48,20 +48,26 @@ void IotService::processSelfMessage(cMessage *msg) {
 void IotService::handleDataArrived(int sockFd, Packet *p) {
     EV << "Recieved packet: " << p->getName() << "\n";
 
-    auto packet = new Packet("Request");
-    auto request = p->peekData<RestfulRequest>();
+    ChunkQueue &queue = connectionQueue.at(sockFd);
+    queue.push(p->peekData());
 
-    auto response = makeShared<RestfulResponse>();
-    response->setResponseCode(ResponseCode::OK);
-    response->setChunkLength(B(par("replySize")));
-    response->addTag<CreationTimeTag>()->setCreationTime(simTime());
-    response->setHost(serviceName);
-    response->setPath(request->getPath());
+    while (queue.has<RestfulRequest>(b(-1)))
+    {
+      EV_INFO << "Reassembled client request\n";
+      auto request = queue.pop<RestfulRequest>(b(-1));
+      auto packet = new Packet("Response");
+      auto response = makeShared<RestfulResponse>();
+      response->setResponseCode(ResponseCode::OK);
+      response->setChunkLength(B(par("replySize")));
+      response->addTag<CreationTimeTag>()->setCreationTime(simTime());
+      response->setHost(serviceName);
+      response->setPath(request->getPath());
 
-    packet->insertData(response);
-    packet->addTag<SocketReq>()->setSocketId(sockFd);
-    packet->setKind(SEND_DELAYED);
-    scheduleAt(simTime() + par("responseDelay"), packet);
+      packet->insertData(response);
+      packet->addTag<SocketReq>()->setSocketId(sockFd);
+      packet->setKind(SEND_DELAYED);
+      scheduleAt(simTime() + par("responseDelay"), packet);
+    }
 
     delete p;
 }
@@ -70,10 +76,14 @@ bool IotService::handleClientConnection(int sockFd, const L3Address &remoteIp,
         const uint16_t &remotePort) {
     EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
+
+    // Create the chunk queue
+    connectionQueue[sockFd];
     return true;
 }
 
 bool IotService::handlePeerClosed(int sockFd) {
     EV << "Peer closed, session ended\n";
+    connectionQueue.erase(sockFd);
     return true;
 }

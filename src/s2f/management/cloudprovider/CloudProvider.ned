@@ -13,7 +13,9 @@ module CloudProvider extends StandardHost
     parameters:
         string nodeTopic = default("CloudProvider"); // The topic that will be used in the Message Queue (must be unique), leave empty for auto assignment  
         string smqIp = default("10.0.2.1");
-
+		string defaultZone = default("cloud");
+		
+		cpService.defaultZone = this.defaultZone;
         cpService.nodeDbPath = "^.nodeDb";
         queueClient.connectAddress = smqIp;
         queueClient.topic = fullName();

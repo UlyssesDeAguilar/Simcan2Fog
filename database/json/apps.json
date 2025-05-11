@@ -103,7 +103,7 @@
         "package": "s2f.apps.iot",
         "parameters": {
             "serviceName": "",
-            "synthSize": "3MB",
+            "synthSize": "400B",
             "pingsThreshold": "10",
             "processingMIs": "100"
         }

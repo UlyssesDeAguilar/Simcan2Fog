@@ -23,6 +23,7 @@ module SmartHouse like ITile
         @display("i=misc/town;bgb=20,20;bgi=showcases/floorplan,s;bgu=m");
         int sensors = 2;
         int actuators = 2;
+        bool enableRouterAsUplink = default(true);
 
 		// Preloading the user configuration
         user.vms = default([{"name":"my-vm", "type":"VM_small"}]);
@@ -49,7 +50,7 @@ module SmartHouse like ITile
             @display("p=4.0782886,10.5598545");
         }
 
-        router: Router {
+        router: Router if enableRouterAsUplink {
             @display("p=1.8206645,13.254438");
         }
 
@@ -86,6 +87,8 @@ module SmartHouse like ITile
         controller.ethg++ <--> Eth10M <--> ap.ethg++;
         netStack.ethg++ <--> Eth10M <--> ap.ethg++;
         
-		router.ethg++ <--> Eth10M <--> ap.ethg++;
-        router.ethg++ <--> ethernet;
+		router.ethg++ <--> Eth10M <--> ap.ethg++ if enableRouterAsUplink;
+        router.ethg++ <--> ethernet if enableRouterAsUplink;
+        
+        ap.ethg++ <--> ethernet if !enableRouterAsUplink;
 }
