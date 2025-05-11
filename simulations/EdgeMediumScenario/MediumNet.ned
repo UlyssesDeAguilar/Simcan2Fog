@@ -53,16 +53,16 @@ network MediumNet
             @display("p=768.32,308");
         }
         fg1: FogNode {
-            @display("p=309.12,300.16");
+            @display("p=367.36002,327.04");
         }
         fg2: FogNode {
-            @display("p=396.48,300.16");
+            @display("p=367.36002,277.76");
         }
         fg3: FogNode {
-            @display("p=385.28,204.96");
+            @display("p=367.36002,219.52");
         }
         fg4: FogNode {
-            @display("p=309.12,204.96");
+            @display("p=367.36002,170.24");
         }
 
         users[numUsers]: <> like ITile {
@@ -72,7 +72,7 @@ network MediumNet
             @display("p=237.18001,259.29");
         }
         metropolitan: InternetCloud {
-            @display("p=480.48,258.72");
+            @display("p=509.6,258.72");
         }
 
         backbone: InternetCloud {
@@ -91,9 +91,14 @@ network MediumNet
         }
         sw2: EthernetSwitch {
 
-            @display("p=352.80002,257.6");
+            @display("p=297.92,257.6");
         }
+
         sw3: EthernetSwitch {
+
+            @display("p=449.12,250.88");
+        }
+        sw4: EthernetSwitch {
             @display("p=698.88,260.96");
         }
     connections:
@@ -110,12 +115,17 @@ network MediumNet
         sw2.ethg++ <--> Eth10G <--> fg3.comm++;
         sw2.ethg++ <--> Eth10G <--> fg4.comm++;
 
-        metropolitan.ethg++ <--> Eth10G <--> sw2.ethg++;
+        sw3.ethg++ <--> Eth10G <--> fg1.comm++;
+        sw3.ethg++ <--> Eth10G <--> fg2.comm++;
+        sw3.ethg++ <--> Eth10G <--> fg3.comm++;
+        sw3.ethg++ <--> Eth10G <--> fg4.comm++;
+
+        metropolitan.ethg++ <--> Eth10G <--> sw3.ethg++;
         metropolitan.ethg++ <--> Eth100G <--> backbone.ethg++;
 
-        sw3.ethg++ <--> Eth100G <--> dc.comm++;
-        sw3.ethg++ <--> Eth100G <--> dns.ethg++;
-        sw3.ethg++ <--> Eth100G <--> messageQueue.ethg++;
-        sw3.ethg++ <--> Eth100G <--> cloudProvider.ethg++;
-        sw3.ethg++ <--> Eth100G <--> backbone.ethg++;
+        sw4.ethg++ <--> Eth100G <--> dc.comm++;
+        sw4.ethg++ <--> Eth100G <--> dns.ethg++;
+        sw4.ethg++ <--> Eth100G <--> messageQueue.ethg++;
+        sw4.ethg++ <--> Eth100G <--> cloudProvider.ethg++;
+        sw4.ethg++ <--> Eth100G <--> backbone.ethg++;
 }
