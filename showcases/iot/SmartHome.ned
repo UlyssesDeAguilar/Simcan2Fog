@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package iot;
+package s2f.showcases.iot;
 
 import s2f.core.simdata.SimData;
 import s2f.architecture.nodes.iot.controllers.Raspberry5;

@@ -1,4 +1,4 @@
-package echo;
+package s2f.tests.modules.echo;
 import s2f.core.cSIMCAN_Core;
 import s2f.architecture.net.card.NetworkCard;
 

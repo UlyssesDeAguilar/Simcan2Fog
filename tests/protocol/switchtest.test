@@ -1,6 +1,36 @@
 %description:
 Tests the correct behaviour of the Switch and NetworkCard implementation
 
+%file: EchoNet1.ned
+import s2f.architecture.net.switch.Switch;
+import s2f.architecture.net.card.NetworkCard;
+import s2f.tests.modules.echo.EchoModule;
+
+network EchoNet1 {
+    parameters:
+        int vecSize = default(5);
+    submodules:
+        main: EchoModule{
+            ip = 1024;
+            recvMode = false;
+            addressRange = parent.vecSize;
+        }
+
+        sw: Switch;
+        
+        vec[vecSize]: EchoModule{
+            ip = index;
+            recvMode = true;
+        }
+
+    connections:
+        main.comm <--> sw.comm++;
+
+        for i=0..vecSize-1 {
+            sw.comm++ <--> vec[i].comm;
+        }
+}
+
 %inifile: omnetpp.ini
 [General]
 network = EchoNet1

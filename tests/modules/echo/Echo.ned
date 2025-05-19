@@ -1,9 +1,8 @@
-package echo;
+package s2f.tests.modules.echo;
 
 simple Echo 
 {
     parameters:
-        @class(Echo);
         bool recvMode;
         int ip;
         int baseIp = default(0);

@@ -1,4 +1,4 @@
-package querier;
+package s2f.tests.modules.querier;
 @namespace();
 
 simple DataManagerQuerier

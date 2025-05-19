@@ -12,7 +12,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
-package proxy;
+package s2f.showcases.proxy;
 
 import s2f.apps.UserAppModule;
 import s2f.architecture.net.stack.proxy.AppProxy;

@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package dc;
+package s2f.showcases.dc;
 
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;

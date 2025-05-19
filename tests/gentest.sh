@@ -31,7 +31,7 @@ M_CONST=\-KINET4_PROJ\=$INET_PROJ\ \-KSM_PROJ\=$SM_PROJ
 #C_OPTS=\-KCXXFLAGS=-gdwarf-4 
 
 # Libs for the proyect
-LIBS=\-lINET\$\(D\)\ \-lSimcan2Fog\$\(D\)\ \-lmysqlcppconn
+LIBS=\-lINET\$\(D\)\ \-lSimcan2Fog\$\(D\)
 
 # Generate the test case files
 for folder in ${TARGETS[@]}

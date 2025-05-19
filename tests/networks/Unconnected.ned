@@ -1,5 +1,7 @@
+package s2f.tests.networks;
+
 import s2f.core.simdata.SimData;
-import querier.DataManagerQuerier;
+import s2f.tests.modules.querier.DataManagerQuerier;
 
 network Unconnected
 {

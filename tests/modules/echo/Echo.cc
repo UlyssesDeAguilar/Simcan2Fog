@@ -1,6 +1,6 @@
 #include "Echo.h"
 #include "s2f/architecture/net/protocol/L2Protocol_m.h"
-using namespace switchtest;
+using namespace s2f::tests;
 Define_Module(Echo);
 
 void Echo::initialize()

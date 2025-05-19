@@ -1,10 +1,10 @@
-package mq;
+package s2f.tests.modules.mq;
 import s2f.core.cSIMCAN_Core;
 
 simple MQDriver extends cSIMCAN_Core{
     parameters:
         @class(MQDriver);
-        bool kickStart = default(false);
+        string destinationTopic = default("");
     gates:
         input in;
         output out;

@@ -1,9 +1,8 @@
-package endpoint;
+package s2f.tests.modules.endpoint;
 
 simple Endpoint
 {
     parameters:
-        @class(Endpoint);
         string nameToResolve;
     gates:
         input endpointIn;

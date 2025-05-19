@@ -5,7 +5,7 @@ Tests the MessageQueue remote services
 %inifile: omnetpp.ini
 
 [General]
-network = MQNetwork
+network = s2f.tests.networks.MQNetwork
 sim-time-limit = 30s
 
 # Enable logging of the important bits
@@ -20,10 +20,15 @@ cmdenv-log-prefix = "[ %m ] : "
 
 # *.configurator.dumpConfig = "ips.xml" Will be necessary for DNS
 *.configurator.config = xml("<config> \
-                                <interface hosts='queue' address='24.24.24.24'/> \
+                                <interface hosts='queue' address='10.0.0.1'/> \
                                 <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
                              </config>")
 
+*.ns*.smqIp = "10.0.0.1"
+*.ns*.dns = "2.2.2.2"
+*.ns1.nodeTopic = "client"
+*.ns2.nodeTopic = "server"
+*.ns1.destinationTopic = "server"
 
 %# This section does the actual checking of what we expect
 %not-contains: stdout

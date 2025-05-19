@@ -3,7 +3,7 @@ Tests the correct behaviour of the JsonDataEngine implementation
 
 %inifile: omnetpp.ini
 [General]
-network = Unconnected
+network = s2f.tests.networks.Unconnected
 sim-time-limit = 10s
 
 *.simData.manager.experiment = "Experiment-1"

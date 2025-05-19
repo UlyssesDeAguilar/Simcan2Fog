@@ -1,10 +1,4 @@
-%description:
-Test the ability of the DNS_Service to register and resolve domains.
-
-%includes:
-#include "modules/Endpoint.h"
-
-%file: TestDNSService.ned
+package s2f.tests.networks;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
@@ -54,28 +48,3 @@ network DNSNet2
         bc_router.ethg++ <--> Eth10M <--> dns_service.ethg++;
         switch.ethg++ <--> Eth10M <--> bc_router.ethg++;
 }
-
-%inifile: omnetpp.ini
-
-[General]
-network = DNSNet2
-sim-time-limit = 20s
-record-eventlog = true
-**.cmdenv-log-level = debug
-
-*.endpoint.end.nameToResolve = ".dc_DataCentre"
-*.endpoint.networkAdapter.debug = true
-*.configurator.dumpConfig = "ips.xml"
-*.configurator.config = xml("<config> \
-                                <interface hosts='*.dns_service'  address='199.7.83.42' /> \
-                                <interface hosts='**.dc_DataCentre.networkAdapter' address='10.0.0.11' /> \
-                                <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
-                             </config>")
-
-%# This section does the actual checking of what we expect
-%not-contains: stdout
-undisposed object:
-%not-contains: stdout
--- check module destructor
-%contains: stdout
-Resolved IP: 10.0.0.11

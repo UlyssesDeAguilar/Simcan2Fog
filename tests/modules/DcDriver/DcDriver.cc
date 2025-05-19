@@ -1,5 +1,5 @@
 #include "DcDriver.h"
-using namespace inet;
+using namespace s2f::tests;
 Define_Module(DcDriver);
 
 void DcDriver::initialize()

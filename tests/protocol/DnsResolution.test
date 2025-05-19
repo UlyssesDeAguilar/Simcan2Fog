@@ -1,0 +1,30 @@
+%description:
+Test the ability of the DNS_Service to register and resolve domains.
+
+%includes:
+#include "modules/Endpoint.h"
+
+%inifile: omnetpp.ini
+
+[General]
+network = TestDNSService
+sim-time-limit = 20s
+record-eventlog = true
+**.cmdenv-log-level = debug
+
+*.endpoint.end.nameToResolve = ".dc_DataCentre"
+*.endpoint.networkAdapter.debug = true
+*.configurator.dumpConfig = "ips.xml"
+*.configurator.config = xml("<config> \
+                                <interface hosts='*.dns_service'  address='199.7.83.42' /> \
+                                <interface hosts='**.dc_DataCentre.networkAdapter' address='10.0.0.11' /> \
+                                <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
+                             </config>")
+
+%# This section does the actual checking of what we expect
+%not-contains: stdout
+undisposed object:
+%not-contains: stdout
+-- check module destructor
+%contains: stdout
+Resolved IP: 10.0.0.11

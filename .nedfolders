@@ -1,4 +1,5 @@
 simulations
 src
 tests/modules
+tests/networks
 showcases
