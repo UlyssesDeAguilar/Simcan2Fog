@@ -23,7 +23,7 @@ using namespace inet;
 Define_Module(DnsClientService);
 
 DnsClientService::DnsClientService() { tickTimer = new cMessage("Tick timer"); }
-DnsClientService::~DnsClientService() { delete tickTimer; }
+DnsClientService::~DnsClientService() { cancelAndDelete(tickTimer); }
 
 void DnsClientService::initialize(int stage)
 {

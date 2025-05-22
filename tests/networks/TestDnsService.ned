@@ -2,49 +2,43 @@ package s2f.tests.networks;
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.StandardHost;
-import s2f.Architecture.Network.DNS.DNS_Server;
-import s2f.Architecture.Network.Adapter.NetworkAdapter;
-import endpoint.Endpoint;
-import inet.node.inet.Router;
-import inet.node.ethernet.EtherSwitch;
+import s2f.architecture.dns.DnsSimplified;
+import s2f.architecture.net.stack.NetworkStack;
+import s2f.architecture.dns.client.DnsClientService;
+import s2f.tests.modules.dns.DnsTestClient;
+import inet.node.ethernet.EthernetSwitch;
 import inet.node.ethernet.Eth10M;
 
-module TestStub 
-{
-    gates:
-        inout comm;
-    submodules:
-        networkAdapter: NetworkAdapter;
-    connections allowunconnected:
-        comm <--> networkAdapter.ethg++;
-}
 
-module EndpointModule extends TestStub
+network TestDnsNetwork
 {
+    @display("bgb=575,347");
     submodules:
-        end: Endpoint;
-    connections:
-        networkAdapter.moduleIn  <-- end.endpointOut;
-        networkAdapter.moduleOut --> end.endpointIn;
-}
-
-network DNSNet2
-{
-    submodules:
-        configurator: Ipv4NetworkConfigurator;
-        endpoint: EndpointModule;
-        dc_DataCentre: TestStub;
-        dns_service: DNS_Server
-        {
-            isMain = true;
-            debug = true;
+        configurator: Ipv4NetworkConfigurator {
+            @display("p=252,32");
         }
-
-        bc_router: Router;
-        switch: EtherSwitch;
+        dns: DnsSimplified {
+            @display("p=471,159");
+        }
+        switch: EthernetSwitch {
+            @display("p=383,158");
+        }
+        netStack: NetworkStack {
+            @display("p=301,159");
+        }
+        client: DnsClientService {
+            @display("p=189,159");
+        }
+        dnsClient: DnsTestClient {
+            @display("p=118,159");
+        }
     connections:
-        switch.ethg++ <--> Eth10M <--> endpoint.comm;
-        switch.ethg++ <--> Eth10M <--> dc_DataCentre.comm;
-        bc_router.ethg++ <--> Eth10M <--> dns_service.ethg++;
-        switch.ethg++ <--> Eth10M <--> bc_router.ethg++;
+        switch.ethg++ <--> Eth10M <--> dns.ethg++;
+        switch.ethg++ <--> Eth10M <--> netStack.ethg++;
+
+        client.socketOut --> netStack.ssIn++;
+        client.socketIn <-- netStack.ssOut++;
+
+        dnsClient.clientOut --> client.clientIn;
+        dnsClient.clientIn <-- client.clientOut;
 }

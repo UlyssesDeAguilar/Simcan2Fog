@@ -1,25 +1,59 @@
 %description:
 Test the ability of the DNS_Service to register and resolve domains.
 
-%includes:
-#include "modules/Endpoint.h"
+%file: zones.json
+[
+    {
+        "zone": ".",
+        "records": [
+            { "domain": "a.gtld-servers.net.", "type": "NS", "ip": "1.1.1.1"}
+        ]
+    },
+    {
+        "zone": "com",
+        "records": [
+            { "domain": "ns1.example.com.", "type": "NS", "ip": "2.2.2.2"}
+        ]
+    },
+    {
+        "zone": "example.com",
+        "records": [
+            { "domain": "example.com.", "type": "A", "ip": "3.3.3.3"},
+            { "domain": "test.example.com.", "type": "CNAME", "text": "example.com"}
+        ]
+    }
+]
 
 %inifile: omnetpp.ini
 
 [General]
-network = TestDNSService
+network = s2f.tests.networks.TestDnsNetwork
 sim-time-limit = 20s
 record-eventlog = true
-**.cmdenv-log-level = debug
 
-*.endpoint.end.nameToResolve = ".dc_DataCentre"
-*.endpoint.networkAdapter.debug = true
+# Enable logging of the important bits
+*.dns.dnsService.cmdenv-log-level = trace
+*.dns.db.cmdenv-log-level = trace
+*.dnsClient.cmdenv-log-level = trace
+*.client.cmdenv-log-level = trace
+**.cmdenv-log-level = off
+cmdenv-log-prefix = "[ %m ] : "
+
 *.configurator.dumpConfig = "ips.xml"
 *.configurator.config = xml("<config> \
-                                <interface hosts='*.dns_service'  address='199.7.83.42' /> \
-                                <interface hosts='**.dc_DataCentre.networkAdapter' address='10.0.0.11' /> \
+                                <interface hosts='dns' address='10.0.0.1' /> \
                                 <interface hosts='**' address='10.0.0.x' netmask='255.255.255.x'/> \
                              </config>")
+
+*.netStack.enableQueue = false
+*.netStack.dns = "10.0.0.1"
+*.netStack.smqIp = ""
+*.netStack.nodeTopic = ""
+
+# The real component
+*.dnsClient.domainList = ["example.com.", "example.es.", "com.", "bogus.net."]
+*.dnsClient.targetDnsList = ["10.0.0.1"]
+*.dns.db.zoneConfig = readJSON("zones.json")
 
 %# This section does the actual checking of what we expect
 %not-contains: stdout
@@ -27,4 +61,25 @@ undisposed object:
 %not-contains: stdout
 -- check module destructor
 %contains: stdout
-Resolved IP: 10.0.0.11
+[ TestDnsNetwork.dnsClient ] : Response for 0 received, status is OK
+[ TestDnsNetwork.dnsClient ] : Return code: 0
+[ TestDnsNetwork.dnsClient ] : Authoritative answer count: 2
+[ TestDnsNetwork.dnsClient ] : Non authoritative answer count: 0
+[ TestDnsNetwork.dnsClient ] : Answer (auth) => domain: example.com., type: A, ip: 3.3.3.3, text: 
+[ TestDnsNetwork.dnsClient ] : Answer (auth) => domain: test.example.com., type: CNAME, ip: <none>, text: example.com
+%contains: stdout
+[ TestDnsNetwork.dnsClient ] : Response for 1 received, status is OK
+[ TestDnsNetwork.dnsClient ] : Return code: 3
+[ TestDnsNetwork.dnsClient ] : Authoritative answer count: 0
+[ TestDnsNetwork.dnsClient ] : Non authoritative answer count: 0
+%contains: stdout
+[ TestDnsNetwork.dnsClient ] : Response for 2 received, status is OK
+[ TestDnsNetwork.dnsClient ] : Return code: 0
+[ TestDnsNetwork.dnsClient ] : Authoritative answer count: 1
+[ TestDnsNetwork.dnsClient ] : Non authoritative answer count: 0
+[ TestDnsNetwork.dnsClient ] : Answer (auth) => domain: ns1.example.com., type: NS, ip: 2.2.2.2, text: 
+%contains: stdout
+[ TestDnsNetwork.dnsClient ] : Response for 3 received, status is OK
+[ TestDnsNetwork.dnsClient ] : Return code: 3
+[ TestDnsNetwork.dnsClient ] : Authoritative answer count: 0
+[ TestDnsNetwork.dnsClient ] : Non authoritative answer count: 0

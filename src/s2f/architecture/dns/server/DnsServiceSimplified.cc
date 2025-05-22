@@ -87,7 +87,8 @@ void DnsServiceSimplified::handleQuery(const Packet *packet, Ptr<const DnsReques
 
     auto node = dnsDatabase->searchRecords(request->getQuestion(0));
 
-    if (node)
+    // If node and not null
+    if (node && node->getRecords())
     {
         processRecords(domain, response, *(node->getRecords()));
         response->setReturnCode(ReturnCode::NOERROR);
