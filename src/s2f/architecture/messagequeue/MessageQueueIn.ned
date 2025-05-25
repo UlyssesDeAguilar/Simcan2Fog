@@ -18,7 +18,9 @@ package s2f.architecture.messagequeue;
 //
 // This module processes all incoming traffic onto the MessageQueue
 // 
-// It's a redesign from the old arquitecture, aiming to be more efficient and scalable!
+// Key responsibilities:
+// - Accepting incoming sessions from queue clients 
+// - Push the data into the corresponding topic (managed by MessageQueueOut module)
 //
 // @author Ulysses de Aguilar Gudmundsson
 // @version 1.0
@@ -26,10 +28,10 @@ simple MessageQueueIn
 {
     parameters:
         @class(MessageQueueIn);
-        string localAddress = default("");
-        int localPort;
-        string messageQueueOutPath = default("^.messageQueueOut");
+        string localAddress = default(""); // The address of the interface where the service will listen (leave empty for all interfaces)
+        int localPort; // Port where the service will listen
+        string messageQueueOutPath = default("^.messageQueueOut"); // Path to the MessageQueueOut module
     gates:
-        input socketIn;
-        output socketOut;
+        input socketIn; // Socket input
+        output socketOut; // Socket output
 }

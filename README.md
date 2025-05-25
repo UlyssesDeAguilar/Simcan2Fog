@@ -57,10 +57,20 @@ The easiest way to install this framework is from the IDE wizard:
 After the installation is complete you can run a tutorial, example or showcase provided by INET to verify that everything is working correctly.
 
 #### Installing Simcan2Fog
-1. Clone the repo inside the ```omnetpp-6.0.3``` folder
+1. Clone the repo inside the ```omnetpp-6.0.3``` installation folder
+2. Add the environment variables into your ```.bashrc```
+
+At this point your ```.bashrc``` (or shell equivalent) should have a section like this:
+```
+# These statements load into the session the environment variables
+[ -f "$HOME/omnetpp-6.0.3/setenv" ] && source "$HOME/omnetpp-6.0.3/setenv" -q
+[ -f "$HOME/omnetpp-6.0.3/inet4.5/setenv" ] && source "$HOME/omnetpp-6.0.3/inet4.5/setenv" -q
+[ -f "$HOME/omnetpp-6.0.3/Simcan2Fog/setenv" ] && source "$HOME/omnetpp-6.0.3/Simcan2Fog/setenv" -q
+```
+
 2. Open the OMNeT++ IDE and select **build proyect**
 
-Technically it should build without any trouble from this point on. 
+Technically it should build without any trouble from this point on.
 If the build succeded, congratulations! You can now move forward to [running experiments](./docs/usage.md).
 
 ## Quick Start

@@ -18,7 +18,16 @@ package s2f.architecture.messagequeue;
 //
 // This module processes all outgoing traffic of the MessageQueue
 // 
-// It's a redesign from the old arquitecture, aiming to be more efficient and scalable!
+// Key responsibilities:
+// - Keep the relationship between queues/topics
+// - Create new topics
+// - Deliver the messages to the topic consumers
+//
+// As the consumers register into this service so do their respective topics.
+// If it's imperative to allow the creation of queues for topics which are not
+// yet registered, because there are no consumers yet,then there's the preemptive
+// queue allocation mode. In this mode a queue will be allocated instead of launching
+// a model error.
 //
 // @author Ulysses de Aguilar Gudmundsson
 // @version 1.0
@@ -26,10 +35,10 @@ simple MessageQueueOut
 {
     parameters:
         @class(MessageQueueOut);
-        string localAddress = default("");
-        int localPort;
-        bool preemptiveQueueAllocation = default(true);
+        string localAddress = default(""); // The address of the interface where the service will listen (leave empty for all interfaces)
+        int localPort; // Port where the service will listen
+        bool preemptiveQueueAllocation = default(true); // Whether the service should preallocate a queue with no consumers
     gates:
-        input socketIn;
-        output socketOut;
+        input socketIn; // Socket input
+        output socketOut; // Socket output
 }

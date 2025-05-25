@@ -15,15 +15,22 @@
 
 package s2f.architecture.messagequeue;
 
-import s2f.architecture.messagequeue.internals.SMQueue;
-import s2f.architecture.messagequeue.services.PushServer;
-import s2f.architecture.messagequeue.services.PullServer;
-
 import inet.applications.tcpapp.TcpServerApp;
 import inet.queueing.buffer.PacketBuffer;
 import inet.node.inet.StandardHost;
 
-
+//
+// This is the implementation of the SIMCAN message queue
+// 
+// It's certainly a central element for the syncronization and communication 
+// of the different actors (Users, Fog Nodes, Data Centers, Cloud Provider)
+// 
+// This service will employ the destinationTopic of the SIMCAN_Message message
+// in order to route to a entity. Don't forget to specify a return topic if 
+// you expect a response!
+//
+// @author Ulysses de Aguilar Gudmundsson
+// @version 2.0
 module MessageQueue extends StandardHost
 {
     parameters:

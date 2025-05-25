@@ -2,11 +2,11 @@
 # OMNeT++/OMNEST Makefile for Simcan2Fog
 #
 # This file was generated with the command:
-#  opp_makemake -f -O out -KINET4_5_PROJ=../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lSimcan2Fog$$\(D\) -lINET$$\(D\) -d src -X.
+#  opp_makemake -f -O out -KINET4_5_PROJ=../inet4.5 -DINET_IMPORT -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -Lout/$$\(CONFIGNAME\)/src -lSimcan2Fog$$\(D\) -lINET$$\(D\) -d src -X.
 #
 
 # Name of target to be created (-o option)
-TARGET_DIR = .
+TARGET_DIR = bin
 TARGET_NAME = Simcan2Fog$(D)
 TARGET = $(TARGET_NAME)$(EXE_SUFFIX)
 TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
