@@ -23,10 +23,16 @@
 namespace dns
 {
 
+    /**
+     * @brief Simulation model that offers DNS database services
+     * 
+     * @author Ulysses de Aguilar Gudmundsson
+     * @version 1.0
+     */
     class DnsDb : public omnetpp::cSimpleModule
     {
     protected:
-        DnsTree tree;
+        DnsTree tree; //!< Tree-like data structure that holds the DNS zones and records
 
     public:
         // Kernel lifecycle
@@ -34,8 +40,30 @@ namespace dns
         virtual void finish() override { tree.clear(); };
         virtual void handleMessage(omnetpp::cMessage *msg) override { error("This module doesn't take any messages"); }
 
+        /**
+         * @brief Inserts a DNS record into a given DNS zone
+         * 
+         * @param zone Zone to insert the record
+         * @param record The record to be inserted
+         */
         void insertRecord(const char *zone, const ResourceRecord &record);
+
+        /**
+         * @brief Removes a DNS record from a given DNS zone
+         * 
+         * @param zone Zone to remove the record
+         * @param record The record to be removed
+         */
         void removeRecord(const char *zone, const ResourceRecord &record);
+
+        /**
+         * @brief Searches for DNS records that match a given DNS question
+         * @details This method provides a best effort implementation, it returns 
+         * the first node in the tree that matches the question either partially or fully
+         * 
+         * @param question DNS question
+         * @return const DnsTreeNode* The node that matches the question
+         */
         const DnsTreeNode *searchRecords(const DnsQuestion &question);
     };
 

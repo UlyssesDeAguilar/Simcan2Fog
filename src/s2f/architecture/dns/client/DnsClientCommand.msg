@@ -11,21 +11,33 @@ enum DnsClientResult
 }
 
 //
-//  Should be set on the packet control info!
+// Petition for the DnsClientService in order to try to resolve a DNS query
+// 
+// The ipPool will usually be the list of DNS resolvers to be tried 
+// before giving up. The payload is expected to be a DNS query and
+// will be sent as is.
 //
+// @author Ulysses de Aguilar Gudmundsson
+// @version 1.0
 message DnsClientCommand
 {
-    inet::L3Address ipPool[];
-    uint16_t requestId;
-    inet::Packet *payload @owned;
+    inet::L3Address ipPool[]; // List of server ip addresses where the query (payload) will be sent
+    uint16_t requestId; // Request Id set by the module that creates the request
+    inet::Packet *payload @owned; // Packet containing the DNS query
 }
 
 //
-// This is the result, if OK then the message itself is an Packet, cMessage otherwise.
+// Result of a DnsClientCommand
+// 
+// The ipPool will usually be the list of DNS resolvers to be tried 
+// before giving up. The payload is expected to be a DNS query and
+// will be sent as is.
 //
+// @author Ulysses de Aguilar Gudmundsson
+// @version 1.0
 message DnsClientIndication
 {
-    uint16_t requestId;
-    DnsClientResult result;
-    inet::Packet *payload @owned;
+    uint16_t requestId; // Request Id set by the module that created the original command
+    DnsClientResult result; // The result of the operation
+    inet::Packet *payload @owned; // The response or nullpointer if there was an error
 }

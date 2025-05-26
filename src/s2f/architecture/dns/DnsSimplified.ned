@@ -5,9 +5,10 @@ import s2f.architecture.dns.registry.DnsRegistryService;
 import s2f.architecture.dns.server.DnsServiceSimplified;
 
 //
-// Module that simplifies the DNS hierarchy by aggregating 
-// all the domains onto a single server
+// Simplified DNS server implementation
 //
+// @author Ulysses de Aguilar Gudmundsson
+// @version 2.0
 module DnsSimplified extends StandardHost
 {
     parameters:
