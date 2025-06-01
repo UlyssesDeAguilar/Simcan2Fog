@@ -40,7 +40,7 @@ protected:
 
     std::map<uint16_t, RequestContext> pendingRequests;
     inet::L3Address ispResolver;
-    dns::DnsDb *dnsDatabase;
+    s2f::dns::DnsDb *dnsDatabase;
     uint16_t lastId{}; // Last reserved id (gives linearity and better likelyhood of finding a free one)
 
     // Kernel lifecycle
@@ -49,9 +49,9 @@ protected:
     virtual void handleMessage(omnetpp::cMessage *msg) override;
 
     void handleRequest(StubDnsRequest *request);
-    void handleResponse(dns::DnsClientIndication *msg);
-    const dns::ResourceRecord *processIndication(dns::DnsClientIndication *msg);
-    void sendResponse(const RequestContext &context, const dns::ResourceRecord *record);
+    void handleResponse(s2f::dns::DnsClientIndication *msg);
+    const s2f::dns::ResourceRecord *processIndication(s2f::dns::DnsClientIndication *msg);
+    void sendResponse(const RequestContext &context, const s2f::dns::ResourceRecord *record);
 };
 
 #endif

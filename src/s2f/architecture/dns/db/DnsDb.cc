@@ -1,7 +1,7 @@
 #include "s2f/architecture/dns/db/DnsDb.h"
 
 using namespace inet;
-using namespace dns;
+using namespace s2f::dns;
 
 Define_Module(DnsDb);
 

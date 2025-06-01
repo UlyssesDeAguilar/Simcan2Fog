@@ -2,7 +2,7 @@ import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import s2f.architecture.dns.ResourceRecord;
 
-namespace dns;
+namespace s2f::dns;
 
 //
 // DNS header field for operation codes

@@ -14,39 +14,76 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
-namespace dns
+namespace s2f
 {
-
-    class DnsServiceSimplified : public inet::ApplicationBase, inet::UdpSocket::ICallback
+    namespace dns
     {
-    protected:
-        inet::UdpSocket socket;
-        DnsDb *dnsDatabase{};
-        omnetpp::cPatternMatcher authorityMatcher;
-        void processRecords(const char *domain, inet::Ptr<DnsRequest> response, const std::set<dns::ResourceRecord> &records);
+        /**
+         * @brief DNS server module
+         * @details Based upon the RFC 1034/1035 with some practical simplifications
+         *
+         * @author Ulysses de Aguilar Gudmundsson
+         * @version 2.0
+         */
+        class DnsServiceSimplified : public inet::ApplicationBase, inet::UdpSocket::ICallback
+        {
+        protected:
+            inet::UdpSocket socket;                    //!< DNS server socket
+            DnsDb *dnsDatabase{};                      //!< DNS database reference
+            omnetpp::cPatternMatcher authorityMatcher; //!< Pattern matcher for determining if a domain falls under the authority domain of this server
 
-    public:
-        // Kernel lifecycle
-        virtual int numInitStages() const override { return inet::NUM_INIT_STAGES + 1; }
-        virtual void initialize(int stage) override;
-        virtual void finish() override;
+            /**
+             * @brief Process DNS records in order to craft a response for a query in a given domain
+             * @details It also checks if the records are under the authority domain
+             *
+             * @param domain Domain where the records the records belong
+             * @param response DNS response message
+             * @param records DNS record list to be processed
+             */
+            void processRecords(const char *domain, inet::Ptr<DnsRequest> response, const std::set<ResourceRecord> &records);
 
-        // INET lifecyle
-        virtual void handleStartOperation(inet::LifecycleOperation *operation) override;
-        virtual void handleStopOperation(inet::LifecycleOperation *operation) override { error("This module doesn't support stopping"); }
-        virtual void handleCrashOperation(inet::LifecycleOperation *operation) override { error("This module doesn't support crashing"); }
+        public:
+            // Kernel lifecycle
+            virtual int numInitStages() const override { return inet::NUM_INIT_STAGES + 1; }
+            virtual void initialize(int stage) override;
+            virtual void finish() override;
 
-        // Logic
-        virtual void handleMessageWhenUp(omnetpp::cMessage *msg) override { socket.processMessage(msg); }
-        void handleQuery(const inet::Packet *packet, inet::Ptr<const DnsRequest> request);
-        void handleNotImplemented(const inet::Packet *packet, inet::Ptr<const DnsRequest> request);
-        void sendResponseTo(const inet::Packet *packet, inet::Ptr<DnsRequest> request);
+            // INET lifecyle
+            virtual void handleStartOperation(inet::LifecycleOperation *operation) override;
+            virtual void handleStopOperation(inet::LifecycleOperation *operation) override { error("This module doesn't support stopping"); }
+            virtual void handleCrashOperation(inet::LifecycleOperation *operation) override { error("This module doesn't support crashing"); }
+            virtual void handleMessageWhenUp(omnetpp::cMessage *msg) override { socket.processMessage(msg); }
 
-        // Socket callbacks
-        virtual void socketDataArrived(inet::UdpSocket *socket, inet::Packet *packet) override;
-        virtual void socketErrorArrived(inet::UdpSocket *socket, inet::Indication *indication) override;
-        virtual void socketClosed(inet::UdpSocket *socket) override {}
-    };
+            /**
+             * @brief Handle an incoming DNS query
+             *
+             * @param packet Originating packet
+             * @param request DNS query message
+             */
+            void handleQuery(const inet::Packet *packet, inet::Ptr<const DnsRequest> request);
+
+            /**
+             * @brief Crafts a reply for a DNS operation code that is not implemented
+             *
+             * @param packet Originating packet
+             * @param request Originating request
+             */
+            void handleNotImplemented(const inet::Packet *packet, inet::Ptr<const DnsRequest> request);
+
+            /**
+             * @brief Sends a response to a DNS query
+             *
+             * @param packet The packet that originated the request
+             * @param response The response for said request
+             */
+            void sendResponseTo(const inet::Packet *packet, inet::Ptr<DnsRequest> response);
+
+            // Socket callbacks
+            virtual void socketDataArrived(inet::UdpSocket *socket, inet::Packet *packet) override;
+            virtual void socketErrorArrived(inet::UdpSocket *socket, inet::Indication *indication) override;
+            virtual void socketClosed(inet::UdpSocket *socket) override {}
+        };
+    }
 }
 
 #endif

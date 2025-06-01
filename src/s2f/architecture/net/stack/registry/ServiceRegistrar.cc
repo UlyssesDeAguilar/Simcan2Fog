@@ -1,11 +1,12 @@
 #include "ServiceRegistrar.h"
+using namespace s2f::dns;
+
 Define_Module(ServiceRegistrar);
 
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/common/ModuleAccess.h"
 #include "s2f/architecture/dns/DnsCommon.h"
 
-using namespace dns;
 
 void ServiceRegistrar::initialize(int stage)
 {

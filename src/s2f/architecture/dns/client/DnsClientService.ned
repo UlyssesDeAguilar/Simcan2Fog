@@ -11,7 +11,6 @@ package s2f.architecture.dns.client;
 simple DnsClientService
 {
     parameters:
-        @class(dns::DnsClientService);
         int ticksForTimeOut = default(5); // Number of ticks before a timeout happens
         int timePerTick @unit(ms) = default(200 ms); // Time between ticks
         int maxAttempts = default(3); // Maximum number of attempts for each resolver server

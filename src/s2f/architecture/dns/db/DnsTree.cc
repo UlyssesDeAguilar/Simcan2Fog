@@ -1,7 +1,7 @@
 #include "s2f/architecture/dns/db/DnsTree.h"
 #include <algorithm>
 
-using namespace dns;
+using namespace s2f::dns;
 using namespace omnetpp;
 
 void DnsTreeNode::clear()
@@ -72,18 +72,21 @@ std::ostream &DnsTreeNode::print(std::ostream &out, int level) const
     return out;
 }
 
-namespace dns
+namespace s2f
 {
-    std::ostream &operator<<(std::ostream &out, const DnsTreeNode &node)
+    namespace dns
     {
-        out << "DnsTreeNode of zone: " << node.domain << " level:" << dnsLevelToString(node.level) << "\n";
-        out << "Records: ";
-        for (auto &record : node.records)
-            out << " + " << record << "\n";
-        out << "Children: ";
-        for (auto &child : node.children)
-            out << " + " << child.second.domain << "\n";
-        return out;
+        std::ostream &operator<<(std::ostream &out, const DnsTreeNode &node)
+        {
+            out << "DnsTreeNode of zone: " << node.domain << " level:" << dnsLevelToString(node.level) << "\n";
+            out << "Records: ";
+            for (auto &record : node.records)
+                out << " + " << record << "\n";
+            out << "Children: ";
+            for (auto &child : node.children)
+                out << " + " << child.second.domain << "\n";
+            return out;
+        }
     }
 }
 

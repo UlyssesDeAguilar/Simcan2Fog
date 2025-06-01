@@ -17,8 +17,7 @@
 #include "s2f/architecture/dns/client/DnsClientCommand_m.h"
 #include "s2f/architecture/dns/DnsCommon.h"
 
-using namespace dns;
-
+using namespace s2f::dns;
 using namespace s2f::tests;
 
 Define_Module(DnsTestClient);

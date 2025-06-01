@@ -5,67 +5,110 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/architecture/dns/DnsRequest_m.h"
 
-namespace dns
+namespace s2f
 {
-    enum ResolutionState
+    namespace dns
     {
-        INIT,
-        TLD_RESOLUTION,
-        NS_RESOLUTION,
-        AUTH_RESOLUTION,
-        RESOLVED,
-        NOT_FOUND,
-        SERVER_ERROR
-    };
-
-    struct Resolution
-    {
-        // Inmutable, could be used as a key
-        uint16_t id;
-        inet::L3Address remoteAddress;
-        int remotePort;
-        DnsQuestion current_question;
-        ResolutionState state;
-        inet::Ptr<DnsRequest> response;
-
-        Resolution(uint16_t id, inet::L3Address remoteAddress, int remotePort, inet::Ptr<const DnsRequest> request)
+        /**
+         * @brief DNS resolution states
+         */
+        enum ResolutionState
         {
-            this->id = id,
-            this->remoteAddress = remoteAddress,
-            this->remotePort = remotePort,
-            current_question = request->getQuestion(0);
-            response = inet::makeShared<DnsRequest>(*request);
-            state = INIT;
-        }
+            INIT,            //!< Initial state
+            TLD_RESOLUTION,  //!< TLD resolution, implies TLD discovery
+            NS_RESOLUTION,   //!< NS resolution, implies NS discovery
+            AUTH_RESOLUTION, //!< Authoritative resolution
+            RESOLVED,        //!< The resolution was successful
+            NOT_FOUND,       //!< The resolution failed
+            SERVER_ERROR     //!< Server error
+        };
 
-        Resolution(const Resolution &other) : id(other.id)
+        /**
+         * @brief Struct that represents a DNS resolution and it's states
+         * 
+         * @author Ulysses de Aguilar Gudmundsson
+         * @version 1.0
+         */
+        struct Resolution
         {
-            this->remotePort = other.remotePort;
-            this->current_question = other.current_question;
-            this->state = other.state;
-            this->response = other.response->dup();
-        }
+            uint16_t id;                    //!< Resolution id
+            inet::L3Address remoteAddress;  //!< Remote address (the client)
+            int remotePort;                 //!< Remote port (the client)
+            DnsQuestion current_question;   //!< Current question, as the resolution advances
+            ResolutionState state;          //!< Resolution state
+            inet::Ptr<DnsRequest> response; //!< DNS response
 
-        Resolution() : id(), remotePort(0), current_question(), state(INIT), response(nullptr) {}
+            /**
+             * @brief Constructor
+             * 
+             * @param id Resolution id
+             * @param remoteAddress Address of the client
+             * @param remotePort Port of the client
+             * @param request The request itself
+             */
+            Resolution(uint16_t id, inet::L3Address remoteAddress, int remotePort, inet::Ptr<const DnsRequest> request)
+            {
+                this->id = id,
+                this->remoteAddress = remoteAddress,
+                this->remotePort = remotePort,
+                current_question = request->getQuestion(0);
+                response = inet::makeShared<DnsRequest>(*request);
+                state = INIT;
+            }
 
-        friend std::ostream &operator<<(std::ostream &os, const Resolution &obj)
-        {
-            return os << "Resolution [ip: " << obj.remoteAddress
-                      << " | port: " << obj.remotePort
-                      << " | id: " << obj.id
-                      << " | state: " << obj.stateToString(obj.state) << " ]";
-        }
+            /**
+             * @brief Copy constructor
+             * 
+             * @param other The other object
+             */
+            Resolution(const Resolution &other) : id(other.id)
+            {
+                this->remotePort = other.remotePort;
+                this->current_question = other.current_question;
+                this->state = other.state;
+                this->response = other.response->dup();
+            }
 
-        friend bool operator<(const Resolution &lhs, const Resolution &rhs) noexcept { return lhs.id < rhs.id; }
+            /**
+             * @brief Default constructor
+             */
+            Resolution() : id(), remotePort(0), current_question(), state(INIT), response(nullptr) {}
 
-        static const char *stateToString(ResolutionState state)
-        {
-            static const char *states[] = {"INIT", "TLD_RESOLUTION", "NS_RESOLUTION", "AUTH_RESOLUTION", "RESOLVED", "NOT_FOUND"};
-            return states[state];
-        }
+            friend std::ostream &operator<<(std::ostream &os, const Resolution &obj)
+            {
+                return os << "Resolution [ip: " << obj.remoteAddress
+                          << " | port: " << obj.remotePort
+                          << " | id: " << obj.id
+                          << " | state: " << obj.stateToString(obj.state) << " ]";
+            }
 
-        bool hasFinished() const { return state == RESOLVED || state == NOT_FOUND; }
-        const char* getCurrentQuestion() const { return current_question.getDomain(); }
-    };
+            friend bool operator<(const Resolution &lhs, const Resolution &rhs) noexcept { return lhs.id < rhs.id; }
+
+            /**
+             * @brief Turns a ResolutionState integer into a string
+             * 
+             * @param state The ResolutionState
+             * @return const char* The string representation 
+             */
+            static const char *stateToString(ResolutionState state)
+            {
+                static const char *states[] = {"INIT", "TLD_RESOLUTION", "NS_RESOLUTION", "AUTH_RESOLUTION", "RESOLVED", "NOT_FOUND"};
+                return states[state];
+            }
+
+            /**
+             * @brief Checks if the resolution has finished
+             * 
+             * @return true The resolution has finished, false otherwise
+             */
+            bool hasFinished() const { return state == RESOLVED || state == NOT_FOUND; }
+
+            /**
+             * @brief Get the current question
+             * @return const char* The current question
+             */
+            const char *getCurrentQuestion() const { return current_question.getDomain(); }
+        };
+    }
 }
 #endif /* SIMCAN_EX_DNS_RESOLUTION_H_ */

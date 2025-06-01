@@ -7,28 +7,30 @@
 #include "s2f/architecture/dns/db/DnsDb.h"
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
 
-namespace dns
+namespace s2f
 {
-    class DnsRegistryService : public omnetpp::cSimpleModule, public inet::LifecycleUnsupported
+    namespace dns
     {
-    protected:
-        inet::TcpSocket socket;
-        DnsDb *dnsDatabase{};
+        /**
+         * @brief DNS registry service
+         * @details This module exposes a RESTful API for DNS records CRUD operations
+         *
+         * @author Ulysses de Aguilar Gudmundsson
+         * @version 1.0
+         */
+        class DnsRegistryService : public omnetpp::cSimpleModule, public inet::LifecycleUnsupported
+        {
+        protected:
+            inet::TcpSocket socket; //!< Server socket
+            DnsDb *dnsDatabase{};   //!< DNS database reference
 
-        long msgsRcvd;
-        long msgsSent;
-        long bytesRcvd;
-        long bytesSent;
-
-        virtual void sendBack(omnetpp::cMessage *msg);
-        virtual void initialize(int stage) override;
-        virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
-        virtual void handleMessage(omnetpp::cMessage *msg) override;
-        virtual void finish() override;
-        virtual bool processRequest(const DnsRegistrationRequest *msg);
-        virtual void refreshDisplay() const override;
-        //void scanNetwork();
-    };
-};
+            virtual void sendBack(omnetpp::cMessage *msg);
+            virtual void initialize(int stage) override;
+            virtual int numInitStages() const override { return inet::NUM_INIT_STAGES; }
+            virtual void handleMessage(omnetpp::cMessage *msg) override;
+            virtual bool processRequest(const DnsRegistrationRequest *msg);
+        };
+    }
+}
 
 #endif

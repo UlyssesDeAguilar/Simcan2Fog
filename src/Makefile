@@ -47,12 +47,7 @@ OBJS = \
     $O/s2f/architecture/dns/resolver/DnsResolverService.o \
     $O/s2f/architecture/dns/server/DnsServiceSimplified.o \
     $O/s2f/architecture/messagequeue/MessageQueueIn.o \
-    $O/s2f/architecture/messagequeue/MessageQueueManager.o \
     $O/s2f/architecture/messagequeue/MessageQueueOut.o \
-    $O/s2f/architecture/messagequeue/internals/SinkDelegate.o \
-    $O/s2f/architecture/messagequeue/internals/SourceDelegate.o \
-    $O/s2f/architecture/messagequeue/services/PullService.o \
-    $O/s2f/architecture/messagequeue/services/PushService.o \
     $O/s2f/architecture/net/card/NetworkCard.o \
     $O/s2f/architecture/net/db/SimpleNetDb.o \
     $O/s2f/architecture/net/hub/CheckingHubModule.o \

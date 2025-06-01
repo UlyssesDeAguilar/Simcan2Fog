@@ -1,7 +1,7 @@
 import inet.common.INETDefs;
 import inet.networklayer.common.L3Address;
 
-namespace dns;
+namespace s2f::dns;
 
 //
 // Resource record/question types

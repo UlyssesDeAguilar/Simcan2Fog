@@ -16,7 +16,7 @@
 #include "s2f/architecture/dns/client/DnsClientService.h"
 #include "inet/common/packet/ChunkQueue.h"
 
-using namespace dns;
+using namespace s2f::dns;
 using namespace omnetpp;
 using namespace inet;
 

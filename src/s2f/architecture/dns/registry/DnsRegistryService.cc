@@ -12,7 +12,7 @@
 #include "inet/transportlayer/contract/tcp/TcpCommand_m.h"
 #include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 
-using namespace dns;
+using namespace s2f::dns;
 using namespace omnetpp;
 using namespace inet;
 
@@ -25,14 +25,6 @@ void DnsRegistryService::initialize(int stage)
     if (stage == INITSTAGE_LOCAL)
     {
         dnsDatabase = check_and_cast<DnsDb *>(findModuleByPath(par("dbPath")));
-
-        // statistics
-        msgsRcvd = msgsSent = bytesRcvd = bytesSent = 0;
-
-        WATCH(msgsRcvd);
-        WATCH(msgsSent);
-        WATCH(bytesRcvd);
-        WATCH(bytesSent);
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
@@ -45,36 +37,8 @@ void DnsRegistryService::initialize(int stage)
         bool isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
         if (!isOperational)
             throw cRuntimeError("This module doesn't support starting in node DOWN state");
-
-        // if ((int) par("mode") == NET_SCAN)
-        //     scanNetwork();
     }
 }
-
-// void DnsRegistryService::scanNetwork()
-// {
-//     cTopology topo;
-//     ResourceRecord r;
-//     r.type = ResourceRecord::RR_Type::A;
-//
-//     topo.extractByProperty("servicenode");
-//
-//     if (topo.getNumNodes() == 0)
-//         error("Couldn't find the nodes in the topology");
-//
-//     for (int i = 0; i < topo.getNumNodes(); i++)
-//     {
-//         cTopology::Node *node = topo.getNode(i);
-//         cModule *module = node->getModule();
-//         L3Address address = L3AddressResolver().addressOf(module->getSubmodule("stack"));
-//         const char *domain = module->par("serviceDeployed");
-//
-//         r.ip = address;
-//         r.domain = domain;
-//         cache->insertData(r);
-//         EV << "Service: \"" << domain << "\" located on: " << module->getName() << " with ip: " << address << "\n";
-//     }
-// }
 
 void DnsRegistryService::sendBack(cMessage *msg)
 {
@@ -82,10 +46,7 @@ void DnsRegistryService::sendBack(cMessage *msg)
 
     if (packet)
     {
-        msgsSent++;
-        bytesSent += packet->getByteLength();
         emit(packetSentSignal, packet);
-
         EV_INFO << "sending \"" << packet->getName() << "\" to TCP, " << packet->getByteLength() << " bytes\n";
     }
     else
@@ -123,9 +84,6 @@ void DnsRegistryService::handleMessage(cMessage *msg)
         while (queue.has<DnsRegistrationRequest>(b(-1)))
         {
             const auto &request = queue.pop<DnsRegistrationRequest>(b(-1));
-            msgsRcvd++;
-            bytesRcvd += B(request->getChunkLength()).get();
-
             auto newPacket = new Packet("DnsRegistry Response");
 
             bool ok = processRequest(request.get());
@@ -178,17 +136,4 @@ bool DnsRegistryService::processRequest(const DnsRegistrationRequest *request)
         EV_WARN << "Unable to process request with verb: " << request->getVerb() << "\n";
         return false;
     }
-}
-
-void DnsRegistryService::refreshDisplay() const
-{
-    char buf[64];
-    sprintf(buf, "rcvd: %ld pks %ld bytes\nsent: %ld pks %ld bytes", msgsRcvd, bytesRcvd, msgsSent, bytesSent);
-    getDisplayString().setTagArg("t", 0, buf);
-}
-
-void DnsRegistryService::finish()
-{
-    EV_INFO << getFullPath() << ": sent " << bytesSent << " bytes in " << msgsSent << " packets\n";
-    EV_INFO << getFullPath() << ": received " << bytesRcvd << " bytes in " << msgsRcvd << " packets\n";
 }

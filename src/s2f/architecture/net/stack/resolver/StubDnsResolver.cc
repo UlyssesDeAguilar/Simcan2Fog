@@ -2,7 +2,7 @@
 
 using namespace omnetpp;
 using namespace inet;
-using namespace dns;
+using namespace s2f::dns;
 
 Define_Module(StubDnsResolver);
 
@@ -88,7 +88,7 @@ void StubDnsResolver::handleResponse(DnsClientIndication *msg)
     delete msg;
 }
 
-void StubDnsResolver::sendResponse(const RequestContext &context, const dns::ResourceRecord *record)
+void StubDnsResolver::sendResponse(const RequestContext &context, const ResourceRecord *record)
 {
     StubDnsResponse *response = new StubDnsResponse();
     response->setDomain(context.request->getDomain());

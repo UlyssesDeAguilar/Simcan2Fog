@@ -31,7 +31,6 @@ package s2f.architecture.dns.db;
 simple DnsDb
 {
     parameters:
-        @class(dns::DnsDb);
         object zoneConfig = default([]); // Zone configuration, expected in JSON like format
         @display("i=block/table,,0");
 }
