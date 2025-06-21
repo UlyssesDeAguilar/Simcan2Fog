@@ -38,7 +38,7 @@ protected:
     int nActiveMachinesThreshold;
     int nLastMachinesInUseForecasting;
 
-    StrMap<hypervisor::DcHypervisor> acceptedVMsMap; // Map of the accepted VMs
+    StrMap<s2f::os::DcHypervisor> acceptedVMsMap; // Map of the accepted VMs
     opp_string_map acceptedUsersRqMap;            // Map of the accepted users (keeps the topic to return messages)
 
     GateInfo networkGates;

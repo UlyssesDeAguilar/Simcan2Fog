@@ -1,6 +1,6 @@
 #include "s2f/os/control/ProcessDemux.h"
 using namespace omnetpp;
-using namespace hypervisor;
+using namespace s2f::os;
 
 Register_Class(PidProcessDemux);
 Register_Class(VmIdProcessDemux);

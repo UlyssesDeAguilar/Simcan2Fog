@@ -124,7 +124,6 @@ OBJS = \
     $O/s2f/architecture/net/protocol/RestfulRequest_m.o \
     $O/s2f/architecture/net/protocol/RestfulResponse_m.o \
     $O/s2f/architecture/net/protocol/RestMsg_m.o \
-    $O/s2f/architecture/net/routing/RoutingInfo_m.o \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
@@ -152,7 +151,6 @@ MSGFILES = \
     s2f/architecture/net/protocol/RestfulRequest.msg \
     s2f/architecture/net/protocol/RestfulResponse.msg \
     s2f/architecture/net/protocol/RestMsg.msg \
-    s2f/architecture/net/routing/RoutingInfo.msg \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \

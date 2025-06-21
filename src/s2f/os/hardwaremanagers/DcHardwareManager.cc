@@ -1,6 +1,7 @@
 #include "s2f/os/hardwaremanagers/DcHardwareManager.h"
 
 using namespace omnetpp;
+using namespace s2f::os;
 Define_Module(DcHardwareManager);
 
 void DcHardwareManager::initialize(int stage)

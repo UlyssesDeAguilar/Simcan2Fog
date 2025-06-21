@@ -1,6 +1,6 @@
 #include "AppBase.h"
 
-using namespace hypervisor;
+using namespace s2f::os;
 #include "inet/common/socket/SocketTag_m.h"
 
 

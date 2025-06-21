@@ -1,4 +1,4 @@
-#include "../../core/include/SIMCAN_types.h"
+#include "s2f/core/include/SIMCAN_types.h"
 
 std::ostream &operator<<(std::ostream &os, tApplicationState s)
 {

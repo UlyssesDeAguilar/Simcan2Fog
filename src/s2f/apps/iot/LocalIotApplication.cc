@@ -4,7 +4,7 @@
 
 Define_Module(LocalIotApplication);
 
-using namespace hypervisor;
+using namespace s2f::os;
 using namespace iot;
 
 void LocalIotApplication::initialize()

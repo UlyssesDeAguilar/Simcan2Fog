@@ -1,10 +1,8 @@
 #include "s2f/os/control/VmControlTable.h"
 
 using namespace omnetpp;
+using namespace s2f::os;
 Define_Module(VmControlTable);
-
-VmControlTable::VmControlTable() { timeoutMsg = new cMessage("Timeout tick"); }
-VmControlTable::~VmControlTable() { delete timeoutMsg; }
 
 void VmControlTable::initialize()
 {
@@ -16,7 +14,6 @@ void VmControlTable::initialize()
 
 void VmControlTable::finish()
 {
-    cancelEvent(timeoutMsg);
     vmTable.clear();
     globalToLocalVmIdMap.clear();
     localToGlobalVmIdMap.clear();

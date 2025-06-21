@@ -4,13 +4,19 @@ cplusplus {{
     #include "s2f/core/include/SIMCAN_types.h"
 }}
 
+//
+// Struct that holds an individual app definition for a deployment
+//
+// @author Pablo C. Cañizares
+// @author Ulysses de Aguilar Gudmundsson
+// @version 2.0
 class AppRequest
 {
-    string name;                    //!< Name of the service being deployed
-    string type;                    //!< Name of the instance
-    double startTime = 0;           //!< Start of execution (in seconds)
-    double finishTime = 0;          //!< End of execution   (in seconds)
-    uint8_t state @customImpl;      //!< State of the application
+    string name; // Name of the service being deployed
+    string type; // Name of the instance
+    double startTime = 0; // Start of execution (in seconds)
+    double finishTime = 0; // End of execution (in seconds)
+    uint8_t state @customImpl; // State of the application
     @str("App: " + name.str() + ", type:" + type.str() + ", current state: " + std::to_string(state) + ", starting time: " + std::to_string(startTime) + ", end time: " + std::to_string(finishTime));
 };
 
@@ -31,18 +37,21 @@ cplusplus(cc) {{
 }}
 
 
-///
-/// SIMCAN Message for User requests
-///
+//
+// Struct that holds an individual app definition for a deployment
+//
+// @author Pablo C. Cañizares
+// @author Ulysses de Aguilar Gudmundsson
+// @version 2.0
 message SM_UserAPP extends SIMCAN_Message{
     @customize(true);
-    operation = SM_APP_Req;
-    string vmId;    
-    string hypervisorUrl;
-    string userId;		         // ID of the user instance
-    AppRequest app[];            // List of applications
-    int nFinishedApps = 0;	         // Number of finished applications.  
-    bool finished = false; 	             // If the cloudprovide has already notified the user
+    operation = SM_APP_Req; // SIMCAN operation code
+    string vmId; // Virtual machine ID where to rollout this deployment
+    string hypervisorUrl; // Hypervisor URL where this request should be directed to
+    string userId; // ID of the user instance
+    AppRequest app[]; // List of applications
+    int nFinishedApps = 0; // Number of finished applications.  
+    bool finished = false; // If the cloudprovider has already notified the user
 }
 
 cplusplus{{

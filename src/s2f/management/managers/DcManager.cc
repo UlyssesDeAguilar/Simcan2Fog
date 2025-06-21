@@ -4,7 +4,7 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 
 using namespace inet;
-using namespace hypervisor;
+using namespace s2f::os;
 
 Define_Module(DcManager);
 

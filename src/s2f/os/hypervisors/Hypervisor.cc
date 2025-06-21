@@ -1,7 +1,7 @@
 #include "Hypervisor.h"
 
 using namespace omnetpp;
-using namespace hypervisor;
+using namespace s2f::os;
 
 Register_Abstract_Class(Hypervisor);
 

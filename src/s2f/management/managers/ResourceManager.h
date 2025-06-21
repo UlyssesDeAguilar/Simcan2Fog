@@ -29,7 +29,7 @@ protected:
      * @param nodeIp The node ip where the hypervisor resides
      * @return hypervisor::DcHypervisor* const
      */
-    hypervisor::DcHypervisor *const getHypervisor(uint32_t nodeIp);
+    s2f::os::DcHypervisor *const getHypervisor(uint32_t nodeIp);
 
 public:
     struct NodeVmRecord
@@ -45,9 +45,9 @@ public:
      * @param ip Ip of the node
      * @param resources The resources of the node
      */
-    size_t addNode(int address, const NodeResources &resources);
+    size_t addNode(int address, const s2f::os::NodeResources &resources);
     void confirmNodeDeallocation(size_t nodeId, const VirtualMachine *vmTemplate);
-    const NodeResources &getNodeAvailableResources(size_t nodeId) const;
+    const s2f::os::NodeResources &getNodeAvailableResources(size_t nodeId) const;
     const Node &getNode(size_t nodeId) const { return defaultNodePool->getNode(nodeId); }
     const std::vector<NodeVmRecord> *allocateVms(SM_UserVM *request);
 

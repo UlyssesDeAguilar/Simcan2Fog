@@ -16,10 +16,13 @@
 import s2f.messages.SM_UserVM;
 
 //
-// TODO generated message class
+// Message for negotiating a VM deployment between the user and the CloudProvider.
+// It takes into account the user type so the CloudProvider can make decisions
+// based upon the priority of said user.
 //
+// @author Pablo C. Cañizares
+// @version 1.0
 message SM_UserVM_Cost extends SM_UserVM {
-      
-    string strUserType;
-    bool bPriorized;
+    string strUserType; // The user type
+    bool bPriorized; // Whether this request should be prioritized
 }

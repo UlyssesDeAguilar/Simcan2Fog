@@ -15,16 +15,15 @@ package s2f.os.schedulers;
 // @author Alberto N&uacute;&ntilde;ez Covarrubias
 // @date 2016-05-01
 moduleinterface ICpuScheduler{
-    
     parameters:
         @display("p=125,96;i=scheduler");
-        bool isVirtualHardware;		// True if this blade allows virtualization and False in another case
-        int numCpuCores;			// Number of CPU cores in the CPU processor
+        bool isVirtualHardware; // True if this blade allows virtualization and False in another case
+        int numCpuCores; // Number of CPU cores in the CPU processor
 
     gates:
-        input fromHypervisor;		// Input gate from the Hypervisor
-        input fromHub;				// Input gate from the Hub
+        input fromHypervisor; // Input gate from the Hypervisor
+        input fromHub; // Input gate from the Hub
 
-        output toHypervisor;		// Output gate to the Hypervisor
-        output toHub;				// Output gate to the Hub
+        output toHypervisor; // Output gate to the Hypervisor
+        output toHub; // Output gate to the Hub
 }

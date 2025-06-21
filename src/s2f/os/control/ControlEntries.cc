@@ -1,5 +1,5 @@
 #include "ControlEntries.h"
-
+using namespace s2f::os;
 
 VmControlBlock::~VmControlBlock() { free(); }
 

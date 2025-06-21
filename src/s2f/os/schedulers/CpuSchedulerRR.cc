@@ -1,4 +1,5 @@
 #include "CpuSchedulerRR.h"
+using namespace s2f::os;
 
 Define_Module(CpuSchedulerRR);
 

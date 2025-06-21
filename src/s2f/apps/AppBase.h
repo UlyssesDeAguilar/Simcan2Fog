@@ -10,7 +10,7 @@
 #include "inet/common/socket/SocketMap.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
-using namespace hypervisor;
+using namespace s2f::os;
 using namespace inet;
 
 /**

@@ -3,7 +3,6 @@
 
 #include <algorithm>
 
-#include "s2f/architecture/net/routing/RoutingInfo_m.h"
 #include "s2f/core/include/GroupVector.hpp"
 #include "s2f/messages/SM_UserAPP_m.h"
 

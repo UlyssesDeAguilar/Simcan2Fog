@@ -1,6 +1,7 @@
 #include "s2f/management/managers/NodePool.h"
 
 using namespace omnetpp;
+using namespace s2f::os;
 
 Define_Module(NodePool);
 

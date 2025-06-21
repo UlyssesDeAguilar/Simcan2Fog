@@ -1,6 +1,6 @@
 #include "DcHypervisor.h"
 
-using namespace hypervisor;
+using namespace s2f::os;
 
 Define_Module(DcHypervisor);
 

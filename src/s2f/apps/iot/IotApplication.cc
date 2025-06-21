@@ -8,7 +8,7 @@
 
 Define_Module(IotApplication);
 
-using namespace hypervisor;
+using namespace s2f::os;
 using namespace iot;
 
 simsignal_t roundTripTime = cComponent::registerSignal("roundTripTime");

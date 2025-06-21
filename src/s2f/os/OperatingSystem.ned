@@ -4,19 +4,30 @@ import s2f.os.schedulers.CpuSchedulersVector;
 import s2f.os.control.VmControlTable;
 import s2f.apps.AppsVector;
 
-// Module that simulates the Operating System in a computer.
+//
+// Module that simulates the Operating System in a computer
+//
+// The original design was revised for a more granular architecture
+//
+// This compound module is composed of:
+// - Hypervisor: The "brain" behind the OS operations
+// - AppsVector: Vector that holds the user applications
+// - CpuSchedulersVector: Vector that holds the VMs schedulers
+// - VmControlTable: Table that holds the VMs context and app information 
 //
 // @author Alberto N&uacute;&ntilde;ez Covarrubias
-// @date 2016-05-01
+// @author Ulysses de Aguilar Gudmundsson
+// @date 2024-12-20
+// @version 2.0
 module OperatingSystem
 {
     parameters:
-        bool staticAppAssignment;										// True if the assignment of application is static or False in another case
-        bool isVirtualHardware;											// True if this blade allows virtualization and False in another case
-        int numApps = default(5);										// Number of applications in all vectors
-        int maxVMs;														// Maximum number of VMs allocated in this blade (For non-cloud environments, use "1")
-        int maxUsers;
-        int numCpuCores;												// Number of CPU cores in the CPU processor
+        bool staticAppAssignment; // True if the assignment of application is static or False in another case
+        bool isVirtualHardware; // True if this blade allows virtualization and False in another case
+        int numApps = default(5); // Number of applications in all vectors
+        int maxVMs; // Maximum number of VMs allocated in this blade (For non-cloud environments, use "1")
+        int maxUsers; // The maximum number of users allowed, in cloud environments this is equal to maxVMs
+        int numCpuCores; // Number of CPU cores in the CPU processor
 
         *.maxVMs = this.maxVMs;
         *.isVirtualHardware = this.isVirtualHardware;
@@ -40,15 +51,15 @@ module OperatingSystem
         
         @display("bgb=532.53,430.68002");
     gates:
-        input fromNetwork;
-        input fromCpu;
-        input fromDisk;
-        input socketIn[];
+        input fromNetwork; // Input from the data centre network
+        input fromCpu; // Input from the cpu module
+        input fromDisk; // Input from the disk module
+        input socketIn[]; // Input from sockets
 
-        output toNetwork;
-        output toCpu;
-        output toDisk;
-        output socketOut[];
+        output toNetwork; // Output to the data centre network
+        output toCpu; // Output to the cpu module
+        output toDisk; // Output to the disk module
+        output socketOut[]; // Output to the sockets
 
     submodules:
 

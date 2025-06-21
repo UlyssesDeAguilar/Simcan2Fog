@@ -37,30 +37,26 @@ cplusplus {{
 
 struct TraceComponent { @existingClass; }
 
-
-
-///
-/// SIMCAN Message Base definition
-///
+//
+// Base model for SIMCAN messages
+//
+// @author Pablo C. Cañizares
+// @author Ulysses de Aguilar Gudmundsson
+// @version 2.0
 message SIMCAN_Message extends cPacket{
-    
     @customize(true);
-
-    unsigned int operation = SM_NullOperation;			// Operation type
-    bool isResponse = false;							// Is a response message?
-    bool remoteOperation = false;						// Is a remote operation?	
-	bool autoSourceTopic = true;						// If set to true the push client will override the message SourceTopic
-	string destinationTopic;							// On which topic the request is pushed
-	string returnTopic;									// On which topic the return of the request should be pushed
-
-    int connectionId = SM_UnsetValue;					// Connection ID (Used in remote communication between nodes)
-    int commId = SM_UnsetValue;							// Communication ID (Used to locate a communication with server)
-    int sourceId = SM_UnsetValue;						// Source process ID
-
-    int nextModuleIndex = SM_UnsetValue;				// Index of the next destination gate (Used in requests messages).				
-    int result = SM_UnsetValue;							// Operation result.
-
-    abstract TraceComponent trace[];					// Message trace			
+    unsigned int operation = SM_NullOperation; // Operation type
+    bool isResponse = false; // Is a response message?
+    bool remoteOperation = false; // Is a remote operation?	
+	bool autoSourceTopic = true; // If set to true the push client will override the message SourceTopic
+	string destinationTopic; // On which topic the request is pushed
+	string returnTopic; // On which topic the return of the request should be pushed
+    int connectionId = SM_UnsetValue; // Connection ID (Used in remote communication between nodes)
+    int commId = SM_UnsetValue; // Communication ID (Used to locate a communication with server)
+    int sourceId = SM_UnsetValue; // Source process ID
+    int nextModuleIndex = SM_UnsetValue; // Index of the next destination gate (Used in requests messages).				
+    int result = SM_UnsetValue; // Operation result.
+    abstract TraceComponent trace[]; // Message trace			
 }
 
 cplusplus{{

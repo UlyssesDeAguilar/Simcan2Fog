@@ -4,7 +4,6 @@
 #include <omnetpp.h>
 #include <string>
 #include <omnetpp/cpar.h>
-#include "ServiceURL.h"
 
 using namespace omnetpp;
 

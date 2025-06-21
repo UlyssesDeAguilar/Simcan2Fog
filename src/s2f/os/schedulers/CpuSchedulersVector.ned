@@ -1,36 +1,42 @@
 package s2f.os.schedulers;
 import s2f.architecture.net.hub.CheckingHubModule;
 
-
+//
 // Vector that contains <i>maxVMs</i> CPU schedulers.
+//
+// In order to work, this module uses: 
+// - CheckingHubModule: In order to deliver to the right scheduler the messages
+// - ICpuScheduler: The schedulers that define the scheduling policy
+//
+// An important thing to note is that all the schedulers have the same policy
 //
 // @author Alberto N&uacute;&ntilde;ez Covarrubias
 // @date 2016-05-01
 module CpuSchedulersVector
 {
     parameters:
-        bool staticAppAssignment;		// True if the assignment of application is static or False in another case
-        bool isVirtualHardware;			// True if this computer allows virtualization and False in another case
-        int numSchedulers;				// Number of schedulers in this vector
-        int numCpuCores;				// Number of CPU cores in the CPU processor
-
         @display("bgb=334,173");
-    gates:
-        input fromHypervisor[];				// Input gates from the Hypervisor
-        input fromCpu;						// Input gate from the CPU
+        bool staticAppAssignment; // True if the assignment of application is static or False in another case
+        bool isVirtualHardware;	// True if this computer allows virtualization and False in another case
+        int numSchedulers; // Number of schedulers in this vector
+        int numCpuCores; // Number of CPU cores in the CPU processor
 
-        output toHypervisor[];				// Output gates to the Hypervisor
-        output toCpu;  						// Output gate to the CPU
+    gates:
+        input fromHypervisor[]; // Input gates from the Hypervisor
+        input fromCpu; // Input gate from the CPU
+
+        output toHypervisor[]; // Output gates to the Hypervisor
+        output toCpu; // Output gate to the CPU
 
     submodules:
-        cpuScheduler[numSchedulers]: <default("CpuSchedulerRR")> like ICpuScheduler {		// Schedulers (all the schedulers have the same type)       
+        cpuScheduler[numSchedulers]: <default("CpuSchedulerRR")> like ICpuScheduler {       
             parameters:
                 isVirtualHardware = parent.isVirtualHardware;
                 numCpuCores = parent.numCpuCores;
                 @display("p=253,88,r,120;i=scheduler");
         }
 
-        schedHub: CheckingHubModule {       												// Hub that manages incoming messages 
+        schedHub: CheckingHubModule {  
             parameters:
                 staticAppAssignment = parent.staticAppAssignment;
                 @display("p=82,88;i=device/hub");

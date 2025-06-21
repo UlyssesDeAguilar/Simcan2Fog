@@ -6,14 +6,13 @@
  * @date 2023-12-05
  *
  */
-#ifndef SIMCAN_EX_HYPERVISOR_COMMON
-#define SIMCAN_EX_HYPERVISOR_COMMON
+#ifndef SIMCAN_EX_HYPERVISOR_COMMON_H_
+#define SIMCAN_EX_HYPERVISOR_COMMON_H_
 
 #include <deque>
 #include <omnetpp.h>
 
 #include "s2f/os/hardwaremanagers/HardwareManager.h"
-#include "s2f/architecture/net/routing/RoutingInfo_m.h"
 #include "s2f/core/simdata/DataManager.h"
 #include "s2f/messages/INET_AppMessage_m.h"
 #include "s2f/messages/SM_CPU_Message.h"
@@ -23,22 +22,17 @@
 #include "s2f/messages/Syscall_m.h"
 #include "s2f/apps/ApplicationBuilder.h"
 
-// Forward declaration
-class SM_Syscall;
-
-namespace hypervisor
+namespace s2f
 {
-    typedef enum
+    namespace os
     {
-        VM_TIMEOUT, //!< A virtual machine reached the maximum renting time
-        POWER_ON    //!< Event for powering on the machine
-    } AutoEvent;
 
-    typedef enum
-    {
-        OK,
-        ERROR
-    } SyscallResult;
+        typedef enum
+        {
+            VM_TIMEOUT, //!< A virtual machine reached the maximum renting time
+            POWER_ON    //!< Event for powering on the machine
+        } AutoEvent;
+    }
 }
 
-#endif
+#endif /* SIMCAN_EX_HYPERVISOR_COMMON_H_ */

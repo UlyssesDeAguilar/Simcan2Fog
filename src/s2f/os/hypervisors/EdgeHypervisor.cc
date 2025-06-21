@@ -1,5 +1,6 @@
 #include "EdgeHypervisor.h"
-using namespace hypervisor;
+using namespace s2f::os;
+
 Define_Module(EdgeHypervisor);
 
 void EdgeHypervisor::initialize(int stage)

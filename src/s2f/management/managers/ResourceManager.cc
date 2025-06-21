@@ -2,7 +2,7 @@
 #include "s2f/core/include/signals.h"
 
 using namespace omnetpp;
-
+using namespace s2f::os;
 Define_Module(ResourceManager);
 
 void ResourceManager::initialize(int stage)
@@ -61,11 +61,11 @@ size_t ResourceManager::addNode(int adress, const NodeResources &resources)
 
 void ResourceManager::setActiveMachines(uint32_t activeMachines) { error("To be reimplemented"); }
 
-hypervisor::DcHypervisor *const ResourceManager::getHypervisor(uint32_t nodeIp)
+DcHypervisor *const ResourceManager::getHypervisor(uint32_t nodeIp)
 {
     cModule *blade = getParentModule()->getSubmodule("blade", nodeIp);
     cModule *hypervisor = blade->getSubmodule("osModule")->getSubmodule("hypervisor");
-    return check_and_cast<hypervisor::DcHypervisor *>(hypervisor);
+    return check_and_cast<DcHypervisor *>(hypervisor);
 }
 
 void ResourceManager::emitSignals(const VirtualMachine *vmTemplate, bool allocation)

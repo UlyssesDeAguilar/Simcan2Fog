@@ -1,6 +1,8 @@
 #include "s2f/os/hardwaremanagers/EdgeHardwareManager.h"
 
 using namespace omnetpp;
+using namespace s2f::os;
+
 Define_Module(EdgeHardwareManager);
 
 void EdgeHardwareManager::initialize()

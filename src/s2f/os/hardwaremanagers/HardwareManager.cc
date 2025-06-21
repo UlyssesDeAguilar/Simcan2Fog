@@ -1,4 +1,5 @@
 #include "HardwareManager.h"
+using namespace s2f::os;
 
 Register_Abstract_Class(HardwareManager);
 

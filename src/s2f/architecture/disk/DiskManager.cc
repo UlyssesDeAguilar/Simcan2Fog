@@ -18,7 +18,7 @@
 #include "s2f/os/hardwaremanagers/HardwareManager.h"
 #include "s2f/os/hypervisors/common.h"
 
-using namespace hypervisor;
+using namespace s2f::os;
 Define_Module(DiskManager);
 
 void DiskManager::initialize()
@@ -44,7 +44,7 @@ void DiskManager::handleMessage(cMessage *msg)
         Syscall *request = reinterpret_cast<DiskSyscall *>(entry->queue.pop());
 
         request->setIsResponse(true);
-        request->setResult(OK);
+        request->setResult(SC_OK);
         send(request, gate("diskOut"));
 
         scheduleIo(*entry);

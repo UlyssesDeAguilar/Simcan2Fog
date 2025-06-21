@@ -56,7 +56,7 @@ public:
      * @param resources The resources available on the node.
      * @return The index of the newly added node.
      */
-    size_t addNode(int address, const NodeResources &resources);
+    size_t addNode(int address, const s2f::os::NodeResources &resources);
 
     /**
      * Allocates resources on a node for a virtual machine.

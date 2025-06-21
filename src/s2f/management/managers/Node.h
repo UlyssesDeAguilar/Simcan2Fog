@@ -12,7 +12,7 @@ struct Node
         MAXED_OUT = 4, //!< If the hypervisor currently cannot allocate any more vms/launch more users
     };
 
-    NodeResources availableResources{}; //!< Current available resources
+    s2f::os::NodeResources availableResources{}; //!< Current available resources
     int address{};                      //!< Address of the node
     uint8_t state{};                    //!< The actual state of the vm
 
