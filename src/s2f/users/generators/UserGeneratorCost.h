@@ -23,33 +23,37 @@
 #include "s2f/management/dataClasses/Users/CloudUserInstancePriority.h"
 #include "s2f/messages/SM_UserVM_Cost_m.h"
 
-class UserGeneratorCost : public UserGenerator_simple
+namespace s2f
 {
-protected:
-    friend class CloudUserModel;
+    namespace users
+    {
+        class UserGeneratorCost : public UserGenerator_simple
+        {
+        protected:
+            friend class CloudUserModel;
 
-    /**Hasmap to accelerate the management of the users*/
-    std::map<std::string, bool> priorizedHashMap;
-    omnetpp::cPar *offerAcceptanceDistribution;
-    double offerCostIncrease;
+            std::map<std::string, bool> priorizedHashMap; //!< Map to accelerate the management of the users
+            omnetpp::cPar *offerAcceptanceDistribution;   //!< Distribution of acceptance of a vm extension
+            double offerCostIncrease;                     //!< Increase in the cost of a vm extension
+            std::string strUserTraceSla;                  //!< Slas of the simulation. FIXME: Remove this
 
-    /** Vector that contains the types of slas generated in the current simulation */
-    std::string strUserTraceSla;
+            virtual void initialize() override;
+            virtual void finish() override;
+            virtual void initializeHashMaps();
 
-    virtual void initialize() override;
-    virtual void finish() override;
-    virtual void initializeHashMaps();
+            virtual SM_UserVM *createVmMessage() override;
+            virtual CloudUser *createUserTraceType() override;
 
-    virtual SM_UserVM *createVmMessage() override;
-    virtual CloudUser *createUserTraceType() override;
+            virtual CloudUserInstance *createCloudUserInstance(const CloudUser *ptrUser,
+                                                               unsigned int totalUserInstance,
+                                                               unsigned int userNumber,
+                                                               int currentInstanceIndex,
+                                                               int totalUserInstances) override;
 
-    virtual CloudUserInstance *createCloudUserInstance(const CloudUser *ptrUser,
-                                                       unsigned int totalUserInstance,
-                                                       unsigned int userNumber,
-                                                       int currentInstanceIndex,
-                                                       int totalUserInstances) override;
+            BaseUserModel *newUserModelInstance() { return new CloudUserModel(*this); }
+        };
+    }
+}
 
-    BaseUserModel *newUserModelInstance() { return new CloudUserModel(*this); }
-};
 
-#endif
+#endif /* __SIMCAN_2_0_USERGENERATORCOST_H_ */

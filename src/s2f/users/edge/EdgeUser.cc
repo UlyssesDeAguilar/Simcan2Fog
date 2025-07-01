@@ -1,7 +1,7 @@
 #include "EdgeUser.h"
 #include "s2f/messages/SM_AppSettings_m.h"
 
-using namespace users;
+using namespace s2f::users;
 Define_Module(EdgeUser);
 
 void EdgeUser::initialize() {
@@ -248,7 +248,7 @@ opp_string EdgeUser::generateUniqueId(const char *name) {
     return std::string(name) + std::string("::") + std::to_string(getId());
 }
 
-users::Vm* EdgeUser::findPlatform(const char *name) {
+Vm* EdgeUser::findPlatform(const char *name) {
     for (auto &vm : managedVms) {
         Vm &def = vm.second;
         if (opp_strcmp(def.getName(), name) == 0)

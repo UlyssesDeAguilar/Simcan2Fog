@@ -1,4 +1,5 @@
 #include "UserGeneratorBase.h"
+using namespace s2f::users;
 
 static void parse_swf(std::vector<Job_t> *jobs, const char *swf_file);
 

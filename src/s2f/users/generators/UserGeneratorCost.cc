@@ -17,6 +17,7 @@
 
 #include "s2f/management/utils/LogUtils.h"
 
+using namespace s2f::users;
 using namespace omnetpp;
 
 Define_Module(UserGeneratorCost);

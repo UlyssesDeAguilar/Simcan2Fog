@@ -18,6 +18,6 @@ package s2f.users.generators;
 moduleinterface IUserGenerator
 {
     gates:
-        input fromCloudProvider;							// Input gate from Cloud provider  		
-        output toCloudProvider;								// Output gates to Cloud provider
+        input fromCloudProvider; // Input gate from Cloud provider  		
+        output toCloudProvider; // Output gates to Cloud provider
 }

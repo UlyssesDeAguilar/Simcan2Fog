@@ -1,5 +1,6 @@
 #include "UserGenerator_simple.h"
 #include "s2f/management/utils/LogUtils.h"
+using namespace s2f::users;
 
 #define USER_REQ_GEN_MSG "USER_REQ_GEN"
 

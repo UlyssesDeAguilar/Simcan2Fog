@@ -16,14 +16,17 @@
 package s2f.users.generators;
 
 //
-// TODO auto-generated module
+// User generator that takes priorities and costs via SLAs into account
 //
+// @author Pablo Cerro Cañizares
+// @author Adrian Bernal
+// @author Ulysses de Aguilar
+// @version 1.3
 simple UserGeneratorCost extends UserGenerator_simple
 {
     parameters:
-        double offerAcceptanceDistribution = default(uniform(0.0,1.0));
-        double offerCostIncrease = default(0.5);
-        string userTraceSla; 								// Sla of the user from the trace
-        
-    @class(UserGeneratorCost);
+        @class(UserGeneratorCost);
+        double offerAcceptanceDistribution = default(uniform(0.0,1.0)); // Acceptance distribution of the user instance
+        double offerCostIncrease = default(0.5); // Increase in the offer's cost 
+        string userTraceSla; // SLAs of the users in a string format. FIXME: Remove this
 }

@@ -1,6 +1,7 @@
 #include "BaseUserModel.h"
 
 #include "s2f/users/generators/UserGenerator_simple.h"
+using namespace s2f::users;
 
 void BaseUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {

@@ -16,6 +16,13 @@
 package s2f.users.generators;
 import s2f.architecture.net.stack.NetworkStack;
 
+
+//
+// Wrapper of the Simcan2Cloud user generators in order to
+// interact with the Simcan2Fog ecosystem
+//
+// @author Ulysses de Aguilar Gudmundsson
+// @version 1.0
 module UserGenerator
 {
     @display("bgb=197,144;i=abstract/people");

@@ -1,5 +1,6 @@
 #include "CloudUserModel.h"
 #include "s2f/users/generators/UserGeneratorCost.h"
+using namespace s2f::users;
 
 void CloudUserModel::handleResponseVmRequest(SM_UserVM *vmRequest, CloudUserInstance &userInstance)
 {
