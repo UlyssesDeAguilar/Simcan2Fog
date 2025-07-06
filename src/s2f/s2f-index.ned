@@ -20,6 +20,9 @@
 // and many other protocols and components. It also provides support for node
 // mobility, advanced visualization, network emulation and more.
 //
+// The project's source code can be found at:
+// - <a href="https://github.com/UlyssesDeAguilar/Simcan2Fog/tree/master" target="_top">Simcan2Fog GitHub repository</a>
+//
 //
 // Related documentation:
 //   - <a href="https://inet.omnetpp.org/docs/users-guide/index.html" target="_top">INET User's Guide</a>

@@ -5,8 +5,8 @@ Define_Module(DcDriver);
 void DcDriver::initialize()
 {
     // Parse target's address
-    if (!dcAddress.tryParse(par("dcAddress")))
-        error("Unable to parse the DC Address, ¿wrong input?");
+    /*if (!dcAddress.tryParse(par("dcAddress")))
+        error("Unable to parse the DC Address, ¿wrong input?");*/
 
     // Prepare request
     request = new SM_UserVM();

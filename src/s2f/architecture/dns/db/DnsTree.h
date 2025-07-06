@@ -45,7 +45,7 @@ namespace s2f
              */
             DnsTreeNode(const char *domain, DnsLevel level, DnsTreeNode *parent) : domain(domain), parent(parent), level(level) {}
 
-            DnsTreeNode() : DnsTreeNode("", ROOT, nullptr) {}
+            DnsTreeNode() : DnsTreeNode(".", ROOT, nullptr) {}
 
             virtual ~DnsTreeNode() = default;
 

@@ -7,7 +7,7 @@ Operations tested: insertion, query (best-effort), inner reflection
 #include "s2f/architecture/dns/db/DnsTree.h"
 
 %activity:
-using namespace dns;
+using namespace s2f::dns;
 using namespace inet;
 
 // We have the following records

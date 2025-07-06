@@ -92,7 +92,7 @@ namespace s2f
 
 DnsTree::DnsTree()
 {
-    root = DnsTreeNode("", ROOT, nullptr);
+    root = DnsTreeNode();
 }
 
 void DnsTree::insertRecord(const char *zone, const ResourceRecord *record)
