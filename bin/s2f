@@ -1,0 +1,126 @@
+#!/bin/sh
+#
+# This script is intended to run Simcan2Fog simulations both in debug and release mode.
+# It can be used only after the 'setenv' script has been run from both the OMNeT++
+# and the Simcan2Fog top level directory using the '. setenv' command. To run a simulation,
+# simply go into its directory and run 's2f' possibly passing additional command
+# line arguments. Please note that Simcan2Fog must be compiled either in debug and/or
+# release mode using 'make MODE=debug' and/or 'make MODE=release' before.
+#
+# This script takes a few additional command line arguments compared to the ones
+# already allowed by OMNeT++. The command line argument '--release' starts the
+# Simcan2Fog release version and '--debug' starts the debug version. If no such argument
+# is provided, then the script automatically selects one prefering the release
+# version over the debug version. The script can run Simcan2Fog independently of how
+# its compiled, as executable or shared lib.
+#
+# This script is based on the 'inet' script from the INET project. Props to them! 
+#
+
+DIR=$(dirname $0)
+OUT=$DIR/../src
+
+#
+# Note: We intentionally do NOT initialize the TOOL and MODE variables, in order
+# to allow usage like this:
+#
+#  $ TOOL=echo s2f_dbg                       ==> print actual command line
+#  $ TOOL=nemiver s2f_dbg                    ==> debug using nemiver
+#  $ TOOL="gdb --args" s2f_dbg               ==> debug using gdb
+#  $ TOOL="valgrind --tool=memcheck --" s2f  ==> find memory problems using valgrind
+#
+
+if [ "$1" = "--release" ]; then
+   # Equivalent to: MODE=release s2f
+   MODE="release"
+   shift;
+fi
+
+if [ "$1" = "--debug" ]; then
+   # Equivalent to: MODE=debug s2f
+   MODE="debug"
+   shift;
+fi
+
+if [ "$1" = "--sanitize" ]; then
+   # Equivalent to: MODE=sanitize s2f
+   MODE="sanitize"
+   shift;
+fi
+
+if [ "$1" = "--printcmd" ] || [ "$1" = "-p" ]; then
+   # Equivalent to: TOOL=echo s2f
+   TOOL="echo"
+   shift;
+fi
+
+OPP_RUN_RELEASE=$(which opp_run_release 2> /dev/null || echo opp_run_release)
+OPP_RUN_DBG=$(which opp_run_dbg 2> /dev/null || echo opp_run_dbg)
+OPP_RUN_SANITIZE=$(which opp_run_sanitize 2> /dev/null || echo opp_run_sanitize)
+
+INET_NEDFOLDERS=$(cat $INET_ROOT/.nedfolders | sed "s|^|$INET_ROOT/|" | tr '\n' ':')
+S2F_NEDFOLDERS=$(cat $SIMCAN_HOME/.nedfolders | sed "s|^|$SIMCAN_HOME/|" | tr '\n' ':')
+
+if [ ! "$S2F_NEDFOLDERS" = "" ]; then
+  S2F_OMNETPP_OPTIONS="-n $S2F_NEDFOLDERS:$INET_NEDFOLDERS $S2F_OMNETPP_OPTIONS"
+fi
+
+S2F_NEDEXCLUSIONS=$(cat $SIMCAN_HOME/.nedexclusions | tr '\n' ';')
+if [ ! "$S2F_NEDEXCLUSIONS" = "" ]; then
+  S2F_OMNETPP_OPTIONS="-x $S2F_NEDEXCLUSIONS $S2F_OMNETPP_OPTIONS"
+fi
+
+if [ "$MODE" = "" ]; then
+  if [ -f $OUT/Simcan2Fog ]; then
+    $TOOL $OUT/Simcan2Fog $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/Simcan2Fog_dbg ]; then
+    $TOOL $OUT/Simcan2Fog_dbg $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/Simcan2Fog.exe ]; then
+    $TOOL $OUT/Simcan2Fog.exe $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/Simcan2Fog_dbg.exe ]; then
+    $TOOL $OUT/Simcan2Fog_dbg.exe $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/libSimcan2Fog.so ] || [ -f $OUT/Simcan2Fog.dll ] || [ -f $OUT/libSimcan2Fog.dll ] || [ -f $OUT/libSimcan2Fog.dylib ]; then
+    $TOOL $OPP_RUN_RELEASE -l $OUT/../src/Simcan2Fog $S2F_OMNETPP_OPTIONS "$@"
+  elif [ -f $OUT/libSimcan2Fog_dbg.so ] || [ -f $OUT/Simcan2Fog_dbg.dll ] || [ -f $OUT/libSimcan2Fog_dbg.dll ] || [ -f $OUT/libSimcan2Fog_dbg.dylib ]; then
+    $TOOL $OPP_RUN_DBG -l $OUT/../src/Simcan2Fog $S2F_OMNETPP_OPTIONS "$@"
+  else
+    echo "Simcan2Fog executable or shared library not found"
+    exit 1
+  fi
+elif [ "$MODE" = "release" ]; then
+  if [ -f $OUT/Simcan2Fog ]; then
+    $TOOL $OUT/Simcan2Fog $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/Simcan2Fog.exe ]; then
+    $TOOL $OUT/Simcan2Fog.exe $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/libSimcan2Fog.so ] || [ -f $OUT/Simcan2Fog.dll ] || [ -f $OUT/libSimcan2Fog.dll ] || [ -f $OUT/libSimcan2Fog.dylib ]; then
+    $TOOL $OPP_RUN_RELEASE -l $OUT/../src/Simcan2Fog $S2F_OMNETPP_OPTIONS "$@"
+  else
+    echo "Simcan2Fog release executable or shared library not found"
+    exit 1
+  fi
+elif [ "$MODE" = "debug" ]; then
+  if [ -f $OUT/Simcan2Fog_dbg ]; then
+    $TOOL $OUT/Simcan2Fog_dbg $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/Simcan2Fog_dbg.exe ]; then
+    $TOOL $OUT/Simcan2Fog_dbg.exe $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/libSimcan2Fog_dbg.so ] || [ -f $OUT/Simcan2Fog_dbg.dll ] || [ -f $OUT/libSimcan2Fog_dbg.dll ] || [ -f $OUT/libSimcan2Fog_dbg.dylib ]; then
+    $TOOL $OPP_RUN_DBG -l $OUT/../src/Simcan2Fog $S2F_OMNETPP_OPTIONS "$@"
+  else
+    echo "Simcan2Fog debug executable or shared library not found"
+    exit 1
+  fi
+elif [ "$MODE" = "sanitize" ]; then
+  if [ -f $OUT/Simcan2Fog_sanitize ]; then
+    $TOOL $OUT/Simcan2Fog_sanitize $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/Simcan2Fog_sanitize.exe ]; then
+    $TOOL $OUT/Simcan2Fog_sanitize.exe $S2F_OMNETPP_OPTIONS
+  elif [ -f $OUT/libSimcan2Fog_sanitize.so ] || [ -f $OUT/Simcan2Fog_sanitize.dll ] || [ -f $OUT/libSimcan2Fog_sanitize.dll ] || [ -f $OUT/libSimcan2Fog_sanitize.dylib ]; then
+    $TOOL $OPP_RUN_SANITIZE -l $OUT/../src/Simcan2Fog $S2F_OMNETPP_OPTIONS "$@"
+  else
+    echo "Simcan2Fog debug executable or shared library not found"
+    exit 1
+  fi
+else
+  echo "Unknown Simcan2Fog execution mode: $MODE"
+  exit 1
+fi

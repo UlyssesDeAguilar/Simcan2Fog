@@ -1,0 +1,54 @@
+#!/bin/bash
+
+if [ -t 1 ]; then
+  # Colors
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[0;33m'
+  BLUE='\033[0;34m'
+  PURPLE='\033[0;35m'
+  CYAN='\033[0;36m'
+  WHITE='\033[0;37m'
+  NC='\033[0m' # No Color
+fi
+
+# Check if --enable-general-conf flag is provided
+ENABLE_GENERAL_CONF=0
+for arg in "$@"; do
+  if [ "$arg" = "--enable-general-conf" ]; then
+    ENABLE_GENERAL_CONF=1
+  fi
+done
+
+if [ $ENABLE_GENERAL_CONF -eq 1 ]; then
+  options=$(s2f -a | grep "Config" | sed 's/Config \(.*\):.*/\1/')
+else
+  options=$(s2f -a | grep -v "General" | grep "Config" | sed 's/Config \(.*\):.*/\1/')
+fi
+
+readarray -t options_array <<< "$options"
+
+if [ $ENABLE_GENERAL_CONF -eq 0 ]; then
+  echo -e "The General configuration has been ommited by default, to enable it run the script with --enable-general-conf flag\n"
+fi
+# Main menu
+echo -e "${GREEN}Select an option:${NC}"
+i=1
+for option in $options; do
+  echo "$i. $option"
+  ((i++))
+done
+
+read -p "Enter your choice: " choice
+
+# Run s2f with selected option
+if [ $choice -ge 1 ] && [ $choice -le $((${#options_array[@]})) ]; then
+  selected_option="${options_array[$((choice-1))]}"
+  echo -e "${YELLOW}Processing $selected_option...${NC}"
+  s2f -u Cmdenv -c $selected_option
+else
+  echo -e "${RED}Invalid choice.${NC}"
+  exit 1
+fi
+
+echo -e "${GREEN}Done! check the ${NC}${CYAN}results/${NC}${GREEN} folder and run the script in ${NC}${CYAN}analysis/${NC}${GREEN} folder to extract the results! ${NC}"
