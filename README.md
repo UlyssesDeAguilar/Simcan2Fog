@@ -20,7 +20,7 @@ Future objectives: containerizing the simulator.
 ## Table of contents
 
 * [Installation](#installation)
-* [Quick Start](#quickstart)
+* [Quick Start](#quick-start)
 * [Design][design]
 * [Simulating][execution]
 * [Testing][testing]
@@ -76,7 +76,7 @@ Technically it should build without any trouble from this point on.
 If the build succeded, congratulations! You can now move forward to [running experiments](./docs/usage.md).
 
 ## Quick Start
-Start navigating and exploring with the simplified showcases included in the folder ```showcases/```:
+Start navigating and exploring with the showcases included in the folder ```showcases/```:
 + Datacentre: Shows how an user may request a cloud vm, deploy an service and even how to instruct the model to deploy a local application that will communicate with the previous service.
 + IoT: Introduces a quick configuration and topology for the IoT models. In this case a smart house is being modelled.
 + Proxy: Dives into a key component of the simulation framework, the Proxy module. Here you will have the choice to include DNS into the mix or not.
