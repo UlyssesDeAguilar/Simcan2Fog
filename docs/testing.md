@@ -4,7 +4,7 @@ The objective of this section is to introduce the reader (and maybe future contr
 ## Fundamentals
 The current way of testing the simulator is using the tools already provided by OMNeT++. It essentially boils down into designing networks, modules and experiments that generate an output (std::out) that will be compared with an expected output declared in the test file. This methodology allows for both unit and module testing under the same techniques.
 
-## Where do I start?
+## Where to start
 Navigate to the folder ```Simcan2Fog/tests```. There you will find the following directories on a clean install:
 
 * ```modules/```: Contains the specificifically developed modules for testing

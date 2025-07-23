@@ -11,24 +11,23 @@
 </div>
 
 ## Overview
-The purpose of this project is to build a customizable simulator for cloud, edge and fog environements. It is based on the Simcan2Cloud Simulator.
+The purpose of this project is to build a customizable simulator for cloud, edge and fog environements. It is based on the Simcan2Cloud simulator.
 
 ### Roadmap
-Present objectives: explaining the code base, experiments and showcases.    
+Present objectives: further explaining the code base, experiments and showcases.    
 Future objectives: containerizing the simulator.
 
 ## Table of contents
 
 * [Installation](#installation)
 * [Quick Start](#quick-start)
-* [Design][design]
-* [Simulating][execution]
+* [Simulating][usage]
 * [Testing][testing]
 * [Documentation](#documentation)
 * [Acknowledgements](#acknowledgements)
 
 [design]: docs/design.md
-[execution]: docs/execution.md
+[usage]: docs/usage.md
 [testing]: docs/testing.md
 
 ## Installation
