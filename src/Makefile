@@ -1,5 +1,5 @@
 #
-# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)Simcan2Fog
+# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)simcan2chain
 #
 # This file was generated with the command:
 #  opp_makemake --make-so -f --deep -O out -KINET4_5_PROJ=../../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -lINET$$\(D\)
@@ -7,7 +7,7 @@
 
 # Name of target to be created (-o option)
 TARGET_DIR = .
-TARGET_NAME = $(LIB_PREFIX)Simcan2Fog$(D)
+TARGET_NAME = $(LIB_PREFIX)simcan2chain$(D)
 TARGET = $(TARGET_NAME)$(SHARED_LIB_SUFFIX)
 TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
 TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
@@ -38,6 +38,7 @@ OBJS = \
     $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
+    $O/s2f/apps/p2p/P2PApplication.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
@@ -124,6 +125,7 @@ OBJS = \
     $O/s2f/architecture/dns/client/DnsClientCommand_m.o \
     $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
     $O/s2f/architecture/net/protocol/L2Protocol_m.o \
+    $O/s2f/architecture/net/protocol/P2PMsg_m.o \
     $O/s2f/architecture/net/protocol/RestfulRequest_m.o \
     $O/s2f/architecture/net/protocol/RestfulResponse_m.o \
     $O/s2f/architecture/net/protocol/RestMsg_m.o \
@@ -151,6 +153,7 @@ MSGFILES = \
     s2f/architecture/dns/client/DnsClientCommand.msg \
     s2f/architecture/dns/registry/DnsRegistrationRequest.msg \
     s2f/architecture/net/protocol/L2Protocol.msg \
+    s2f/architecture/net/protocol/P2PMsg.msg \
     s2f/architecture/net/protocol/RestfulRequest.msg \
     s2f/architecture/net/protocol/RestfulResponse.msg \
     s2f/architecture/net/protocol/RestMsg.msg \
