@@ -18,6 +18,7 @@ class NetworkPeer
         sockFd = sockFd;
     }
 };
+
 /**
  * @class P2PApplication P2PApplication.h "P2PApplication.h"
  *
@@ -36,13 +37,6 @@ class P2PApplication : public AppBase, public AppBase::ICallback
         TEST_NET = 18333,
         REG_NET = 18444
     };
-    enum State
-    {
-        DISCOVERY_PERSISTENT,
-        DISCOVERY_DNSSEED,
-        DISCOVERY_FALLBACKIPS,
-        END
-    } state;
 
     const char *dnsSeed{}; //!< DNS A record seed
 
@@ -61,7 +55,9 @@ class P2PApplication : public AppBase, public AppBase::ICallback
     virtual void initialize() override;
     virtual void finish() override;
 
-    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override;
+    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override
+    {
+    }
     virtual void returnRead(simtime_t timeElapsed) override {}
     virtual void returnWrite(simtime_t timeElapsed) override {}
     virtual void handleDataArrived(int sockFd, Packet *p) override;
