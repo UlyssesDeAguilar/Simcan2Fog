@@ -12,101 +12,78 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
-
 package s2f.simulations.P2PShowcase;
 
-import s2f.core.simdata.SimData;
+import s2f.apps.UserAppModule;
+import s2f.architecture.net.stack.proxy.AppProxy;
+import s2f.architecture.net.stack.proxy.ServiceTable;
+import s2f.architecture.net.stack.resolver.DnsResolver;
+import s2f.architecture.dns.resolver.DnsResolverServer;
 import s2f.architecture.dns.DnsSimplified;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
-import s2f.architecture.messagequeue.MessageQueue;
-
-import s2f.management.cloudprovider.CloudProvider;
-import s2f.architecture.nodes.cloud.DataCentre;
-import s2f.architecture.nodes.fog.FogNode;
-
-import inet.node.inet.Router;
 import inet.node.ethernet.Eth10M;
-import inet.node.ethernet.Eth100M;
-import inet.node.ethernet.Eth10G;
-import inet.node.ethernet.Eth100G;
 import inet.node.ethernet.EthernetSwitch;
-import inet.node.internetcloud.InternetCloud;
-import ned.IdealChannel;
-import inet.node.ethernet.Eth10G;
+import inet.node.inet.StandardHost;
 
-import s2f.users.edge.EdgeUser;
-import s2f.architecture.net.stack.NetworkStack;
-import s2f.architecture.nodes.iot.sensors.HumiditySensor;
-import s2f.architecture.nodes.iot.actuators.AutomaticWatering;
-import s2f.architecture.nodes.iot.controllers.Raspberry5;
-
-module P2PUser
+// Removes the need for a proxy, should allow UDP (i.e. DNS registration)
+module DnsSimplifiedHost extends StandardHost
 {
-    parameters:
-        @display("i=abstract/person,,0;bgb=,,,,0");
-        networkStack.nodeTopic = fullName();
-    gates:
-        inout ethg;
     submodules:
-        edgeUser: EdgeUser {
-            @display("p=64,98");
+        hostedApp: UserAppModule {
+            @display("p=932.554,60.966003");
         }
-        networkStack: NetworkStack {
-            @display("p=188,98");
+        resolver: DnsResolver {
+            @display("p=1106.42,60.966003");
         }
-        controller: Raspberry5 {
-            @display("p=84.42,87.435005");
-        }
-    connections allowunconnected:
-        edgeUser.serialOut --> controller.serialIn;
-        edgeUser.serialIn <-- controller.serialOut;
-        networkStack.queueOut --> IdealChannel --> edgeUser.queueIn;
-        edgeUser.queueOut --> IdealChannel --> networkStack.queueIn;
+    connections:
+        // App connects to the TCP/UDP Layer
+        at.in++ <-- hostedApp.socketOut;
+        at.out++ --> hostedApp.socketIn;
 
-        networkStack.ethg++ <--> IdealChannel <--> ethg;
+        // Resolver connects to the TCP/UDP layer
+        resolver.socketOut --> at.in++;
+        resolver.socketIn <-- at.out++;
 }
 
-
-
-
-
-network SimpleP2PNetwork
+//
+// Network that showcases p2p peer discovery and file sharing
+//
+network P2PNetwork
 {
-    parameters:
-        int edgeTiles = default(1);
-
-        @display("bgb=411,344;bgg=50");
-
     submodules:
-        simData: SimData {
-
-            @display("p=372,27");
-        }
         configurator: Ipv4NetworkConfigurator {
-            @display("p=304,27");
+            @display("p=67,36");
         }
-        messageQueue: MessageQueue {
-
-            @display("p=171,254");
+        switch: EthernetSwitch {
+            @display("p=165,157");
         }
-        userA: P2PUser {
-            @display("p=73.365,173.865");
+        peerA: DnsSimplifiedHost {
+            @display("p=67,158");
         }
-        userB: P2PUser {
-            @display("p=270.345,173.865");
+        peerB: DnsSimplifiedHost {
+            @display("p=272,176");
+        }
+        peerC: DnsSimplifiedHost {
+            @display("p=165,268");
+        }
+        peerD: DnsSimplifiedHost {
+            @display("p=80,255");
+        }
+        peerE: DnsSimplifiedHost {
+            @display("p=258,268");
+        }
+        resolver: DnsResolverServer {
+            @display("p=153,74");
         }
         dns: DnsSimplified {
-            @display("p=171.855,78.39");
+            @display("p=246,87");
         }
-
-        sw: EthernetSwitch {
-
-            @display("p=171.855,172.86");
-        }
-
     connections:
-        userA.ethg <--> Eth10G <--> sw.ethg++;
-        userB.ethg <--> Eth10G <--> sw.ethg++;
-        sw.ethg++ <--> Eth10G <--> dns.ethg++;
-        sw.ethg++ <--> Eth100G <--> messageQueue.ethg++;
+        peerA.ethg++ <--> Eth10M <--> switch.ethg++;
+        peerB.ethg++ <--> Eth10M <--> switch.ethg++;
+        peerC.ethg++ <--> Eth10M <--> switch.ethg++;
+        peerD.ethg++ <--> Eth10M <--> switch.ethg++;
+        peerE.ethg++ <--> Eth10M <--> switch.ethg++;
+        resolver.ethg++ <--> Eth10M <--> switch.ethg++;
+        dns.ethg++ <--> Eth10M <--> switch.ethg++;
 }
