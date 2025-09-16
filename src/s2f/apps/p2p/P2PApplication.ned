@@ -19,24 +19,10 @@ import s2f.apps.AppBase;
 simple P2PApplication extends AppBase {
 	parameters:
 	    @class(P2PApplication);
-		string parentPath = default("^.^.^.^.");
-		int processingMIs = default(1);						// not needed for now
-		int listeningPort = default(8333);					// mainnet port	
-        int synthSize @unit(B) = default(40B);              // The payload that'll be sent
-        int pingsThreshold = default(5);                    // The number of pings where it will start processing
-        string localInterface = default("");
-        string externalInterface = default("");
+		int listeningPort = default(8333);
+		int peerRequestLimit = default(3);
         string dnsSeed @mutable;
-        double pollingInterval @unit(s) = default(5s);
-        
-        // These signals are only registering the output and input traffic from the endpoint
-        @signal[packetSent](type=inet::Packet);
-        @signal[packetReceived](type=inet::Packet);
-        @signal[roundTripTime](type=double);
-
-        @statistic[packetReceived](title="packets received"; source=packetReceived; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
-        @statistic[packetSent](title="packets sent"; source=packetSent; record=count,"sum(packetBytes)","vector(packetBytes)"; interpolationmode=none);
-        @statistic[endToEndDelay](title="end-to-end delay"; source="dataAge(packetReceived)"; unit=s; record=histogram,weightedHistogram,vector; interpolationmode=none);
-        @statistic[roundTripTime](title="round trip time"; unit=s; record=histogram,vector; interpolationmode=none);
-		
+        string localIp @mutable;
+        string dnsIp @mutable;
+        string testIp @mutable;
 }
