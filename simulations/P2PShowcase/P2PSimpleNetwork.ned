@@ -63,15 +63,15 @@ network P2PNetwork
         peerB: DnsSimplifiedHost {
             @display("p=272,176");
         }
-        peerC: DnsSimplifiedHost {
-            @display("p=165,268");
-        }
-        peerD: DnsSimplifiedHost {
-            @display("p=80,255");
-        }
-        peerE: DnsSimplifiedHost {
-            @display("p=258,268");
-        }
+        //peerC: DnsSimplifiedHost {
+        //    @display("p=165,268");
+        //}
+        //peerD: DnsSimplifiedHost {
+        //    @display("p=80,255");
+        //}
+        //peerE: DnsSimplifiedHost {
+        //    @display("p=258,268");
+        //}
         resolver: DnsResolverServer {
             @display("p=153,74");
         }
@@ -81,9 +81,9 @@ network P2PNetwork
     connections:
         peerA.ethg++ <--> Eth10M <--> switch.ethg++;
         peerB.ethg++ <--> Eth10M <--> switch.ethg++;
-        peerC.ethg++ <--> Eth10M <--> switch.ethg++;
-        peerD.ethg++ <--> Eth10M <--> switch.ethg++;
-        peerE.ethg++ <--> Eth10M <--> switch.ethg++;
+        //peerC.ethg++ <--> Eth10M <--> switch.ethg++;
+        //peerD.ethg++ <--> Eth10M <--> switch.ethg++;
+        //peerE.ethg++ <--> Eth10M <--> switch.ethg++;
         resolver.ethg++ <--> Eth10M <--> switch.ethg++;
         dns.ethg++ <--> Eth10M <--> switch.ethg++;
 }

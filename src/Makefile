@@ -38,7 +38,7 @@ OBJS = \
     $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
-    $O/s2f/apps/p2p/P2PApplication.o \
+    $O/s2f/apps/p2p/P2PBase.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
@@ -64,6 +64,7 @@ OBJS = \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
+    $O/s2f/architecture/p2p/pow/PowFlowManager.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/include/signals.o \

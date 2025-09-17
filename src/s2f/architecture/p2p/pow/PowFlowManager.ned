@@ -13,16 +13,12 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package s2f.apps.p2p;
-import s2f.apps.AppBase;
+package s2f.architecture.p2p.pow;
+import s2f.apps.p2p.P2PBase;
 
-simple P2PApplication extends AppBase {
-	parameters:
-	    @class(P2PApplication);
-		int listeningPort = default(8333);
-		int peerRequestLimit = default(3);
-        string dnsSeed @mutable;
-        string localIp @mutable;
-        string dnsIp @mutable;
-        string testIp @mutable;
+simple PowFlowManager extends P2PBase
+{
+    parameters:
+    	@class(PowFlowManager);
+    	listeningPort=8333;
 }

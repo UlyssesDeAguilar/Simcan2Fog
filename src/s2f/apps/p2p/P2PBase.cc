@@ -1,4 +1,4 @@
-#include "P2PApplication.h"
+#include "P2PBase.h"
 #include "inet/common/Ptr.h"
 #include "inet/common/Simsignals_m.h"
 #include "inet/networklayer/common/L3Address.h"
@@ -8,17 +8,17 @@
 #include "s2f/apps/AppBase.h"
 #include "s2f/architecture/dns/ResourceRecord_m.h"
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
-#include "s2f/architecture/net/protocol/P2PMsg_m.h"
 #include "s2f/messages/Syscall_m.h"
 
 using namespace s2f::dns;
 
-Define_Module(P2PApplication);
+Define_Module(P2PBase);
 
-void P2PApplication::initialize()
+void P2PBase::initialize()
 {
     AppBase::initialize();
     setReturnCallback(this);
+    connectionQueue.clear();
 
     listeningPort = par("listeningPort");
     dnsSeed = par("dnsSeed");
@@ -29,7 +29,7 @@ void P2PApplication::initialize()
     runStartTime = time(nullptr);
 }
 
-void P2PApplication::processSelfMessage(cMessage *msg)
+void P2PBase::processSelfMessage(cMessage *msg)
 {
     if (msg->getKind() == EXEC_START)
     {
@@ -49,22 +49,8 @@ void P2PApplication::processSelfMessage(cMessage *msg)
     connect(peer.sockFd, peer.ip, listeningPort);
 }
 
-void P2PApplication::handleConnectReturn(int sockFd, bool connected)
+void P2PBase::handleConnectFailure()
 {
-    // Connection successful, start message exchange
-    if (connected)
-    {
-        auto packet = new Packet("Version message");
-        auto data = makeShared<P2PMsg>();
-        data->setCommandName("version");
-        data->setPayloadSize(0);
-        data->setStartString("f9beb4d9");
-        data->setChecksum("test");
-        packet->insertAtBack(data);
-        _send(sockFd, packet);
-        return;
-    }
-
     NetworkPeer peer = peerCandidates.back();
     EV_INFO << "Could not reach peer candidate" << peer.ip << "\n";
 
@@ -84,12 +70,7 @@ void P2PApplication::handleConnectReturn(int sockFd, bool connected)
     connect(peer.sockFd, peer.ip, listeningPort);
 }
 
-void P2PApplication::handleDataArrived(int sockFd, Packet *p)
-{
-    EV_INFO << p << "\n";
-}
-
-void P2PApplication::handleResolutionFinished(const L3Address ip, bool resolved)
+void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
 {
     if (!resolved)
         error("No peers connected on DNS seed %s.", dnsSeed);
@@ -105,16 +86,25 @@ void P2PApplication::handleResolutionFinished(const L3Address ip, bool resolved)
     connect(peer.sockFd, peer.ip, listeningPort);
 }
 
-bool P2PApplication::handleClientConnection(int sockFd,
-                                            const L3Address &remoteIp,
-                                            const uint16_t &remotePort)
+bool P2PBase::handleClientConnection(int sockFd, const L3Address &remoteIp,
+                                     const uint16_t &remotePort)
 {
     EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
+
+    // Create the chunk queue
+    connectionQueue[sockFd];
     return true;
 }
 
-void P2PApplication::finish()
+bool P2PBase::handlePeerClosed(int sockFd)
+{
+    EV << "Peer closed, session ended\n";
+    connectionQueue.erase(sockFd);
+    return true;
+}
+
+void P2PBase::finish()
 {
     // Calculate the total runtime
     double runtime = difftime(time(nullptr), runStartTime);
@@ -131,7 +121,7 @@ void P2PApplication::finish()
     AppBase::finish();
 }
 
-void P2PApplication::registerServiceToDNS()
+void P2PBase::registerServiceToDNS()
 {
     int sockFd = open(-1, SOCK_DGRAM);
     ResourceRecord record;
