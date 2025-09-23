@@ -11,7 +11,12 @@ namespace s2f
     namespace p2p
     {
         /**
+         * @class PowMessageBuilder PowMessageBuilder.h "PowMessageBuilder.h"
+         *
          * Auxiliary class to build messages between two nodes on a PoW network.
+         *
+         * @author Tomás Daniel Expósito Torre
+         * @date 2025-09-23
          */
         class PowMessageBuilder
         {
@@ -19,12 +24,21 @@ namespace s2f
             /**
              * Wrapper method to build messages based on the message command.
              *
-             * @param
+             * @param c     Message type.
              */
             virtual Packet *buildMessage(enum Command c);
 
           protected:
+            /**
+             * Builds the "version" message, exchanged at the beginning of the
+             * the connection between two nodes.
+             */
             virtual Packet *buildVersionMessage();
+
+            /**
+             * Builds the "verack" message, exchanged when network versions
+             * match for two connecting nodes.
+             */
             virtual Packet *buildVerackMessage();
         };
     }

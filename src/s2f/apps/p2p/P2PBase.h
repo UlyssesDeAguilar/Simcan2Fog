@@ -23,7 +23,7 @@ struct NetworkPeer
  * Base application for the peer-to-peer protocol with various node discovery
  * methods.
  *
- * @author Tomás Daniel Expósito override
+ * @author Tomás Daniel Expósito Torre
  * @date 2025-09-08
  */
 class P2PBase : public AppBase, public AppBase::ICallback
@@ -111,8 +111,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
     /**
      * Handles the initial connection to another peer candidate in the network.
      *
-     * @param sockFd    connection file descriptor. Should always match the last
-     *                  element in the peer candidates vector.
+     * @param sockFd    connection file descriptor.
      * @param connected connection status.
      */
     virtual void handleConnectReturn(int sockFd, bool connected) override {}
