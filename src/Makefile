@@ -64,7 +64,9 @@ OBJS = \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
-    $O/s2f/architecture/p2p/pow/PowFlowManager.o \
+    $O/s2f/architecture/p2p/pow/PowCommon.o \
+    $O/s2f/architecture/p2p/pow/PowMessageBuilder.o \
+    $O/s2f/architecture/p2p/pow/PowP2PApp.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/include/signals.o \
@@ -126,13 +128,14 @@ OBJS = \
     $O/s2f/architecture/dns/client/DnsClientCommand_m.o \
     $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
     $O/s2f/architecture/net/protocol/L2Protocol_m.o \
-    $O/s2f/architecture/net/protocol/P2PMsg_m.o \
     $O/s2f/architecture/net/protocol/RestfulRequest_m.o \
     $O/s2f/architecture/net/protocol/RestfulResponse_m.o \
     $O/s2f/architecture/net/protocol/RestMsg_m.o \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
+    $O/s2f/architecture/p2p/pow/PowMsgHeader_m.o \
+    $O/s2f/architecture/p2p/pow/PowMsgVersion_m.o \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
@@ -154,13 +157,14 @@ MSGFILES = \
     s2f/architecture/dns/client/DnsClientCommand.msg \
     s2f/architecture/dns/registry/DnsRegistrationRequest.msg \
     s2f/architecture/net/protocol/L2Protocol.msg \
-    s2f/architecture/net/protocol/P2PMsg.msg \
     s2f/architecture/net/protocol/RestfulRequest.msg \
     s2f/architecture/net/protocol/RestfulResponse.msg \
     s2f/architecture/net/protocol/RestMsg.msg \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
+    s2f/architecture/p2p/pow/PowMsgHeader.msg \
+    s2f/architecture/p2p/pow/PowMsgVersion.msg \
     s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \

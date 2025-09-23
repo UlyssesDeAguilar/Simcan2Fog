@@ -16,9 +16,9 @@
 package s2f.architecture.p2p.pow;
 import s2f.apps.p2p.P2PBase;
 
-simple PowFlowManager extends P2PBase
+simple PowP2PApp extends P2PBase
 {
     parameters:
-    	@class(PowFlowManager);
+    	@class(PowP2PApp);
     	listeningPort=8333;
 }
