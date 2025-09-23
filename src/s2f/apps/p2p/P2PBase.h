@@ -8,16 +8,6 @@
 #include <vector>
 
 /**
- * P2P Network peer information.
- */
-struct NetworkPeer
-{
-    int sockFd;            //!< Active TCP connection to the peer
-    L3Address ip;          //!< Peer address
-    int reconnections = 3; //!< Number of times to attempt connection to peer
-};
-
-/**
  * @class P2PBase P2PBase.h "P2PBase.h"
  *
  * Base application for the peer-to-peer protocol with various node discovery
@@ -29,9 +19,10 @@ struct NetworkPeer
 class P2PBase : public AppBase, public AppBase::ICallback
 {
   protected:
-    const char *dnsSeed{};                   //!< DNS A record seed
-    std::vector<NetworkPeer> peers;          //!< Active network peers
-    std::vector<NetworkPeer> peerCandidates; //!< Discovery candidates
+    const char *dnsSeed{};                 //!< DNS A record seed
+    std::map<int, L3Address> peers;        //!< Active network peers
+    std::vector<L3Address> peerCandidates; //!< Discovery candidates
+
     std::map<int, ChunkQueue> connectionQueue;
 
     L3Address localIp;   //!< Local address
@@ -52,7 +43,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * A failure can be triggered either on the connection or due to protocol
      * incompatibilities.
      */
-    virtual void handleConnectFailure();
+    virtual void handleConnectFailure(int sockFd);
 
     /**
      * Registers a record in the DNS Seed with the node's IP address.

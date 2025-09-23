@@ -9,7 +9,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     EV_INFO << "handling connect return on node with ip " << localIp << "\n";
     if (!connected)
     {
-        handleConnectFailure();
+        handleConnectFailure(sockFd);
         return;
     }
 

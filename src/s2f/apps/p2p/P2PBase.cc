@@ -46,32 +46,33 @@ void P2PBase::processSelfMessage(cMessage *msg)
     // Temporary: Reach peer through IP
     if (strcmp(par("localIp"), "10.0.0.1") == 0)
     {
-        NetworkPeer peer = {.sockFd = open(-1, SOCK_STREAM),
-                            .ip = L3Address(par("testIp"))};
-        peerCandidates.push_back(peer);
-        connect(peer.sockFd, peer.ip, listeningPort);
+        int sockFd = open(-1, SOCK_STREAM);
+        peers[sockFd] = L3Address(par("testIp"));
+        connect(sockFd, peers[sockFd], listeningPort);
     }
 }
 
-void P2PBase::handleConnectFailure()
+void P2PBase::handleConnectFailure(int sockFd)
 {
-    NetworkPeer peer = peerCandidates.back();
-    EV_INFO << "Could not reach peer candidate" << peer.ip << "\n";
+    EV_INFO << "Could not reach peer " << peers[sockFd] << "\n";
 
-    // Remove candidate on reconnection threshold break
-    if (!peer.reconnections--)
-        peerCandidates.pop_back();
+    // Remove peer from active connection list
+    peers.erase(sockFd);
 
     // Out of candidates to process
     if (peerCandidates.empty())
     {
         event->setKind(NO_ROUTE_FOUND); // TODO: connection status enum
         scheduleAt(simTime() + 1.0, event);
+        return;
     }
 
     // Attempt a new connection
-    peer = peerCandidates.back();
-    connect(peer.sockFd, peer.ip, listeningPort);
+    int newSock = open(-1, SOCK_STREAM);
+    peers[newSock] = peerCandidates.back();
+    peerCandidates.pop_back();
+
+    connect(newSock, peers[newSock], listeningPort);
 }
 
 void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
@@ -85,9 +86,10 @@ void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
     }
 
     // Attempt connection to peer candidate
-    NetworkPeer peer = {.sockFd = open(-1, SOCK_STREAM), .ip = ip};
-    peerCandidates.push_back(peer);
-    connect(peer.sockFd, peer.ip, listeningPort);
+    int newSock = open(-1, SOCK_STREAM);
+    peers[newSock] = ip;
+
+    connect(newSock, peers[newSock], listeningPort);
 }
 
 bool P2PBase::handleClientConnection(int sockFd, const L3Address &remoteIp,
@@ -96,8 +98,7 @@ bool P2PBase::handleClientConnection(int sockFd, const L3Address &remoteIp,
     EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
 
-    NetworkPeer peer = {.sockFd = sockFd, .ip = remoteIp};
-    peerCandidates.push_back(peer);
+    peers[sockFd] = remoteIp;
 
     // Create the chunk queue
     connectionQueue[sockFd];
@@ -108,6 +109,7 @@ bool P2PBase::handlePeerClosed(int sockFd)
 {
     EV << "Peer closed, session ended\n";
     connectionQueue.erase(sockFd);
+    peers.erase(sockFd);
     return true;
 }
 
