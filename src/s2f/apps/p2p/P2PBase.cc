@@ -31,6 +31,7 @@ void P2PBase::initialize()
 
 void P2PBase::processSelfMessage(cMessage *msg)
 {
+
     if (msg->getKind() == EXEC_START)
     {
         // Open the designated port to handle P2P requests
@@ -43,10 +44,13 @@ void P2PBase::processSelfMessage(cMessage *msg)
     }
 
     // Temporary: Reach peer through IP
-    NetworkPeer peer = {.sockFd = open(-1, SOCK_STREAM),
-                        .ip = L3Address(par("testIp"))};
-    peerCandidates.push_back(peer);
-    connect(peer.sockFd, peer.ip, listeningPort);
+    if (strcmp(par("localIp"), "10.0.0.1") == 0)
+    {
+        NetworkPeer peer = {.sockFd = open(-1, SOCK_STREAM),
+                            .ip = L3Address(par("testIp"))};
+        peerCandidates.push_back(peer);
+        connect(peer.sockFd, peer.ip, listeningPort);
+    }
 }
 
 void P2PBase::handleConnectFailure()
@@ -91,6 +95,9 @@ bool P2PBase::handleClientConnection(int sockFd, const L3Address &remoteIp,
 {
     EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
+
+    NetworkPeer peer = {.sockFd = sockFd, .ip = remoteIp};
+    peerCandidates.push_back(peer);
 
     // Create the chunk queue
     connectionQueue[sockFd];

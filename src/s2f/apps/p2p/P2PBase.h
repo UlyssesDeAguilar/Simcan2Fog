@@ -3,7 +3,6 @@
 
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/architecture/net/protocol/P2PMsg_m.h"
 #include "s2f/messages/Syscall_m.h"
 #include <omnetpp.h>
 #include <vector>
