@@ -130,6 +130,7 @@ void P2PBase::finish()
     AppBase::finish();
 }
 
+// TODO: test DNS registry service
 void P2PBase::registerServiceToDNS()
 {
     int sockFd = open(-1, SOCK_DGRAM);

@@ -40,6 +40,9 @@ namespace s2f
              * match for two connecting nodes.
              */
             virtual Packet *buildVerackMessage();
+
+            virtual Packet *buildGetaddrMessage();
+            virtual Packet *buildAddrMessage();
         };
     }
 }

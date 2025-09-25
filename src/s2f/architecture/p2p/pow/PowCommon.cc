@@ -10,8 +10,12 @@ namespace s2f
                 return Command::VERSION;
             if (std::strncmp(c, "verack", 6) == 0)
                 return Command::VERACK;
+            if (std::strncmp(c, "getaddr", 7) == 0)
+                return Command::GETADDR;
+            if (std::strncmp(c, "addr", 4) == 0)
+                return Command::ADDR;
 
-            return Command::VERACK;
+            return Command::NOT_SUPPORTED;
         }
     }
 }

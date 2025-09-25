@@ -1,8 +1,11 @@
 #include "PowMessageBuilder.h"
+#include "PowMsgAddress_m.h"
 #include "PowMsgHeader_m.h"
 #include "PowMsgVersion_m.h"
+#include "inet/networklayer/common/L3Address.h"
 
 using namespace s2f::p2p;
+using namespace inet;
 
 Packet *PowMessageBuilder::buildMessage(enum Command c)
 {
@@ -12,6 +15,10 @@ Packet *PowMessageBuilder::buildMessage(enum Command c)
         return buildVersionMessage();
     case VERACK:
         return buildVerackMessage();
+    case GETADDR:
+        return buildGetaddrMessage();
+    case ADDR:
+        return buildAddrMessage();
     default:
         return nullptr;
     }
@@ -66,5 +73,48 @@ Packet *PowMessageBuilder::buildVerackMessage()
     header->setChecksum("TODO");
 
     packet->insertAtBack(header);
+    return packet;
+}
+
+Packet *PowMessageBuilder::buildGetaddrMessage()
+{
+    auto packet = new Packet("GetAddr message");
+    auto header = makeShared<PowMsgHeader>();
+
+    // Message Header
+    header->setCommandName("getaddr");
+    header->setStartString(StartString::MAIN_NET);
+    header->setPayloadSize(0);
+    header->setChecksum("TODO");
+
+    packet->insertAtBack(header);
+    return packet;
+}
+
+Packet *PowMessageBuilder::buildAddrMessage()
+{
+    auto packet = new Packet("Addr message");
+    auto header = makeShared<PowMsgHeader>();
+    auto payload = makeShared<PowMsgAddress>();
+
+    NetworkPeer peer;
+
+    peer.port = 8333;
+    peer.time = 0;
+    peer.ipAddress = L3Address("10.0.0.5");
+    peer.services = PowServiceType::NODE_NETWORK;
+
+    // Message Header
+    header->setCommandName("addr");
+    header->setStartString(StartString::MAIN_NET);
+    header->setPayloadSize(0);
+    header->setChecksum("TODO");
+
+    // Payload
+    payload->setIpAddressCount(1);
+    payload->appendIpAddresses(peer);
+
+    packet->insertAtBack(header);
+    packet->insertAtBack(payload);
     return packet;
 }

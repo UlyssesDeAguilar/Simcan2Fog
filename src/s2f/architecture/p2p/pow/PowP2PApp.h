@@ -3,6 +3,7 @@
 
 #include "PowCommon.h"
 #include "PowMessageBuilder.h"
+#include "PowMsgAddress_m.h"
 #include "PowMsgHeader_m.h"
 #include "PowMsgVersion_m.h"
 #include "inet/common/Ptr.h"
@@ -59,7 +60,14 @@ namespace s2f
              * @param msg       message payload.
              */
             virtual void handleVersionMessage(int sockFd,
-                                              Ptr<const PowMsgVersion> msg);
+                                              Ptr<const PowMsgVersion> payload);
+
+            virtual void handleVerackMessage(int sockFd,
+                                             Ptr<const PowMsgHeader> header);
+            virtual void handleGetaddrMessage(int sockFd,
+                                              Ptr<const PowMsgHeader> header);
+            virtual void handleAddrMessage(int sockFd,
+                                           Ptr<const PowMsgAddress> payload);
         };
     }
 };

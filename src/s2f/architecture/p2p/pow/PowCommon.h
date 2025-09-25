@@ -14,7 +14,10 @@ namespace s2f
         enum Command
         {
             VERSION,
-            VERACK
+            VERACK,
+            GETADDR,
+            ADDR,
+            NOT_SUPPORTED
         };
 
         /**
@@ -24,5 +27,6 @@ namespace s2f
          */
         Command getCommand(const char *c);
     }
+
 }
 #endif
