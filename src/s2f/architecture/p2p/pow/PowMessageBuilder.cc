@@ -97,12 +97,12 @@ Packet *PowMessageBuilder::buildAddrMessage()
     auto header = makeShared<PowMsgHeader>();
     auto payload = makeShared<PowMsgAddress>();
 
-    PowNetworkPeer peer;
+    PowNetworkPeer *peer = new PowNetworkPeer;
 
-    peer.port = 8333;
-    peer.time = 0;
-    peer.ipAddress = L3Address("10.0.0.5");
-    peer.services = PowServiceType::NODE_NETWORK;
+    peer->port = 8333;
+    peer->time = 0;
+    peer->ipAddress = L3Address("10.0.0.5");
+    peer->services = PowServiceType::NODE_NETWORK;
 
     // Message Header
     header->setCommandName("addr");

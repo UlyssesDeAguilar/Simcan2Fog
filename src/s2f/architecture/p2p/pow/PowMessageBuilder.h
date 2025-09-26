@@ -41,7 +41,16 @@ namespace s2f
              */
             virtual Packet *buildVerackMessage();
 
+            /**
+             * Builds the "getaddr" message, sent by the transmitting node to
+             * discover new peer candidates.
+             */
             virtual Packet *buildGetaddrMessage();
+
+            /**
+             * Builds the "addr" message, sent by the receiving node in answer
+             * to an addr message.
+             */
             virtual Packet *buildAddrMessage();
         };
     }

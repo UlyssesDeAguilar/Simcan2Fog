@@ -38,8 +38,7 @@ namespace s2f
              * @param sockFd    connection file descriptor.
              * @param connected connection status.
              */
-            virtual void handleConnectReturn(int sockFd,
-                                             bool connected) override;
+            virtual void handleConnectReturn(int sockFd, bool connected) override;
 
             /**
              * Handles packets arrived from an existing connection.
@@ -49,25 +48,50 @@ namespace s2f
              */
             virtual void handleDataArrived(int sockFd, Packet *p) override;
 
+            /**
+             * Handle hook for socket connection initiated by a possible peer.
+             *
+             * @param sockFd    File descriptor for this connection.
+             * @param remoteIp  Peer Ip address.
+             */
+            virtual bool
+            handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort) override;
+
             // -------------------------------------------------------------- //
-            //                       MSGBUILDER METHODS                       //
-            // -------------------------------------------------------------- //
+            //                       POWP2PAPP METHODS                        //
+            //  ------------------------------------------------------------- //
 
             /**
              * Handles an incoming "version" message.
              *
              * @param sockFd    connection file descriptor.
-             * @param msg       message payload.
+             * @param payload   message payload.
              */
-            virtual void handleVersionMessage(int sockFd,
-                                              Ptr<const PowMsgVersion> payload);
+            virtual void handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payload);
 
-            virtual void handleVerackMessage(int sockFd,
-                                             Ptr<const PowMsgHeader> header);
-            virtual void handleGetaddrMessage(int sockFd,
-                                              Ptr<const PowMsgHeader> header);
-            virtual void handleAddrMessage(int sockFd,
-                                           Ptr<const PowMsgAddress> payload);
+            /**
+             * Handles an incoming "verack" message.
+             *
+             * @param sockFd    connection file descriptor.
+             * @param header    message header.
+             */
+            virtual void handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header);
+
+            /**
+             * Handles an incoming "getaddr" message.
+             *
+             * @param sockFd    connection file descriptor.
+             * @param header    message header.
+             */
+            virtual void handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header);
+
+            /**
+             * Handles an incoming "addr" message.
+             *
+             * @param sockFd    connection file descriptor.
+             * @param payload   message payload.
+             */
+            virtual void handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload);
         };
     }
 };

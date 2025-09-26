@@ -3,10 +3,12 @@
 
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/messages/Syscall_m.h"
 #include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
+#include "s2f/messages/Syscall_m.h"
 #include <omnetpp.h>
 #include <vector>
+
+using namespace s2f::p2p;
 
 /**
  * @class P2PBase P2PBase.h "P2PBase.h"
@@ -20,15 +22,15 @@
 class P2PBase : public AppBase, public AppBase::ICallback
 {
   protected:
-    const char *dnsSeed{};                 //!< DNS A record seed
-    std::map<int, s2f::p2p::NetworkPeer> peers;        //!< Active network peers
-    std::vector<s2f::p2p::NetworkPeer> peerCandidates; //!< Discovery candidates
+    const char *dnsSeed{};                     //!< DNS A record seed
+    std::map<int, NetworkPeer *> peers;        //!< Active network peers
+    std::vector<NetworkPeer *> peerCandidates; //!< Discovery candidates
 
     std::map<int, ChunkQueue> connectionQueue;
 
     L3Address localIp;   //!< Local address
     L3Address dnsIp;     //!< DNS address
-    int listeningPort;   //!< Mainnet, Testnet or Regtest port
+    int listeningPort;   //!< Protocol port
     int listeningSocket; //!< TCP socket for p2p requesting
 
     simtime_t simStartTime; //!< Simulation Starting timestamp
@@ -51,7 +53,14 @@ class P2PBase : public AppBase, public AppBase::ICallback
      */
     virtual void registerServiceToDNS();
 
+    /**
+     * Wrapper method to create a connection to a new peer.
+     */
     virtual void connectToPeer(const L3Address &destIp);
+
+    /**
+     * Wrapper method to create a connection to a new peer.
+     */
     virtual void connectToPeer();
 
     // --------------------------------------------------------------------- //
@@ -81,16 +90,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * @param ip        IP Address received on a successful resolution.
      * @param resolved  Resolution status.
      */
-    virtual void handleResolutionFinished(const L3Address ip,
-                                          bool resolved) override;
-    /**
-     * Handle hook for socket connection initiated by a possible peer.
-     *
-     * @param sockFd    File descriptor for this connection.
-     * @param remoteIp  Peer Ip address.
-     */
-    virtual bool handleClientConnection(int sockFd, const L3Address &remoteIp,
-                                        const uint16_t &remotePort) override;
+    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override;
 
     /**
      * Handle hook for peer disconnection.
@@ -111,9 +111,15 @@ class P2PBase : public AppBase, public AppBase::ICallback
      */
     virtual void handleConnectReturn(int sockFd, bool connected) override {}
 
-    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override
-    {
-    }
+    /**
+     * Handle hook for socket connection initiated by a possible peer.
+     *
+     * @param sockFd    File descriptor for this connection.
+     * @param remoteIp  Peer Ip address.
+     */
+    virtual bool handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort) override { return true; }
+
+    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {}
     virtual void returnRead(simtime_t timeElapsed) override {}
     virtual void returnWrite(simtime_t timeElapsed) override {}
     virtual void handleDataArrived(int sockFd, Packet *p) override {}

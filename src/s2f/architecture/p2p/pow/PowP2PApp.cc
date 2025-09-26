@@ -5,6 +5,10 @@
 using namespace s2f::p2p;
 Define_Module(PowP2PApp);
 
+// ------------------------------------------------------------------------- //
+//                             P2PBASE OVERRIDES                             //
+// ------------------------------------------------------------------------- //
+
 void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 {
     EV_INFO << "handling connect return on node with ip " << localIp << "\n";
@@ -15,6 +19,22 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     }
 
     _send(sockFd, msgBuilder.buildMessage(Command::VERSION));
+}
+
+bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp,
+                                       const uint16_t &remotePort)
+{
+    EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
+    EV << "Socket fd: " << sockFd << "\n";
+
+    PowNetworkPeer *p = new PowNetworkPeer;
+
+    p->ipAddress = remoteIp;
+    peers[sockFd] = p;
+
+    // Create the chunk queue
+    connectionQueue[sockFd];
+    return true;
 }
 
 void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
@@ -43,6 +63,10 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
     }
 }
 
+// ------------------------------------------------------------------------- //
+//                             POWP2PAPP METHODS                             //
+// ------------------------------------------------------------------------- //
+
 void PowP2PApp::handleVersionMessage(int sockFd,
                                      Ptr<const PowMsgVersion> payload)
 {
@@ -63,5 +87,7 @@ void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
 {
-    connectToPeer(payload->getIpAddresses(0).ipAddress);
+    for (int i = 0; i < payload->getIpAddressesArraySize(); i++)
+        peerCandidates.push_back(const_cast<PowNetworkPeer *>(payload->getIpAddresses(i)));
+    connectToPeer();
 }
