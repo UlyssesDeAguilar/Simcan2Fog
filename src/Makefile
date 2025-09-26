@@ -134,6 +134,7 @@ OBJS = \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
+    $O/s2f/architecture/p2p/pow/PowMsgAddress_m.o \
     $O/s2f/architecture/p2p/pow/PowMsgHeader_m.o \
     $O/s2f/architecture/p2p/pow/PowMsgVersion_m.o \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
@@ -163,6 +164,7 @@ MSGFILES = \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
+    s2f/architecture/p2p/pow/PowMsgAddress.msg \
     s2f/architecture/p2p/pow/PowMsgHeader.msg \
     s2f/architecture/p2p/pow/PowMsgVersion.msg \
     s2f/management/cloudprovider/NodeUpdate.msg \

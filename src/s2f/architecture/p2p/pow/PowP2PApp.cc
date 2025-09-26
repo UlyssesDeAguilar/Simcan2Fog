@@ -52,9 +52,7 @@ void PowP2PApp::handleVersionMessage(int sockFd,
 void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header)
 {
     if (localIp.str().compare("10.0.0.1") == 0)
-    {
         _send(sockFd, msgBuilder.buildMessage(Command::GETADDR));
-    }
 }
 
 void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
@@ -65,8 +63,5 @@ void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
 {
-    EV_INFO << payload->getIpAddresses(0).ipAddress << "\n";
-    int newSock = open(-1, SOCK_STREAM);
-    peers[newSock] = L3Address(payload->getIpAddresses(0).ipAddress);
-    connect(newSock, peers[newSock], listeningPort);
+    connectToPeer(payload->getIpAddresses(0).ipAddress);
 }

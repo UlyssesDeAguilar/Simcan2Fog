@@ -97,7 +97,7 @@ Packet *PowMessageBuilder::buildAddrMessage()
     auto header = makeShared<PowMsgHeader>();
     auto payload = makeShared<PowMsgAddress>();
 
-    NetworkPeer peer;
+    PowNetworkPeer peer;
 
     peer.port = 8333;
     peer.time = 0;

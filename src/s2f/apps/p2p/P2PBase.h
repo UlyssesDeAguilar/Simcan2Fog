@@ -4,6 +4,7 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/apps/AppBase.h"
 #include "s2f/messages/Syscall_m.h"
+#include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
 #include <omnetpp.h>
 #include <vector>
 
@@ -20,8 +21,8 @@ class P2PBase : public AppBase, public AppBase::ICallback
 {
   protected:
     const char *dnsSeed{};                 //!< DNS A record seed
-    std::map<int, L3Address> peers;        //!< Active network peers
-    std::vector<L3Address> peerCandidates; //!< Discovery candidates
+    std::map<int, s2f::p2p::NetworkPeer> peers;        //!< Active network peers
+    std::vector<s2f::p2p::NetworkPeer> peerCandidates; //!< Discovery candidates
 
     std::map<int, ChunkQueue> connectionQueue;
 
@@ -48,7 +49,10 @@ class P2PBase : public AppBase, public AppBase::ICallback
     /**
      * Registers a record in the DNS Seed with the node's IP address.
      */
-    void registerServiceToDNS();
+    virtual void registerServiceToDNS();
+
+    virtual void connectToPeer(const L3Address &destIp);
+    virtual void connectToPeer();
 
     // --------------------------------------------------------------------- //
     //                          APPBASE OVERRIDES                            //

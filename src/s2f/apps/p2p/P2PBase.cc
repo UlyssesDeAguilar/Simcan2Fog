@@ -14,6 +14,7 @@ using namespace s2f::dns;
 
 Define_Module(P2PBase);
 
+
 void P2PBase::initialize()
 {
     AppBase::initialize();
@@ -45,16 +46,12 @@ void P2PBase::processSelfMessage(cMessage *msg)
 
     // Temporary: Reach peer through IP
     if (strcmp(par("localIp"), "10.0.0.1") == 0)
-    {
-        int sockFd = open(-1, SOCK_STREAM);
-        peers[sockFd] = L3Address(par("testIp"));
-        connect(sockFd, peers[sockFd], listeningPort);
-    }
+        connectToPeer(L3Address(par("testIp")));
 }
 
 void P2PBase::handleConnectFailure(int sockFd)
 {
-    EV_INFO << "Could not reach peer " << peers[sockFd] << "\n";
+    EV_INFO << "Could not reach peer " << peers[sockFd].ipAddress << "\n";
 
     // Remove peer from active connection list
     peers.erase(sockFd);
@@ -68,11 +65,7 @@ void P2PBase::handleConnectFailure(int sockFd)
     }
 
     // Attempt a new connection
-    int newSock = open(-1, SOCK_STREAM);
-    peers[newSock] = peerCandidates.back();
-    peerCandidates.pop_back();
-
-    connect(newSock, peers[newSock], listeningPort);
+    connectToPeer();
 }
 
 void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
@@ -86,10 +79,7 @@ void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
     }
 
     // Attempt connection to peer candidate
-    int newSock = open(-1, SOCK_STREAM);
-    peers[newSock] = ip;
-
-    connect(newSock, peers[newSock], listeningPort);
+    connectToPeer(ip);
 }
 
 bool P2PBase::handleClientConnection(int sockFd, const L3Address &remoteIp,
@@ -98,7 +88,8 @@ bool P2PBase::handleClientConnection(int sockFd, const L3Address &remoteIp,
     EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
 
-    peers[sockFd] = remoteIp;
+    peers[sockFd];
+    peers[sockFd].ipAddress = remoteIp;
 
     // Create the chunk queue
     connectionQueue[sockFd];
@@ -128,6 +119,22 @@ void P2PBase::finish()
 
     // Finish the super-class
     AppBase::finish();
+}
+
+void P2PBase::connectToPeer(const L3Address &destIp)
+{
+    int sockFd = open(-1, SOCK_STREAM);
+    peers[sockFd];
+    peers[sockFd].ipAddress = destIp;
+    connect(sockFd, peers[sockFd].ipAddress, listeningPort);
+}
+
+void P2PBase::connectToPeer()
+{
+    int sockFd = open(-1, SOCK_STREAM);
+    peers[sockFd] = peerCandidates.back();
+    peerCandidates.pop_back();
+    connect(sockFd, peers[sockFd].ipAddress, listeningPort);
 }
 
 // TODO: test DNS registry service
