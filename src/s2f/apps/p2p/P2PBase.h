@@ -32,6 +32,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
     L3Address dnsIp;     //!< DNS address
     int listeningPort;   //!< Protocol port
     int listeningSocket; //!< TCP socket for p2p requesting
+    int dnsSock;         //!< Active DNS connection
 
     simtime_t simStartTime; //!< Simulation Starting timestamp
     time_t runStartTime;    //!< Real execution time
@@ -47,11 +48,6 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * incompatibilities.
      */
     virtual void handleConnectFailure(int sockFd);
-
-    /**
-     * Registers a record in the DNS Seed with the node's IP address.
-     */
-    virtual void registerServiceToDNS();
 
     /**
      * Wrapper method to create a connection to a new peer.
@@ -105,11 +101,21 @@ class P2PBase : public AppBase, public AppBase::ICallback
 
     /**
      * Handles the initial connection to another peer candidate in the network.
+     * This class handles connections related to the DNS service.
      *
      * @param sockFd    connection file descriptor.
      * @param connected connection status.
      */
-    virtual void handleConnectReturn(int sockFd, bool connected) override {}
+    virtual void handleConnectReturn(int sockFd, bool connected) override;
+
+    /**
+     * Handles packets arrived from an existing connection.
+     * This class handles data received from the DNS service.
+     *
+     * @param sockFd    connection file descriptor.
+     * @param p         connection incoming data.
+     */
+    virtual void handleDataArrived(int sockFd, Packet *p) override;
 
     /**
      * Handle hook for socket connection initiated by a possible peer.
@@ -122,7 +128,6 @@ class P2PBase : public AppBase, public AppBase::ICallback
     virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {}
     virtual void returnRead(simtime_t timeElapsed) override {}
     virtual void returnWrite(simtime_t timeElapsed) override {}
-    virtual void handleDataArrived(int sockFd, Packet *p) override {}
     virtual void handleParameterChange(const char *parameterName) override {}
 };
 #endif

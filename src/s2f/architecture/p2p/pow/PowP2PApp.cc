@@ -1,4 +1,5 @@
 #include "PowP2PApp.h"
+#include "s2f/apps/p2p/P2PBase.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
 #include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
 
@@ -11,7 +12,14 @@ Define_Module(PowP2PApp);
 
 void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 {
-    EV_INFO << "handling connect return on node with ip " << localIp << "\n";
+    if (sockFd == dnsSock)
+    {
+        P2PBase::handleConnectReturn(sockFd, connected);
+        return;
+    }
+
+    EV_INFO << "handling connect return on peer with ip " << localIp << "\n";
+
     if (!connected)
     {
         handleConnectFailure(sockFd);
@@ -24,7 +32,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp,
                                        const uint16_t &remotePort)
 {
-    EV << "Client connected: " << remoteIp << ":" << remotePort << "\n";
+    EV << "Peer connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
 
     PowNetworkPeer *p = new PowNetworkPeer;
@@ -40,7 +48,13 @@ bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp,
 void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 {
 
-    EV_INFO << "Packet arrived from client with connection " << sockFd << "\n";
+    if (sockFd == dnsSock)
+    {
+        P2PBase::handleDataArrived(sockFd, p);
+        return;
+    }
+
+    EV_INFO << "Packet arrived from peer with connection " << sockFd << "\n";
 
     auto header = p->popAtFront<PowMsgHeader>();
 

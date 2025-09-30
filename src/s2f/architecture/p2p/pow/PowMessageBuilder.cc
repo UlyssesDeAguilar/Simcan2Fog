@@ -111,7 +111,6 @@ Packet *PowMessageBuilder::buildAddrMessage()
     header->setChecksum("TODO");
 
     // Payload
-    payload->setIpAddressCount(1);
     payload->appendIpAddresses(peer);
 
     packet->insertAtBack(header);

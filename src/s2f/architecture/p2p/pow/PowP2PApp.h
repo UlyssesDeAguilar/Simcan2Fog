@@ -54,8 +54,7 @@ namespace s2f
              * @param sockFd    File descriptor for this connection.
              * @param remoteIp  Peer Ip address.
              */
-            virtual bool
-            handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort) override;
+            virtual bool handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort) override;
 
             // -------------------------------------------------------------- //
             //                       POWP2PAPP METHODS                        //
