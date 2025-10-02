@@ -1,4 +1,5 @@
 #include "PowP2PApp.h"
+#include "omnetpp/clog.h"
 #include "s2f/apps/p2p/P2PBase.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
 #include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
@@ -26,11 +27,15 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    _send(sockFd, msgBuilder.buildMessage(Command::VERSION));
+    auto packet = new Packet("Version message");
+    auto payload = msgBuilder.buildVersionMessage();
+    auto header = msgBuilder.buildMessageHeader("version", payload);
+    packet->insertAtBack(header);
+    packet->insertAtBack(payload);
+    _send(sockFd, packet);
 }
 
-bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp,
-                                       const uint16_t &remotePort)
+bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort)
 {
     EV << "Peer connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
@@ -38,6 +43,7 @@ bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp,
     PowNetworkPeer *p = new PowNetworkPeer;
 
     p->ipAddress = remoteIp;
+    p->port = remotePort;
     peers[sockFd] = p;
 
     // Create the chunk queue
@@ -81,22 +87,36 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 //                             POWP2PAPP METHODS                             //
 // ------------------------------------------------------------------------- //
 
-void PowP2PApp::handleVersionMessage(int sockFd,
-                                     Ptr<const PowMsgVersion> payload)
+void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payload)
 {
-    _send(sockFd, msgBuilder.buildMessage(Command::VERACK));
+    auto packet = new Packet("Verack message");
+    auto header = msgBuilder.buildMessageHeader("verack", nullptr);
+    packet->insertAtBack(header);
+    _send(sockFd, packet);
 }
 
 void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header)
 {
     if (localIp.str().compare("10.0.0.1") == 0)
-        _send(sockFd, msgBuilder.buildMessage(Command::GETADDR));
+    {
+        auto packet = new Packet("Getaddr message");
+        auto header = msgBuilder.buildMessageHeader("getaddr", nullptr);
+        packet->insertAtBack(header);
+        _send(sockFd, packet);
+    }
 }
 
 void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 {
     if (localIp.str().compare("10.0.0.4") == 0)
-        _send(sockFd, msgBuilder.buildMessage(Command::ADDR));
+    {
+        auto packet = new Packet("Addr message");
+        auto payload = msgBuilder.buildAddrMessage();
+        auto header = msgBuilder.buildMessageHeader("addr", payload);
+        packet->insertAtBack(header);
+        packet->insertAtBack(payload);
+        _send(sockFd, packet);
+    }
 }
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)

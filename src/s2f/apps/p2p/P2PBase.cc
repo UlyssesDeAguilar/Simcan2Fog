@@ -63,6 +63,8 @@ void P2PBase::initialize()
     AppBase::initialize();
     setReturnCallback(this);
     connectionQueue.clear();
+    peers.clear();
+    peerCandidates.clear();
 
     dnsSock = open(-1, SOCK_STREAM);
     listeningPort = par("listeningPort");
@@ -86,7 +88,6 @@ void P2PBase::processSelfMessage(cMessage *msg)
         EV_INFO << "Connecting to DNS registry service" << "\n";
         connect(dnsSock, dnsIp, 443);
     }
-    return;
 
     // Temporary: Reach peer through IP
     if (strcmp(par("localIp"), "10.0.0.1") == 0)
@@ -102,6 +103,7 @@ void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
         EV_INFO << "DNS seed resolved to our address, discarding..." << "\n";
         return;
     }
+    EV_INFO << "DNS seed resolved to " << ip << "\n";
 
     // Attempt connection to peer candidate
     connectToPeer(ip);
@@ -133,7 +135,6 @@ void P2PBase::handleConnectReturn(int sockFd, bool connected)
 
 void P2PBase::handleDataArrived(int sockFd, Packet *p)
 {
-
     auto response = p->peekData<RestfulResponse>();
     EV_INFO << "Received response code " << response->getResponseCode() << " from DNS service" << "\n";
 }

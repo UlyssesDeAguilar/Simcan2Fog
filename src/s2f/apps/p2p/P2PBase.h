@@ -100,8 +100,8 @@ class P2PBase : public AppBase, public AppBase::ICallback
     // --------------------------------------------------------------------- //
 
     /**
-     * Handles the initial connection to another peer candidate in the network.
-     * This class handles connections related to the DNS service.
+     * Handles connections related to the DNS service.
+     * Peer connections should be handled by specific protocol implementations.
      *
      * @param sockFd    connection file descriptor.
      * @param connected connection status.
@@ -109,8 +109,8 @@ class P2PBase : public AppBase, public AppBase::ICallback
     virtual void handleConnectReturn(int sockFd, bool connected) override;
 
     /**
-     * Handles packets arrived from an existing connection.
-     * This class handles data received from the DNS service.
+     * Handles packets arrived from an existing connection to the DNS service.
+     * Peer connections should be handled by specific protocol implementations.
      *
      * @param sockFd    connection file descriptor.
      * @param p         connection incoming data.

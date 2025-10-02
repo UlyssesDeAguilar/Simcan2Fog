@@ -2,7 +2,11 @@
 #define __POW_MESSAGE_BUILDER_H_
 
 #include "PowCommon.h"
+#include "PowMsgAddress_m.h"
+#include "PowMsgHeader_m.h"
+#include "PowMsgVersion_m.h"
 #include "inet/common/packet/Packet.h"
+#include "inet/common/packet/chunk/FieldsChunk.h"
 
 using namespace inet;
 
@@ -22,36 +26,23 @@ namespace s2f
         {
           public:
             /**
-             * Wrapper method to build messages based on the message command.
+             * Wrapper to build a message header, which should be created after
+             * the payload to append its hash value.
              *
-             * @param c     Message type.
+             * @param commandName   Message kind.
+             * @param payload       Message payload.
              */
-            virtual Packet *buildMessage(enum Command c);
-
-          protected:
-            /**
-             * Builds the "version" message, exchanged at the beginning of the
-             * the connection between two nodes.
-             */
-            virtual Packet *buildVersionMessage();
+            virtual Ptr<PowMsgHeader> buildMessageHeader(const char *commandName, Ptr<FieldsChunk> payload);
 
             /**
-             * Builds the "verack" message, exchanged when network versions
-             * match for two connecting nodes.
+             * Payload builder for "version" message.
              */
-            virtual Packet *buildVerackMessage();
+            virtual Ptr<PowMsgVersion> buildVersionMessage();
 
             /**
-             * Builds the "getaddr" message, sent by the transmitting node to
-             * discover new peer candidates.
+             * Payload builder for "addr" message.
              */
-            virtual Packet *buildGetaddrMessage();
-
-            /**
-             * Builds the "addr" message, sent by the receiving node in answer
-             * to an addr message.
-             */
-            virtual Packet *buildAddrMessage();
+            virtual Ptr<PowMsgAddress> buildAddrMessage();
         };
     }
 }

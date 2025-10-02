@@ -7,39 +7,27 @@
 using namespace s2f::p2p;
 using namespace inet;
 
-Packet *PowMessageBuilder::buildMessage(enum Command c)
+Ptr<PowMsgHeader> PowMessageBuilder::buildMessageHeader(const char *commandName, Ptr<FieldsChunk> payload)
 {
-    switch (c)
-    {
-    case VERSION:
-        return buildVersionMessage();
-    case VERACK:
-        return buildVerackMessage();
-    case GETADDR:
-        return buildGetaddrMessage();
-    case ADDR:
-        return buildAddrMessage();
-    default:
-        return nullptr;
-    }
-}
-
-Packet *PowMessageBuilder::buildVersionMessage()
-{
-    auto packet = new Packet("Version message");
     auto header = makeShared<PowMsgHeader>();
-    auto payload = makeShared<PowMsgVersion>();
 
     // Message Header
-    header->setCommandName("version");
+    header->setCommandName(commandName);
     header->setStartString(StartString::MAIN_NET);
     header->setPayloadSize(0);
     header->setChecksum("TODO");
 
+    return header;
+}
+
+Ptr<PowMsgVersion> PowMessageBuilder::buildVersionMessage()
+{
+    auto payload = makeShared<PowMsgVersion>();
+
     // Version Message Payload
     payload->setVersion(1);
     payload->setServices(PowServiceType::NODE_NETWORK);
-    payload->setTimestamp(0);
+    payload->setTimestamp(time(nullptr));
 
     payload->setAddrRecvServices(payload->getServices());
     payload->setAddrRecvIpAddress("TODO");
@@ -56,47 +44,12 @@ Packet *PowMessageBuilder::buildVersionMessage()
     payload->setStartHeight(0);
     payload->setRelay(true);
 
-    packet->insertAtBack(header);
-    packet->insertAtBack(payload);
-    return packet;
+    return payload;
 }
 
-Packet *PowMessageBuilder::buildVerackMessage()
+Ptr<PowMsgAddress> PowMessageBuilder::buildAddrMessage()
 {
-    auto packet = new Packet("Verack message");
-    auto header = makeShared<PowMsgHeader>();
-
-    // Message Header
-    header->setCommandName("verack");
-    header->setStartString(StartString::MAIN_NET);
-    header->setPayloadSize(0);
-    header->setChecksum("TODO");
-
-    packet->insertAtBack(header);
-    return packet;
-}
-
-Packet *PowMessageBuilder::buildGetaddrMessage()
-{
-    auto packet = new Packet("GetAddr message");
-    auto header = makeShared<PowMsgHeader>();
-
-    // Message Header
-    header->setCommandName("getaddr");
-    header->setStartString(StartString::MAIN_NET);
-    header->setPayloadSize(0);
-    header->setChecksum("TODO");
-
-    packet->insertAtBack(header);
-    return packet;
-}
-
-Packet *PowMessageBuilder::buildAddrMessage()
-{
-    auto packet = new Packet("Addr message");
-    auto header = makeShared<PowMsgHeader>();
     auto payload = makeShared<PowMsgAddress>();
-
     PowNetworkPeer *peer = new PowNetworkPeer;
 
     peer->port = 8333;
@@ -104,16 +57,7 @@ Packet *PowMessageBuilder::buildAddrMessage()
     peer->ipAddress = L3Address("10.0.0.5");
     peer->services = PowServiceType::NODE_NETWORK;
 
-    // Message Header
-    header->setCommandName("addr");
-    header->setStartString(StartString::MAIN_NET);
-    header->setPayloadSize(0);
-    header->setChecksum("TODO");
-
-    // Payload
     payload->appendIpAddresses(peer);
 
-    packet->insertAtBack(header);
-    packet->insertAtBack(payload);
-    return packet;
+    return payload;
 }
