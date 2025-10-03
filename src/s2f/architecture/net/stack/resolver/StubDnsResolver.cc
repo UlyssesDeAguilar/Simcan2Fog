@@ -42,12 +42,18 @@ void StubDnsResolver::handleRequest(StubDnsRequest *request)
     // We might have the record cached
     if (node && node->getDnsLevel() == AUTHORITATIVE && node->getChildCount() > 0)
     {
-        auto iter = std::find_if(node->getRecords()->begin(), node->getRecords()->end(), [question](const ResourceRecord &rr)
-                     { return matchWithWildcard(rr, question.getDomain()); });
+        std::set<ResourceRecord> cachedRecords;
 
-        if (iter != node->getRecords()->end())
+        std::copy_if(node->getRecords()->begin(), node->getRecords()->end(),
+                     std::inserter(cachedRecords, cachedRecords.end()),
+                     [question](const ResourceRecord &rr)
+                     {
+                         return matchWithWildcard(rr, question.getDomain());
+                     });
+
+        if (!cachedRecords.empty())
         {
-            sendResponse(ctx, &(*iter));
+            sendResponse(ctx, cachedRecords);
             return;
         }
     }
@@ -82,21 +88,25 @@ void StubDnsResolver::handleResponse(DnsClientIndication *msg)
 
     // Process and generate response
     RequestContext &context = iter->second;
-    const ResourceRecord *record = processIndication(msg);
-    sendResponse(context, record);
+    std::set<ResourceRecord> records = processIndication(msg);
+    sendResponse(context, records);
     pendingRequests.erase(iter);
     delete msg;
 }
 
-void StubDnsResolver::sendResponse(const RequestContext &context, const ResourceRecord *record)
+void StubDnsResolver::sendResponse(const RequestContext &context, std::set<ResourceRecord> records)
 {
     StubDnsResponse *response = new StubDnsResponse();
     response->setDomain(context.request->getDomain());
 
-    if (record)
+    if (records.size())
     {
         response->setResult(0);
-        response->setAddress(record->ip);
+        response->setAddressArraySize(records.size());
+
+        int i = 0;
+        for (const auto &record : records)
+            response->setAddress(i++, record.ip);
     }
     else
         response->setResult(1);
@@ -106,25 +116,28 @@ void StubDnsResolver::sendResponse(const RequestContext &context, const Resource
     sendDirect(response, module, "resolver");
 }
 
-const ResourceRecord *StubDnsResolver::processIndication(DnsClientIndication *msg)
+std::set<ResourceRecord> StubDnsResolver::processIndication(DnsClientIndication *msg)
 {
-    const ResourceRecord *record = nullptr;
+    std::set<ResourceRecord> records;
     if (msg->getResult() != OK)
-        return nullptr;
+        return records;
 
     auto packet = msg->getPayloadForUpdate();
     auto dnsResponse = packet->peekData<DnsRequest>();
 
     if (dnsResponse->getReturnCode() != ReturnCode::NOERROR)
-        return nullptr;
+        return records;
 
     if (dnsResponse->isAuthoritative())
-        record = &dnsResponse->getAuthoritativeAnswer(0);
+        for (int i = 0; i < dnsResponse->getAuthoritativeAnswerArraySize(); i++)
+            records.insert(dnsResponse->getAuthoritativeAnswer(i));
     else
-        record = &dnsResponse->getNonAuthoritativeAnswer(0);
+        for (int i = 0; i < dnsResponse->getNonAuthoritativeAnswerArraySize(); i++)
+            records.insert(dnsResponse->getNonAuthoritativeAnswer(i));
 
     auto &question = dnsResponse->getQuestion(0);
-    dnsDatabase->insertRecord(question.getDomain(), *record);
+    for (const auto &record : records)
+        dnsDatabase->insertRecord(question.getDomain(), record);
 
-    return record;
+    return records;
 }

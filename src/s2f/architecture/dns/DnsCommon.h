@@ -9,11 +9,11 @@
 #ifndef SIMCAN_EX_DNS_COMMON_H__
 #define SIMCAN_EX_DNS_COMMON_H__
 
+#include "inet/networklayer/common/L3Address.h"
+#include "s2f/architecture/dns/DnsRequest_m.h"
+#include "s2f/architecture/dns/ResourceRecord_m.h"
 #include <memory>
 #include <omnetpp.h>
-#include "inet/networklayer/common/L3Address.h"
-#include "s2f/architecture/dns/ResourceRecord_m.h"
-#include "s2f/architecture/dns/DnsRequest_m.h"
 
 namespace s2f
 {
@@ -35,7 +35,7 @@ namespace s2f
 
         static bool operator<(const ResourceRecord &lhs, const ResourceRecord &rhs)
         {
-            return (omnetpp::opp_strcmp(lhs.domain.c_str(), rhs.domain.c_str()) < 0) || (lhs.type < rhs.type);
+            return (omnetpp::opp_strcmp(lhs.domain.c_str(), rhs.domain.c_str()) < 0) || (lhs.type < rhs.type) || (lhs.ip < rhs.ip);
         }
 
         std::ostream &operator<<(std::ostream &os, const ResourceRecord &obj);
