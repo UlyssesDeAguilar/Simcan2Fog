@@ -87,6 +87,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * @param resolved  Resolution status.
      */
     virtual void handleResolutionFinished(const L3Address ip, bool resolved) override;
+    virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override;
 
     /**
      * Handle hook for peer disconnection.

@@ -109,6 +109,19 @@ void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
     connectToPeer(ip);
 }
 
+void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
+{
+
+    if (!resolved)
+        error("No peers connected on DNS seed %s.", dnsSeed);
+
+    EV_INFO << "DNS seed resolved to " << ipResolutions.size() << ":";
+    for (const auto &i : ipResolutions)
+        EV_INFO << i << ", ";
+
+    EV_INFO << "\n";
+}
+
 void P2PBase::handleConnectReturn(int sockFd, bool connected)
 {
     if (connected == false)
@@ -137,6 +150,7 @@ void P2PBase::handleDataArrived(int sockFd, Packet *p)
 {
     auto response = p->peekData<RestfulResponse>();
     EV_INFO << "Received response code " << response->getResponseCode() << " from DNS service" << "\n";
+    resolve(dnsSeed);
 }
 
 bool P2PBase::handlePeerClosed(int sockFd)
