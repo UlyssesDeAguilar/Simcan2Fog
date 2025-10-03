@@ -121,7 +121,7 @@ void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
 {
-    for (int i = 0; i < payload->getIpAddressesArraySize(); i++)
-        peerCandidates.push_back(const_cast<PowNetworkPeer *>(payload->getIpAddresses(i)));
+    for (int i = 0; i < payload->getIpAddressArraySize(); i++)
+        peerCandidates.push_back(const_cast<PowNetworkPeer *>(payload->getIpAddress(i)));
     connectToPeer();
 }

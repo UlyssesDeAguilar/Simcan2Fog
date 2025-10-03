@@ -57,7 +57,7 @@ Ptr<PowMsgAddress> PowMessageBuilder::buildAddrMessage()
     peer->ipAddress = L3Address("10.0.0.5");
     peer->services = PowServiceType::NODE_NETWORK;
 
-    payload->appendIpAddresses(peer);
+    payload->appendIpAddress(peer);
 
     return payload;
 }

@@ -20,5 +20,5 @@ class PowMsgAddress extends inet::FieldsChunk
 {
 	  chunkLength = inet::B(20); // Packet length
     uint16_t ipAddressCount;
-	  PowNetworkPeer *ipAddresses[]; 
+	  PowNetworkPeer *ipAddress[]; 
 }
