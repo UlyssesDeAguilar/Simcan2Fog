@@ -22,6 +22,11 @@ using namespace s2f::p2p;
 class P2PBase : public AppBase, public AppBase::ICallback
 {
   protected:
+    enum P2PEvent
+    {
+        NODE_UP = 4,
+        PEER_DISCOVERY
+    };
     const char *dnsSeed{};                     //!< DNS A record seed
     std::map<int, NetworkPeer *> peers;        //!< Active network peers
     std::vector<NetworkPeer *> peerCandidates; //!< Discovery candidates
@@ -59,6 +64,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
      */
     virtual void connectToPeer();
 
+    virtual bool findIpInPeers(L3Address ip);
     // --------------------------------------------------------------------- //
     //                          APPBASE OVERRIDES                            //
     // --------------------------------------------------------------------- //
@@ -86,7 +92,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * @param ip        IP Address received on a successful resolution.
      * @param resolved  Resolution status.
      */
-    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override;
+    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
     virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override;
 
     /**

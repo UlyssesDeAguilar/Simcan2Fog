@@ -11,6 +11,7 @@
 #include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 #include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
 #include "s2f/messages/Syscall_m.h"
+#include <algorithm>
 
 using namespace s2f::dns;
 
@@ -54,6 +55,14 @@ void P2PBase::connectToPeer()
     connect(sockFd, peers[sockFd]->ipAddress, listeningPort);
 }
 
+bool P2PBase::findIpInPeers(L3Address ip)
+{
+    return std::any_of(peers.begin(), peers.end(), [&](const auto &p)
+                       { return p.second->ipAddress == ip; }) ||
+           std::any_of(peerCandidates.begin(), peerCandidates.end(), [&](const auto &p)
+                       { return p->ipAddress == ip; });
+}
+
 // ------------------------------------------------------------------------- //
 //                            APPBASE OVERRIDES                              //
 // ------------------------------------------------------------------------- //
@@ -79,34 +88,29 @@ void P2PBase::initialize()
 void P2PBase::processSelfMessage(cMessage *msg)
 {
 
-    // Open the designated port to handle P2P requests
-    if (msg->getKind() == EXEC_START)
+    switch (msg->getKind())
     {
+    case EXEC_START:
         listeningSocket = open(listeningPort, SOCK_STREAM);
         listen(listeningSocket);
-
+        event->setKind(NODE_UP);
+        scheduleAfter(uniform(30, 120), event);
+        break;
+    case NODE_UP:
         EV_INFO << "Connecting to DNS registry service" << "\n";
         connect(dnsSock, dnsIp, 443);
+        break;
+    case PEER_DISCOVERY:
+        if (!peerCandidates.empty() && peers.empty())
+            connectToPeer();
+        break;
+    default:
+        error("TODO: change this default");
     }
 
     // Temporary: Reach peer through IP
-    if (strcmp(par("localIp"), "10.0.0.1") == 0)
-        connectToPeer(L3Address(par("testIp")));
-}
-
-void P2PBase::handleResolutionFinished(const L3Address ip, bool resolved)
-{
-    if (!resolved)
-        error("No peers connected on DNS seed %s.", dnsSeed);
-    else if (ip == localIp)
-    {
-        EV_INFO << "DNS seed resolved to our address, discarding..." << "\n";
-        return;
-    }
-    EV_INFO << "DNS seed resolved to " << ip << "\n";
-
-    // Attempt connection to peer candidate
-    connectToPeer(ip);
+    // if (strcmp(par("localIp"), "10.0.0.1") == 0)
+    //    connectToPeer(L3Address(par("testIp")));
 }
 
 void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
@@ -115,11 +119,18 @@ void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, 
     if (!resolved)
         error("No peers connected on DNS seed %s.", dnsSeed);
 
-    EV_INFO << "DNS seed resolved to " << ipResolutions.size() << ":";
-    for (const auto &i : ipResolutions)
-        EV_INFO << i << ", ";
+    EV_INFO << "DNS seed resolved to " << ipResolutions.size() << " possible addresses" << "\n";
+    for (const auto &ip : ipResolutions)
+        if (ip != localIp && findIpInPeers(ip) == false)
+        {
+            NetworkPeer *np = new NetworkPeer;
+            np->ipAddress = ip;
+            peerCandidates.push_back(np);
+        }
 
-    EV_INFO << "\n";
+    return;
+    event->setKind(PEER_DISCOVERY);
+    scheduleAfter(1.0, event);
 }
 
 void P2PBase::handleConnectReturn(int sockFd, bool connected)
