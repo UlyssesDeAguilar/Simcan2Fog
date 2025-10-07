@@ -72,9 +72,6 @@ network P2PNetwork
         //peerE: DnsSimplifiedHost {
         //    @display("p=258,268");
         //}
-        resolver: DnsResolverServer {
-            @display("p=153,74");
-        }
         dns: DnsSimplified {
             @display("p=246,87");
         }
@@ -84,6 +81,5 @@ network P2PNetwork
         peerC.ethg++ <--> Eth10M <--> switch.ethg++;
         //peerD.ethg++ <--> Eth10M <--> switch.ethg++;
         //peerE.ethg++ <--> Eth10M <--> switch.ethg++;
-        resolver.ethg++ <--> Eth10M <--> switch.ethg++;
         dns.ethg++ <--> Eth10M <--> switch.ethg++;
 }
