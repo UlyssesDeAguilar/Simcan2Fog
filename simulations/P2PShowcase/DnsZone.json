@@ -1,8 +1,6 @@
 [
     {
         "zone": "mainnet.com",
-        "records": [
-            { "domain": "test.mainnet.com", "type": "A", "ip": "10.0.0.1"}
-        ]
+        "records": []
     }
 ]
