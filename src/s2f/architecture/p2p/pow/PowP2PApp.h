@@ -31,6 +31,8 @@ namespace s2f
             //                       P2PBASE OVERRIDES                       //
             // ------------------------------------------------------------- //
 
+            virtual void processSelfMessage(cMessage *msg) override;
+
             /**
              * Handles the initial connection to another peer candidate in the
              * network.

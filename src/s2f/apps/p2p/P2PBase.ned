@@ -20,9 +20,8 @@ simple P2PBase extends AppBase {
 	parameters:
 	    @class(P2PBase);
 		int listeningPort;
-		int peerRequestLimit = default(3);
+    int discoveryAttempts = 3;
+    int discoveryThreshold = 5;
 		string dnsSeed @mutable;
-		string localIp @mutable;
 		string dnsIp @mutable;
-		string testIp @mutable;
 }

@@ -4,12 +4,12 @@ import inet.networklayer.common.L3Address;
 
 namespace s2f::p2p;
 
-struct NetworkPeer
+class NetworkPeer
 {
     inet::L3Address ipAddress;
-}
+};
 
-struct PowNetworkPeer extends NetworkPeer
+class PowNetworkPeer extends NetworkPeer
 {
     uint32_t time;
     uint64_t services;

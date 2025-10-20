@@ -1,7 +1,7 @@
 #include "P2PBase.h"
 #include "inet/common/Ptr.h"
-#include "inet/common/Simsignals_m.h"
 #include "inet/networklayer/common/L3Address.h"
+#include "inet/networklayer/common/L3AddressResolver.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/csimulation.h"
 #include "omnetpp/regmacros.h"
@@ -18,52 +18,6 @@ using namespace s2f::dns;
 Define_Module(P2PBase);
 
 // ------------------------------------------------------------------------- //
-//                             P2PBASE METHODS                               //
-// ------------------------------------------------------------------------- //
-void P2PBase::handleConnectFailure(int sockFd)
-{
-    EV_INFO << "Could not reach peer " << peers[sockFd]->ipAddress << "\n";
-
-    // Remove peer from active connection list
-    peers.erase(sockFd);
-
-    // Out of candidates to process
-    if (peerCandidates.empty())
-    {
-        event->setKind(NO_ROUTE_FOUND); // TODO: connection status enum
-        scheduleAt(simTime() + 1.0, event);
-        return;
-    }
-
-    // Attempt a new connection
-    connectToPeer();
-}
-
-void P2PBase::connectToPeer(const L3Address &destIp)
-{
-    int sockFd = open(-1, SOCK_STREAM);
-    peers[sockFd] = new NetworkPeer;
-    peers[sockFd]->ipAddress = destIp;
-    connect(sockFd, peers[sockFd]->ipAddress, listeningPort);
-}
-
-void P2PBase::connectToPeer()
-{
-    int sockFd = open(-1, SOCK_STREAM);
-    peers[sockFd] = peerCandidates.back();
-    peerCandidates.pop_back();
-    connect(sockFd, peers[sockFd]->ipAddress, listeningPort);
-}
-
-bool P2PBase::findIpInPeers(L3Address ip)
-{
-    return std::any_of(peers.begin(), peers.end(), [&](const auto &p)
-                       { return p.second->ipAddress == ip; }) ||
-           std::any_of(peerCandidates.begin(), peerCandidates.end(), [&](const auto &p)
-                       { return p->ipAddress == ip; });
-}
-
-// ------------------------------------------------------------------------- //
 //                            APPBASE OVERRIDES                              //
 // ------------------------------------------------------------------------- //
 
@@ -71,16 +25,22 @@ void P2PBase::initialize()
 {
     AppBase::initialize();
     setReturnCallback(this);
+
+    // DNS seed resolution params
+    dnsSock = open(-1, SOCK_STREAM);
+    dnsSeed = par("dnsSeed");
+    dnsIp = L3Address(par("dnsIp"));
+
+    // P2P params
     connectionQueue.clear();
     peers.clear();
     peerCandidates.clear();
 
-    dnsSock = open(-1, SOCK_STREAM);
     listeningPort = par("listeningPort");
-    dnsSeed = par("dnsSeed");
-    dnsIp = L3Address(par("dnsIp"));
-    localIp = L3Address(par("localIp"));
+    discoveryAttempts = par("discoveryAttempts");
+    discoveryThreshold = par("discoveryThreshold");
 
+    // Simulation params
     simStartTime = simTime();
     runStartTime = time(nullptr);
 }
@@ -88,58 +48,62 @@ void P2PBase::initialize()
 void P2PBase::processSelfMessage(cMessage *msg)
 {
 
-    switch (msg->getKind())
+    if (msg->getKind() == EXEC_START)
     {
-    case EXEC_START:
+        // Open the P2P protocol socket
+        localIp = L3AddressResolver().addressOf(getModuleByPath("^.^."));
         listeningSocket = open(listeningPort, SOCK_STREAM);
         listen(listeningSocket);
+
+        // Join the network at an arbitrary time
         event->setKind(NODE_UP);
         scheduleAfter(uniform(30, 120), event);
-        break;
-    case NODE_UP:
-        EV_INFO << "Connecting to DNS registry service" << "\n";
-        connect(dnsSock, dnsIp, 443);
-        break;
-    case PEER_DISCOVERY:
-        if (!peerCandidates.empty() && peers.empty())
-            connectToPeer();
-        break;
-    default:
-        error("TODO: change this default");
     }
-
-    // Temporary: Reach peer through IP
-    // if (strcmp(par("localIp"), "10.0.0.1") == 0)
-    //    connectToPeer(L3Address(par("testIp")));
+    else if (msg->getKind() == PEER_CONNECTION)
+    {
+        if (!peerCandidates.empty())
+        {
+            connectToPeer();
+            scheduleAfter(1.0, event);
+        }
+        else
+        {
+            discoveryAttempts--;
+            event->setKind(PEER_DISCOVERY);
+            scheduleAfter(1.0, event);
+        }
+    }
 }
 
+// TODO: remove from base class
 void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
 {
-
     if (!resolved)
         error("No peers connected on DNS seed %s.", dnsSeed);
 
-    EV_INFO << "DNS seed resolved to " << ipResolutions.size() << " possible addresses" << "\n";
+    EV_INFO << "DNS seed resolved to " << ipResolutions.size()
+            << " possible addresses" << "\n";
+
+    // Add peer candidates from resolution
     for (const auto &ip : ipResolutions)
         if (ip != localIp && findIpInPeers(ip) == false)
-        {
-            NetworkPeer *np = new NetworkPeer;
-            np->ipAddress = ip;
-            peerCandidates.push_back(np);
-        }
+            peerCandidates.push_back(ip);
 
-    return;
-    event->setKind(PEER_DISCOVERY);
+    // Start connecting to discovered peers
+    event->setKind(PEER_CONNECTION);
     scheduleAfter(1.0, event);
 }
 
+// TODO: remove from base class
 void P2PBase::handleConnectReturn(int sockFd, bool connected)
 {
-    if (connected == false)
+    if (!connected)
         error("Cannot connect to DNS to join the network");
 
     EV_INFO << "Registering service on port " << listeningPort
             << " on dns seed " << dnsSeed << "\n";
+
+    // Register as peer into DNS seed
     ResourceRecord record;
 
     auto packet = new Packet("Registration request");
@@ -150,23 +114,27 @@ void P2PBase::handleConnectReturn(int sockFd, bool connected)
     record.ip = localIp;
 
     request->appendRecords(record);
-    request->setZone("mainnet.com");
+    request->setZone("mainnet.com"); // TODO: parse from dnsSeed
     request->setVerb(Verb::PUT);
 
     packet->insertAtBack(request);
     _send(dnsSock, packet);
 }
 
+// TODO: remove from base class
 void P2PBase::handleDataArrived(int sockFd, Packet *p)
 {
-    auto response = p->peekData<RestfulResponse>();
-    EV_INFO << "Received response code " << response->getResponseCode() << " from DNS service" << "\n";
-    resolve(dnsSeed);
+    auto httpResponse = p->peekData<RestfulResponse>();
+    if (httpResponse->getResponseCode() == ResponseCode::OK)
+        EV_INFO << "Service registered at DNS seed " << dnsSeed << "\n";
+
+    event->setKind(PEER_DISCOVERY);
+    scheduleAfter(1.0, event);
 }
 
 bool P2PBase::handlePeerClosed(int sockFd)
 {
-    EV << "Peer" << peers[sockFd]->ipAddress << "closed the connection" << "\n";
+    EV << "Peer" << peers[sockFd]->getIpAddress() << "closed the connection" << "\n";
     connectionQueue.erase(sockFd);
     delete peers[sockFd];
     peers.erase(sockFd);
@@ -186,6 +154,44 @@ void P2PBase::finish()
     EV_INFO << " + Total execution time (real):" << runtime << " seconds"
             << '\n';
 
+    for (auto &[sockFd, p] : peers)
+    {
+        close(sockFd);
+        delete p;
+    }
+
+    peers.clear();
+    peerCandidates.clear();
+    connectionQueue.clear();
+    close(dnsSock);
+
     // Finish the super-class
     AppBase::finish();
+}
+
+// ------------------------------------------------------------------------- //
+//                             P2PBASE METHODS                               //
+// ------------------------------------------------------------------------- //
+
+void P2PBase::handleConnectFailure(int sockFd)
+{
+    // Remove peer from active connection list
+    EV_INFO << "Connection failed for IP " << peers[sockFd]->getIpAddress() << "on sockFd" << sockFd << "\n";
+    delete peers[sockFd];
+    peers.erase(sockFd);
+}
+
+void P2PBase::connectToPeer()
+{
+    int sockFd = open(-1, SOCK_STREAM);
+
+    L3Address destIp = peerCandidates.back();
+    peerCandidates.pop_back();
+    connect(sockFd, destIp, listeningPort);
+}
+
+bool P2PBase::findIpInPeers(L3Address ip)
+{
+    return std::any_of(peers.begin(), peers.end(), [&](const auto &p)
+                       { return p.second->getIpAddress() == ip; });
 }

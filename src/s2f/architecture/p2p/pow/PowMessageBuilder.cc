@@ -52,10 +52,10 @@ Ptr<PowMsgAddress> PowMessageBuilder::buildAddrMessage()
     auto payload = makeShared<PowMsgAddress>();
     PowNetworkPeer *peer = new PowNetworkPeer;
 
-    peer->port = 8333;
-    peer->time = 0;
-    peer->ipAddress = L3Address("10.0.0.5");
-    peer->services = PowServiceType::NODE_NETWORK;
+    peer->setPort(8333);
+    peer->setTime(0);
+    peer->setIpAddress(L3Address("10.0.0.5"));
+    peer->setServices(PowServiceType::NODE_NETWORK);
 
     payload->appendIpAddress(peer);
 

@@ -13,8 +13,7 @@ using namespace s2f::p2p;
 /**
  * @class P2PBase P2PBase.h "P2PBase.h"
  *
- * Base application for the peer-to-peer protocol with various node discovery
- * methods.
+ * Base application for the peer-to-peer protocol.
  *
  * @author Tomás Daniel Expósito Torre
  * @date 2025-09-08
@@ -24,12 +23,14 @@ class P2PBase : public AppBase, public AppBase::ICallback
   protected:
     enum P2PEvent
     {
-        NODE_UP = 4,
-        PEER_DISCOVERY
+        NODE_UP = 4,     //!< Post-startup action for protocol implementation
+        PEER_DISCOVERY,  //!< Peer discovery handling for protocol implementation
+        PEER_CONNECTION, //!< Connection to peer candidates from discovery process
+        CONNECTED        //!< Node is ready and connected to the network
     };
-    const char *dnsSeed{};                     //!< DNS A record seed
-    std::map<int, NetworkPeer *> peers;        //!< Active network peers
-    std::vector<NetworkPeer *> peerCandidates; //!< Discovery candidates
+    const char *dnsSeed{};                 //!< DNS A record seed
+    std::map<int, NetworkPeer *> peers;    //!< Active network peers
+    std::vector<L3Address> peerCandidates; //!< Discovery candidates
 
     std::map<int, ChunkQueue> connectionQueue;
 
@@ -38,6 +39,9 @@ class P2PBase : public AppBase, public AppBase::ICallback
     int listeningPort;   //!< Protocol port
     int listeningSocket; //!< TCP socket for p2p requesting
     int dnsSock;         //!< Active DNS connection
+
+    int discoveryAttempts;
+    int discoveryThreshold;
 
     simtime_t simStartTime; //!< Simulation Starting timestamp
     time_t runStartTime;    //!< Real execution time
@@ -53,11 +57,6 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * incompatibilities.
      */
     virtual void handleConnectFailure(int sockFd);
-
-    /**
-     * Wrapper method to create a connection to a new peer.
-     */
-    virtual void connectToPeer(const L3Address &destIp);
 
     /**
      * Wrapper method to create a connection to a new peer.
