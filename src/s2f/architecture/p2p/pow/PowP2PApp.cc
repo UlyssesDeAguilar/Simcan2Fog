@@ -52,22 +52,32 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    // Store peer information on new connection, otherwise close the connection
     // TODO: NetworkPeer status enum, to handle the case where two peers try to
     //       connect to each other at the same time.
     // TODO: check why close(sockFd) if both peers close it at the same time.
     auto sock = check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd));
 
+    // Do not connect to the same peer twice
     if (findIpInPeers(sock->getRemoteAddress()))
         return;
 
+    // Register the peer
     PowNetworkPeer *p = new PowNetworkPeer;
     p->setIpAddress(sock->getRemoteAddress());
     p->setPort(sock->getRemotePort());
+    p->setServices(pow::UNNAMED);
+
     peers[sockFd] = p;
+    connectionQueue[sockFd];
+
+    PowNetworkPeer self;
+    self.setPort(sock->getLocalPort());
+    self.setIpAddress(sock->getLocalAddress());
+    self.setServices(pow::NODE_NETWORK);
+    self.setTime(time(nullptr));
 
     auto packet = new Packet("Version message");
-    auto payload = msgBuilder.buildVersionMessage();
+    auto payload = msgBuilder.buildVersionMessage(1, self, *p);
     auto header = msgBuilder.buildMessageHeader("version", payload);
     packet->insertAtBack(header);
     packet->insertAtBack(payload);
@@ -78,11 +88,6 @@ bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp, co
 {
     EV << "Peer connected: " << remoteIp << ":" << remotePort << "\n";
     EV << "Socket fd: " << sockFd << "\n";
-
-    // HACK:    We'll create the peer info at handleConnectReturn(), since it is
-    //          called by both server and client. We just need to define the
-    //          connection Queue here.
-    connectionQueue[sockFd];
 
     return true;
 }
@@ -100,18 +105,18 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 
     auto header = p->popAtFront<PowMsgHeader>();
 
-    switch (getCommand(header->getCommandName()))
+    switch (pow::getCommand(header->getCommandName()))
     {
-    case VERSION:
+    case pow::VERSION:
         handleVersionMessage(sockFd, p->peekData<PowMsgVersion>());
         break;
-    case VERACK:
+    case pow::VERACK:
         handleVerackMessage(sockFd, header);
         break;
-    case GETADDR:
+    case pow::GETADDR:
         handleGetaddrMessage(sockFd, header);
         break;
-    case ADDR:
+    case pow::ADDR:
         handleAddrMessage(sockFd, p->peekData<PowMsgAddress>());
         break;
     default:
@@ -126,6 +131,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payload)
 {
     auto packet = new Packet("Verack message");
+
     auto header = msgBuilder.buildMessageHeader("verack", nullptr);
     packet->insertAtBack(header);
     _send(sockFd, packet);

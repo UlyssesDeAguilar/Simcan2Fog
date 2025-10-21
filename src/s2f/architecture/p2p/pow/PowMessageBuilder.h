@@ -37,7 +37,7 @@ namespace s2f
             /**
              * Payload builder for "version" message.
              */
-            virtual Ptr<PowMsgVersion> buildVersionMessage();
+            virtual Ptr<PowMsgVersion> buildVersionMessage(int version, PowNetworkPeer &self, PowNetworkPeer &peer);
 
             /**
              * Payload builder for "addr" message.
