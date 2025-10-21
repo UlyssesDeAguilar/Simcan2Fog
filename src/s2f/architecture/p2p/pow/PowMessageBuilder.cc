@@ -3,6 +3,7 @@
 #include "PowMsgHeader_m.h"
 #include "PowMsgVersion_m.h"
 #include <cstdint>
+#include <iterator>
 
 using namespace s2f::p2p;
 using namespace inet;
@@ -13,7 +14,9 @@ Ptr<PowMsgHeader> PowMessageBuilder::buildMessageHeader(const char *commandName,
 
     // Message Header
     header->setCommandName(commandName);
-    header->setStartString(StartString::MAIN_NET);
+    header->setStartString(pow::MAIN_NET);
+
+    // TODO: determine size from payload and sha256 to create a checksum
     header->setPayloadSize(0);
     header->setChecksum("TODO");
 
@@ -37,6 +40,7 @@ Ptr<PowMsgVersion> PowMessageBuilder::buildVersionMessage(int32_t version, PowNe
     payload->setAddrTransIpAddress(self.getIpAddress());
     payload->setAddrTransPort(self.getPort());
 
+    // TODO: send value back to caller, to append to list of previously used nonces
     payload->setNonce(random());
 
     // TODO: set these properly once I understand what the fields do

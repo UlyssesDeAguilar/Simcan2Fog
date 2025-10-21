@@ -132,6 +132,29 @@ void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payloa
 {
     auto packet = new Packet("Verack message");
 
+    // Version missmatch - not a suitable peer
+    if (payload->getVersion() != 1)
+    {
+        delete peers[sockFd];
+        peers.erase(sockFd);
+        return;
+    }
+
+    // NOTE: Temporary . Ideally, check against a list of used nonces to detect
+    // a self-connection.
+    if (payload->getNonce() == -1)
+    {
+        delete peers[sockFd];
+        peers.erase(sockFd);
+        return;
+    }
+
+    // Update peer data
+    auto p = check_and_cast<PowNetworkPeer *>(peers[sockFd]);
+    p->setServices(payload->getAddrTransServices());
+    p->setTime(payload->getTimestamp());
+    p->setPort(payload->getAddrTransPort());
+
     auto header = msgBuilder.buildMessageHeader("verack", nullptr);
     packet->insertAtBack(header);
     _send(sockFd, packet);
@@ -139,17 +162,19 @@ void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payloa
 
 void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header)
 {
-    if (localIp.str().compare("10.0.0.1") == 0)
-    {
-        auto packet = new Packet("Getaddr message");
-        auto header = msgBuilder.buildMessageHeader("getaddr", nullptr);
-        packet->insertAtBack(header);
-        _send(sockFd, packet);
-    }
+    // Only the joining node asks for new addresses
+    if (!isClient(sockFd))
+        return;
+
+    auto packet = new Packet("Getaddr message");
+    auto h = msgBuilder.buildMessageHeader("getaddr", nullptr);
+    packet->insertAtBack(h);
+    _send(sockFd, packet);
 }
 
 void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 {
+    return;
     if (localIp.str().compare("10.0.0.4") == 0)
     {
         auto packet = new Packet("Addr message");
