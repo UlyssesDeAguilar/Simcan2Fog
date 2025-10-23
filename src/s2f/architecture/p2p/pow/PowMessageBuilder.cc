@@ -3,7 +3,6 @@
 #include "PowMsgHeader_m.h"
 #include "PowMsgVersion_m.h"
 #include <cstdint>
-#include <iterator>
 
 using namespace s2f::p2p;
 using namespace inet;
@@ -52,13 +51,16 @@ Ptr<PowMsgVersion> PowMessageBuilder::buildVersionMessage(int32_t version, PowNe
     return payload;
 }
 
-Ptr<PowMsgAddress> PowMessageBuilder::buildAddrMessage()
+Ptr<PowMsgAddress> PowMessageBuilder::buildAddrMessage(std::map<int, PowNetworkPeer *> &peers)
 {
     auto payload = makeShared<PowMsgAddress>();
-    return payload;
 
-    // FIXME: add the addresses !!!
-    payload->appendIpAddress(nullptr);
+    // Send a copy of active peer info
+    for (const auto &iter : peers)
+    {
+        PowNetworkPeer *p = new PowNetworkPeer(*iter.second);
+        payload->appendIpAddress(p);
+    }
 
     return payload;
 }

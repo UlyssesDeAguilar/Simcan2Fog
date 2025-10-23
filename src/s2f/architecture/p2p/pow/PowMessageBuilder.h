@@ -42,7 +42,7 @@ namespace s2f
             /**
              * Payload builder for "addr" message.
              */
-            virtual Ptr<PowMsgAddress> buildAddrMessage();
+            virtual Ptr<PowMsgAddress> buildAddrMessage(std::map<int, PowNetworkPeer *> &peers);
         };
     }
 }

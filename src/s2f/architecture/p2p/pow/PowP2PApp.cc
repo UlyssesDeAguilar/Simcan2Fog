@@ -174,21 +174,17 @@ void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header)
 
 void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 {
-    return;
-    if (localIp.str().compare("10.0.0.4") == 0)
-    {
-        auto packet = new Packet("Addr message");
-        auto payload = msgBuilder.buildAddrMessage();
-        auto header = msgBuilder.buildMessageHeader("addr", payload);
-        packet->insertAtBack(header);
-        packet->insertAtBack(payload);
-        _send(sockFd, packet);
-    }
+    auto packet = new Packet("Addr message");
+    auto payload = msgBuilder.buildAddrMessage(reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers));
+    auto h = msgBuilder.buildMessageHeader("addr", payload);
+    packet->insertAtBack(h);
+    packet->insertAtBack(payload);
+    _send(sockFd, packet);
 }
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
 {
-    EV_INFO << "TODO\n";
-    // for (int i = 0; i < payload->getIpAddressArraySize(); i++)
-    //    peerCandidates.push_back(const_cast<PowNetworkPeer *>(payload->getIpAddress(i)));
+    EV_INFO << "Received address from addr message on socket " << sockFd << "\n";
+    for (int i = 0; i < payload->getIpAddressArraySize(); i++)
+        EV_INFO << "    " << payload->getIpAddress(i)->getIpAddress() << "\n";
 }
