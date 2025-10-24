@@ -50,6 +50,9 @@ module DnsSimplifiedHost extends StandardHost
 //
 network P2PNetwork
 {
+    parameters:
+        int numPeers = default(2);
+    
     submodules:
         configurator: Ipv4NetworkConfigurator {
             @display("p=67,36");
@@ -57,12 +60,13 @@ network P2PNetwork
         switch: EthernetSwitch {
             @display("p=165,157");
         }
-        peerA: DnsSimplifiedHost {
-            @display("p=67,158");
-        }
-        peerB: DnsSimplifiedHost {
-            @display("p=272,176");
-        }
+        peers[numPeers]: DnsSimplifiedHost;
+        //peerA: DnsSimplifiedHost {
+        //    @display("p=67,158");
+        //}
+        //peerB: DnsSimplifiedHost {
+        //    @display("p=272,176");
+        //}
         //peerC: DnsSimplifiedHost {
         //    @display("p=165,268");
         //}
@@ -75,10 +79,10 @@ network P2PNetwork
         dns: DnsSimplified {
             @display("p=246,87");
         }
-    connections:
-        peerA.ethg++ <--> Eth10M <--> switch.ethg++;
-        peerB.ethg++ <--> Eth10M <--> switch.ethg++;
-        //peerC.ethg++ <--> Eth10M <--> switch.ethg++;
+    connections allowunconnected:
+        for i=0..numPeers-1 {
+            peers[i].ethg++ <--> Eth10M <--> switch.ethg++;
+        }
         //peerD.ethg++ <--> Eth10M <--> switch.ethg++;
         //peerE.ethg++ <--> Eth10M <--> switch.ethg++;
         dns.ethg++ <--> Eth10M <--> switch.ethg++;
