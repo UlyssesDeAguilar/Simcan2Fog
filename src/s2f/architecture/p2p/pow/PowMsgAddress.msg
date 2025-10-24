@@ -4,6 +4,12 @@ import inet.networklayer.common.L3Address;
 
 namespace s2f::p2p;
 
+enum ConnectionState
+{
+    CANDIDATE = 0;
+    CONNECTED = 1;
+};
+
 class NetworkPeer
 {
     inet::L3Address ipAddress;
@@ -11,6 +17,7 @@ class NetworkPeer
 
 class PowNetworkPeer extends NetworkPeer
 {
+    ConnectionState state;
     uint32_t time;
     uint64_t services;
     uint16_t port;

@@ -1,4 +1,5 @@
 #include "PowP2PApp.h"
+#include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "s2f/apps/p2p/P2PBase.h"
@@ -16,7 +17,7 @@ void PowP2PApp::processSelfMessage(cMessage *msg)
     if (msg->getKind() == NODE_UP)
     {
         // TODO: NODE_UP of non-full nodes, which do not connect to the dns
-        EV_INFO << "Connecting to DNS registry service" << "\n";
+        EV << "Connecting to DNS registry service" << "\n";
         connect(dnsSock, dnsIp, 443);
     }
     else if (msg->getKind() == PEER_DISCOVERY)
@@ -43,7 +44,11 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    EV_INFO << "handling connect return on peer with ip " << localIp << "\n";
+    PowNetworkPeer *p;
+    TcpSocket *sock;
+    int previousConnection;
+
+    EV << "Handling connect return on peer with ip " << localIp << "\n";
     EV << "Socket fd: " << sockFd << "\n";
 
     if (!connected)
@@ -52,21 +57,34 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    // TODO: NetworkPeer status enum, to handle the case where two peers try to
-    //       connect to each other at the same time.
     // TODO: check why close(sockFd) if both peers close it at the same time.
-    auto sock = check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd));
+    sock = check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd));
+    previousConnection = findIpInPeers(sock->getRemoteAddress());
 
-    // Do not connect to the same peer twice
-    if (findIpInPeers(sock->getRemoteAddress()))
+    // Duplicated connection: close
+    if (previousConnection && previousConnection != sockFd)
+    {
+        EV_DEBUG << "Found previous connection on socket fd: " << previousConnection << ". Closing.\n";
         return;
+    }
 
-    // Register the peer
-    PowNetworkPeer *p = new PowNetworkPeer;
-    p->setIpAddress(sock->getRemoteAddress());
-    p->setPort(sock->getRemotePort());
-    p->setServices(pow::UNNAMED);
+    if (previousConnection == sockFd)
+    {
+        // Transmitting node: connection from ADDR message
+        EV_DEBUG << "Return belongs to existing connection declared on ADDR message.\n";
+        p = check_and_cast<PowNetworkPeer *>(peers[sockFd]);
+    }
+    else
+    {
+        // Receiving node: New connection
+        EV_DEBUG << "Return belongs to new connection.\n";
+        p = new PowNetworkPeer;
+        p->setIpAddress(sock->getRemoteAddress());
+        p->setPort(sock->getRemotePort());
+        p->setServices(pow::UNNAMED);
+    }
 
+    p->setState(ConnectionState::CONNECTED);
     peers[sockFd] = p;
     connectionQueue[sockFd];
 
@@ -81,6 +99,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     auto header = msgBuilder.buildMessageHeader("version", payload);
     packet->insertAtBack(header);
     packet->insertAtBack(payload);
+
     _send(sockFd, packet);
 }
 
@@ -101,7 +120,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
         return;
     }
 
-    EV_INFO << "Packet arrived from peer with connection " << sockFd << "\n";
+    EV << "Packet arrived from peer with connection " << sockFd << "\n";
 
     auto header = p->popAtFront<PowMsgHeader>();
 
@@ -184,7 +203,25 @@ void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
 {
-    EV_INFO << "Received address from addr message on socket " << sockFd << "\n";
+    EV << "Received " << payload->getIpAddressArraySize() << " addresses from socket " << sockFd << "via addr message.\n";
+
     for (int i = 0; i < payload->getIpAddressArraySize(); i++)
-        EV_INFO << "    " << payload->getIpAddress(i)->getIpAddress() << "\n";
+    {
+        EV_DEBUG << "Evaluating peer: " << payload->getIpAddress(i)->getIpAddress() << "\n";
+        auto p = const_cast<PowNetworkPeer *>(payload->getIpAddress(i));
+
+        if (p->getIpAddress() == localIp || findIpInPeers(p->getIpAddress()))
+        {
+            EV_DEBUG << "\tKnown. Discarding...\n";
+            delete p;
+        }
+        else
+        {
+            EV_DEBUG << "New. Adding as candidate...\n";
+            p->setState(ConnectionState::CANDIDATE);
+            p->setPort(listeningPort);
+            int newSock = open(-1, SOCK_STREAM);
+            peers[newSock] = p;
+        }
+    }
 }

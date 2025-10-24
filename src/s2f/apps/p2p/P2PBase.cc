@@ -86,7 +86,7 @@ void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, 
 
     // Add peer candidates from resolution
     for (const auto &ip : ipResolutions)
-        if (ip != localIp && findIpInPeers(ip) == false)
+        if (ip != localIp && !findIpInPeers(ip))
             peerCandidates.push_back(ip);
 
     // Start connecting to discovered peers
@@ -190,8 +190,9 @@ void P2PBase::connectToPeer()
     connect(sockFd, destIp, listeningPort);
 }
 
-bool P2PBase::findIpInPeers(L3Address ip)
+int P2PBase::findIpInPeers(L3Address ip)
 {
-    return std::any_of(peers.begin(), peers.end(), [&](const auto &p)
-                       { return p.second->getIpAddress() == ip; });
+    auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &p)
+                           { return p.second->getIpAddress() == ip; });
+    return it != peers.end() ? it->first : 0;
 }
