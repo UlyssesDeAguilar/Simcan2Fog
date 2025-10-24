@@ -44,47 +44,48 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    PowNetworkPeer *p;
-    TcpSocket *sock;
-    int previousConnection;
-
-    EV << "Handling connect return on peer with ip " << localIp << "\n";
-    EV << "Socket fd: " << sockFd << "\n";
-
     if (!connected)
     {
         handleConnectFailure(sockFd);
         return;
     }
 
+    PowNetworkPeer *p;
+    TcpSocket *sock;
+    int oldSock;
+
+    EV << "Handling connect return on peer with ip " << localIp << "\n";
+    EV << "Socket fd: " << sockFd << "\n";
+
     // TODO: check why close(sockFd) if both peers close it at the same time.
     sock = check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd));
-    previousConnection = findIpInPeers(sock->getRemoteAddress());
+    oldSock = findIpInPeers(sock->getRemoteAddress());
 
-    // Duplicated connection: close
-    if (previousConnection && previousConnection != sockFd)
+    if (oldSock)
     {
-        EV_DEBUG << "Found previous connection on socket fd: " << previousConnection << ". Closing.\n";
-        return;
-    }
+        p = check_and_cast<PowNetworkPeer *>(peers[oldSock]);
 
-    if (previousConnection == sockFd)
-    {
-        // Transmitting node: connection from ADDR message
-        EV_DEBUG << "Return belongs to existing connection declared on ADDR message.\n";
-        p = check_and_cast<PowNetworkPeer *>(peers[sockFd]);
+        // Remove duplicate connections
+        if (p->getState() == ConnectionState::CONNECTED)
+        {
+            EV << "Found active connection to same peer on socket fd: " << oldSock << ". Closing.\n";
+            return;
+        }
+
+        // Remove stale candidate on differing sockets
+        // Reinserts at same index if oldSock == sockFd (peers[sockFd] = p)
+        peers.erase(oldSock);
     }
     else
     {
-        // Receiving node: New connection
-        EV_DEBUG << "Return belongs to new connection.\n";
         p = new PowNetworkPeer;
-        p->setIpAddress(sock->getRemoteAddress());
-        p->setPort(sock->getRemotePort());
         p->setServices(pow::UNNAMED);
     }
 
+    p->setIpAddress(sock->getRemoteAddress());
+    p->setPort(sock->getRemotePort());
     p->setState(ConnectionState::CONNECTED);
+
     peers[sockFd] = p;
     connectionQueue[sockFd];
 
@@ -169,6 +170,7 @@ void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payloa
     }
 
     // Update peer data
+    // BUG: nullptr casting in a specific scenario with 6 peers
     auto p = check_and_cast<PowNetworkPeer *>(peers[sockFd]);
     p->setServices(payload->getAddrTransServices());
     p->setTime(payload->getTimestamp());
@@ -203,7 +205,7 @@ void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
 
 void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
 {
-    EV << "Received " << payload->getIpAddressArraySize() << " addresses from socket " << sockFd << "via addr message.\n";
+    EV << "Received " << payload->getIpAddressArraySize() << " addresses from socket " << sockFd << " via addr message.\n";
 
     for (int i = 0; i < payload->getIpAddressArraySize(); i++)
     {
