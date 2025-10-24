@@ -66,7 +66,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
 
     virtual int findIpInPeers(L3Address ip);
 
-    virtual bool isClient(int sockFd) { return listeningPort == check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd))->getLocalPort(); }
+    virtual bool isClient(int sockFd) { return listeningPort != check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd))->getLocalPort(); }
     // --------------------------------------------------------------------- //
     //                          APPBASE OVERRIDES                            //
     // --------------------------------------------------------------------- //
