@@ -170,7 +170,6 @@ void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payloa
     }
 
     // Update peer data
-    // BUG: nullptr casting in a specific scenario with 6 peers
     auto p = check_and_cast<PowNetworkPeer *>(peers[sockFd]);
     p->setServices(payload->getAddrTransServices());
     p->setTime(payload->getTimestamp());
