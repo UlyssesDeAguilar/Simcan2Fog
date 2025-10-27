@@ -2,11 +2,11 @@
 #define __POW_MESSAGE_BUILDER_H_
 
 #include "PowCommon.h"
-#include "PowMsgAddress_m.h"
-#include "PowMsgHeader_m.h"
-#include "PowMsgVersion_m.h"
 #include "inet/common/packet/Packet.h"
 #include "inet/common/packet/chunk/FieldsChunk.h"
+#include "messages/Address_m.h"
+#include "messages/Header_m.h"
+#include "messages/Version_m.h"
 
 using namespace inet;
 
@@ -32,17 +32,17 @@ namespace s2f
              * @param commandName   Message kind.
              * @param payload       Message payload.
              */
-            virtual Ptr<PowMsgHeader> buildMessageHeader(const char *commandName, Ptr<FieldsChunk> payload);
+            virtual Ptr<Header> buildMessageHeader(const char *commandName, Ptr<FieldsChunk> payload);
 
             /**
              * Payload builder for "version" message.
              */
-            virtual Ptr<PowMsgVersion> buildVersionMessage(int version, PowNetworkPeer &self, PowNetworkPeer &peer);
+            virtual Ptr<Version> buildVersionMessage(int version, PowNetworkPeer &self, PowNetworkPeer &peer);
 
             /**
              * Payload builder for "addr" message.
              */
-            virtual Ptr<PowMsgAddress> buildAddrMessage(std::map<int, PowNetworkPeer *> &peers);
+            virtual Ptr<Address> buildAddrMessage(std::map<int, PowNetworkPeer *> &peers);
         };
     }
 }

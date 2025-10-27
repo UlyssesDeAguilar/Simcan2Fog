@@ -4,12 +4,10 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/checkandcast.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
+#include "s2f/apps/p2p/NetworkPeer_m.h"
 #include "s2f/messages/Syscall_m.h"
 #include <omnetpp.h>
 #include <vector>
-
-using namespace s2f::p2p;
 
 /**
  * @class P2PBase P2PBase.h "P2PBase.h"

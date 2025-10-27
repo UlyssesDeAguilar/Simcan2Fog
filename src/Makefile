@@ -122,6 +122,7 @@ OBJS = \
     $O/s2f/users/generators/UserGenerator_simple.o \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
+    $O/s2f/apps/p2p/NetworkPeer_m.o \
     $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
     $O/s2f/architecture/dns/ResourceRecord_m.o \
@@ -134,9 +135,10 @@ OBJS = \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
-    $O/s2f/architecture/p2p/pow/PowMsgAddress_m.o \
-    $O/s2f/architecture/p2p/pow/PowMsgHeader_m.o \
-    $O/s2f/architecture/p2p/pow/PowMsgVersion_m.o \
+    $O/s2f/architecture/p2p/pow/PowNetworkPeer_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Address_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Header_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Version_m.o \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
@@ -152,6 +154,7 @@ OBJS = \
 
 # Message files
 MSGFILES = \
+    s2f/apps/p2p/NetworkPeer.msg \
     s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
     s2f/architecture/dns/ResourceRecord.msg \
@@ -164,9 +167,10 @@ MSGFILES = \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
-    s2f/architecture/p2p/pow/PowMsgAddress.msg \
-    s2f/architecture/p2p/pow/PowMsgHeader.msg \
-    s2f/architecture/p2p/pow/PowMsgVersion.msg \
+    s2f/architecture/p2p/pow/PowNetworkPeer.msg \
+    s2f/architecture/p2p/pow/messages/Address.msg \
+    s2f/architecture/p2p/pow/messages/Header.msg \
+    s2f/architecture/p2p/pow/messages/Version.msg \
     s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \

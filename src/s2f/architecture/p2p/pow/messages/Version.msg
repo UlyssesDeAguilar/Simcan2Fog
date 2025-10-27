@@ -2,11 +2,12 @@ import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import inet.networklayer.common.L3Address;
 
+namespace s2f::p2p;
 
 //
 // Version message payload 
 //
-class PowMsgVersion extends inet::FieldsChunk
+class Version extends inet::FieldsChunk
 {
     chunkLength = inet::B(90);    // TODO: change dummy size
 

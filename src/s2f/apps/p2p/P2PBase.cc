@@ -9,7 +9,6 @@
 #include "s2f/architecture/dns/ResourceRecord_m.h"
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
 #include "s2f/architecture/net/protocol/RestfulResponse_m.h"
-#include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
 #include "s2f/messages/Syscall_m.h"
 #include <algorithm>
 

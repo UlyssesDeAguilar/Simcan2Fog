@@ -1,15 +1,15 @@
 #include "PowMessageBuilder.h"
-#include "PowMsgAddress_m.h"
-#include "PowMsgHeader_m.h"
-#include "PowMsgVersion_m.h"
+#include "messages/Address_m.h"
+#include "messages/Header_m.h"
+#include "messages/Version_m.h"
 #include <cstdint>
 
 using namespace s2f::p2p;
 using namespace inet;
 
-Ptr<PowMsgHeader> PowMessageBuilder::buildMessageHeader(const char *commandName, Ptr<FieldsChunk> payload)
+Ptr<Header> PowMessageBuilder::buildMessageHeader(const char *commandName, Ptr<FieldsChunk> payload)
 {
-    auto header = makeShared<PowMsgHeader>();
+    auto header = makeShared<Header>();
 
     // Message Header
     header->setCommandName(commandName);
@@ -22,9 +22,9 @@ Ptr<PowMsgHeader> PowMessageBuilder::buildMessageHeader(const char *commandName,
     return header;
 }
 
-Ptr<PowMsgVersion> PowMessageBuilder::buildVersionMessage(int32_t version, PowNetworkPeer &self, PowNetworkPeer &peer)
+Ptr<Version> PowMessageBuilder::buildVersionMessage(int32_t version, PowNetworkPeer &self, PowNetworkPeer &peer)
 {
-    auto payload = makeShared<PowMsgVersion>();
+    auto payload = makeShared<Version>();
 
     // Version Message Payload
     payload->setVersion(version);
@@ -51,9 +51,9 @@ Ptr<PowMsgVersion> PowMessageBuilder::buildVersionMessage(int32_t version, PowNe
     return payload;
 }
 
-Ptr<PowMsgAddress> PowMessageBuilder::buildAddrMessage(std::map<int, PowNetworkPeer *> &peers)
+Ptr<Address> PowMessageBuilder::buildAddrMessage(std::map<int, PowNetworkPeer *> &peers)
 {
-    auto payload = makeShared<PowMsgAddress>();
+    auto payload = makeShared<Address>();
 
     // Send a copy of active peer info
     for (const auto &iter : peers)

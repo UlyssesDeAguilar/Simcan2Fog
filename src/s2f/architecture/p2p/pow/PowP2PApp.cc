@@ -4,7 +4,7 @@
 #include "omnetpp/clog.h"
 #include "s2f/apps/p2p/P2PBase.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
-#include "s2f/architecture/p2p/pow/PowMsgAddress_m.h"
+#include "s2f/architecture/p2p/pow/messages/Address_m.h"
 
 using namespace s2f::p2p;
 Define_Module(PowP2PApp);
@@ -123,12 +123,12 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 
     EV << "Packet arrived from peer with connection " << sockFd << "\n";
 
-    auto header = p->popAtFront<PowMsgHeader>();
+    auto header = p->popAtFront<Header>();
 
     switch (pow::getCommand(header->getCommandName()))
     {
     case pow::VERSION:
-        handleVersionMessage(sockFd, p->peekData<PowMsgVersion>());
+        handleVersionMessage(sockFd, p->peekData<Version>());
         break;
     case pow::VERACK:
         handleVerackMessage(sockFd, header);
@@ -137,7 +137,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
         handleGetaddrMessage(sockFd, header);
         break;
     case pow::ADDR:
-        handleAddrMessage(sockFd, p->peekData<PowMsgAddress>());
+        handleAddrMessage(sockFd, p->peekData<Address>());
         break;
     default:
         error("Message type not supported: %s", header->getCommandName());
@@ -148,7 +148,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 //                             POWP2PAPP METHODS                             //
 // ------------------------------------------------------------------------- //
 
-void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payload)
+void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const Version> payload)
 {
     auto packet = new Packet("Verack message");
 
@@ -180,7 +180,7 @@ void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payloa
     _send(sockFd, packet);
 }
 
-void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header)
+void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const Header> header)
 {
     // Only the joining node asks for new addresses
     if (!isClient(sockFd))
@@ -192,7 +192,7 @@ void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header)
     _send(sockFd, packet);
 }
 
-void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
+void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const Header> header)
 {
     auto packet = new Packet("Addr message");
     auto payload = msgBuilder.buildAddrMessage(reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers));
@@ -202,7 +202,7 @@ void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header)
     _send(sockFd, packet);
 }
 
-void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload)
+void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const Address> payload)
 {
     EV << "Received " << payload->getIpAddressArraySize() << " addresses from socket " << sockFd << " via addr message.\n";
 

@@ -3,10 +3,10 @@
 
 #include "PowCommon.h"
 #include "PowMessageBuilder.h"
-#include "PowMsgAddress_m.h"
-#include "PowMsgHeader_m.h"
-#include "PowMsgVersion_m.h"
 #include "inet/common/Ptr.h"
+#include "messages/Address_m.h"
+#include "messages/Header_m.h"
+#include "messages/Version_m.h"
 #include "s2f/apps/p2p/P2PBase.h"
 
 namespace s2f
@@ -68,7 +68,7 @@ namespace s2f
              * @param sockFd    connection file descriptor.
              * @param payload   message payload.
              */
-            virtual void handleVersionMessage(int sockFd, Ptr<const PowMsgVersion> payload);
+            virtual void handleVersionMessage(int sockFd, Ptr<const Version> payload);
 
             /**
              * Handles an incoming "verack" message.
@@ -76,7 +76,7 @@ namespace s2f
              * @param sockFd    connection file descriptor.
              * @param header    message header.
              */
-            virtual void handleVerackMessage(int sockFd, Ptr<const PowMsgHeader> header);
+            virtual void handleVerackMessage(int sockFd, Ptr<const Header> header);
 
             /**
              * Handles an incoming "getaddr" message.
@@ -84,7 +84,7 @@ namespace s2f
              * @param sockFd    connection file descriptor.
              * @param header    message header.
              */
-            virtual void handleGetaddrMessage(int sockFd, Ptr<const PowMsgHeader> header);
+            virtual void handleGetaddrMessage(int sockFd, Ptr<const Header> header);
 
             /**
              * Handles an incoming "addr" message.
@@ -92,7 +92,7 @@ namespace s2f
              * @param sockFd    connection file descriptor.
              * @param payload   message payload.
              */
-            virtual void handleAddrMessage(int sockFd, Ptr<const PowMsgAddress> payload);
+            virtual void handleAddrMessage(int sockFd, Ptr<const Address> payload);
         };
     }
 };

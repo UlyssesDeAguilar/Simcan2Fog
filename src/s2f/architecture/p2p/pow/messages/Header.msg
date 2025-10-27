@@ -1,11 +1,12 @@
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 
+namespace s2f::p2p;
 
 //
 // Header inspired in the bitcoin p2p message header
 //
-class PowMsgHeader extends inet::FieldsChunk
+class Header extends inet::FieldsChunk
 {
     chunkLength = inet::B(32);
     uint32_t startString;  	// Magic number indicating origin network 
