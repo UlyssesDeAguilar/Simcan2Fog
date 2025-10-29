@@ -17,7 +17,8 @@ namespace s2f
                     return Command::GETADDR;
                 if (std::strncmp(c, "addr", 4) == 0)
                     return Command::ADDR;
-
+                if (std::strncmp(c, "ping", 4) == 0 || std::strncmp(c, "pong", 4) == 0)
+                    return Command::PINGPONG;
                 return Command::NOT_SUPPORTED;
             }
         }

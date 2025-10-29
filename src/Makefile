@@ -67,6 +67,10 @@ OBJS = \
     $O/s2f/architecture/p2p/pow/PowCommon.o \
     $O/s2f/architecture/p2p/pow/PowMessageBuilder.o \
     $O/s2f/architecture/p2p/pow/PowP2PApp.o \
+    $O/s2f/architecture/p2p/pow/handlers/AddressMessageHandler.o \
+    $O/s2f/architecture/p2p/pow/handlers/GetAddressMessageHandler.o \
+    $O/s2f/architecture/p2p/pow/handlers/VerackMessageHandler.o \
+    $O/s2f/architecture/p2p/pow/handlers/VersionMessageHandler.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/include/signals.o \
@@ -138,6 +142,7 @@ OBJS = \
     $O/s2f/architecture/p2p/pow/PowNetworkPeer_m.o \
     $O/s2f/architecture/p2p/pow/messages/Address_m.o \
     $O/s2f/architecture/p2p/pow/messages/Header_m.o \
+    $O/s2f/architecture/p2p/pow/messages/PingPong_m.o \
     $O/s2f/architecture/p2p/pow/messages/Version_m.o \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
@@ -170,6 +175,7 @@ MSGFILES = \
     s2f/architecture/p2p/pow/PowNetworkPeer.msg \
     s2f/architecture/p2p/pow/messages/Address.msg \
     s2f/architecture/p2p/pow/messages/Header.msg \
+    s2f/architecture/p2p/pow/messages/PingPong.msg \
     s2f/architecture/p2p/pow/messages/Version.msg \
     s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \

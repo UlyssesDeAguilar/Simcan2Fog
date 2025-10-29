@@ -1,10 +1,14 @@
 #include "PowP2PApp.h"
+#include "handlers/AddressMessageHandler.h"
+#include "handlers/GetAddressMessageHandler.h"
+#include "handlers/VerackMessageHandler.h"
+#include "handlers/VersionMessageHandler.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
-#include "s2f/apps/p2p/P2PBase.h"
-#include "s2f/architecture/p2p/pow/PowCommon.h"
-#include "s2f/architecture/p2p/pow/messages/Address_m.h"
+#include "omnetpp/cmessage.h"
+#include "s2f/architecture/p2p/pow/handlers/IMessageHandler.h"
+#include "s2f/messages/Syscall_m.h"
 
 using namespace s2f::p2p;
 Define_Module(PowP2PApp);
@@ -12,6 +16,32 @@ Define_Module(PowP2PApp);
 // ------------------------------------------------------------------------- //
 //                             P2PBASE OVERRIDES                             //
 // ------------------------------------------------------------------------- //
+
+void PowP2PApp::initialize()
+{
+    peerConnection.clear();
+    handlers = {
+        {"version", new VersionMessageHandler},
+        {"verack", new VerackMessageHandler},
+        {"getaddr", new GetAddressMessageHandler},
+        {"addr", new AddressMessageHandler}};
+
+    P2PBase::initialize();
+}
+
+void PowP2PApp::finish()
+{
+    for (auto &[_, event] : peerConnection)
+        cancelAndDelete(event);
+
+    for (auto &[_, handler] : handlers)
+        delete handler;
+
+    peerConnection.clear();
+    handlers.clear();
+    P2PBase::finish();
+}
+
 void PowP2PApp::processSelfMessage(cMessage *msg)
 {
     if (msg->getKind() == NODE_UP)
@@ -74,7 +104,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 
         // Remove stale candidate on differing sockets
         // Reinserts at same index if oldSock == sockFd (peers[sockFd] = p)
-        peers.erase(oldSock);
+        powPeers.erase(oldSock);
     }
     else
     {
@@ -87,7 +117,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     p->setState(ConnectionState::CONNECTED);
 
     peers[sockFd] = p;
-    connectionQueue[sockFd];
+    peerConnection[sockFd] = new cMessage("CONNECTION STATUS");
 
     PowNetworkPeer self;
     self.setPort(sock->getLocalPort());
@@ -124,105 +154,34 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
     EV << "Packet arrived from peer with connection " << sockFd << "\n";
 
     auto header = p->popAtFront<Header>();
+    auto handler = handlers.find(header->getCommandName());
+    HandlerContext ictx = {powPeers, isClient(sockFd), sockFd, localIp};
 
-    switch (pow::getCommand(header->getCommandName()))
+    if (handler == handlers.end())
+        error("Message kind not yet implemented! %s", header->getCommandName());
+
+    auto result = handler->second->handleMessage(p, ictx);
+    auto response = handler->second->buildResponse(ictx);
+
+    switch (result.action)
     {
-    case pow::VERSION:
-        handleVersionMessage(sockFd, p->peekData<Version>());
+    case OPEN:
+        for (auto &p : result.peers)
+        {
+            p->setPort(listeningPort);
+            powPeers[open(-1, SOCK_STREAM)] = p;
+        }
         break;
-    case pow::VERACK:
-        handleVerackMessage(sockFd, header);
+    case SCHEDULE:
+        scheduleAfter(20 * 60, peerConnection[sockFd]);
         break;
-    case pow::GETADDR:
-        handleGetaddrMessage(sockFd, header);
-        break;
-    case pow::ADDR:
-        handleAddrMessage(sockFd, p->peekData<Address>());
+    case CANCEL:
+        cancelEvent(peerConnection[sockFd]);
         break;
     default:
-        error("Message type not supported: %s", header->getCommandName());
-    }
-}
-
-// ------------------------------------------------------------------------- //
-//                             POWP2PAPP METHODS                             //
-// ------------------------------------------------------------------------- //
-
-void PowP2PApp::handleVersionMessage(int sockFd, Ptr<const Version> payload)
-{
-    auto packet = new Packet("Verack message");
-
-    // Version missmatch - not a suitable peer
-    if (payload->getVersion() != 1)
-    {
-        delete peers[sockFd];
-        peers.erase(sockFd);
-        return;
+        break;
     }
 
-    // NOTE: Temporary . Ideally, check against a list of used nonces to detect
-    // a self-connection.
-    if (payload->getNonce() == -1)
-    {
-        delete peers[sockFd];
-        peers.erase(sockFd);
-        return;
-    }
-
-    // Update peer data
-    auto p = check_and_cast<PowNetworkPeer *>(peers[sockFd]);
-    p->setServices(payload->getAddrTransServices());
-    p->setTime(payload->getTimestamp());
-    p->setPort(payload->getAddrTransPort());
-
-    auto header = msgBuilder.buildMessageHeader("verack", nullptr);
-    packet->insertAtBack(header);
-    _send(sockFd, packet);
-}
-
-void PowP2PApp::handleVerackMessage(int sockFd, Ptr<const Header> header)
-{
-    // Only the joining node asks for new addresses
-    if (!isClient(sockFd))
-        return;
-
-    auto packet = new Packet("Getaddr message");
-    auto h = msgBuilder.buildMessageHeader("getaddr", nullptr);
-    packet->insertAtBack(h);
-    _send(sockFd, packet);
-}
-
-void PowP2PApp::handleGetaddrMessage(int sockFd, Ptr<const Header> header)
-{
-    auto packet = new Packet("Addr message");
-    auto payload = msgBuilder.buildAddrMessage(reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers));
-    auto h = msgBuilder.buildMessageHeader("addr", payload);
-    packet->insertAtBack(h);
-    packet->insertAtBack(payload);
-    _send(sockFd, packet);
-}
-
-void PowP2PApp::handleAddrMessage(int sockFd, Ptr<const Address> payload)
-{
-    EV << "Received " << payload->getIpAddressArraySize() << " addresses from socket " << sockFd << " via addr message.\n";
-
-    for (int i = 0; i < payload->getIpAddressArraySize(); i++)
-    {
-        EV_DEBUG << "Evaluating peer: " << payload->getIpAddress(i)->getIpAddress() << "\n";
-        auto p = const_cast<PowNetworkPeer *>(payload->getIpAddress(i));
-
-        if (p->getIpAddress() == localIp || findIpInPeers(p->getIpAddress()))
-        {
-            EV_DEBUG << "\tKnown. Discarding...\n";
-            delete p;
-        }
-        else
-        {
-            EV_DEBUG << "New. Adding as candidate...\n";
-            p->setState(ConnectionState::CANDIDATE);
-            p->setPort(listeningPort);
-            int newSock = open(-1, SOCK_STREAM);
-            peers[newSock] = p;
-        }
-    }
+    if (response)
+        _send(sockFd, response);
 }

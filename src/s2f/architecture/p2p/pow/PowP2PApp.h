@@ -3,11 +3,10 @@
 
 #include "PowCommon.h"
 #include "PowMessageBuilder.h"
+#include "handlers/IMessageHandler.h"
 #include "inet/common/Ptr.h"
-#include "messages/Address_m.h"
-#include "messages/Header_m.h"
-#include "messages/Version_m.h"
 #include "s2f/apps/p2p/P2PBase.h"
+#include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
 
 namespace s2f
 {
@@ -25,12 +24,31 @@ namespace s2f
         class PowP2PApp : public P2PBase
         {
           protected:
-            PowMessageBuilder msgBuilder; //<! Object to build messages
+            PowMessageBuilder msgBuilder;                      //!< Object to build messages
+            std::map<int, cMessage *> peerConnection;          //!< Peer event handlers
+            std::map<std::string, IMessageHandler *> handlers; //!< Message handlers
+            std::map<int, PowNetworkPeer *> &powPeers =
+                reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers); //!< Peer list in PowNetworkPeer format
 
             // ------------------------------------------------------------- //
             //                       P2PBASE OVERRIDES                       //
             // ------------------------------------------------------------- //
 
+            /**
+             * Initialization hook for this module.
+             */
+            virtual void initialize() override;
+
+            /**
+             * Finish hook that runs when the simulation is terminated without errors.
+             */
+            virtual void finish() override;
+
+            /**
+             * Handle hook for messages sent by this module.
+             *
+             * @param msg   Message to process.
+             */
             virtual void processSelfMessage(cMessage *msg) override;
 
             /**
@@ -57,42 +75,6 @@ namespace s2f
              * @param remoteIp  Peer Ip address.
              */
             virtual bool handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort) override;
-
-            // -------------------------------------------------------------- //
-            //                       POWP2PAPP METHODS                        //
-            //  ------------------------------------------------------------- //
-
-            /**
-             * Handles an incoming "version" message.
-             *
-             * @param sockFd    connection file descriptor.
-             * @param payload   message payload.
-             */
-            virtual void handleVersionMessage(int sockFd, Ptr<const Version> payload);
-
-            /**
-             * Handles an incoming "verack" message.
-             *
-             * @param sockFd    connection file descriptor.
-             * @param header    message header.
-             */
-            virtual void handleVerackMessage(int sockFd, Ptr<const Header> header);
-
-            /**
-             * Handles an incoming "getaddr" message.
-             *
-             * @param sockFd    connection file descriptor.
-             * @param header    message header.
-             */
-            virtual void handleGetaddrMessage(int sockFd, Ptr<const Header> header);
-
-            /**
-             * Handles an incoming "addr" message.
-             *
-             * @param sockFd    connection file descriptor.
-             * @param payload   message payload.
-             */
-            virtual void handleAddrMessage(int sockFd, Ptr<const Address> payload);
         };
     }
 };

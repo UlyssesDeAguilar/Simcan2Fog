@@ -34,6 +34,7 @@ namespace s2f
                 VERACK,
                 GETADDR,
                 ADDR,
+                PINGPONG,
                 NOT_SUPPORTED
             };
 
