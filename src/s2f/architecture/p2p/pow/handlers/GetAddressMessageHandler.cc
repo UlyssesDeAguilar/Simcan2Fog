@@ -15,5 +15,6 @@ inet::Packet *GetAddressMessageHandler::buildResponse(HandlerContext &ictx)
     }
 
     packet->insertAtBack(buildHeader("addr", nullptr));
+    packet->insertAtBack(payload);
     return packet;
 }

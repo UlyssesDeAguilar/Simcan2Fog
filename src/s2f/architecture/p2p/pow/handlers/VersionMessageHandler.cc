@@ -3,7 +3,6 @@
 
 struct HandlerResponse VersionMessageHandler::handleMessage(inet::Packet *msg, struct HandlerContext &ictx)
 {
-    auto header = msg->popAtFront<Header>();
     auto payload = msg->peekData<Version>();
     auto p = ictx.peers[ictx.sockFd];
 
@@ -19,7 +18,7 @@ struct HandlerResponse VersionMessageHandler::handleMessage(inet::Packet *msg, s
     return {NOACTION};
 }
 
-inet::Packet *VersionMessageHandler::buildResponse(HandlerContext &ctx)
+inet::Packet *VersionMessageHandler::buildResponse(HandlerContext &ictx)
 {
     auto packet = new inet::Packet("verack");
     packet->insertAtBack(buildHeader("verack", nullptr));

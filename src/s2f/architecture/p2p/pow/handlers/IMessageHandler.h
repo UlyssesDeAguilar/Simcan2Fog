@@ -67,6 +67,7 @@ class IMessageHandler
   public:
     virtual struct HandlerResponse handleMessage(inet::Packet *msg, struct HandlerContext &ictx) { return {NOACTION}; };
     virtual inet::Packet *buildResponse(struct HandlerContext &ctx) { return nullptr; }
+    virtual ~IMessageHandler() = default;
 };
 
 #endif

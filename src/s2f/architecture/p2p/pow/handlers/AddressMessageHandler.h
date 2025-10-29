@@ -1,5 +1,5 @@
-#ifndef __P2P_VERACKMESSAGEHANDLER_H_
-#define __P2P_VERACKMESSAGEHANDLER_H_
+#ifndef __P2P_ADDRESSMESSAGEHANDLER_H_
+#define __P2P_ADDRESSMESSAGEHANDLER_H_
 
 #include "../messages/Address_m.h"
 #include "IMessageHandler.h"
