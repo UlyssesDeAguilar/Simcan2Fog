@@ -31,7 +31,6 @@ void P2PBase::initialize()
     dnsIp = L3Address(par("dnsIp"));
 
     // P2P params
-    connectionQueue.clear();
     peers.clear();
     peerCandidates.clear();
 
@@ -134,7 +133,6 @@ void P2PBase::handleDataArrived(int sockFd, Packet *p)
 bool P2PBase::handlePeerClosed(int sockFd)
 {
     EV << "Peer" << peers[sockFd]->getIpAddress() << "closed the connection" << "\n";
-    connectionQueue.erase(sockFd);
     delete peers[sockFd];
     peers.erase(sockFd);
     return true;
@@ -161,7 +159,6 @@ void P2PBase::finish()
 
     peers.clear();
     peerCandidates.clear();
-    connectionQueue.clear();
     close(dnsSock);
 
     // Finish the super-class

@@ -31,8 +31,6 @@ class P2PBase : public AppBase, public AppBase::ICallback
     std::map<int, NetworkPeer *> peers;    //!< Active network peers
     std::vector<L3Address> peerCandidates; //!< Discovery candidates
 
-    std::map<int, ChunkQueue> connectionQueue;
-
     L3Address localIp;   //!< Local address
     L3Address dnsIp;     //!< DNS address
     int listeningPort;   //!< Protocol port
@@ -65,6 +63,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
     virtual int findIpInPeers(L3Address ip);
 
     virtual bool isClient(int sockFd) { return listeningPort != check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd))->getLocalPort(); }
+
     // --------------------------------------------------------------------- //
     //                          APPBASE OVERRIDES                            //
     // --------------------------------------------------------------------- //
