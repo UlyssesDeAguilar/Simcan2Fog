@@ -1,10 +1,10 @@
-#ifndef __P2P_VERACKMESSAGEHANDLER_H_
-#define __P2P_VERACKMESSAGEHANDLER_H_
+#ifndef __P2P_VERACKMSGCONSUMER_H
+#define __P2P_VERACKMSGCONSUMER_H
 
-#include "IMessageHandler.h"
+#include "IPowMsgConsumer.h"
 
 using namespace s2f::p2p;
-class VerackMessageHandler : public IMessageHandler
+class VerackMsgConsumer : public IPowMsgConsumer
 {
   public:
     virtual HandlerResponse handleMessage(struct HandlerContext &ictx) override;

@@ -1,5 +1,5 @@
-#ifndef __P2P_IMESSAGEHANDLER_H_
-#define __P2P_IMESSAGEHANDLER_H_
+#ifndef __P2P_POW_IMSGCALLBACK_H_
+#define __P2P_POW_IMSGCALLBACK_H_
 
 #include "inet/common/packet/Packet.h"
 #include "inet/networklayer/common/L3Address.h"
@@ -24,6 +24,9 @@ enum HandlerAction
     NOACTION
 };
 
+/**
+ * Information derived from callback to use in the main module.
+ */
 struct HandlerResponse
 {
     enum HandlerAction action;
@@ -33,6 +36,11 @@ struct HandlerResponse
     std::vector<PowNetworkPeer *> peers;
 };
 
+/**
+ * Information required by callback to process messages
+ * NOTE: peer data is subject to modification by the callback.
+ *
+ */
 struct HandlerContext
 {
     inet::Packet *msg;                      //!< Received message
@@ -51,7 +59,7 @@ struct HandlerContext
  * @author Tomás Daniel Expósito Torre
  * @date 2025-10-29
  */
-class IMessageHandler
+class IPowMsgCallback
 {
   protected:
     virtual inet::Ptr<Header> buildHeader(const char *name, inet::Ptr<inet::FieldsChunk> payload)
@@ -70,9 +78,7 @@ class IMessageHandler
     }
 
   public:
-    virtual HandlerResponse handleMessage(struct HandlerContext &ictx) { return {NOACTION}; };
-    virtual inet::Packet *buildResponse(struct HandlerContext &ctx) { return nullptr; }
-    virtual ~IMessageHandler() = default;
+    virtual ~IPowMsgCallback() = default;
 };
 
 #endif

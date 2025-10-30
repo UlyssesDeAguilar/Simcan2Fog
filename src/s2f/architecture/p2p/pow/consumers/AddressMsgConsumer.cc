@@ -1,4 +1,4 @@
-#include "AddressMessageHandler.h"
+#include "AddressMsgConsumer.h"
 
 int findIpInPeers(std::map<int, PowNetworkPeer *> &peers, inet::L3Address ip)
 {
@@ -7,7 +7,7 @@ int findIpInPeers(std::map<int, PowNetworkPeer *> &peers, inet::L3Address ip)
     return it != peers.end() ? it->first : 0;
 }
 
-HandlerResponse AddressMessageHandler::handleMessage(HandlerContext &ictx)
+HandlerResponse AddressMsgConsumer::handleMessage(HandlerContext &ictx)
 {
     HandlerResponse response{};
     auto payload = ictx.msg->peekData<Address>();

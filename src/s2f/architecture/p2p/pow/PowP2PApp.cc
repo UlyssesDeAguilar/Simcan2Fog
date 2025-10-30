@@ -1,17 +1,18 @@
 #include "PowP2PApp.h"
-#include "handlers/AddressMessageHandler.h"
-#include "handlers/GetAddressMessageHandler.h"
-#include "handlers/VerackMessageHandler.h"
-#include "handlers/VersionMessageHandler.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
-#include "s2f/architecture/p2p/pow/handlers/IMessageHandler.h"
-#include "s2f/architecture/p2p/pow/handlers/InitialMessageBuilder.h"
-#include "s2f/architecture/p2p/pow/handlers/PingMessageHandler.h"
-#include "s2f/architecture/p2p/pow/handlers/PongMessageHandler.h"
+#include "s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.h"
+#include "s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.h"
+#include "s2f/architecture/p2p/pow/consumers/PingMsgConsumer.h"
+#include "s2f/architecture/p2p/pow/consumers/PongMsgConsumer.h"
+#include "s2f/architecture/p2p/pow/consumers/VerackMsgConsumer.h"
+#include "s2f/architecture/p2p/pow/consumers/VersionMsgConsumer.h"
+#include "s2f/architecture/p2p/pow/producers/PingMsgProducer.h"
+#include "s2f/architecture/p2p/pow/producers/VersionMsgProducer.h"
+
 #include <memory>
 
 using namespace s2f::p2p;
@@ -24,13 +25,15 @@ Define_Module(PowP2PApp);
 void PowP2PApp::initialize()
 {
     peerConnection.clear();
-    initialHandler = std::make_unique<InitialMessageBuilder>();
-    handlers.emplace("version", std::make_unique<VersionMessageHandler>());
-    handlers.emplace("verack", std::make_unique<VerackMessageHandler>());
-    handlers.emplace("getaddr", std::make_unique<GetAddressMessageHandler>());
-    handlers.emplace("addr", std::make_unique<AddressMessageHandler>());
-    handlers.emplace("ping", std::make_unique<PingMessageHandler>());
-    handlers.emplace("pong", std::make_unique<PongMessageHandler>());
+    consumers.emplace("version", std::make_unique<VersionMsgConsumer>());
+    consumers.emplace("verack", std::make_unique<VerackMsgConsumer>());
+    consumers.emplace("getaddr", std::make_unique<GetAddressMsgConsumer>());
+    consumers.emplace("addr", std::make_unique<AddressMsgConsumer>());
+    consumers.emplace("ping", std::make_unique<PingMsgConsumer>());
+    consumers.emplace("pong", std::make_unique<PongMsgConsumer>());
+
+    producers.emplace("version", std::make_unique<VersionMsgProducer>());
+    producers.emplace("ping", std::make_unique<PingMsgProducer>());
 
     self.setServices(pow::NODE_NETWORK);
     self.setTime(time(nullptr));
@@ -43,7 +46,8 @@ void PowP2PApp::finish()
         cancelAndDelete(event);
 
     peerConnection.clear();
-    handlers.clear();
+    consumers.clear();
+    producers.clear();
     P2PBase::finish();
 }
 
@@ -58,7 +62,7 @@ void PowP2PApp::processConnectionState(cMessage *msg)
         {
             peerConnection[sockFd]->setKind(pow::AWAITING_POLL);
             scheduleAfter(pow::PONG_TIMEOUT_SECONDS, peerConnection[sockFd]);
-            _send(sockFd, initialHandler->buildMessage("ping", ictx));
+            _send(sockFd, producers["ping"]->buildMessage(ictx));
         }
         else
         {
@@ -161,7 +165,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 
     self.setPort(sock->getLocalPort());
 
-    auto response = initialHandler->buildMessage("version", ictx);
+    auto response = producers["version"]->buildMessage(ictx);
 
     if (response)
         _send(sockFd, response);
@@ -179,7 +183,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
     EV << "Packet arrived from peer with connection " << sockFd << "\n";
 
     auto header = p->popAtFront<Header>();
-    auto handler = handlers.find(header->getCommandName());
+    auto handler = consumers.find(header->getCommandName());
     HandlerContext ictx = {
         .msg = p,
         .peers = powPeers,
@@ -189,7 +193,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
         .localIp = localIp,
     };
 
-    if (handler == handlers.end())
+    if (handler == consumers.end())
         error("Message kind not yet implemented! %s", header->getCommandName());
 
     auto result = handler->second->handleMessage(ictx);

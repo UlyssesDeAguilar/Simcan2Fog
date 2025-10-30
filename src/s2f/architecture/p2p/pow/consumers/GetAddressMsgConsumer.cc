@@ -1,7 +1,6 @@
-#include "GetAddressMessageHandler.h"
-#include "inet/common/Ptr.h"
+#include "GetAddressMsgConsumer.h"
 
-inet::Packet *GetAddressMessageHandler::buildResponse(HandlerContext &ictx)
+inet::Packet *GetAddressMsgConsumer::buildResponse(HandlerContext &ictx)
 {
     auto packet = new inet::Packet("addr");
 

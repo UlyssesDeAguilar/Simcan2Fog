@@ -66,13 +66,14 @@ OBJS = \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
     $O/s2f/architecture/p2p/pow/PowCommon.o \
     $O/s2f/architecture/p2p/pow/PowP2PApp.o \
-    $O/s2f/architecture/p2p/pow/handlers/AddressMessageHandler.o \
-    $O/s2f/architecture/p2p/pow/handlers/GetAddressMessageHandler.o \
-    $O/s2f/architecture/p2p/pow/handlers/InitialMessageBuilder.o \
-    $O/s2f/architecture/p2p/pow/handlers/PingMessageHandler.o \
-    $O/s2f/architecture/p2p/pow/handlers/PongMessageHandler.o \
-    $O/s2f/architecture/p2p/pow/handlers/VerackMessageHandler.o \
-    $O/s2f/architecture/p2p/pow/handlers/VersionMessageHandler.o \
+    $O/s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/PingMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/PongMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/VerackMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/VersionMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/producers/PingMsgProducer.o \
+    $O/s2f/architecture/p2p/pow/producers/VersionMsgProducer.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/include/signals.o \

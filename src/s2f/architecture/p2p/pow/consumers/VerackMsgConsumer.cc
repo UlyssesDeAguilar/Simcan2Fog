@@ -1,7 +1,6 @@
-#include "VerackMessageHandler.h"
-#include "s2f/architecture/p2p/pow/PowCommon.h"
+#include "VerackMsgConsumer.h"
 
-HandlerResponse VerackMessageHandler::handleMessage(struct HandlerContext &ictx)
+HandlerResponse VerackMsgConsumer::handleMessage(struct HandlerContext &ictx)
 {
     return {
         .action = SCHEDULE,
@@ -11,9 +10,9 @@ HandlerResponse VerackMessageHandler::handleMessage(struct HandlerContext &ictx)
     };
 }
 
-inet::Packet *VerackMessageHandler::buildResponse(HandlerContext &ictx)
+inet::Packet *VerackMsgConsumer::buildResponse(HandlerContext &ictx)
 {
-    if (ictx.isClient == false)
+    if (!ictx.isClient)
         return nullptr;
 
     auto packet = new inet::Packet("getaddr");

@@ -1,12 +1,12 @@
-#ifndef __P2P_PINGMESSAHEHANDLER_H_
-#define __P2P_PINGMESSAHEHANDLER_H_
+#ifndef __P2P_VERSIONMSGCONSUMER_H_
+#define __P2P_VERSIONMSGCONSUMER_H_
 
-#include "../messages/PingPong_m.h"
-#include "IMessageHandler.h"
+#include "../messages/Version_m.h"
+#include "IPowMsgConsumer.h"
 
 using namespace s2f::p2p;
 
-class PingMessageHandler : public IMessageHandler
+class VersionMsgConsumer : public IPowMsgConsumer
 {
   public:
     virtual HandlerResponse handleMessage(HandlerContext &ictx) override;

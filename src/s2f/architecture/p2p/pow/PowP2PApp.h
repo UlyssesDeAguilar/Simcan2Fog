@@ -2,9 +2,9 @@
 #define __POW_FLOW_MANAGER_H_
 
 #include "PowCommon.h"
-#include "handlers/IMessageHandler.h"
-#include "handlers/InitialMessageBuilder.h"
+#include "consumers/IPowMsgConsumer.h"
 #include "inet/common/Ptr.h"
+#include "producers/IPowMsgProducer.h"
 #include "s2f/apps/p2p/P2PBase.h"
 #include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
 #include <memory>
@@ -25,10 +25,10 @@ namespace s2f
         class PowP2PApp : public P2PBase
         {
           protected:
-            PowNetworkPeer self;                                              //!< Data for this node
-            std::map<int, cMessage *> peerConnection;                         //!< Peer event handlers
-            std::map<std::string, std::unique_ptr<IMessageHandler>> handlers; //!< Message handlers
-            std::unique_ptr<InitialMessageBuilder> initialHandler;            //!< Message handlers
+            PowNetworkPeer self;                                               //!< Data for this node
+            std::map<int, cMessage *> peerConnection;                          //!< Peer event handlers
+            std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
+            std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
             std::map<int, PowNetworkPeer *> &powPeers =
                 reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers); //!< Peer list in PowNetworkPeer format
 

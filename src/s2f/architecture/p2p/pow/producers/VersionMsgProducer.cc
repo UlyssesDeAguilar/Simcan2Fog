@@ -1,18 +1,6 @@
-#include "InitialMessageBuilder.h"
+#include "VersionMsgProducer.h"
 
-inet::Packet *InitialMessageBuilder::buildPing(HandlerContext &ictx)
-{
-    inet::Packet *packet = new inet::Packet("ping");
-    auto payload = inet::makeShared<PingPong>();
-
-    payload->setNonce(random());
-
-    packet->insertAtBack(buildHeader("ping", nullptr));
-    packet->insertAtBack(payload);
-    return packet;
-}
-
-inet::Packet *InitialMessageBuilder::buildVersion(HandlerContext &ictx)
+inet::Packet *VersionMsgProducer::buildMessage(HandlerContext &ictx)
 {
     auto packet = new inet::Packet("version");
     auto payload = inet::makeShared<Version>();

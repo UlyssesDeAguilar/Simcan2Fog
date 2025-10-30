@@ -1,12 +1,12 @@
-#ifndef __P2P_PONGMESSAHEHANDLER_H_
-#define __P2P_PONGMESSAHEHANDLER_H_
+#ifndef __P2P_PONGMSGCONSUMER_H_
+#define __P2P_PONGMSGCONSUMER_H_
 
 #include "../messages/PingPong_m.h"
-#include "IMessageHandler.h"
+#include "IPowMsgConsumer.h"
 
 using namespace s2f::p2p;
 
-class PongMessageHandler : public IMessageHandler
+class PongMsgConsumer : public IPowMsgConsumer
 {
   public:
     virtual HandlerResponse handleMessage(HandlerContext &ictx) override;

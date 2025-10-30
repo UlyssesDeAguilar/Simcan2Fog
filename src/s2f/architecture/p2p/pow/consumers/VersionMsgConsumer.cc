@@ -1,7 +1,6 @@
-#include "VersionMessageHandler.h"
-#include "s2f/architecture/p2p/pow/handlers/IMessageHandler.h"
+#include "VersionMsgConsumer.h"
 
-HandlerResponse VersionMessageHandler::handleMessage(struct HandlerContext &ictx)
+HandlerResponse VersionMsgConsumer::handleMessage(struct HandlerContext &ictx)
 {
     auto payload = ictx.msg->peekData<Version>();
     auto p = ictx.peers[ictx.sockFd];
@@ -18,7 +17,7 @@ HandlerResponse VersionMessageHandler::handleMessage(struct HandlerContext &ictx
     return {.action = NOACTION};
 }
 
-inet::Packet *VersionMessageHandler::buildResponse(HandlerContext &ictx)
+inet::Packet *VersionMsgConsumer::buildResponse(HandlerContext &ictx)
 {
     auto packet = new inet::Packet("verack");
     packet->insertAtBack(buildHeader("verack", nullptr));
