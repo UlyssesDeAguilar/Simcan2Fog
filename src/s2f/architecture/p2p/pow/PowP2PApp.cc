@@ -8,7 +8,8 @@
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
 #include "s2f/architecture/p2p/pow/handlers/IMessageHandler.h"
-#include "s2f/messages/Syscall_m.h"
+#include "s2f/architecture/p2p/pow/handlers/InitialMessageHandler.h"
+#include <memory>
 
 using namespace s2f::p2p;
 Define_Module(PowP2PApp);
@@ -20,12 +21,14 @@ Define_Module(PowP2PApp);
 void PowP2PApp::initialize()
 {
     peerConnection.clear();
-    handlers = {
-        {"version", new VersionMessageHandler},
-        {"verack", new VerackMessageHandler},
-        {"getaddr", new GetAddressMessageHandler},
-        {"addr", new AddressMessageHandler}};
+    handlers.emplace("initial", std::make_unique<InitialMessageHandler>());
+    handlers.emplace("version", std::make_unique<VersionMessageHandler>());
+    handlers.emplace("verack", std::make_unique<VerackMessageHandler>());
+    handlers.emplace("getaddr", std::make_unique<GetAddressMessageHandler>());
+    handlers.emplace("addr", std::make_unique<AddressMessageHandler>());
 
+    self.setServices(pow::NODE_NETWORK);
+    self.setTime(time(nullptr));
     P2PBase::initialize();
 }
 
@@ -33,9 +36,6 @@ void PowP2PApp::finish()
 {
     for (auto &[_, event] : peerConnection)
         cancelAndDelete(event);
-
-    for (auto &[_, handler] : handlers)
-        delete handler;
 
     peerConnection.clear();
     handlers.clear();
@@ -46,6 +46,7 @@ void PowP2PApp::processSelfMessage(cMessage *msg)
 {
     if (msg->getKind() == NODE_UP)
     {
+        self.setIpAddress(localIp);
         // TODO: NODE_UP of non-full nodes, which do not connect to the dns
         EV << "Connecting to DNS registry service" << "\n";
         connect(dnsSock, dnsIp, 443);
@@ -83,6 +84,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     PowNetworkPeer *p;
     TcpSocket *sock;
     int oldSock;
+    HandlerContext ictx = {powPeers, isClient(sockFd), sockFd, self, localIp};
 
     EV << "Handling connect return on peer with ip " << localIp << "\n";
     EV << "Socket fd: " << sockFd << "\n";
@@ -93,7 +95,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 
     if (oldSock)
     {
-        p = check_and_cast<PowNetworkPeer *>(peers[oldSock]);
+        p = powPeers[oldSock];
 
         // Remove duplicate connections
         if (p->getState() == ConnectionState::CONNECTED)
@@ -119,27 +121,12 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     peers[sockFd] = p;
     peerConnection[sockFd] = new cMessage("CONNECTION STATUS");
 
-    PowNetworkPeer self;
     self.setPort(sock->getLocalPort());
-    self.setIpAddress(sock->getLocalAddress());
-    self.setServices(pow::NODE_NETWORK);
-    self.setTime(time(nullptr));
 
-    auto packet = new Packet("Version message");
-    auto payload = msgBuilder.buildVersionMessage(1, self, *p);
-    auto header = msgBuilder.buildMessageHeader("version", payload);
-    packet->insertAtBack(header);
-    packet->insertAtBack(payload);
+    auto response = handlers["initial"]->buildResponse(ictx);
 
-    _send(sockFd, packet);
-}
-
-bool PowP2PApp::handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort)
-{
-    EV << "Peer connected: " << remoteIp << ":" << remotePort << "\n";
-    EV << "Socket fd: " << sockFd << "\n";
-
-    return true;
+    if (response)
+        _send(sockFd, response);
 }
 
 void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
@@ -155,7 +142,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 
     auto header = p->popAtFront<Header>();
     auto handler = handlers.find(header->getCommandName());
-    HandlerContext ictx = {powPeers, isClient(sockFd), sockFd, localIp};
+    HandlerContext ictx = {powPeers, isClient(sockFd), sockFd, self, localIp};
 
     if (handler == handlers.end())
         error("Message kind not yet implemented! %s", header->getCommandName());

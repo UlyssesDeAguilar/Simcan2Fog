@@ -65,10 +65,10 @@ OBJS = \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
     $O/s2f/architecture/p2p/pow/PowCommon.o \
-    $O/s2f/architecture/p2p/pow/PowMessageBuilder.o \
     $O/s2f/architecture/p2p/pow/PowP2PApp.o \
     $O/s2f/architecture/p2p/pow/handlers/AddressMessageHandler.o \
     $O/s2f/architecture/p2p/pow/handlers/GetAddressMessageHandler.o \
+    $O/s2f/architecture/p2p/pow/handlers/InitialMessageHandler.o \
     $O/s2f/architecture/p2p/pow/handlers/VerackMessageHandler.o \
     $O/s2f/architecture/p2p/pow/handlers/VersionMessageHandler.o \
     $O/s2f/core/cSIMCAN_Core.o \

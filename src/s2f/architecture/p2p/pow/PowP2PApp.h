@@ -2,11 +2,11 @@
 #define __POW_FLOW_MANAGER_H_
 
 #include "PowCommon.h"
-#include "PowMessageBuilder.h"
 #include "handlers/IMessageHandler.h"
 #include "inet/common/Ptr.h"
 #include "s2f/apps/p2p/P2PBase.h"
 #include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
+#include <memory>
 
 namespace s2f
 {
@@ -24,9 +24,9 @@ namespace s2f
         class PowP2PApp : public P2PBase
         {
           protected:
-            PowMessageBuilder msgBuilder;                      //!< Object to build messages
-            std::map<int, cMessage *> peerConnection;          //!< Peer event handlers
-            std::map<std::string, IMessageHandler *> handlers; //!< Message handlers
+            PowNetworkPeer self;                                              //!< Data for this node
+            std::map<int, cMessage *> peerConnection;                         //!< Peer event handlers
+            std::map<std::string, std::unique_ptr<IMessageHandler>> handlers; //!< Message handlers
             std::map<int, PowNetworkPeer *> &powPeers =
                 reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers); //!< Peer list in PowNetworkPeer format
 
@@ -67,14 +67,6 @@ namespace s2f
              * @param p         connection incoming data.
              */
             virtual void handleDataArrived(int sockFd, Packet *p) override;
-
-            /**
-             * Handle hook for socket connection initiated by a possible peer.
-             *
-             * @param sockFd    File descriptor for this connection.
-             * @param remoteIp  Peer Ip address.
-             */
-            virtual bool handleClientConnection(int sockFd, const L3Address &remoteIp, const uint16_t &remotePort) override;
         };
     }
 };

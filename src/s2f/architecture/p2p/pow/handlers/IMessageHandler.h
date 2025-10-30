@@ -35,6 +35,7 @@ struct HandlerContext
     std::map<int, PowNetworkPeer *> &peers; //<! All known peers
     bool isClient;                          //!< For messages only initiated by one peer
     int sockFd;                             //!< Active connection
+    PowNetworkPeer &self;
     inet::L3Address localIp;
 };
 
