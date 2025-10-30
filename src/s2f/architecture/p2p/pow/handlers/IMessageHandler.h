@@ -27,11 +27,15 @@ enum HandlerAction
 struct HandlerResponse
 {
     enum HandlerAction action;
+    short eventKind;
+    int eventDelayMin;
+    int eventDelayMax;
     std::vector<PowNetworkPeer *> peers;
 };
 
 struct HandlerContext
 {
+    inet::Packet *msg;                      //!< Received message
     std::map<int, PowNetworkPeer *> &peers; //<! All known peers
     bool isClient;                          //!< For messages only initiated by one peer
     int sockFd;                             //!< Active connection
@@ -66,7 +70,7 @@ class IMessageHandler
     }
 
   public:
-    virtual struct HandlerResponse handleMessage(inet::Packet *msg, struct HandlerContext &ictx) { return {NOACTION}; };
+    virtual HandlerResponse handleMessage(struct HandlerContext &ictx) { return {NOACTION}; };
     virtual inet::Packet *buildResponse(struct HandlerContext &ctx) { return nullptr; }
     virtual ~IMessageHandler() = default;
 };

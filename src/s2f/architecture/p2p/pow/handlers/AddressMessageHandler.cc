@@ -7,10 +7,10 @@ int findIpInPeers(std::map<int, PowNetworkPeer *> &peers, inet::L3Address ip)
     return it != peers.end() ? it->first : 0;
 }
 
-HandlerResponse AddressMessageHandler::handleMessage(inet::Packet *msg, HandlerContext &ictx)
+HandlerResponse AddressMessageHandler::handleMessage(HandlerContext &ictx)
 {
     HandlerResponse response{};
-    auto payload = msg->peekData<Address>();
+    auto payload = ictx.msg->peekData<Address>();
 
     response.action = OPEN;
     for (int i = 0; i < payload->getIpAddressArraySize(); i++)

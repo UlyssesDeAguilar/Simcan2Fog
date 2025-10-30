@@ -7,6 +7,7 @@ using namespace s2f::p2p;
 class VerackMessageHandler : public IMessageHandler
 {
   public:
+    virtual HandlerResponse handleMessage(struct HandlerContext &ictx) override;
     virtual inet::Packet *buildResponse(HandlerContext &ictx) override;
 };
 

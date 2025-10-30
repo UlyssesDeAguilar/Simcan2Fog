@@ -8,7 +8,7 @@ using namespace s2f::p2p;
 class AddressMessageHandler : public IMessageHandler
 {
   public:
-    virtual HandlerResponse handleMessage(inet::Packet *msg, HandlerContext &ictx) override;
+    virtual HandlerResponse handleMessage(HandlerContext &ictx) override;
 };
 
 #endif
