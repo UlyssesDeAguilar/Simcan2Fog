@@ -7,8 +7,11 @@
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
+#include "s2f/architecture/p2p/pow/PowCommon.h"
 #include "s2f/architecture/p2p/pow/handlers/IMessageHandler.h"
-#include "s2f/architecture/p2p/pow/handlers/InitialMessageHandler.h"
+#include "s2f/architecture/p2p/pow/handlers/InitialMessageBuilder.h"
+#include "s2f/architecture/p2p/pow/handlers/PingMessageHandler.h"
+#include "s2f/architecture/p2p/pow/handlers/PongMessageHandler.h"
 #include <memory>
 
 using namespace s2f::p2p;
@@ -21,11 +24,13 @@ Define_Module(PowP2PApp);
 void PowP2PApp::initialize()
 {
     peerConnection.clear();
-    handlers.emplace("initial", std::make_unique<InitialMessageHandler>());
+    initialHandler = std::make_unique<InitialMessageBuilder>();
     handlers.emplace("version", std::make_unique<VersionMessageHandler>());
     handlers.emplace("verack", std::make_unique<VerackMessageHandler>());
     handlers.emplace("getaddr", std::make_unique<GetAddressMessageHandler>());
     handlers.emplace("addr", std::make_unique<AddressMessageHandler>());
+    handlers.emplace("ping", std::make_unique<PingMessageHandler>());
+    handlers.emplace("pong", std::make_unique<PongMessageHandler>());
 
     self.setServices(pow::NODE_NETWORK);
     self.setTime(time(nullptr));
@@ -42,8 +47,35 @@ void PowP2PApp::finish()
     P2PBase::finish();
 }
 
-void PowP2PApp::processSelfMessage(cMessage *msg)
+void PowP2PApp::processConnectionState(cMessage *msg)
 {
+    if (msg->getKind() == pow::SEND_PING)
+    {
+        HandlerContext ictx = {.peers = powPeers, .isClient = true, .self = self};
+        int sockFd = *(int *)msg->getContextPointer();
+
+        if (powPeers.count(sockFd))
+        {
+            peerConnection[sockFd]->setKind(pow::AWAITING_POLL);
+            scheduleAfter(pow::PONG_TIMEOUT_SECONDS, peerConnection[sockFd]);
+            _send(sockFd, initialHandler->buildMessage("ping", ictx));
+        }
+        else
+        {
+            delete peerConnection[sockFd];
+            peerConnection.erase(sockFd);
+        }
+        delete (int *)msg->getContextPointer();
+    }
+    else if (msg->getKind() == pow::AWAITING_POLL)
+    {
+        // TODO: add disconnection after timeout
+    }
+}
+
+void PowP2PApp::processNodeState(cMessage *msg)
+{
+
     if (msg->getKind() == NODE_UP)
     {
         self.setIpAddress(localIp);
@@ -84,7 +116,13 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     PowNetworkPeer *p;
     TcpSocket *sock;
     int oldSock;
-    HandlerContext ictx = {powPeers, isClient(sockFd), sockFd, self, localIp};
+    HandlerContext ictx = {
+        .peers = powPeers,
+        .isClient = isClient(sockFd),
+        .sockFd = sockFd,
+        .self = self,
+        .localIp = localIp,
+    };
 
     EV << "Handling connect return on peer with ip " << localIp << "\n";
     EV << "Socket fd: " << sockFd << "\n";
@@ -123,7 +161,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 
     self.setPort(sock->getLocalPort());
 
-    auto response = handlers["initial"]->buildResponse(ictx);
+    auto response = initialHandler->buildMessage("version", ictx);
 
     if (response)
         _send(sockFd, response);
@@ -142,12 +180,19 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 
     auto header = p->popAtFront<Header>();
     auto handler = handlers.find(header->getCommandName());
-    HandlerContext ictx = {powPeers, isClient(sockFd), sockFd, self, localIp};
+    HandlerContext ictx = {
+        .msg = p,
+        .peers = powPeers,
+        .isClient = isClient(sockFd),
+        .sockFd = sockFd,
+        .self = self,
+        .localIp = localIp,
+    };
 
     if (handler == handlers.end())
         error("Message kind not yet implemented! %s", header->getCommandName());
 
-    auto result = handler->second->handleMessage(p, ictx);
+    auto result = handler->second->handleMessage(ictx);
     auto response = handler->second->buildResponse(ictx);
 
     switch (result.action)
@@ -159,11 +204,15 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
             powPeers[open(-1, SOCK_STREAM)] = p;
         }
         break;
-    case SCHEDULE:
-        scheduleAfter(20 * 60, peerConnection[sockFd]);
-        break;
     case CANCEL:
         cancelEvent(peerConnection[sockFd]);
+    case SCHEDULE:
+        if (result.eventDelayMin)
+        {
+            peerConnection[sockFd]->setKind(result.eventKind);
+            peerConnection[sockFd]->setContextPointer(static_cast<void *>(new int(sockFd)));
+            scheduleAfter(uniform(result.eventDelayMin, result.eventDelayMax), peerConnection[sockFd]);
+        }
         break;
     default:
         break;

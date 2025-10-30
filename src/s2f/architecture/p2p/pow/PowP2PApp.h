@@ -3,6 +3,7 @@
 
 #include "PowCommon.h"
 #include "handlers/IMessageHandler.h"
+#include "handlers/InitialMessageBuilder.h"
 #include "inet/common/Ptr.h"
 #include "s2f/apps/p2p/P2PBase.h"
 #include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
@@ -27,6 +28,7 @@ namespace s2f
             PowNetworkPeer self;                                              //!< Data for this node
             std::map<int, cMessage *> peerConnection;                         //!< Peer event handlers
             std::map<std::string, std::unique_ptr<IMessageHandler>> handlers; //!< Message handlers
+            std::unique_ptr<InitialMessageBuilder> initialHandler;            //!< Message handlers
             std::map<int, PowNetworkPeer *> &powPeers =
                 reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers); //!< Peer list in PowNetworkPeer format
 
@@ -49,7 +51,16 @@ namespace s2f
              *
              * @param msg   Message to process.
              */
-            virtual void processSelfMessage(cMessage *msg) override;
+            virtual void processSelfMessage(cMessage *msg) override
+            {
+                if (msg != event)
+                    processConnectionState(msg);
+                else
+                    processNodeState(msg);
+            }
+
+            void processConnectionState(cMessage *msg);
+            void processNodeState(cMessage *msg);
 
             /**
              * Handles the initial connection to another peer candidate in the

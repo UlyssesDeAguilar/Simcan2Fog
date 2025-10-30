@@ -24,6 +24,11 @@ namespace s2f
             constexpr uint64_t NODE_XTHIN = 0x10;             //<! Full node with support for Xtreme Thinblocks.
             constexpr uint64_t NODE_NETWORK_LIMITED = 0x0400; //<! Same as 0x01 with restrictions from BIP159
 
+            /* Ping-Pong connectivity */
+            constexpr uint64_t PONG_TIMEOUT_SECONDS = 1200; //<! for pingpong message connectivity
+            constexpr uint64_t PING_POLLING_MIN = 60;
+            constexpr uint64_t PING_POLLING_MAX = 600;
+
             /**
              * Command options for a PoW message. Based on bitcoin networking:
              * https://developer.bitcoin.org/reference/p2p_networking.html#version
@@ -36,6 +41,12 @@ namespace s2f
                 ADDR,
                 PINGPONG,
                 NOT_SUPPORTED
+            };
+
+            enum PowEvent
+            {
+                SEND_PING = 8,
+                AWAITING_POLL,
             };
 
             /**
