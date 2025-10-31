@@ -30,7 +30,7 @@ namespace s2f
             std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
             std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
             std::map<int, PowNetworkPeer *> &powPeers =
-                reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers); //!< Peer list in PowNetworkPeer format
+                reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
 
             // ------------------------------------------------------------- //
             //                           OVERRIDES                           //

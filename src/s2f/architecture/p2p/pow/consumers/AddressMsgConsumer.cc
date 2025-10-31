@@ -20,10 +20,7 @@ IPowMsgResponse AddressMsgConsumer::handleMessage(IPowMsgContext &ictx)
         if (p->getIpAddress() == ictx.self.getIpAddress() || findIpInPeers(ictx.peers, p->getIpAddress()))
             delete p;
         else
-        {
-            p->setState(ConnectionState::CANDIDATE);
             response.peers.push_back(p);
-        }
     }
 
     return response;

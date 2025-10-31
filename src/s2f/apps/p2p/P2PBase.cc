@@ -84,7 +84,7 @@ void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions,
 
     // Add peer candidates from resolution
     for (const auto &ip : ipResolutions)
-        if (ip != localIp && !findIpInPeers(ip))
+        if (ip != localIp && !peers.count(ip))
             resolutionList.push_back(ip);
 
     // Start connecting to discovered peers
@@ -132,10 +132,11 @@ void P2PBase::handleDataArrived(int sockFd, Packet *p)
 
 bool P2PBase::handlePeerClosed(int sockFd)
 {
-    EV << "Peer" << peers[sockFd]->getIpAddress() << "closed the connection"
+    EV << "Peer" << peerData[sockFd]->getIpAddress() << "closed the connection"
        << "\n";
-    delete peers[sockFd];
-    peers.erase(sockFd);
+    peers.erase(peerData[sockFd]->getIpAddress());
+    delete peerData[sockFd];
+    peerData.erase(sockFd);
     return true;
 }
 
@@ -152,7 +153,7 @@ void P2PBase::finish()
     EV_INFO << " + Total execution time (real):" << runtime << " seconds"
             << '\n';
 
-    for (auto &[sockFd, p] : peers)
+    for (auto &[sockFd, p] : peerData)
     {
         close(sockFd);
         delete p;
@@ -172,24 +173,28 @@ void P2PBase::finish()
 
 void P2PBase::handleConnectFailure(int sockFd)
 {
-    EV_INFO << "Connection failed for IP " << peers[sockFd]->getIpAddress()
+    EV_INFO << "Connection failed for IP " << peerData[sockFd]->getIpAddress()
             << "on sockFd" << sockFd << "\n";
-    delete peers[sockFd];
-    peers.erase(sockFd);
+    peers.erase(peerData[sockFd]->getIpAddress());
+    delete peerData[sockFd];
+    peerData.erase(sockFd);
 }
 
 void P2PBase::connectToPeer()
 {
-    int sockFd = open(-1, SOCK_STREAM);
-
     L3Address destIp = resolutionList.back();
     resolutionList.pop_back();
+
+    if (peers.count(destIp))
+        return;
+
+    int sockFd = open(-1, SOCK_STREAM);
     connect(sockFd, destIp, listeningPort);
 }
 
-int P2PBase::findIpInPeers(L3Address ip)
+int P2PBase::getSockFd(L3Address ip)
 {
-    auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &p)
+    auto it = std::find_if(peerData.begin(), peerData.end(), [&](const auto &p)
                            { return p.second->getIpAddress() == ip; });
-    return it != peers.end() ? it->first : 0;
+    return it != peerData.end() ? it->first : 0;
 }

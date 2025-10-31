@@ -30,15 +30,15 @@ class P2PBase : public AppBase, public AppBase::ICallback
         CONNECTED        //!< Node is ready and connected to the network
     };
 
-    const char *dnsSeed{};              //!< DNS A record seed
-    std::map<int, NetworkPeer *> peers; //!< Active network peers
-    std::vector<L3Address>
-        resolutionList;  //!< Addresses obtained through discovery services
-    L3Address localIp;   //!< Local address
-    L3Address dnsIp;     //!< DNS address
-    int listeningPort;   //!< Protocol port
-    int listeningSocket; //!< TCP socket for p2p requesting
-    int dnsSock;         //!< Active DNS connection
+    std::map<int, NetworkPeer *> peerData; //!< Peer data
+    std::vector<L3Address> resolutionList; //!< Addresses obtained through discovery services
+    std::set<L3Address> peers;             //<! Active peers
+    L3Address localIp;                     //!< Local address
+    L3Address dnsIp;                       //!< DNS address
+    const char *dnsSeed{};                 //!< DNS A record seed
+    int listeningPort;                     //!< Protocol port
+    int listeningSocket;                   //!< TCP socket for p2p requesting
+    int dnsSock;                           //!< Active DNS connection
 
     int discoveryAttempts;  //!< Number of times to run discovery services
     int discoveryThreshold; //!< Number of nodes before considering oneself
@@ -72,7 +72,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
      * @param address   Peer address.
      * @return sockFd on found peer, 0 otherwise.
      */
-    virtual int findIpInPeers(L3Address ip);
+    virtual int getSockFd(L3Address ip);
 
     /**
      * Determines whether this node started the connection or not.

@@ -4,6 +4,7 @@
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
+#include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
 #include "s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.h"
 #include "s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.h"
 #include "s2f/architecture/p2p/pow/consumers/PingMsgConsumer.h"
@@ -135,34 +136,31 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
 
     // TODO: check why close(sockFd) if both peers close it at the same time.
     sock = check_and_cast<TcpSocket *>(socketMap.getSocketById(sockFd));
-    oldSock = findIpInPeers(sock->getRemoteAddress());
+    oldSock = getSockFd(sock->getRemoteAddress());
 
-    if (oldSock)
+    // Remove duplicate connections
+    if (peers.count(sock->getRemoteAddress()))
     {
-        p = powPeers[oldSock];
+        EV << "Found active connection to same peer on socket fd: " << oldSock << ". Closing.\n";
 
-        // Remove duplicate connections
-        if (p->getState() == ConnectionState::CONNECTED)
-        {
-            EV << "Found active connection to same peer on socket fd: " << oldSock << ". Closing.\n";
-            return;
-        }
-
-        // Remove stale candidate on differing sockets
-        // Reinserts at same index if oldSock == sockFd (peers[sockFd] = p)
-        powPeers.erase(oldSock);
-    }
-    else
-    {
-        p = new PowNetworkPeer;
-        p->setServices(pow::UNNAMED);
+        // FIXME: closing here bricks the simulation
+        // if (isClient(sockFd))
+        //     close(sockFd);
+        return;
     }
 
+    p = oldSock ? powPeers[oldSock] : new PowNetworkPeer;
+    p->setServices(oldSock ? p->getServices() : pow::UNNAMED);
     p->setIpAddress(sock->getRemoteAddress());
     p->setPort(sock->getRemotePort());
-    p->setState(ConnectionState::CONNECTED);
 
-    peers[sockFd] = p;
+    // Remove stale candidate on differing sockets
+    // Reinserts at same index if oldSock == sockFd (peers[sockFd] = p)
+    if (oldSock)
+        powPeers.erase(oldSock);
+
+    peers.insert(p->getIpAddress());
+    powPeers[sockFd] = p;
     peerConnection[sockFd] = new cMessage("CONNECTION STATUS");
 
     self.setPort(sock->getLocalPort());
