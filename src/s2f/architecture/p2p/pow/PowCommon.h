@@ -1,5 +1,5 @@
-#ifndef __POW_COMMON_H_
-#define __POW_COMMON_H_
+#ifndef __P2P_POW_COMMON_H__
+#define __P2P_POW_COMMON_H__
 
 #include <cstdint>
 #include <cstring>
@@ -11,9 +11,9 @@ namespace s2f
         namespace pow
         {
             /* Network start string*/
-            constexpr uint32_t MAIN_NET = 0xF9BEB4D9;
-            constexpr uint32_t TEST_NET = 0x0B110907;
-            constexpr uint32_t REG_TEST = 0xFABFB5DA;
+            constexpr uint32_t MAIN_NET = 0xF9BEB4D9; //<! Main network
+            constexpr uint32_t TEST_NET = 0x0B110907; //<! Test network
+            constexpr uint32_t REG_TEST = 0xFABFB5DA; //<! Reg test
 
             /* Node service types */
             constexpr uint64_t UNNAMED = 0x00;                //<! Not a full node, may only be ble to provide transactions
@@ -26,22 +26,8 @@ namespace s2f
 
             /* Ping-Pong connectivity */
             constexpr uint64_t PONG_TIMEOUT_SECONDS = 1200; //<! for pingpong message connectivity
-            constexpr uint64_t PING_POLLING_MIN = 60;
-            constexpr uint64_t PING_POLLING_MAX = 600;
-
-            /**
-             * Command options for a PoW message. Based on bitcoin networking:
-             * https://developer.bitcoin.org/reference/p2p_networking.html#version
-             */
-            enum Command
-            {
-                VERSION,
-                VERACK,
-                GETADDR,
-                ADDR,
-                PINGPONG,
-                NOT_SUPPORTED
-            };
+            constexpr uint64_t PING_POLLING_MIN = 60;       //<! minimum time before sending ping
+            constexpr uint64_t PING_POLLING_MAX = 600;      //<! maximum time before sending ping
 
             enum PowEvent
             {
@@ -49,12 +35,6 @@ namespace s2f
                 AWAITING_POLL,
             };
 
-            /**
-             * Parses a string as its corresponding command.
-             *
-             * @param c    Command string.
-             */
-            Command getCommand(const char *c);
         }
     }
 }

@@ -1,5 +1,5 @@
-#ifndef __POW_FLOW_MANAGER_H_
-#define __POW_FLOW_MANAGER_H_
+#ifndef __P2P_POW_APP_H__
+#define __P2P_POW_APP_H__
 
 #include "PowCommon.h"
 #include "consumers/IPowMsgConsumer.h"
@@ -25,7 +25,7 @@ namespace s2f
         class PowP2PApp : public P2PBase
         {
           protected:
-            PowNetworkPeer self;                                               //!< Data for this node
+            PowNetworkPeer self;                                               //!< Representation of this node
             std::map<int, cMessage *> peerConnection;                          //!< Peer event handlers
             std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
             std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
@@ -33,7 +33,7 @@ namespace s2f
                 reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peers); //!< Peer list in PowNetworkPeer format
 
             // ------------------------------------------------------------- //
-            //                       P2PBASE OVERRIDES                       //
+            //                           OVERRIDES                           //
             // ------------------------------------------------------------- //
 
             /**
@@ -59,7 +59,14 @@ namespace s2f
                     processNodeState(msg);
             }
 
+            /**
+             * Handle hook for events related to other peers.
+             */
             void processConnectionState(cMessage *msg);
+
+            /**
+             * Handle hook for self-events.
+             */
             void processNodeState(cMessage *msg);
 
             /**

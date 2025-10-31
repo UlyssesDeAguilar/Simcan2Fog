@@ -1,6 +1,6 @@
 #include "VersionMsgProducer.h"
 
-inet::Packet *VersionMsgProducer::buildMessage(HandlerContext &ictx)
+inet::Packet *VersionMsgProducer::buildMessage(IPowMsgContext &ictx)
 {
     auto packet = new inet::Packet("version");
     auto payload = inet::makeShared<Version>();

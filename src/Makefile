@@ -64,7 +64,6 @@ OBJS = \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
-    $O/s2f/architecture/p2p/pow/PowCommon.o \
     $O/s2f/architecture/p2p/pow/PowP2PApp.o \
     $O/s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.o \
     $O/s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.o \

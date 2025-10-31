@@ -1,6 +1,6 @@
 #include "PongMsgConsumer.h"
 
-HandlerResponse PongMsgConsumer::handleMessage(struct HandlerContext &ictx)
+IPowMsgResponse PongMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {
     return {
         .action = CANCEL,

@@ -1,6 +1,6 @@
 #include "VerackMsgConsumer.h"
 
-HandlerResponse VerackMsgConsumer::handleMessage(struct HandlerContext &ictx)
+IPowMsgResponse VerackMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {
     return {
         .action = SCHEDULE,
@@ -10,7 +10,7 @@ HandlerResponse VerackMsgConsumer::handleMessage(struct HandlerContext &ictx)
     };
 }
 
-inet::Packet *VerackMsgConsumer::buildResponse(HandlerContext &ictx)
+inet::Packet *VerackMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {
     if (!ictx.isClient)
         return nullptr;

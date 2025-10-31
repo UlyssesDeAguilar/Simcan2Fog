@@ -1,21 +1,28 @@
-#ifndef __P2P_POW_IMSGPRODUCER_H_
-#define __P2P_POW_IMSGPRODUCER_H_
+#ifndef __P2P_POW_IMSGPRODUCER_H__
+#define __P2P_POW_IMSGPRODUCER_H__
 
 #include "../IPowMsgCallback.h"
+using namespace s2f::p2p;
 
 /**
- * @class IMessageHandler IMessageHandler.h "IMessageHandler.h"
+ * @class IPowMsgProducer IPowMsgProducer.h "IPowMsgProducer.h"
  *
- * Message handling interface for the pow-based p2p protocol.
+ * Callback for message producers. A producer is manually called to generate
+ * an initial message (e.g., "version" and "ping") that depends on no input.
  *
  * @author Tomás Daniel Expósito Torre
  * @date 2025-10-29
  */
 class IPowMsgProducer : public IPowMsgCallback
 {
-
   public:
-    virtual inet::Packet *buildMessage(struct HandlerContext &ctx) { return nullptr; }
+    /**
+     * Builder for the specific message.
+     *
+     * @param ctx    Callback context.
+     * @return inet::Packet representing the built message.
+     */
+    virtual inet::Packet *buildMessage(struct IPowMsgContext &ctx) { return nullptr; }
 };
 
 #endif

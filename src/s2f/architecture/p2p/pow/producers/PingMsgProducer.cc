@@ -1,6 +1,6 @@
 #include "PingMsgProducer.h"
 
-inet::Packet *PingMsgProducer::buildMessage(HandlerContext &ictx)
+inet::Packet *PingMsgProducer::buildMessage(IPowMsgContext &ictx)
 {
     inet::Packet *packet = new inet::Packet("ping");
     auto payload = inet::makeShared<PingPong>();

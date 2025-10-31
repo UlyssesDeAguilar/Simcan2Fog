@@ -1,5 +1,5 @@
-#ifndef __P2P_POW_IMSGCALLBACK_H_
-#define __P2P_POW_IMSGCALLBACK_H_
+#ifndef __P2P_POW_IMSGCALLBACK_H__
+#define __P2P_POW_IMSGCALLBACK_H__
 
 #include "inet/common/packet/Packet.h"
 #include "inet/networklayer/common/L3Address.h"
@@ -16,7 +16,7 @@ using namespace s2f::p2p;
  * Delegated action to the module. Used for omnet-dependant procedures which
  * cannot be delegated to other classes.
  */
-enum HandlerAction
+enum IPowMsgAction
 {
     OPEN,     //!< Open sockets for incoming peers
     SCHEDULE, //!< Schedule an event for a peer
@@ -27,34 +27,32 @@ enum HandlerAction
 /**
  * Information derived from callback to use in the main module.
  */
-struct HandlerResponse
+struct IPowMsgResponse
 {
-    enum HandlerAction action;
-    short eventKind;
-    int eventDelayMin;
-    int eventDelayMax;
-    std::vector<PowNetworkPeer *> peers;
+    enum IPowMsgAction action;           //<! Action to execute
+    short eventKind;                     //<! Event type to schedule
+    int eventDelayMin;                   //<! Minimum delay for self event
+    int eventDelayMax;                   //<! Maximum delay for self event
+    std::vector<PowNetworkPeer *> peers; //<! New peers to connect to
 };
 
 /**
- * Information required by callback to process messages
- * NOTE: peer data is subject to modification by the callback.
- *
+ * Information required by callback to process messages.
+ * Peer data is subject to modification by the callback.
  */
-struct HandlerContext
+struct IPowMsgContext
 {
     inet::Packet *msg;                      //!< Received message
     std::map<int, PowNetworkPeer *> &peers; //<! All known peers
     bool isClient;                          //!< For messages only initiated by one peer
     int sockFd;                             //!< Active connection
-    PowNetworkPeer &self;
-    inet::L3Address localIp;
+    PowNetworkPeer &self;                   //!< Caller information
 };
 
 /**
- * @class IMessageHandler IMessageHandler.h "IMessageHandler.h"
+ * @class IPowMsgCallback IPowMsgCallback.h "IPowMsgCallback.h"
  *
- * Message handling interface for the pow-based p2p protocol.
+ * Message processing callback for the pow-based p2p protocol.
  *
  * @author Tomás Daniel Expósito Torre
  * @date 2025-10-29
@@ -62,6 +60,15 @@ struct HandlerContext
 class IPowMsgCallback
 {
   protected:
+    /**
+     * Builds a packet header. This method should be called after building the
+     * packet payload.
+     *
+     * @param name      Targetted consumer implementation.
+     * @param payload   Packet payload to compute the checksum.
+     *
+     * @return The built header.
+     */
     virtual inet::Ptr<Header> buildHeader(const char *name, inet::Ptr<inet::FieldsChunk> payload)
     {
         auto header = inet::makeShared<Header>();

@@ -1,13 +1,16 @@
-#ifndef __P2P_POW_IMSGCONSUMER_H_
-#define __P2P_POW_IMSGCONSUMER_H_
+#ifndef __P2P_POW_IMSGCONSUMER_H__
+#define __P2P_POW_IMSGCONSUMER_H__
 
 #include "../IPowMsgCallback.h"
 using namespace s2f::p2p;
 
 /**
- * @class IMessageHandler IMessageHandler.h "IMessageHandler.h"
+ * @class IPowMsgConsumer IPowMsgConsumer.h "IPowMsgConsumer.h"
  *
- * Message handling interface for the pow-based p2p protocol.
+ * Callback for message consumer. A consumer is programaticlly called from a
+ * message input kind and then generates the appropriate output.
+ *
+ * Optionally, it also derives actions to the main module.
  *
  * @author Tomás Daniel Expósito Torre
  * @date 2025-10-29
@@ -15,8 +18,21 @@ using namespace s2f::p2p;
 class IPowMsgConsumer : public IPowMsgCallback
 {
   public:
-    virtual HandlerResponse handleMessage(struct HandlerContext &ictx) { return {NOACTION}; };
-    virtual inet::Packet *buildResponse(struct HandlerContext &ctx) { return nullptr; }
+    /**
+     * Callback to handle a received message.
+     *
+     * @param ictx  Callback context.
+     * @return Action context to run by the main module.
+     */
+    virtual IPowMsgResponse handleMessage(struct IPowMsgContext &ictx) { return {NOACTION}; };
+
+    /**
+     * Callback to build a message response.
+     *
+     * @param ictx  Callback context.
+     * @return inet::Packet representing the built response.
+     */
+    virtual inet::Packet *buildResponse(struct IPowMsgContext &ctx) { return nullptr; }
 };
 
 #endif

@@ -19,12 +19,14 @@ using namespace s2f::p2p;
 Define_Module(PowP2PApp);
 
 // ------------------------------------------------------------------------- //
-//                             P2PBASE OVERRIDES                             //
+//                                  OVERRIDES                                //
 // ------------------------------------------------------------------------- //
 
 void PowP2PApp::initialize()
 {
     peerConnection.clear();
+
+    // Message consumers
     consumers.emplace("version", std::make_unique<VersionMsgConsumer>());
     consumers.emplace("verack", std::make_unique<VerackMsgConsumer>());
     consumers.emplace("getaddr", std::make_unique<GetAddressMsgConsumer>());
@@ -32,6 +34,7 @@ void PowP2PApp::initialize()
     consumers.emplace("ping", std::make_unique<PingMsgConsumer>());
     consumers.emplace("pong", std::make_unique<PongMsgConsumer>());
 
+    // Message producers
     producers.emplace("version", std::make_unique<VersionMsgProducer>());
     producers.emplace("ping", std::make_unique<PingMsgProducer>());
 
@@ -55,7 +58,7 @@ void PowP2PApp::processConnectionState(cMessage *msg)
 {
     if (msg->getKind() == pow::SEND_PING)
     {
-        HandlerContext ictx = {.peers = powPeers, .isClient = true, .self = self};
+        IPowMsgContext ictx = {.peers = powPeers, .isClient = true, .self = self};
         int sockFd = *(int *)msg->getContextPointer();
 
         if (powPeers.count(sockFd))
@@ -80,16 +83,16 @@ void PowP2PApp::processConnectionState(cMessage *msg)
 void PowP2PApp::processNodeState(cMessage *msg)
 {
 
+    // TODO: merge NODE_UP and PEER_DISCOVERY, change for call to various
+    // discovery services.
     if (msg->getKind() == NODE_UP)
     {
         self.setIpAddress(localIp);
-        // TODO: NODE_UP of non-full nodes, which do not connect to the dns
         EV << "Connecting to DNS registry service" << "\n";
         connect(dnsSock, dnsIp, 443);
     }
     else if (msg->getKind() == PEER_DISCOVERY)
     {
-        // TODO: define more peer discovery methods
         if (peers.size() < discoveryThreshold && discoveryAttempts > 0)
             resolve(dnsSeed);
         else if (peers.size() > 0)
@@ -120,12 +123,11 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
     PowNetworkPeer *p;
     TcpSocket *sock;
     int oldSock;
-    HandlerContext ictx = {
+    IPowMsgContext ictx = {
         .peers = powPeers,
         .isClient = isClient(sockFd),
         .sockFd = sockFd,
         .self = self,
-        .localIp = localIp,
     };
 
     EV << "Handling connect return on peer with ip " << localIp << "\n";
@@ -184,13 +186,12 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
 
     auto header = p->popAtFront<Header>();
     auto handler = consumers.find(header->getCommandName());
-    HandlerContext ictx = {
+    IPowMsgContext ictx = {
         .msg = p,
         .peers = powPeers,
         .isClient = isClient(sockFd),
         .sockFd = sockFd,
         .self = self,
-        .localIp = localIp,
     };
 
     if (handler == consumers.end())

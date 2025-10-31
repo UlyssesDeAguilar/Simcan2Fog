@@ -7,9 +7,9 @@ int findIpInPeers(std::map<int, PowNetworkPeer *> &peers, inet::L3Address ip)
     return it != peers.end() ? it->first : 0;
 }
 
-HandlerResponse AddressMsgConsumer::handleMessage(HandlerContext &ictx)
+IPowMsgResponse AddressMsgConsumer::handleMessage(IPowMsgContext &ictx)
 {
-    HandlerResponse response{};
+    IPowMsgResponse response{};
     auto payload = ictx.msg->peekData<Address>();
 
     response.action = OPEN;
@@ -17,7 +17,7 @@ HandlerResponse AddressMsgConsumer::handleMessage(HandlerContext &ictx)
     {
         auto p = const_cast<PowNetworkPeer *>(payload->getIpAddress(i));
 
-        if (p->getIpAddress() == ictx.localIp || findIpInPeers(ictx.peers, p->getIpAddress()))
+        if (p->getIpAddress() == ictx.self.getIpAddress() || findIpInPeers(ictx.peers, p->getIpAddress()))
             delete p;
         else
         {

@@ -17,9 +17,8 @@ using namespace s2f::dns;
 Define_Module(P2PBase);
 
 // ------------------------------------------------------------------------- //
-//                            APPBASE OVERRIDES                              //
+//                                  OVERRIDES                                //
 // ------------------------------------------------------------------------- //
-
 void P2PBase::initialize()
 {
     AppBase::initialize();
@@ -32,7 +31,7 @@ void P2PBase::initialize()
 
     // P2P params
     peers.clear();
-    peerCandidates.clear();
+    resolutionList.clear();
 
     listeningPort = par("listeningPort");
     discoveryAttempts = par("discoveryAttempts");
@@ -59,7 +58,7 @@ void P2PBase::processSelfMessage(cMessage *msg)
     }
     else if (msg->getKind() == PEER_CONNECTION)
     {
-        if (!peerCandidates.empty())
+        if (!resolutionList.empty())
         {
             connectToPeer();
             scheduleAfter(1.0, event);
@@ -74,7 +73,8 @@ void P2PBase::processSelfMessage(cMessage *msg)
 }
 
 // TODO: remove from base class
-void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
+void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions,
+                                       bool resolved)
 {
     if (!resolved)
         error("No peers connected on DNS seed %s.", dnsSeed);
@@ -85,7 +85,7 @@ void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions, 
     // Add peer candidates from resolution
     for (const auto &ip : ipResolutions)
         if (ip != localIp && !findIpInPeers(ip))
-            peerCandidates.push_back(ip);
+            resolutionList.push_back(ip);
 
     // Start connecting to discovered peers
     event->setKind(PEER_CONNECTION);
@@ -132,7 +132,8 @@ void P2PBase::handleDataArrived(int sockFd, Packet *p)
 
 bool P2PBase::handlePeerClosed(int sockFd)
 {
-    EV << "Peer" << peers[sockFd]->getIpAddress() << "closed the connection" << "\n";
+    EV << "Peer" << peers[sockFd]->getIpAddress() << "closed the connection"
+       << "\n";
     delete peers[sockFd];
     peers.erase(sockFd);
     return true;
@@ -158,7 +159,7 @@ void P2PBase::finish()
     }
 
     peers.clear();
-    peerCandidates.clear();
+    resolutionList.clear();
     close(dnsSock);
 
     // Finish the super-class
@@ -166,13 +167,13 @@ void P2PBase::finish()
 }
 
 // ------------------------------------------------------------------------- //
-//                             P2PBASE METHODS                               //
+//                                 METHODS                                   //
 // ------------------------------------------------------------------------- //
 
 void P2PBase::handleConnectFailure(int sockFd)
 {
-    // Remove peer from active connection list
-    EV_INFO << "Connection failed for IP " << peers[sockFd]->getIpAddress() << "on sockFd" << sockFd << "\n";
+    EV_INFO << "Connection failed for IP " << peers[sockFd]->getIpAddress()
+            << "on sockFd" << sockFd << "\n";
     delete peers[sockFd];
     peers.erase(sockFd);
 }
@@ -181,8 +182,8 @@ void P2PBase::connectToPeer()
 {
     int sockFd = open(-1, SOCK_STREAM);
 
-    L3Address destIp = peerCandidates.back();
-    peerCandidates.pop_back();
+    L3Address destIp = resolutionList.back();
+    resolutionList.pop_back();
     connect(sockFd, destIp, listeningPort);
 }
 

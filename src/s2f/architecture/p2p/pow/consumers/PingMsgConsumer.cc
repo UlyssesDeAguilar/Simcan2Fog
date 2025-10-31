@@ -1,13 +1,6 @@
 #include "PingMsgConsumer.h"
 
-HandlerResponse PingMsgConsumer::handleMessage(struct HandlerContext &ictx)
-{
-    return {
-        .action = NOACTION,
-    };
-}
-
-inet::Packet *PingMsgConsumer::buildResponse(HandlerContext &ictx)
+inet::Packet *PingMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {
     inet::Packet *packet = new inet::Packet("pong");
     auto payload = inet::makeShared<PingPong>();

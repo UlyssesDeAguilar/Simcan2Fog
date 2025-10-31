@@ -1,6 +1,6 @@
 #include "VersionMsgConsumer.h"
 
-HandlerResponse VersionMsgConsumer::handleMessage(struct HandlerContext &ictx)
+IPowMsgResponse VersionMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {
     auto payload = ictx.msg->peekData<Version>();
     auto p = ictx.peers[ictx.sockFd];
@@ -17,7 +17,7 @@ HandlerResponse VersionMsgConsumer::handleMessage(struct HandlerContext &ictx)
     return {.action = NOACTION};
 }
 
-inet::Packet *VersionMsgConsumer::buildResponse(HandlerContext &ictx)
+inet::Packet *VersionMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {
     auto packet = new inet::Packet("verack");
     packet->insertAtBack(buildHeader("verack", nullptr));

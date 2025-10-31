@@ -1,14 +1,29 @@
-#ifndef __P2P_ADDRESSMSGCONSUMER_H_
-#define __P2P_ADDRESSMSGCONSUMER_H_
+#ifndef __P2P_POW_ADDRESSMSGCONSUMER_H__
+#define __P2P_POW_ADDRESSMSGCONSUMER_H__
 
 #include "../messages/Address_m.h"
 #include "IPowMsgConsumer.h"
+using namespace s2f::p2p;
 
+/**
+ * @class AddressMsgConsumer AddressMsgConsumer.h "AddressMsgConsumer.h"
+ *
+ * Callback to consume an "addr" message. No response message is generated.
+ *
+ * @author Tomás Daniel Expósito Torre
+ * @date 2025-10-29
+ */
 using namespace s2f::p2p;
 class AddressMsgConsumer : public IPowMsgConsumer
 {
   public:
-    virtual HandlerResponse handleMessage(HandlerContext &ictx) override;
+    /**
+     * Callback to handle the "addr" message.
+     *
+     * @param ictx  Callback context.
+     * @return Peer data to add.
+     */
+    virtual IPowMsgResponse handleMessage(IPowMsgContext &ictx) override;
 };
 
 #endif
