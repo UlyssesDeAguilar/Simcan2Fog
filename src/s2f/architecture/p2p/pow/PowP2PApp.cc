@@ -16,7 +16,7 @@
 
 #include <memory>
 
-using namespace s2f::p2p;
+using namespace s2f::p2p::pow;
 Define_Module(PowP2PApp);
 
 // ------------------------------------------------------------------------- //

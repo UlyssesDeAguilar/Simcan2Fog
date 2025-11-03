@@ -9,7 +9,7 @@
 #include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
 #include <memory>
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class PowP2PApp PowP2PApp.h "PowP2PApp.h"

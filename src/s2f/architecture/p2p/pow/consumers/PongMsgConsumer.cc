@@ -1,6 +1,6 @@
 #include "PongMsgConsumer.h"
 
-using namespace s2f::p2p;
+using namespace s2f::p2p::pow;
 
 IPowMsgResponse PongMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {

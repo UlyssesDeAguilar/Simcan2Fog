@@ -3,7 +3,7 @@ import inet.common.packet.chunk.Chunk;
 import inet.networklayer.common.L3Address;
 import s2f.architecture.p2p.pow.PowNetworkPeer;
 
-namespace s2f::p2p;
+namespace s2f::p2p::pow;
 
 class Address extends inet::FieldsChunk
 {

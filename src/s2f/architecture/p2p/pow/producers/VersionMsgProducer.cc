@@ -1,6 +1,6 @@
 #include "VersionMsgProducer.h"
 
-using namespace s2f::p2p;
+using namespace s2f::p2p::pow;
 
 inet::Packet *VersionMsgProducer::buildMessage(IPowMsgContext &ictx)
 {

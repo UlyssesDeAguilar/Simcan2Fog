@@ -4,7 +4,7 @@
 #include "../messages/PingPong_m.h"
 #include "IPowMsgConsumer.h"
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class PingMsgConsumer PingMsgConsumer.h "PingMsgConsumer.h"

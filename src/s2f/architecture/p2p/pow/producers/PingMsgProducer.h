@@ -4,7 +4,7 @@
 #include "../messages/PingPong_m.h"
 #include "IPowMsgProducer.h"
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class PingMsgProducer PingMsgProducer.h "PingMsgProducer.h"

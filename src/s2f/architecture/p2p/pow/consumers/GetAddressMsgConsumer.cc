@@ -1,6 +1,6 @@
 #include "GetAddressMsgConsumer.h"
 
-using namespace s2f::p2p;
+using namespace s2f::p2p::pow;
 
 inet::Packet *GetAddressMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {

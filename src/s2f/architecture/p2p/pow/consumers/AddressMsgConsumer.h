@@ -4,7 +4,7 @@
 #include "../messages/Address_m.h"
 #include "IPowMsgConsumer.h"
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class AddressMsgConsumer AddressMsgConsumer.h "AddressMsgConsumer.h"

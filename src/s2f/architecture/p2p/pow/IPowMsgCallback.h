@@ -10,7 +10,7 @@
 #include <omnetpp.h>
 #include <vector>
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * Delegated action to the module. Used for omnet-dependant procedures which

@@ -2,7 +2,7 @@
 #define __P2P_POW_IMSGCONSUMER_H__
 
 #include "../IPowMsgCallback.h"
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class IPowMsgConsumer IPowMsgConsumer.h "IPowMsgConsumer.h"

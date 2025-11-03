@@ -1,6 +1,6 @@
 #include "PingMsgProducer.h"
 
-using namespace s2f::p2p;
+using namespace s2f::p2p::pow;
 
 inet::Packet *PingMsgProducer::buildMessage(IPowMsgContext &ictx)
 {

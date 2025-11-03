@@ -1,6 +1,6 @@
 #include "PingMsgConsumer.h"
 
-using namespace s2f::p2p;
+using namespace s2f::p2p::pow;
 
 inet::Packet *PingMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {

@@ -3,7 +3,7 @@
 
 #include "../IPowMsgCallback.h"
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class IPowMsgProducer IPowMsgProducer.h "IPowMsgProducer.h"

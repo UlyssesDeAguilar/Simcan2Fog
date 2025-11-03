@@ -1,7 +1,7 @@
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 
-namespace s2f::p2p;
+namespace s2f::p2p::pow;
 
 //
 // Header inspired in the bitcoin p2p message header

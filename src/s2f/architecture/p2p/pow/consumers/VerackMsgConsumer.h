@@ -2,7 +2,7 @@
 #define __P2P_POW_VERACKMSGCONSUMER_H__
 
 #include "IPowMsgConsumer.h"
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class VerackMsgConsumer VerackMsgConsumer.h "VerackMsgConsumer.h"

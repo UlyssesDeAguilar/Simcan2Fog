@@ -2,7 +2,7 @@ import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import inet.networklayer.common.L3Address;
 
-namespace s2f::p2p;
+namespace s2f::p2p::pow;
 
 //
 // Version message payload 

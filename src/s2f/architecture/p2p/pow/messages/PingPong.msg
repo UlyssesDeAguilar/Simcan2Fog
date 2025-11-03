@@ -2,7 +2,7 @@
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 
-namespace s2f::p2p;
+namespace s2f::p2p::pow;
 
 class PingPong extends inet::FieldsChunk
 {

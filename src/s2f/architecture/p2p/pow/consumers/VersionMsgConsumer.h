@@ -4,7 +4,7 @@
 #include "../messages/Version_m.h"
 #include "IPowMsgConsumer.h"
 
-namespace s2f::p2p
+namespace s2f::p2p::pow
 {
     /**
      * @class VersionMsgConsumer VersionMsgConsumer.h "VersionMsgConsumer.h"
