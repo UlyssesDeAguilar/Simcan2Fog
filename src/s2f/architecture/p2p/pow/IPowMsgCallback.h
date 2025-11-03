@@ -10,82 +10,82 @@
 #include <omnetpp.h>
 #include <vector>
 
-using namespace s2f::p2p;
-
-/**
- * Delegated action to the module. Used for omnet-dependant procedures which
- * cannot be delegated to other classes.
- */
-enum IPowMsgAction
+namespace s2f::p2p
 {
-    OPEN,     //!< Open sockets for incoming peers
-    SCHEDULE, //!< Schedule an event for a peer
-    CANCEL,   //!< Cancel an event for a peer
-    NOACTION
-};
-
-/**
- * Information derived from callback to use in the main module.
- */
-struct IPowMsgResponse
-{
-    enum IPowMsgAction action;           //<! Action to execute
-    short eventKind;                     //<! Event type to schedule
-    int eventDelayMin;                   //<! Minimum delay for self event
-    int eventDelayMax;                   //<! Maximum delay for self event
-    std::vector<PowNetworkPeer *> peers; //<! New peers to connect to
-};
-
-/**
- * Information required by callback to process messages.
- * Peer data is subject to modification by the callback.
- */
-struct IPowMsgContext
-{
-    inet::Packet *msg;                      //!< Received message
-    std::map<int, PowNetworkPeer *> &peers; //<! All known peers
-    bool isClient;                          //!< For messages only initiated by one peer
-    int sockFd;                             //!< Active connection
-    PowNetworkPeer &self;                   //!< Caller information
-};
-
-/**
- * @class IPowMsgCallback IPowMsgCallback.h "IPowMsgCallback.h"
- *
- * Message processing callback for the pow-based p2p protocol.
- *
- * @author Tomás Daniel Expósito Torre
- * @date 2025-10-29
- */
-class IPowMsgCallback
-{
-  protected:
     /**
-     * Builds a packet header. This method should be called after building the
-     * packet payload.
-     *
-     * @param name      Targetted consumer implementation.
-     * @param payload   Packet payload to compute the checksum.
-     *
-     * @return The built header.
+     * Delegated action to the module. Used for omnet-dependant procedures which
+     * cannot be delegated to other classes.
      */
-    virtual inet::Ptr<Header> buildHeader(const char *name, inet::Ptr<inet::FieldsChunk> payload)
+    enum IPowMsgAction
     {
-        auto header = inet::makeShared<Header>();
+        OPEN,     //!< Open sockets for incoming peers
+        SCHEDULE, //!< Schedule an event for a peer
+        CANCEL,   //!< Cancel an event for a peer
+        NOACTION
+    };
 
-        // Message Header
-        header->setCommandName(name);
-        header->setStartString(pow::MAIN_NET);
+    /**
+     * Information derived from callback to use in the main module.
+     */
+    struct IPowMsgResponse
+    {
+        enum IPowMsgAction action;           //<! Action to execute
+        short eventKind;                     //<! Event type to schedule
+        int eventDelayMin;                   //<! Minimum delay for self event
+        int eventDelayMax;                   //<! Maximum delay for self event
+        std::vector<PowNetworkPeer *> peers; //<! New peers to connect to
+    };
 
-        // TODO: determine size from payload and sha256 to create a checksum
-        header->setPayloadSize(0);
-        header->setChecksum("TODO");
+    /**
+     * Information required by callback to process messages.
+     * Peer data is subject to modification by the callback.
+     */
+    struct IPowMsgContext
+    {
+        inet::Packet *msg;                      //!< Received message
+        std::map<int, PowNetworkPeer *> &peers; //<! All known peers
+        bool isClient;                          //!< For messages only initiated by one peer
+        int sockFd;                             //!< Active connection
+        PowNetworkPeer &self;                   //!< Caller information
+    };
 
-        return header;
-    }
+    /**
+     * @class IPowMsgCallback IPowMsgCallback.h "IPowMsgCallback.h"
+     *
+     * Message processing callback for the pow-based p2p protocol.
+     *
+     * @author Tomás Daniel Expósito Torre
+     * @date 2025-10-29
+     */
+    class IPowMsgCallback
+    {
+      protected:
+        /**
+         * Builds a packet header. This method should be called after building the
+         * packet payload.
+         *
+         * @param name      Targetted consumer implementation.
+         * @param payload   Packet payload to compute the checksum.
+         *
+         * @return The built header.
+         */
+        virtual inet::Ptr<Header> buildHeader(const char *name, inet::Ptr<inet::FieldsChunk> payload)
+        {
+            auto header = inet::makeShared<Header>();
 
-  public:
-    virtual ~IPowMsgCallback() = default;
-};
+            // Message Header
+            header->setCommandName(name);
+            header->setStartString(pow::MAIN_NET);
 
+            // TODO: determine size from payload and sha256 to create a checksum
+            header->setPayloadSize(0);
+            header->setChecksum("TODO");
+
+            return header;
+        }
+
+      public:
+        virtual ~IPowMsgCallback() = default;
+    };
+}
 #endif

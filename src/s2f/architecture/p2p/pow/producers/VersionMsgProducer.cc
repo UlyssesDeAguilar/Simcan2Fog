@@ -1,5 +1,7 @@
 #include "VersionMsgProducer.h"
 
+using namespace s2f::p2p;
+
 inet::Packet *VersionMsgProducer::buildMessage(IPowMsgContext &ictx)
 {
     auto packet = new inet::Packet("version");

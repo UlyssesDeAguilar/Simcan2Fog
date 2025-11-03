@@ -9,83 +9,80 @@
 #include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
 #include <memory>
 
-namespace s2f
+namespace s2f::p2p
 {
-    namespace p2p
+    /**
+     * @class PowP2PApp PowP2PApp.h "PowP2PApp.h"
+     *
+     * Peer-to-peer protocol specification for nodes managing a proof of
+     * work based blockchain, inspired by bitcoin.
+     *
+     * @author Tomás Daniel Expósito Torre
+     * @date 2025-09-23
+     */
+    class PowP2PApp : public P2PBase
     {
+      protected:
+        PowNetworkPeer self;                                               //!< Representation of this node
+        std::map<int, cMessage *> peerConnection;                          //!< Peer event handlers
+        std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
+        std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
+        std::map<int, PowNetworkPeer *> &powPeers =
+            reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
+
+        // ------------------------------------------------------------- //
+        //                           OVERRIDES                           //
+        // ------------------------------------------------------------- //
+
         /**
-         * @class PowP2PApp PowP2PApp.h "PowP2PApp.h"
-         *
-         * Peer-to-peer protocol specification for nodes managing a proof of
-         * work based blockchain, inspired by bitcoin.
-         *
-         * @author Tomás Daniel Expósito Torre
-         * @date 2025-09-23
+         * Initialization hook for this module.
          */
-        class PowP2PApp : public P2PBase
+        virtual void initialize() override;
+
+        /**
+         * Finish hook that runs when the simulation is terminated without errors.
+         */
+        virtual void finish() override;
+
+        /**
+         * Handle hook for messages sent by this module.
+         *
+         * @param msg   Message to process.
+         */
+        virtual void processSelfMessage(cMessage *msg) override
         {
-          protected:
-            PowNetworkPeer self;                                               //!< Representation of this node
-            std::map<int, cMessage *> peerConnection;                          //!< Peer event handlers
-            std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
-            std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
-            std::map<int, PowNetworkPeer *> &powPeers =
-                reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
+            if (msg != event)
+                processConnectionState(msg);
+            else
+                processNodeState(msg);
+        }
 
-            // ------------------------------------------------------------- //
-            //                           OVERRIDES                           //
-            // ------------------------------------------------------------- //
+        /**
+         * Handle hook for events related to other peers.
+         */
+        void processConnectionState(cMessage *msg);
 
-            /**
-             * Initialization hook for this module.
-             */
-            virtual void initialize() override;
+        /**
+         * Handle hook for self-events.
+         */
+        void processNodeState(cMessage *msg);
 
-            /**
-             * Finish hook that runs when the simulation is terminated without errors.
-             */
-            virtual void finish() override;
+        /**
+         * Handles the initial connection to another peer candidate in the
+         * network.
+         *
+         * @param sockFd    connection file descriptor.
+         * @param connected connection status.
+         */
+        virtual void handleConnectReturn(int sockFd, bool connected) override;
 
-            /**
-             * Handle hook for messages sent by this module.
-             *
-             * @param msg   Message to process.
-             */
-            virtual void processSelfMessage(cMessage *msg) override
-            {
-                if (msg != event)
-                    processConnectionState(msg);
-                else
-                    processNodeState(msg);
-            }
-
-            /**
-             * Handle hook for events related to other peers.
-             */
-            void processConnectionState(cMessage *msg);
-
-            /**
-             * Handle hook for self-events.
-             */
-            void processNodeState(cMessage *msg);
-
-            /**
-             * Handles the initial connection to another peer candidate in the
-             * network.
-             *
-             * @param sockFd    connection file descriptor.
-             * @param connected connection status.
-             */
-            virtual void handleConnectReturn(int sockFd, bool connected) override;
-
-            /**
-             * Handles packets arrived from an existing connection.
-             *
-             * @param sockFd    connection file descriptor.
-             * @param p         connection incoming data.
-             */
-            virtual void handleDataArrived(int sockFd, Packet *p) override;
-        };
-    }
-};
+        /**
+         * Handles packets arrived from an existing connection.
+         *
+         * @param sockFd    connection file descriptor.
+         * @param p         connection incoming data.
+         */
+        virtual void handleDataArrived(int sockFd, Packet *p) override;
+    };
+}
 #endif

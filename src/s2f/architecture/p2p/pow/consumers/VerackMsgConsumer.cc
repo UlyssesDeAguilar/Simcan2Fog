@@ -1,5 +1,7 @@
 #include "VerackMsgConsumer.h"
 
+using namespace s2f::p2p;
+
 IPowMsgResponse VerackMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {
     return {

@@ -1,5 +1,7 @@
 #include "PingMsgConsumer.h"
 
+using namespace s2f::p2p;
+
 inet::Packet *PingMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {
     inet::Packet *packet = new inet::Packet("pong");

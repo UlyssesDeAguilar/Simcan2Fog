@@ -1,5 +1,6 @@
 #include "VersionMsgConsumer.h"
 
+using namespace s2f::p2p;
 IPowMsgResponse VersionMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {
     auto payload = ictx.msg->peekData<Version>();

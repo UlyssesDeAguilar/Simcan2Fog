@@ -4,34 +4,35 @@
 #include "../messages/Version_m.h"
 #include "IPowMsgConsumer.h"
 
-using namespace s2f::p2p;
-
-/**
- * @class VersionMsgConsumer VersionMsgConsumer.h "VersionMsgConsumer.h"
- *
- * Callback to consume a "version" message.
- *
- * @author Tomás Daniel Expósito Torre
- * @date 2025-10-29
- */
-class VersionMsgConsumer : public IPowMsgConsumer
+namespace s2f::p2p
 {
-  public:
     /**
-     * Callback to handle the "version" message.
+     * @class VersionMsgConsumer VersionMsgConsumer.h "VersionMsgConsumer.h"
      *
-     * @param ictx  Callback context.
-     * @return Peer data to add.
-     */
-    virtual IPowMsgResponse handleMessage(IPowMsgContext &ictx) override;
-    /**
-     * Callback to build a response for a "version" message.
-     * The response is a "verack" message.
+     * Callback to consume a "version" message.
      *
-     * @param ictx  Callback context.
-     * @return inet::Packet representing the built response.
+     * @author Tomás Daniel Expósito Torre
+     * @date 2025-10-29
      */
-    virtual inet::Packet *buildResponse(struct IPowMsgContext &ictx) override;
-};
+    class VersionMsgConsumer : public IPowMsgConsumer
+    {
+      public:
+        /**
+         * Callback to handle the "version" message.
+         *
+         * @param ictx  Callback context.
+         * @return Peer data to add.
+         */
+        virtual IPowMsgResponse handleMessage(IPowMsgContext &ictx) override;
+        /**
+         * Callback to build a response for a "version" message.
+         * The response is a "verack" message.
+         *
+         * @param ictx  Callback context.
+         * @return inet::Packet representing the built response.
+         */
+        virtual inet::Packet *buildResponse(struct IPowMsgContext &ictx) override;
+    };
+}
 
 #endif

@@ -1,5 +1,7 @@
 #include "AddressMsgConsumer.h"
 
+using namespace s2f::p2p;
+
 int findIpInPeers(std::map<int, PowNetworkPeer *> &peers, inet::L3Address ip)
 {
     auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &p)

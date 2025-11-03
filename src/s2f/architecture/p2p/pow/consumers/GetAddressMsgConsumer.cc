@@ -1,5 +1,7 @@
 #include "GetAddressMsgConsumer.h"
 
+using namespace s2f::p2p;
+
 inet::Packet *GetAddressMsgConsumer::buildResponse(IPowMsgContext &ictx)
 {
     auto packet = new inet::Packet("addr");
