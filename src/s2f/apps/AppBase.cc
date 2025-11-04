@@ -1,10 +1,11 @@
 #include "AppBase.h"
+#include "inet/networklayer/common/L3Address.h"
 
 using namespace s2f::os;
 #include "inet/common/socket/SocketTag_m.h"
 
-
-void AppBase::initialize() {
+void AppBase::initialize()
+{
     // Init the super-class
     cSIMCAN_Core::initialize();
 
@@ -12,7 +13,7 @@ void AppBase::initialize() {
     startDelay = par("startDelay");
     connectionDelay = par("connectionDelay");
     isDistributedApp = par("isDistributedApp");
-    myRank = (unsigned int) par("myRank");
+    myRank = (unsigned int)par("myRank");
     testID = par("testID");
     appInstance = par("appInstance");
     vmInstance = par("vmInstance");
@@ -37,15 +38,17 @@ void AppBase::initialize() {
     scheduleExecStart();
 }
 
-void AppBase::scheduleExecStart() {
+void AppBase::scheduleExecStart()
+{
     // Schedule waiting time to execute
     EV_DEBUG << "App module: " << getClassName() << " will start executing in "
-                    << startDelay << " seconds from now\n";
+             << startDelay << " seconds from now\n";
     event = new cMessage("EXECUTION START");
     scheduleAt(simTime() + startDelay, event);
 }
 
-void AppBase::finish() {
+void AppBase::finish()
+{
     // Clear all sockets
     for (auto &iter : socketMap.getMap())
         iter.second->destroy();
@@ -55,7 +58,8 @@ void AppBase::finish() {
     cSIMCAN_Core::finish();
 }
 
-cGate* AppBase::getOutGate(cMessage *msg) {
+cGate *AppBase::getOutGate(cMessage *msg)
+{
     // If msg arrives from the Operating System
     if (msg->getArrivalGate() == inGate)
         return outGate;
@@ -64,49 +68,61 @@ cGate* AppBase::getOutGate(cMessage *msg) {
     return nullptr;
 }
 
-void AppBase::syscallFillData(Syscall *syscall, SyscallCode code) {
+void AppBase::syscallFillData(Syscall *syscall, SyscallCode code)
+{
     syscall->setPid(pid);
     syscall->setVmId(vmId);
     syscall->setOpCode(code);
 }
 
-void AppBase::handleMessage(cMessage *msg) {
+void AppBase::handleMessage(cMessage *msg)
+{
     auto arrivalGate = msg->getArrivalGate();
 
     if (arrivalGate == inGate || msg->isSelfMessage())
         cSIMCAN_Core::handleMessage(msg);
-    else if (arrivalGate == gate("resolver")) {
+    else if (arrivalGate == gate("resolver"))
+    {
         // DNS resolver response!
-        auto response = check_and_cast<StubDnsResponse*>(msg);
-        callback->handleResolutionFinished(response->getAddress(),
-                response->getResult() == 0);
+        auto response = check_and_cast<StubDnsResponse *>(msg);
+        std::set<L3Address> ipResolutions;
+        for (int i = 0; i < response->getAddressArraySize(); i++)
+            ipResolutions.insert(response->getAddress(i));
+        callback->handleResolutionFinished(ipResolutions,
+                                           response->getResult() == 0);
         delete response;
-    } else {
+    }
+    else
+    {
         auto socket = socketMap.findSocketFor(msg);
         if (socket)
             socket->processMessage(msg);
-        else{
-            auto packet = dynamic_cast<Packet*>(msg);
+        else
+        {
+            auto packet = dynamic_cast<Packet *>(msg);
             int socketId = packet->getTag<SocketInd>()->getSocketId();
             error("Message arrived for an unregistered socket %d", socketId);
         }
     }
 }
 
-void AppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate) {
+void AppBase::sendRequestMessage(SIMCAN_Message *sm, cGate *outGate)
+{
     // Record the starting time and change state
     operationStart = simTime();
     cSIMCAN_Core::sendRequestMessage(sm, outGate);
 }
 
-void AppBase::processResponseMessage(SIMCAN_Message *msg) {
-    auto syscall = check_and_cast<Syscall*>(msg);
+void AppBase::processResponseMessage(SIMCAN_Message *msg)
+{
+    auto syscall = check_and_cast<Syscall *>(msg);
     auto timeElapsed = simTime() - operationStart;
 
-    switch (syscall->getOpCode()) {
+    switch (syscall->getOpCode())
+    {
     case EXEC:
         callback->returnExec(timeElapsed,
-                check_and_cast<SM_CPU_Message*>(syscall));
+                             check_and_cast<SM_CPU_Message *>(syscall));
         break;
     case READ:
         callback->returnRead(timeElapsed);
@@ -123,7 +139,8 @@ void AppBase::processResponseMessage(SIMCAN_Message *msg) {
 
 // ----------------- CPU calls ----------------- //
 
-void AppBase::execute(double MIs) {
+void AppBase::execute(double MIs)
+{
     // Prepare the system call
     SM_CPU_Message *sm_cpu = new SM_CPU_Message();
     syscallFillData(sm_cpu, EXEC);
@@ -136,13 +153,14 @@ void AppBase::execute(double MIs) {
     sm_cpu->updateLength();
 
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " sending cpu request \n";
+             << " sending cpu request \n";
 
     // Send the request to the Operating System
     sendRequestMessage(sm_cpu, outGate);
 }
 
-void AppBase::execute(simtime_t cpuTime) {
+void AppBase::execute(simtime_t cpuTime)
+{
     // Prepare the system call
     SM_CPU_Message *sm_cpu = new SM_CPU_Message();
     syscallFillData(sm_cpu, EXEC);
@@ -155,49 +173,54 @@ void AppBase::execute(simtime_t cpuTime) {
     sm_cpu->updateLength();
 
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " sending cpu request \n";
+             << " sending cpu request \n";
 
     // Send the request to the Operating System
     sendRequestMessage(sm_cpu, outGate);
 }
 
-void AppBase::read(double bytes) {
+void AppBase::read(double bytes)
+{
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " sending read call: " << bytes << "B" << "\n";
+             << " sending read call: " << bytes << "B" << "\n";
     auto syscall = new DiskSyscall();
     syscallFillData(syscall, READ);
     syscall->setBufferSize(bytes);
     sendRequestMessage(syscall, outGate);
 }
 
-void AppBase::write(double bytes) {
+void AppBase::write(double bytes)
+{
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " sending write call: " << bytes << "B" << "\n";
+             << " sending write call: " << bytes << "B" << "\n";
     auto syscall = new DiskSyscall();
     syscallFillData(syscall, WRITE);
     syscall->setBufferSize(bytes);
     sendRequestMessage(syscall, outGate);
 }
 
-void AppBase::_exit() {
+void AppBase::_exit()
+{
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " terminated sucessfully\n";
+             << " terminated sucessfully\n";
     auto syscall = new Syscall();
     syscallFillData(syscall, EXIT);
     sendRequestMessage(syscall, outGate);
 }
 
-void AppBase::abort() {
+void AppBase::abort()
+{
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " terminated abruptly\n";
+             << " terminated abruptly\n";
     Syscall *syscall = new Syscall();
     syscallFillData(syscall, ABORT);
     sendRequestMessage(syscall, outGate);
 }
 
-void AppBase::resolve(const char *domainName) {
+void AppBase::resolve(const char *domainName)
+{
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " resolving:" << domainName << "\n";
+             << " resolving:" << domainName << "\n";
     auto request = new StubDnsRequest();
     request->setDomain(domainName);
     request->setModuleId(getId());
@@ -205,9 +228,11 @@ void AppBase::resolve(const char *domainName) {
 }
 
 int AppBase::open(uint16_t localPort, ConnectionMode mode,
-        const char *interfaceName) {
-    ISocket *socket { };
-    if (mode == SOCK_DGRAM) {
+                  const char *interfaceName)
+{
+    ISocket *socket{};
+    if (mode == SOCK_DGRAM)
+    {
         auto s = new UdpSocket();
         s->setCallback(this);
         s->setOutputGate(gate("socketOut"));
@@ -219,7 +244,9 @@ int AppBase::open(uint16_t localPort, ConnectionMode mode,
                     localPort);
 
         socket = s;
-    } else {
+    }
+    else
+    {
         auto s = new TcpSocket();
         s->setCallback(this);
         s->setOutputGate(gate("socketOut"));
@@ -236,42 +263,50 @@ int AppBase::open(uint16_t localPort, ConnectionMode mode,
     return socket->getSocketId();
 }
 
-void AppBase::listen(int socketFd) {
+void AppBase::listen(int socketFd)
+{
     ISocket *sock = socketMap.getSocketById(socketFd);
-    auto tcpSocket = check_and_cast<TcpSocket*>(sock);
+    auto tcpSocket = check_and_cast<TcpSocket *>(sock);
     tcpSocket->listen();
 }
 
 void AppBase::connect(int socketFd, const L3Address &destIp,
-        const uint16_t &destPort) {
+                      const uint16_t &destPort)
+{
     ISocket *sock = socketMap.getSocketById(socketFd);
-    auto tcpSocket = check_and_cast<TcpSocket*>(sock);
+    auto tcpSocket = check_and_cast<TcpSocket *>(sock);
     tcpSocket->connect(destIp, destPort);
 }
 
 void AppBase::_send(int socketFd, Packet *packet, uint32_t destIp,
-        uint16_t destPort) {
+                    uint16_t destPort)
+{
     ISocket *sock = socketMap.getSocketById(socketFd);
     Ipv4Address address(destIp);
 
-    if (destIp == 0 && destPort == 0) {
-        auto tcpSocket = check_and_cast<TcpSocket*>(sock);
+    if (destIp == 0 && destPort == 0)
+    {
+        auto tcpSocket = check_and_cast<TcpSocket *>(sock);
         tcpSocket->send(packet);
-    } else {
-        auto udpSock = check_and_cast<UdpSocket*>(sock);
+    }
+    else
+    {
+        auto udpSock = check_and_cast<UdpSocket *>(sock);
         udpSock->sendTo(packet, address, destPort);
     }
 }
 
-void AppBase::close(int socketFd) {
+void AppBase::close(int socketFd)
+{
     EV_TRACE << "App " << "[" << vmId << "]" << "[" << pid << "]"
-                    << " closing socket:" << socketFd;
+             << " closing socket:" << socketFd;
 
     ISocket *sock = socketMap.removeSocket(socketMap.getSocketById(socketFd));
     sock->close();
 }
 
-void AppBase::registerService(const char *serviceName, int sockFd) {
+void AppBase::registerService(const char *serviceName, int sockFd)
+{
     auto packet = new Packet();
 
     auto request = makeShared<ProxyServiceRequest>();
@@ -285,7 +320,8 @@ void AppBase::registerService(const char *serviceName, int sockFd) {
     send(packet, gate("socketOut"));
 }
 
-void AppBase::unregisterService(const char *serviceName, int sockFd) {
+void AppBase::unregisterService(const char *serviceName, int sockFd)
+{
     auto packet = new Packet();
 
     auto request = makeShared<ProxyServiceRequest>();
@@ -300,51 +336,61 @@ void AppBase::unregisterService(const char *serviceName, int sockFd) {
 }
 
 void AppBase::socketAvailable(TcpSocket *socket,
-        TcpAvailableInfo *availableInfo) {
+                              TcpAvailableInfo *availableInfo)
+{
     if (callback->handleClientConnection(availableInfo->getNewSocketId(),
-            availableInfo->getRemoteAddr(), availableInfo->getRemotePort())) {
+                                         availableInfo->getRemoteAddr(), availableInfo->getRemotePort()))
+    {
         auto newSocket = new TcpSocket(availableInfo);
         newSocket->setCallback(this);
         newSocket->setOutputGate(gate("socketOut"));
         socketMap.addSocket(newSocket);
         socket->accept(newSocket->getSocketId());
-    } else {
+    }
+    else
+    {
         error("TBD: Closing socket on TCP/ACCEPT");
     }
 }
 
-void AppBase::socketDataArrived(UdpSocket *socket, Packet *packet) {
+void AppBase::socketDataArrived(UdpSocket *socket, Packet *packet)
+{
     int socketFd = socket->getSocketId();
     EV << "Incoming message for udp socket: " << socketFd << "\n";
     callback->handleDataArrived(socketFd, packet);
 }
 
-void AppBase::socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent) {
+void AppBase::socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent)
+{
     int socketFd = socket->getSocketId();
     EV << "Incoming message for tcp socket: " << socketFd << "\n";
     callback->handleDataArrived(socketFd, msg);
 }
 
-void AppBase::socketErrorArrived(UdpSocket *socket, Indication *indication) {
+void AppBase::socketErrorArrived(UdpSocket *socket, Indication *indication)
+{
     EV_WARN << "Ignoring UDP error report " << indication->getName() << endl;
     delete indication;
 }
 
-void AppBase::socketEstablished(TcpSocket *socket) {
+void AppBase::socketEstablished(TcpSocket *socket)
+{
     int socketFd = socket->getSocketId();
     EV << "Incoming message for socket: " << socketFd
-              << " pushing into the queue\n";
+       << " pushing into the queue\n";
     callback->handleConnectReturn(socketFd, true);
 }
 
-void AppBase::socketFailure(TcpSocket *socket, int code) {
+void AppBase::socketFailure(TcpSocket *socket, int code)
+{
     int socketFd = socket->getSocketId();
     EV << "Incoming message for socket: " << socketFd
-              << "connection failed with code" << code << "\n";
+       << "connection failed with code" << code << "\n";
     callback->handleConnectReturn(socketFd, false);
 }
 
-void AppBase::socketPeerClosed(TcpSocket *socket) {
+void AppBase::socketPeerClosed(TcpSocket *socket)
+{
     int socketFd = socket->getSocketId();
     EV << "Incoming message for socket: " << socketFd << " peer closed\n";
     bool closeSocket = callback->handlePeerClosed(socketFd);
@@ -354,13 +400,15 @@ void AppBase::socketPeerClosed(TcpSocket *socket) {
         close(socketFd);
 }
 
-void AppBase::socketClosed(UdpSocket *socket) {
+void AppBase::socketClosed(UdpSocket *socket)
+{
     int socketFd = socket->getSocketId();
     socketMap.removeSocket(socketMap.getSocketById(socketFd));
     delete socket;
 }
 
-void AppBase::socketClosed(TcpSocket *socket) {
+void AppBase::socketClosed(TcpSocket *socket)
+{
     int socketFd = socket->getSocketId();
     socketMap.removeSocket(socketMap.getSocketById(socketFd));
     delete socket;

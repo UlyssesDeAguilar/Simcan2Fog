@@ -9,6 +9,8 @@ import inet.applications.contract.IApp;
 simple DnsRegistryService like IApp {
     parameters:
         string dbPath = default("^.db");    
+        @signal[packetSent](type=inet::Packet);
+        @signal[packetReceived](type=inet::Packet);
     gates:
         input socketIn @labels(ITransportPacket/up); // Socket input
         output socketOut @labels(ITransportPacket/down); // Socket output

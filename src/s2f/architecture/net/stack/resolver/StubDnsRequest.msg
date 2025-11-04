@@ -10,6 +10,6 @@ message StubDnsRequest
 message StubDnsResponse
 {
     int result;
-    inet::L3Address address;
+    inet::L3Address address[];
     string domain;
 }
