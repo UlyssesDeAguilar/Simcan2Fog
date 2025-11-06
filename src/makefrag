@@ -1,1 +1,2 @@
 MSGC:=$(MSGC) --msg6
+LIBS += -lcrypto -lssl
