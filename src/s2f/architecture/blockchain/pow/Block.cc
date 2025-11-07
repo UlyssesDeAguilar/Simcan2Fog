@@ -13,18 +13,16 @@ void Block::add(std::vector<Transaction> &trns)
 {
     for (auto t : trns)
         transactions.push_back(t);
-
-    header.merkleRootHash = merkleRoot();
 }
 
-std::array<std::byte, SHA256_DIGEST_LENGTH> Block::hash()
+sha256digest Block::hash()
 {
     return s2f::os::crypto::dsha256(&header, sizeof(header));
 }
 
-std::array<std::byte, SHA256_DIGEST_LENGTH> Block::merkleRoot()
+sha256digest Block::merkleRoot()
 {
-    std::vector<std::array<std::byte, SHA256_DIGEST_LENGTH>> hashes;
+    std::vector<sha256digest> hashes;
 
     if (transactions.empty())
         return {};
@@ -32,7 +30,7 @@ std::array<std::byte, SHA256_DIGEST_LENGTH> Block::merkleRoot()
     // Balance the merkle tree
     hashes.reserve(transactions.size());
     for (auto &t : transactions)
-        hashes.push_back(s2f::os::crypto::sha256(&t, t.size()));
+        hashes.push_back(t.hash());
 
     // Start hashing TXIDs
     while (hashes.size() > 1)

@@ -4,6 +4,8 @@
 #include <array>
 #include <openssl/sha.h>
 
+using sha256digest = std::array<std::byte, SHA256_DIGEST_LENGTH>;
+
 namespace s2f::os::crypto
 {
     /** * Computes a double sha256 hash of the given data.
@@ -14,9 +16,9 @@ namespace s2f::os::crypto
      * @return The hash value as a std::array.
      */
     template <typename T>
-    std::array<std::byte, SHA256_DIGEST_LENGTH> sha256(const T *data, const int size)
+    sha256digest sha256(const T *data, size_t size)
     {
-        std::array<std::byte, SHA256_DIGEST_LENGTH> hash;
+        sha256digest hash;
         auto d = reinterpret_cast<const unsigned char *>(data);
         auto h = reinterpret_cast<unsigned char *>(hash.data());
         SHA256(d, size, h);
@@ -32,7 +34,7 @@ namespace s2f::os::crypto
      * @return The hash value as a std::array.
      */
     template <typename T>
-    std::array<std::byte, SHA256_DIGEST_LENGTH> dsha256(const T *data, const int size)
+    sha256digest dsha256(const T *data, size_t size)
     {
         return sha256(sha256(data, size).data(), SHA256_DIGEST_LENGTH);
     }

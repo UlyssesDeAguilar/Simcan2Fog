@@ -2,7 +2,7 @@
 #define __POW_BLOCK_H__
 
 #include "Transaction.h"
-#include <array>
+#include "s2f/os/crypto/crypto.h"
 #include <omnetpp.h>
 #include <openssl/sha.h>
 
@@ -11,8 +11,8 @@ namespace s2f::chain::pow
     struct BlockHeader
     {
         int32_t version;
-        std::array<std::byte, SHA256_DIGEST_LENGTH> parentBlockHash;
-        std::array<std::byte, SHA256_DIGEST_LENGTH> merkleRootHash;
+        sha256digest parentBlockHash;
+        sha256digest merkleRootHash;
         uint32_t time;
         uint32_t nBits;
         uint32_t nonce;
@@ -29,7 +29,7 @@ namespace s2f::chain::pow
          *
          * @return sha256 value of the block header over two iterations.
          */
-        std::array<std::byte, SHA256_DIGEST_LENGTH> hash();
+        sha256digest hash();
 
         /**
          * Adds a transaction to this block.
@@ -61,7 +61,7 @@ namespace s2f::chain::pow
          *
          * @return The hash value, or an array of 0 on an empty block.
          */
-        std::array<std::byte, SHA256_DIGEST_LENGTH> merkleRoot();
+        sha256digest merkleRoot();
     };
 }
 #endif

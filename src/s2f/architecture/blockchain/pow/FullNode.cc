@@ -24,6 +24,7 @@ void printHex(const Container &bytes)
             << "";
     }
     EV << std::dec;
+    EV << "\n";
 }
 
 void FullNode::initialize(int stage)
@@ -53,11 +54,13 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
 
     t = {
         .version = 0,
-        .outputs = {},
-        .inputs = {},
+        .outputs = {{.amount = 10}, {.amount = 15}},
+        .inputs = {{.txid = {b.hash()}, .vout = 1}},
         .locktime = 1};
 
     printHex(b.hash());
+    printHex(t.hash());
+    EV << t.size() << "\n";
 
     b.add(t);
 
