@@ -3,8 +3,10 @@
 
 #include <array>
 #include <openssl/sha.h>
+#include <vector>
 
 using sha256digest = std::array<std::byte, SHA256_DIGEST_LENGTH>;
+using bytes = std::vector<std::byte>;
 
 namespace s2f::os::crypto
 {

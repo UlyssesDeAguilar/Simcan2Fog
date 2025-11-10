@@ -6,44 +6,45 @@ using namespace s2f::chain::pow;
 /**
  * Appends arbitrary data into a byte array.
  *
- * @param src   Data to append at the end of dst.
+ * @param src   Data to append at the end of dst, which should be trivially
+ *              convertible to std::byte*.
  * @param dst   Destination array.
  * @param len   Length of src.
  */
-void append(const void *src, std::vector<std::byte> &dst, size_t len)
+void append(const void *src, bytes &dst, size_t len)
 {
-    const auto *bytes = static_cast<const std::byte *>(src);
+    auto bytes = static_cast<const std::byte *>(src);
     dst.insert(dst.end(), bytes, bytes + len);
 }
 
 // ------------------------------------------------------------------------- //
 //                                  OUTPUTS                                  //
 // ------------------------------------------------------------------------- //
-std::vector<std::byte> utxo::repr() const
+bytes utxo::getBytes() const
 {
-    std::vector<std::byte> repr;
-    repr.reserve(size());
+    bytes buf;
+    buf.reserve(size());
 
-    append(&amount, repr, sizeof(amount));
-    append(pubkeyScript.data(), repr, pubkeyScript.size());
+    append(&amount, buf, sizeof(amount));
+    append(pubkeyScript.data(), buf, pubkeyScript.size());
 
-    return repr;
+    return buf;
 }
 
 // ------------------------------------------------------------------------- //
 //                                  INPUTS                                   //
 // ------------------------------------------------------------------------- //
-std::vector<std::byte> txi::repr() const
+bytes txi::getBytes() const
 {
-    std::vector<std::byte> repr;
-    repr.reserve(size());
+    bytes buf;
+    buf.reserve(size());
 
-    append(txid.data(), repr, txid.size());
-    append(&vout, repr, sizeof(vout));
-    append(signatureScript.data(), repr, signatureScript.size());
-    append(&sequenceNumber, repr, sizeof(sequenceNumber));
+    append(txid.data(), buf, txid.size());
+    append(&vout, buf, sizeof(vout));
+    append(signatureScript.data(), buf, signatureScript.size());
+    append(&sequenceNumber, buf, sizeof(sequenceNumber));
 
-    return repr;
+    return buf;
 }
 
 // ------------------------------------------------------------------------- //
@@ -55,18 +56,18 @@ Transaction Transaction::fromJSON(std::string data)
     return *this;
 }
 
-sha256digest Transaction::hash()
+sha256digest Transaction::hash() const
 {
-    std::vector<std::byte> buf;
+    bytes buf;
     buf.reserve(size());
 
     append(&version, buf, sizeof(version));
 
     for (const auto &o : outputs)
-        append(o.repr().data(), buf, o.size());
+        append(o.getBytes().data(), buf, o.size());
 
     for (const auto &i : inputs)
-        append(i.repr().data(), buf, i.size());
+        append(i.getBytes().data(), buf, i.size());
 
     append(&locktime, buf, sizeof(locktime));
 

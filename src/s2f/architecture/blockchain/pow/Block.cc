@@ -4,23 +4,7 @@
 
 using namespace s2f::chain::pow;
 
-void Block::add(const Transaction t)
-{
-    transactions.push_back(t);
-}
-
-void Block::add(std::vector<Transaction> &trns)
-{
-    for (auto t : trns)
-        transactions.push_back(t);
-}
-
-sha256digest Block::hash()
-{
-    return s2f::os::crypto::dsha256(&header, sizeof(header));
-}
-
-sha256digest Block::merkleRoot()
+sha256digest Block::merkleRoot() const
 {
     std::vector<sha256digest> hashes;
     std::array<std::byte, 2 * SHA256_DIGEST_LENGTH> buf{};

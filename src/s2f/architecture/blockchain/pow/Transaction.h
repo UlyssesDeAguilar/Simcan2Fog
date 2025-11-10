@@ -13,23 +13,20 @@ namespace s2f::chain::pow
      */
     struct utxo
     {
-        int amount;                          //<! Number to pay in Satoshis
-        std::vector<std::byte> pubkeyScript; //<! Locking code
+        int amount;         //<! Number to pay in Satoshis
+        bytes pubkeyScript; //<! Locking code
 
         /**
          * Computes the size of this output.
          *
          * @return output size.
          */
-        size_t size() const
-        {
-            return sizeof(amount) + pubkeyScript.size();
-        }
+        size_t size() const { return sizeof(amount) + pubkeyScript.size(); }
 
         /**
          * @return byte array representation of this object.
          */
-        std::vector<std::byte> repr() const;
+        bytes getBytes() const;
     };
 
     /**
@@ -37,26 +34,22 @@ namespace s2f::chain::pow
      */
     struct txi
     {
-        sha256digest txid;                      //<! Transaction identifier
-        int vout;                               //<! Output index
-        std::vector<std::byte> signatureScript; //!< Unlocking code
-        int sequenceNumber;                     //<! Minimum Mining Time / Replaceable
+        sha256digest txid;     //<! Transaction identifier
+        int vout;              //<! Output index
+        bytes signatureScript; //!< Unlocking code
+        int sequenceNumber;    //<! Minimum Mining Time / Replaceable
 
         /**
          * Computes the size of this input.
          *
          * @return input size.
-         *
          */
-        size_t size() const
-        {
-            return sizeof(txid) + sizeof(vout) + sizeof(sequenceNumber) + signatureScript.size();
-        }
+        size_t size() const { return sizeof(txid) + sizeof(vout) + sizeof(sequenceNumber) + signatureScript.size(); }
 
         /**
          * @return byte array representation of this object.
          */
-        std::vector<std::byte> repr() const;
+        bytes getBytes() const;
     };
 
     /**
@@ -85,14 +78,14 @@ namespace s2f::chain::pow
         Transaction fromJSON(std::string data);
 
         /**
-         * Computes the txid of this transaction.
+         * Computes the txid of this transaction from transaction data.
          *
          * @return sha256 digest of the transaction.
          */
-        sha256digest hash();
+        sha256digest hash() const;
 
         /**
-         * Computes the size in bytes of this transaction.
+         * Returns the size of this transaction in bytes.
          *
          * @return transaction size.
          */
