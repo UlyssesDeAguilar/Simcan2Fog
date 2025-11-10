@@ -209,6 +209,7 @@ void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
         break;
     case CANCEL:
         cancelEvent(peerConnection[sockFd]);
+        // NOTE: purposely not adding a break here
     case SCHEDULE:
         if (result.eventDelayMin)
         {

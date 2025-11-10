@@ -55,7 +55,6 @@ namespace s2f::chain::pow
             return header.parentBlockHash == parent.hash() && header.merkleRootHash == merkleRoot();
         }
 
-      private:
         /**
          * Computes the merkle root hash of this block.
          *

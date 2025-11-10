@@ -55,14 +55,20 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
     t = {
         .version = 0,
         .outputs = {{.amount = 10}, {.amount = 15}},
-        .inputs = {{.txid = {b.hash()}, .vout = 1}},
+        .inputs = {},
         .locktime = 1};
 
     printHex(b.hash());
     printHex(t.hash());
     EV << t.size() << "\n";
 
-    b.add(t);
+    for (int i = 0; i < 5; i++)
+    {
+        t.version = i;
+        b.add(t);
+    }
+
+    printHex(b.merkleRoot());
 
     return;
 }

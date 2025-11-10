@@ -23,33 +23,32 @@ sha256digest Block::hash()
 sha256digest Block::merkleRoot()
 {
     std::vector<sha256digest> hashes;
+    std::array<std::byte, 2 * SHA256_DIGEST_LENGTH> buf{};
 
     if (transactions.empty())
         return {};
 
-    // Balance the merkle tree
+    // Compute initial TXIDs
     hashes.reserve(transactions.size());
     for (auto &t : transactions)
         hashes.push_back(t.hash());
 
-    // Start hashing TXIDs
+    // Merkle root rounds
     while (hashes.size() > 1)
     {
         if (hashes.size() % 2)
             hashes.push_back(hashes.back());
 
-        // Concatenate + hash all pairs
+        // Concatenate and re-hash TXIDs
         for (size_t i = 0; i < hashes.size() / 2; i++)
         {
             auto &left = hashes[2 * i];
             auto &right = hashes[2 * i + 1];
-            std::array<std::byte, 2 * SHA256_DIGEST_LENGTH> _;
 
-            // NOTE: read openssl init+update+final, might save copying data.
-            std::copy(left.begin(), left.end(), _.begin());
-            std::copy(right.begin(), right.end(), _.begin() + SHA256_DIGEST_LENGTH);
+            std::copy(left.begin(), left.end(), buf.begin());
+            std::copy(right.begin(), right.end(), buf.begin() + SHA256_DIGEST_LENGTH);
 
-            hashes[i] = s2f::os::crypto::sha256(_.data(), _.size());
+            hashes[i] = s2f::os::crypto::dsha256(buf.data(), buf.size());
         }
 
         hashes.resize(hashes.size() / 2);
