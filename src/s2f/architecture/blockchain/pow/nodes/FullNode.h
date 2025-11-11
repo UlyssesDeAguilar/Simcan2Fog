@@ -1,7 +1,7 @@
 #ifndef __POW_FULLNODE_H__
 #define __POW_FULLNODE_H__
 
-#include "Block.h"
+#include "../data/Block.h"
 #include "omnetpp/csimplemodule.h"
 #include <omnetpp.h>
 #include <vector>

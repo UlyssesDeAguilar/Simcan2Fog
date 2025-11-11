@@ -8,16 +8,28 @@
 
 namespace s2f::chain::pow
 {
+
+    /**
+     * Data representation of a block header
+     */
     struct BlockHeader
     {
-        int32_t version;
-        sha256digest parentBlockHash;
-        sha256digest merkleRootHash;
-        uint32_t time;
-        uint32_t nBits;
-        uint32_t nonce;
+        int32_t version;              //<! Block version
+        sha256digest parentBlockHash; //<! Hash of the previous block
+        sha256digest merkleRootHash;  //<! Merkle root of the transaction list
+        uint32_t time;                //<! Time of mining
+        uint32_t nBits;               //<! Target at the time of mining
+        uint32_t nonce;               //<! Mining value
     };
 
+    /**
+     * @class Block Block.h "Block.h"
+     *
+     * Data representation of a block within bitcoin.
+     *
+     * @author Tomás Daniel Expósito Torre
+     * @date 2025-11-08
+     */
     class Block
     {
       public:

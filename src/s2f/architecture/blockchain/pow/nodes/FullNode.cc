@@ -1,7 +1,6 @@
 #include "FullNode.h"
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
-#include "s2f/architecture/blockchain/pow/Block.h"
 #include <cstddef>
 #include <iomanip>
 
