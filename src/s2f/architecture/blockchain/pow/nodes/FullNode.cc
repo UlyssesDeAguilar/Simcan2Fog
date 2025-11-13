@@ -64,10 +64,19 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
     for (int i = 0; i < 5; i++)
     {
         t.version = i;
+        utxo.add(t);
         b.add(t);
     }
 
     printHex(b.merkleRoot());
+
+    for (int i = 0; i < 5; i++)
+    {
+        EV << utxo.getCoin(b.transactions[i].hash(), 0) << "\n";
+        EV << utxo.getCoin(b.transactions[i].hash(), 1) << "\n";
+        utxo.spendCoin(b.transactions[i].hash(), 0);
+        utxo.spendCoin(b.transactions[i].hash(), 1);
+    }
 
     return;
 }

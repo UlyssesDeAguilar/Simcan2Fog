@@ -18,6 +18,7 @@ namespace s2f::chain::pow
      */
     class UtxoSet
     {
+      public:
         std::map<sha256digest, std::vector<struct utxo>> database;
 
         /**

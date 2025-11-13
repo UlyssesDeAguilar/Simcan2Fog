@@ -3,6 +3,7 @@
 
 #include "../data/Block.h"
 #include "omnetpp/csimplemodule.h"
+#include "s2f/architecture/blockchain/pow/database/UtxoSet.h"
 #include <omnetpp.h>
 #include <vector>
 
@@ -12,6 +13,7 @@ namespace s2f::chain::pow
     {
       public:
         std::vector<Block> blockchain;
+        UtxoSet utxo;
 
         virtual void initialize(int stage) override;
         virtual void handleMessage(omnetpp::cMessage *msg) override;

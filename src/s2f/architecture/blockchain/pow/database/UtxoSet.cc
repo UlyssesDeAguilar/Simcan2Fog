@@ -1,5 +1,4 @@
 #include "UtxoSet.h"
-#include <numeric>
 
 using namespace s2f::chain::pow;
 
@@ -24,6 +23,10 @@ void UtxoSet::spendCoin(const sha256digest &txid, int vout)
     outputs[vout].amount = -1;
 
     // Remove transaction once outputs are spent
-    if (std::reduce(outputs.begin(), outputs.end(), 0) == -outputs.size())
+    int sum = 0;
+    for (auto &utxo : outputs)
+        sum += utxo.amount;
+
+    if (sum == -outputs.size())
         database.erase(txid);
 }

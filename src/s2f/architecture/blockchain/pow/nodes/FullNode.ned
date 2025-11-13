@@ -1,5 +1,4 @@
-package s2f.architecture.blockchain.pow;
-
+package s2f.architecture.blockchain.pow.nodes;
 simple FullNode
 {
 	parameters:

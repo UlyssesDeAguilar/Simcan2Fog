@@ -41,9 +41,10 @@ OBJS = \
     $O/s2f/apps/p2p/P2PBase.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
-    $O/s2f/architecture/blockchain/pow/Block.o \
-    $O/s2f/architecture/blockchain/pow/FullNode.o \
-    $O/s2f/architecture/blockchain/pow/Transaction.o \
+    $O/s2f/architecture/blockchain/pow/data/Block.o \
+    $O/s2f/architecture/blockchain/pow/data/Transaction.o \
+    $O/s2f/architecture/blockchain/pow/database/UtxoSet.o \
+    $O/s2f/architecture/blockchain/pow/nodes/FullNode.o \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
     $O/s2f/architecture/dns/DnsCommon.o \
