@@ -35,7 +35,7 @@ namespace s2f::chain::pow
          * @param vout Transaction outpoint index.
          * @return The amount in the outpoint or -1.
          */
-        int getCoin(const sha256digest &txid, int vout);
+        uint32_t getCoin(const sha256digest &txid, int vout) const;
 
         /**
          * Invalidates the coin value at txid:vout so that it cannot be spent

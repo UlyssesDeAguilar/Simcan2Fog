@@ -3,6 +3,7 @@
 
 #include "Transaction.h"
 #include "s2f/os/crypto/crypto.h"
+#include <cstdint>
 #include <omnetpp.h>
 #include <openssl/sha.h>
 
@@ -20,6 +21,20 @@ namespace s2f::chain::pow
         uint32_t time;                //<! Time of mining
         uint32_t nBits;               //<! Target at the time of mining
         uint32_t nonce;               //<! Mining value
+
+        sha256digest getTarget()
+        {
+            sha256digest target{};
+
+            uint32_t i = 32 - (nBits >> 24);
+            uint32_t tgt = nBits & 0x00FFFFFF;
+
+            target[i] = std::byte((tgt >> 16) & 0xFF);
+            target[i + 1] = std::byte((tgt >> 8) & 0xFF);
+            target[i + 2] = std::byte(tgt & 0xFF);
+
+            return target;
+        }
     };
 
     /**

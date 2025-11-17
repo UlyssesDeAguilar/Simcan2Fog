@@ -2,7 +2,10 @@
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
 #include <cstddef>
+#include <cstdint>
 #include <iomanip>
+#include <limits>
+#include <sys/types.h>
 
 using namespace s2f::chain::pow;
 using namespace omnetpp;
@@ -79,4 +82,55 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
     }
 
     return;
+}
+
+void FullNode::mineBlock()
+{
+
+    Block &block = blockchain.back();
+    sha256digest target = block.header.getTarget();
+
+    addCoinbase();
+
+    // TODO: add "fakeness" factor + execute()
+    // Ensures simulation time is around ~10 mins for block
+    // While keeping real time on only a few seconds at most
+
+    // Proof-of-Work: Mine nonce until hash <= target
+    while (std::memcmp(block.hash().data(), target.data(), target.size()) > 0)
+        if (++block.header.nonce == 0)
+            block.header.time = time(nullptr);
+}
+
+void FullNode::addCoinbase()
+{
+    Block &block = blockchain.back();
+
+    uint64_t fee = 0;
+    uint32_t BLOCK_SUBSIDY = 3125000000;
+
+    for (const auto &t : block.transactions)
+    {
+        auto txid = t.hash();
+
+        for (const auto &i : t.inputs)
+            fee += utxo.getCoin(txid, i.vout);
+
+        for (const auto &o : t.outputs)
+            fee -= o.amount;
+    }
+
+    // TODO: Compute BLOCK_SUBSIDY instead of hardcoded
+    // TODO: version, pubkeyScript, signatureScript, pubkeyScript, sequenceNumber
+
+    // Create the transaction
+    Transaction coinbase{
+        .version = 1,
+        .outputs = {{.amount = fee + BLOCK_SUBSIDY, .pubkeyScript = {}}},
+        .inputs = {{.txid = {}, .vout = std::numeric_limits<uint32_t>::max(), .signatureScript = {}, .sequenceNumber = 0}},
+        .locktime = 100,
+    };
+
+    block.transactions.insert(block.transactions.begin(), coinbase);
+    block.header.merkleRootHash = block.merkleRoot();
 }

@@ -13,7 +13,7 @@ namespace s2f::chain::pow
      */
     struct utxo
     {
-        int amount;         //<! Number to pay in Satoshis
+        uint64_t amount;    //<! Number to pay in Satoshis
         bytes pubkeyScript; //<! Locking code
 
         /**
@@ -34,10 +34,10 @@ namespace s2f::chain::pow
      */
     struct txi
     {
-        sha256digest txid;     //<! Transaction identifier
-        int vout;              //<! Output index
-        bytes signatureScript; //!< Unlocking code
-        int sequenceNumber;    //<! Minimum Mining Time / Replaceable
+        sha256digest txid;       //<! Transaction identifier
+        uint32_t vout;           //<! Output index
+        bytes signatureScript;   //!< Unlocking code
+        uint32_t sequenceNumber; //<! Minimum Mining Time / Replaceable
 
         /**
          * Computes the size of this input.
