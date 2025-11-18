@@ -1,6 +1,7 @@
 #include "FullNode.h"
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
@@ -68,28 +69,34 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
     {
         t.version = i;
         utxo.add(t);
-        b.add(t);
     }
 
     printHex(b.merkleRoot());
 
     for (int i = 0; i < 5; i++)
     {
-        EV << utxo.getCoin(b.transactions[i].hash(), 0) << "\n";
-        EV << utxo.getCoin(b.transactions[i].hash(), 1) << "\n";
-        utxo.spendCoin(b.transactions[i].hash(), 0);
-        utxo.spendCoin(b.transactions[i].hash(), 1);
+        EV << utxo.getCoin(b.transactions[i].t.hash(), 0) << "\n";
+        EV << utxo.getCoin(b.transactions[i].t.hash(), 1) << "\n";
+        utxo.spendCoin(b.transactions[i].t.hash(), 0);
+        utxo.spendCoin(b.transactions[i].t.hash(), 1);
     }
 
     return;
 }
 
-void FullNode::mineBlock()
+void FullNode::mineBlock(size_t limit)
 {
 
+    // TODO: create new block instead
     Block &block = blockchain.back();
     sha256digest target = block.header.getTarget();
 
+    // Add transactions + coinbase
+    for (int i = 0; i < std::min(limit, mempool.size()); i++)
+    {
+        block.transactions.push_back(mempool.top());
+        mempool.pop();
+    }
     addCoinbase();
 
     // TODO: add "fakeness" factor + execute()
@@ -109,16 +116,8 @@ void FullNode::addCoinbase()
     uint64_t fee = 0;
     uint32_t BLOCK_SUBSIDY = 3125000000;
 
-    for (const auto &t : block.transactions)
-    {
-        auto txid = t.hash();
-
-        for (const auto &i : t.inputs)
-            fee += utxo.getCoin(txid, i.vout);
-
-        for (const auto &o : t.outputs)
-            fee -= o.amount;
-    }
+    for (const auto &txfee : block.transactions)
+        fee += txfee.fee;
 
     // TODO: Compute BLOCK_SUBSIDY instead of hardcoded
     // TODO: version, pubkeyScript, signatureScript, pubkeyScript, sequenceNumber
@@ -131,6 +130,39 @@ void FullNode::addCoinbase()
         .locktime = 100,
     };
 
-    block.transactions.insert(block.transactions.begin(), coinbase);
+    block.transactions.insert(block.transactions.begin(), TxFee{.t = coinbase});
     block.header.merkleRootHash = block.merkleRoot();
+}
+
+void FullNode::addToMempool(Transaction t)
+{
+    uint64_t fee = 0;
+    uint64_t amount;
+
+    // Compute the fee based on inputs and outputs
+    // TODO: script validation
+    for (const auto &i : t.inputs)
+    {
+        if ((amount = utxo.getCoin(i.txid, i.vout)) == -1)
+            return;
+
+        fee += amount;
+    }
+
+    for (const auto &o : t.outputs)
+        fee -= o.amount;
+
+    if (fee < 0)
+        return;
+
+    // TODO: add BIP125 compatibility
+    // If a new transaction with the same inputs presents a higher fee,
+    // remove the old one and insert the new one
+    mempool.push(TxFee{.t = t, .fee = fee});
+}
+
+void FullNode::addToMempool(std::vector<Transaction> &trns)
+{
+    for (auto t : trns)
+        addToMempool(t);
 }
