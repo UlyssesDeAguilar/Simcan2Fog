@@ -2,7 +2,7 @@
 
 using namespace s2f::chain::pow;
 
-int UtxoSet::getCoin(const sha256digest &txid, int vout)
+uint64_t UtxoSet::getCoin(const sha256digest &txid, int vout) const
 {
     auto it = database.find(txid);
 

@@ -42,8 +42,10 @@ OBJS = \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/blockchain/pow/data/Block.o \
+    $O/s2f/architecture/blockchain/pow/data/InOut.o \
     $O/s2f/architecture/blockchain/pow/data/Transaction.o \
-    $O/s2f/architecture/blockchain/pow/database/UtxoSet.o \
+    $O/s2f/architecture/blockchain/pow/data/TxComparator.o \
+    $O/s2f/architecture/blockchain/pow/data/UtxoSet.o \
     $O/s2f/architecture/blockchain/pow/nodes/FullNode.o \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
@@ -118,6 +120,7 @@ OBJS = \
     $O/s2f/os/control/ControlEntries.o \
     $O/s2f/os/control/ProcessDemux.o \
     $O/s2f/os/control/VmControlTable.o \
+    $O/s2f/os/crypto/crypto.o \
     $O/s2f/os/hardwaremanagers/DcHardwareManager.o \
     $O/s2f/os/hardwaremanagers/EdgeHardwareManager.o \
     $O/s2f/os/hardwaremanagers/HardwareManager.o \

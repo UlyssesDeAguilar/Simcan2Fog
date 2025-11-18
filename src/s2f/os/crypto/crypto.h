@@ -10,6 +10,17 @@ using bytes = std::vector<std::byte>;
 
 namespace s2f::os::crypto
 {
+
+    /**
+     * Appends arbitrary data into a byte array.
+     *
+     * @param src   Data to append at the end of dst, which should be trivially
+     *              convertible to std::byte*.
+     * @param dst   Destination array.
+     * @param len   Length of src.
+     */
+    void append(const void *src, bytes &dst, size_t len);
+
     /** * Computes a double sha256 hash of the given data.
      *
      * @param data Data to hash.
