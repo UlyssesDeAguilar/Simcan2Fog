@@ -14,8 +14,8 @@ sha256digest Block::merkleRoot() const
 
     // Compute initial TXIDs
     hashes.reserve(transactions.size());
-    for (auto &t : transactions)
-        hashes.push_back(t.hash());
+    for (auto &txfee : transactions)
+        hashes.push_back(txfee.t.hash());
 
     // Merkle root rounds
     while (hashes.size() > 1)

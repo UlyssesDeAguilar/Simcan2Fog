@@ -1,7 +1,7 @@
 #ifndef __POW_BLOCK_H__
 #define __POW_BLOCK_H__
 
-#include "Transaction.h"
+#include "TxComparator.h"
 #include "s2f/os/crypto/crypto.h"
 #include <cstdint>
 #include <omnetpp.h>
@@ -22,6 +22,10 @@ namespace s2f::chain::pow
         uint32_t nBits;               //<! Target at the time of mining
         uint32_t nonce;               //<! Mining value
 
+        /**
+         * Computes the hashing target from the nBits value.
+         *
+         */
         sha256digest getTarget()
         {
             sha256digest target{};
@@ -49,7 +53,7 @@ namespace s2f::chain::pow
     {
       public:
         BlockHeader header;
-        std::vector<Transaction> transactions;
+        std::vector<TxFee> transactions;
 
         /**
          * Computes the hash for this block.
@@ -57,20 +61,6 @@ namespace s2f::chain::pow
          * @return sha256 value of the block header over two iterations.
          */
         sha256digest hash() const { return os::crypto::dsha256(&header, sizeof(header)); }
-
-        /**
-         * Adds a transaction to this block.
-         *
-         * @param t transaction object.
-         */
-        void add(const Transaction t) { transactions.push_back(t); }
-
-        /**
-         * Adds a list of transactions to this block.
-         *
-         * @param trns  List of transactions to insert.
-         */
-        void add(std::vector<Transaction> &trns) { transactions.insert(transactions.end(), trns.begin(), trns.end()); }
 
         /**
          * Verifies whether the block header information is a valid element of the chain.
