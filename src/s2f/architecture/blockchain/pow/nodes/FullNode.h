@@ -5,6 +5,7 @@
 #include "../data/TxComparator.h"
 #include "../data/UtxoSet.h"
 #include "omnetpp/csimplemodule.h"
+#include <cstdint>
 #include <omnetpp.h>
 #include <queue>
 #include <vector>
@@ -21,23 +22,33 @@ namespace s2f::chain::pow
         TxComparator txc;
         std::priority_queue<TxFee, std::vector<TxFee>, TxComparator> mempool{txc};
 
+        /**
+         * Initialization hook for this module.
+         *
+         * @param stage Initialization stage.
+         */
         virtual void initialize(int stage) override;
+
+        /**
+         * Handler for received messages.
+         */
         virtual void handleMessage(omnetpp::cMessage *msg) override;
 
         /**
-         * Starts mining a block using transactions from the mempool.
-         * TODO: replace `limit` with the actual block limit
+         * Build and mine a block using transactions from the mempool.
          *
-         * @param limit Maximum number of transactions added to the block.
-         *
+         * Respects the maximum size for a serialized block.
          */
-        void mineBlock(size_t limit);
+        void mineBlock();
 
       private:
         /**
          * Creates a coinbase transaction and adds it to the current block.
+         *
+         * Since the coinbase transaction is chronologically added last,
+         * this method also internally computes and sets the blcok merkle root.
          */
-        void addCoinbase();
+        void addCoinbase(Block &block);
 
         /**
          * Adds a transaction to the mempool of this node.
@@ -48,16 +59,6 @@ namespace s2f::chain::pow
          * @param t transaction object.
          */
         void addToMempool(Transaction t);
-
-        /**
-         * Adds a list of transactions to the mempool of this node.
-         *
-         * This method only only accepts transactions that are valid for the
-         * local block chain, failing silently otherwise.
-         *
-         * @param trns  List of transactions to insert.
-         */
-        void addToMempool(std::vector<Transaction> &trns);
     };
 }
 #endif

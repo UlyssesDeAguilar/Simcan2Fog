@@ -3,6 +3,7 @@
 #include <openssl/sha.h>
 
 using namespace s2f::chain::pow;
+using namespace s2f::os::crypto;
 
 sha256digest Block::merkleRoot() const
 {
@@ -15,7 +16,7 @@ sha256digest Block::merkleRoot() const
     // Compute initial TXIDs
     hashes.reserve(transactions.size());
     for (auto &txfee : transactions)
-        hashes.push_back(txfee.t.hash());
+        hashes.push_back(txfee.tx.hash());
 
     // Merkle root rounds
     while (hashes.size() > 1)
@@ -32,7 +33,7 @@ sha256digest Block::merkleRoot() const
             std::copy(left.begin(), left.end(), buf.begin());
             std::copy(right.begin(), right.end(), buf.begin() + SHA256_DIGEST_LENGTH);
 
-            hashes[i] = s2f::os::crypto::dsha256(buf.data(), buf.size());
+            hashes[i] = dsha256(buf.data(), buf.size());
         }
 
         hashes.resize(hashes.size() / 2);

@@ -31,11 +31,11 @@ namespace s2f::chain::pow
             sha256digest target{};
 
             uint32_t i = 32 - (nBits >> 24);
-            uint32_t tgt = nBits & 0x00FFFFFF;
+            uint32_t coefficient = nBits & 0x00FFFFFF;
 
-            target[i] = std::byte((tgt >> 16) & 0xFF);
-            target[i + 1] = std::byte((tgt >> 8) & 0xFF);
-            target[i + 2] = std::byte(tgt & 0xFF);
+            target[i] = std::byte((coefficient >> 16) & 0xFF);
+            target[i + 1] = std::byte((coefficient >> 8) & 0xFF);
+            target[i + 2] = std::byte(coefficient & 0xFF);
 
             return target;
         }

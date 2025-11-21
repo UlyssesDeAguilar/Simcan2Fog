@@ -41,9 +41,6 @@ namespace s2f::chain::pow
          * Invalidates the coin value at txid:vout so that it cannot be spent
          * via getCoin in the future.
          *
-         * TODO: determine whether sigScript verification occurs at the node
-         * level or the utxo_set level.
-         *
          * @param txid Transaction identifier (hash).
          * @param vout Transaction outpoint index.
          */

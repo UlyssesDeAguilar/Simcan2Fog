@@ -1,7 +1,7 @@
 #include "FullNode.h"
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
-#include <algorithm>
+#include "s2f/architecture/blockchain/pow/data/Blockchain.h"
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
@@ -75,29 +75,39 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
 
     for (int i = 0; i < 5; i++)
     {
-        EV << utxo.getCoin(b.transactions[i].t.hash(), 0) << "\n";
-        EV << utxo.getCoin(b.transactions[i].t.hash(), 1) << "\n";
-        utxo.spendCoin(b.transactions[i].t.hash(), 0);
-        utxo.spendCoin(b.transactions[i].t.hash(), 1);
+        EV << utxo.getCoin(b.transactions[i].tx.hash(), 0) << "\n";
+        EV << utxo.getCoin(b.transactions[i].tx.hash(), 1) << "\n";
+        utxo.spendCoin(b.transactions[i].tx.hash(), 0);
+        utxo.spendCoin(b.transactions[i].tx.hash(), 1);
     }
 
     return;
 }
 
-void FullNode::mineBlock(size_t limit)
+void FullNode::mineBlock()
 {
 
-    // TODO: create new block instead
-    Block &block = blockchain.back();
-    sha256digest target = block.header.getTarget();
+    Block block;
+    size_t blockSize = sizeof(BlockHeader);
 
-    // Add transactions + coinbase
-    for (int i = 0; i < std::min(limit, mempool.size()); i++)
+    block.header = {
+        .version = 1,
+        .parentBlockHash = blockchain.back().hash(),
+        .merkleRootHash = {},
+        .time = static_cast<uint32_t>(time(nullptr)),
+        .nBits = getDifficulty(blockchain, blockchain.size() - 1),
+        .nonce = 0,
+    };
+
+    while (blockSize < MAX_BLOCK_SERIALIZED_SIZE - COINBASE_SIZE && mempool.size())
     {
         block.transactions.push_back(mempool.top());
+        blockSize += mempool.top().tx.size();
         mempool.pop();
     }
-    addCoinbase();
+    addCoinbase(block);
+
+    sha256digest target = block.header.getTarget();
 
     // TODO: add "fakeness" factor + execute()
     // Ensures simulation time is around ~10 mins for block
@@ -107,41 +117,38 @@ void FullNode::mineBlock(size_t limit)
     while (std::memcmp(block.hash().data(), target.data(), target.size()) > 0)
         if (++block.header.nonce == 0)
             block.header.time = time(nullptr);
+
+    // TODO: send to chain after completing PoW
 }
 
-void FullNode::addCoinbase()
+void FullNode::addCoinbase(Block &block)
 {
-    Block &block = blockchain.back();
 
     uint64_t fee = 0;
-    uint32_t BLOCK_SUBSIDY = 3125000000;
 
     for (const auto &txfee : block.transactions)
         fee += txfee.fee;
 
-    // TODO: Compute BLOCK_SUBSIDY instead of hardcoded
     // TODO: version, pubkeyScript, signatureScript, pubkeyScript, sequenceNumber
-
-    // Create the transaction
     Transaction coinbase{
         .version = 1,
-        .outputs = {{.amount = fee + BLOCK_SUBSIDY, .pubkeyScript = {}}},
+        .outputs = {{.amount = fee + getSubsidy(blockchain.size()), .pubkeyScript = {}}},
         .inputs = {{.txid = {}, .vout = std::numeric_limits<uint32_t>::max(), .signatureScript = {}, .sequenceNumber = 0}},
         .locktime = 100,
     };
 
-    block.transactions.insert(block.transactions.begin(), TxFee{.t = coinbase});
+    block.transactions.insert(block.transactions.begin(), TxFee{.tx = coinbase});
     block.header.merkleRootHash = block.merkleRoot();
 }
 
-void FullNode::addToMempool(Transaction t)
+void FullNode::addToMempool(Transaction tx)
 {
     uint64_t fee = 0;
     uint64_t amount;
 
     // Compute the fee based on inputs and outputs
     // TODO: script validation
-    for (const auto &i : t.inputs)
+    for (const auto &i : tx.inputs)
     {
         if ((amount = utxo.getCoin(i.txid, i.vout)) == -1)
             return;
@@ -149,7 +156,7 @@ void FullNode::addToMempool(Transaction t)
         fee += amount;
     }
 
-    for (const auto &o : t.outputs)
+    for (const auto &o : tx.outputs)
         fee -= o.amount;
 
     if (fee < 0)
@@ -158,11 +165,5 @@ void FullNode::addToMempool(Transaction t)
     // TODO: add BIP125 compatibility
     // If a new transaction with the same inputs presents a higher fee,
     // remove the old one and insert the new one
-    mempool.push(TxFee{.t = t, .fee = fee});
-}
-
-void FullNode::addToMempool(std::vector<Transaction> &trns)
-{
-    for (auto t : trns)
-        addToMempool(t);
+    mempool.push(TxFee{.tx = tx, .fee = fee});
 }
