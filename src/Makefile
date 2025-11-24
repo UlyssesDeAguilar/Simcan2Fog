@@ -42,6 +42,7 @@ OBJS = \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/blockchain/pow/data/Block.o \
+    $O/s2f/architecture/blockchain/pow/data/Blockchain.o \
     $O/s2f/architecture/blockchain/pow/data/InOut.o \
     $O/s2f/architecture/blockchain/pow/data/Transaction.o \
     $O/s2f/architecture/blockchain/pow/data/TxComparator.o \

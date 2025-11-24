@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <omnetpp.h>
 
+using namespace s2f::os::crypto;
 namespace s2f::chain::pow
 {
 
