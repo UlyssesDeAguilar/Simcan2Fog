@@ -2,13 +2,17 @@
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
 #include "s2f/architecture/blockchain/pow/data/Blockchain.h"
+#include "s2f/os/crypto/crypto.h"
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
+#include <ios>
 #include <limits>
+#include <openssl/pem.h>
 #include <sys/types.h>
 
 using namespace s2f::chain::pow;
+using namespace s2f::os::crypto;
 using namespace omnetpp;
 
 Define_Module(FullNode);
@@ -41,45 +45,23 @@ void FullNode::initialize(int stage)
 
 void FullNode::handleMessage(omnetpp::cMessage *msg)
 {
-    EV << "This has started!!" << "\n";
     delete msg;
+    key priv;
 
-    Block b;
-    Transaction t;
+    // Create key
+    priv = createKeyPair();
 
-    b.header = {
-        .version = 1,
-        .parentBlockHash = {},
-        .merkleRootHash = {},
-        .time = 0,
-        .nBits = 1,
-        .nonce = 1};
+    // Serialize and deserialize
+    auto ser = serializePublic(priv);
+    key pub = deserializePublic(ser);
 
-    t = {
-        .version = 0,
-        .outputs = {{.amount = 10}, {.amount = 15}},
-        .inputs = {},
-        .locktime = 1};
+    // Sign and verify -- True
+    auto signature = sign(priv, ser);
+    EV << std::boolalpha << verify(pub, ser, signature) << "\n";
 
-    printHex(b.hash());
-    printHex(t.hash());
-    EV << t.size() << "\n";
-
-    for (int i = 0; i < 5; i++)
-    {
-        t.version = i;
-        utxo.add(t);
-    }
-
-    printHex(b.merkleRoot());
-
-    for (int i = 0; i < 5; i++)
-    {
-        EV << utxo.getCoin(b.transactions[i].tx.hash(), 0) << "\n";
-        EV << utxo.getCoin(b.transactions[i].tx.hash(), 1) << "\n";
-        utxo.spendCoin(b.transactions[i].tx.hash(), 0);
-        utxo.spendCoin(b.transactions[i].tx.hash(), 1);
-    }
+    // Alter and verify -- False
+    signature[0] = (std::byte)0;
+    EV << std::boolalpha << verify(pub, ser, signature) << "\n";
 
     return;
 }

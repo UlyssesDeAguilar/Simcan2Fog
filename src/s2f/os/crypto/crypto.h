@@ -1,19 +1,49 @@
 #ifndef __SIMCAN_CRYPTO_H__
 #define __SIMCAN_CRYPTO_H__
 
+#include "omnetpp/clog.h"
 #include <array>
 #include <memory>
-#include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <openssl/x509.h>
 #include <vector>
 
 namespace s2f::os::crypto
 {
-    using sha256digest = std::array<std::byte, SHA256_DIGEST_LENGTH>;
-    using bytes = std::vector<std::byte>;
-    using key = EVP_PKEY;
 
-    constexpr size_t SIGSIZE = 64;
+    //-------------------------------------------------------------------------
+    // Data types
+    //-------------------------------------------------------------------------
+
+    /**
+     * Custom destroyer for public/private keypairs
+     */
+    struct KeyDestroyer
+    {
+        void operator()(EVP_PKEY *p) const noexcept
+        {
+            if (p)
+                EVP_PKEY_free(p);
+        }
+    };
+
+    /* Digest for SHA256 */
+    using sha256digest = std::array<std::byte, SHA256_DIGEST_LENGTH>;
+
+    /* Arbitrary byte array */
+    using bytes = std::vector<std::byte>;
+
+    /* EVP_PKEY wrapper with automatic memory management */
+    using key = std::unique_ptr<EVP_PKEY, KeyDestroyer>;
+
+    //-------------------------------------------------------------------------
+    // Constants
+    //-------------------------------------------------------------------------
+    constexpr size_t SIGSIZE = 64; //<! Signature size on Ed25519
+
+    //-------------------------------------------------------------------------
+    // Methods
+    //-------------------------------------------------------------------------
 
     /** * Computes a sha256 hash of the given data.
      *
@@ -47,30 +77,6 @@ namespace s2f::os::crypto
     }
 
     /**
-     * Openssl wrapper to create a private/public keypair with the ED25519
-     * signature scheme.
-     */
-    key *createKeyPair();
-
-    /**
-     * Serialize the public component of a keypair into DER format.
-     *
-     * @param key   Key to serialize.
-     *
-     * @return  Byte array DER key.
-     */
-    bytes serializePublic(const key *key);
-
-    /**
-     * Get a public key from a DER serialization.
-     *
-     * @param data   DER representation of a key.
-     *
-     * @return  Public key.
-     */
-    key *deserializePublic(bytes &data);
-
-    /**
      * Appends arbitrary data into a byte array.
      *
      * @param src   Data to append at the end of dst, which should be trivially
@@ -81,6 +87,32 @@ namespace s2f::os::crypto
     void append(const void *src, bytes &dst, size_t len);
 
     /**
+     * Openssl wrapper to create a private/public keypair with the ED25519
+     * signature scheme.
+     *
+     * @return Keypair.
+     */
+    key createKeyPair();
+
+    /**
+     * Serialize the public component of a keypair into DER format.
+     *
+     * @param key   Key to serialize.
+     *
+     * @return Byte array DER key.
+     */
+    bytes serializePublic(const key &key);
+
+    /**
+     * Get a public key from a DER serialization.
+     *
+     * @param data   DER representation of a key.
+     *
+     * @return  Public key.
+     */
+    key deserializePublic(bytes &data);
+
+    /**
      * Sign a buffer of data with a private key.
      *
      * @param k      Private key.
@@ -88,7 +120,7 @@ namespace s2f::os::crypto
      *
      * @returns Signature in bytes.
      */
-    bytes sign(key *k, bytes &data);
+    bytes sign(const key &priv, bytes &data);
 
     /**
      * Verify a signature against a data buffer.
@@ -99,6 +131,6 @@ namespace s2f::os::crypto
      *
      * @returns true if the signatures match, false otherwise.
      */
-    bool verify(key *k, bytes &data, bytes &signature);
+    bool verify(const key &pub, bytes &data, bytes &signature);
 }
 #endif
