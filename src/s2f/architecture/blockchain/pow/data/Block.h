@@ -7,6 +7,8 @@
 #include <omnetpp.h>
 #include <openssl/sha.h>
 
+using namespace s2f::os::crypto;
+
 namespace s2f::chain::pow
 {
 
@@ -60,7 +62,7 @@ namespace s2f::chain::pow
          *
          * @return sha256 value of the block header over two iterations.
          */
-        sha256digest hash() const { return os::crypto::dsha256(&header, sizeof(header)); }
+        sha256digest hash() const { return dsha256(&header, sizeof(header)); }
 
         /**
          * Verifies whether the block header information is a valid element of the chain.
