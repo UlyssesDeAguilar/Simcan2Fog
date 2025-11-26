@@ -1,6 +1,7 @@
 #include "FullNode.h"
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
+#include "s2f/architecture/blockchain/pow/data/Block.h"
 #include "s2f/architecture/blockchain/pow/data/Blockchain.h"
 #include "s2f/os/crypto/crypto.h"
 #include <cstddef>
@@ -56,13 +57,31 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
     key pub = deserializePublic(ser);
 
     // Sign and verify -- True
+    EV << "Verifying signed serialization: ";
     auto signature = sign(priv, ser);
     EV << std::boolalpha << verify(pub, ser, signature) << "\n";
 
     // Alter and verify -- False
+    EV << "Verifying altered signature: ";
     signature[0] = (std::byte)0;
     EV << std::boolalpha << verify(pub, ser, signature) << "\n";
 
+    Block b;
+
+    b.header = {
+        .version = 1,
+        .parentBlockHash = {},
+        .merkleRootHash = {},
+        .time = static_cast<uint32_t>(time(nullptr)),
+        .nBits = 0x1dffffff,
+        .nonce = 0,
+    };
+
+    EV << "Trying sha256 hash: ";
+    printHex(sha256(ser.data(), ser.size()));
+
+    EV << "Trying ripemd160 hash: ";
+    printHex(ripemd160(ser.data(), ser.size()));
     return;
 }
 
