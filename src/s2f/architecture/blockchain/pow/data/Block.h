@@ -3,6 +3,7 @@
 
 #include "TxComparator.h"
 #include "s2f/os/crypto/crypto.h"
+#include <algorithm>
 #include <cstdint>
 #include <omnetpp.h>
 #include <openssl/sha.h>
@@ -27,12 +28,15 @@ namespace s2f::chain::pow
         /**
          * Computes the hashing target from the nBits value.
          *
+         * @param fakeness  Difficulty easing factor. Makes the required hash require
+         *                  N leading zeroes less.
          */
-        sha256digest getTarget()
+        sha256digest getTarget(int fakeness)
         {
             sha256digest target{};
 
-            uint32_t i = 32 - (nBits >> 24);
+            uint32_t i = std::clamp(32 - (nBits >> 24) - fakeness, 0u, 32 - (nBits >> 24));
+
             uint32_t coefficient = nBits & 0x00FFFFFF;
 
             target[i] = std::byte((coefficient >> 16) & 0xFF);

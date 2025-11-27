@@ -42,6 +42,8 @@ void FullNode::initialize(int stage)
     cSimpleModule::initialize(stage);
     blockchain.clear();
 
+    priv = createKeyPair();
+
     cMessage *msg = new cMessage("btcstartup");
     send(msg, "out");
 }
@@ -49,10 +51,6 @@ void FullNode::initialize(int stage)
 void FullNode::handleMessage(omnetpp::cMessage *msg)
 {
     delete msg;
-    key priv;
-
-    // Create key
-    priv = createKeyPair();
 
     // Serialize and deserialize
     auto ser = serializePublic(priv);
@@ -110,14 +108,10 @@ void FullNode::mineBlock()
     }
     addCoinbase(block);
 
-    sha256digest target = block.header.getTarget();
-
-    // TODO: add "fakeness" factor + execute()
-    // Ensures simulation time is around ~10 mins for block
-    // While keeping real time on only a few seconds at most
+    sha256digest target = block.header.getTarget(999);
 
     // Proof-of-Work: Mine nonce until hash <= target
-    // HACK: favor if (false) in branch prediction
+    // HACK: favor false scenario in branch prediction
     while (std::memcmp(block.hash().data(), target.data(), target.size()) > 0)
         if (__builtin_expect(++block.header.nonce == 0, false))
             block.header.time = time(nullptr);
@@ -129,17 +123,25 @@ void FullNode::addCoinbase(Block &block)
 {
 
     uint64_t fee = 0;
+    bytes pubDer;
+    ripemd160digest outputHash;
+    int chainSize = blockchain.size();
 
     for (const auto &txfee : block.transactions)
         fee += txfee.fee;
 
-    // TODO: version, pubkeyScript, signatureScript, pubkeyScript, sequenceNumber
+    // TODO: version, sequenceNumber/witness
     Transaction coinbase{
         .version = 1,
         .outputs = {{.amount = fee + getSubsidy(blockchain.size()), .pubkeyScript = {}}},
-        .inputs = {{.txid = {}, .vout = std::numeric_limits<uint32_t>::max(), .signatureScript = {}, .sequenceNumber = 0}},
+        .inputs = {{.txid = {}, .vout = std::numeric_limits<uint32_t>::max(), .signatureScript = toBytes(&chainSize, sizeof(chainSize)), .sequenceNumber = 0}},
         .locktime = 100,
     };
+
+    pubDer = serializePublic(priv);
+    outputHash = ripemd160(sha256(pubDer.data(), pubDer.size()).data(), SHA256_DIGEST_LENGTH);
+
+    coinbase.outputs[0].pubkeyScript = toBytes(outputHash.data(), outputHash.size());
 
     block.transactions.insert(block.transactions.begin(), TxFee{.tx = coinbase});
     block.header.merkleRootHash = block.merkleRoot();
@@ -165,7 +167,7 @@ void FullNode::addToMempool(Transaction tx)
 
         // Compute/extract hashes
         inputHash = ripemd160(sha256(pubDer.data(), pubDer.size()).data(), SHA256_DIGEST_LENGTH);
-        std::copy_n(out->pubkeyScript.begin(), RIPEMD160_DIGEST_LENGTH, outputHash);
+        std::copy_n(out->pubkeyScript.begin(), RIPEMD160_DIGEST_LENGTH, outputHash.begin());
 
         // Extract signature data
         signedData = toBytes(&out->amount, sizeof(out->amount));
