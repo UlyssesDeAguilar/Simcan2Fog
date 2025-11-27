@@ -36,6 +36,7 @@ namespace s2f::chain::pow
          * @return The amount in the outpoint or -1.
          */
         uint64_t getCoin(const sha256digest &txid, int vout) const;
+        const utxo *get(const sha256digest &txid, int vout) const;
 
         /**
          * Invalidates the coin value at txid:vout so that it cannot be spent

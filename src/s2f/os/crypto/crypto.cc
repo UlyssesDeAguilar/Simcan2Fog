@@ -16,10 +16,16 @@ namespace s2f::os::crypto
         return reinterpret_cast<unsigned char *>(buf.data());
     }
 
-    std::vector<std::byte> toBytes(unsigned char *buf, size_t size)
+    bytes toBytesOld(unsigned char *buf, size_t size)
     {
-        return std::vector<std::byte>(reinterpret_cast<std::byte *>(buf),
-                                      reinterpret_cast<std::byte *>(buf) + size);
+        return bytes(reinterpret_cast<std::byte *>(buf),
+                     reinterpret_cast<std::byte *>(buf) + size);
+    }
+
+    bytes toBytes(const void *buf, size_t size)
+    {
+        auto buffer = static_cast<const std::byte *>(buf);
+        return bytes(buffer, buffer + size);
     }
 
     key createKeyPair()

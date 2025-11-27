@@ -2,14 +2,14 @@
 
 using namespace s2f::chain::pow;
 
-uint64_t UtxoSet::getCoin(const sha256digest &txid, int vout) const
+const utxo *UtxoSet::get(const sha256digest &txid, int vout) const
 {
     auto it = database.find(txid);
 
     if (vout < 0 || it == database.end() || vout > it->second.size())
-        return -1;
+        return nullptr;
 
-    return it->second[vout].amount;
+    return &it->second[vout];
 }
 
 void UtxoSet::spendCoin(const sha256digest &txid, int vout)

@@ -61,6 +61,15 @@ namespace s2f::os::crypto
     void append(const void *src, bytes &dst, size_t len);
 
     /**
+     * Serialize arbitrary data into a byte array.
+     *
+     * @param src   Data to serialize, which should be trivially
+     *              convertible to std::byte*.
+     * @param size  Length of src.
+     */
+    bytes toBytes(const void *buf, size_t size);
+
+    /**
      * Openssl wrapper to create a private/public keypair with the ED25519
      * signature scheme.
      *

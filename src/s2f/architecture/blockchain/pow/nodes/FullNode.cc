@@ -4,12 +4,14 @@
 #include "s2f/architecture/blockchain/pow/data/Block.h"
 #include "s2f/architecture/blockchain/pow/data/Blockchain.h"
 #include "s2f/os/crypto/crypto.h"
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>
 #include <ios>
 #include <limits>
 #include <openssl/pem.h>
+#include <openssl/sha.h>
 #include <sys/types.h>
 
 using namespace s2f::chain::pow;
@@ -115,8 +117,9 @@ void FullNode::mineBlock()
     // While keeping real time on only a few seconds at most
 
     // Proof-of-Work: Mine nonce until hash <= target
+    // HACK: favor if (false) in branch prediction
     while (std::memcmp(block.hash().data(), target.data(), target.size()) > 0)
-        if (++block.header.nonce == 0)
+        if (__builtin_expect(++block.header.nonce == 0, false))
             block.header.time = time(nullptr);
 
     // TODO: send to chain after completing PoW
@@ -145,16 +148,34 @@ void FullNode::addCoinbase(Block &block)
 void FullNode::addToMempool(Transaction tx)
 {
     uint64_t fee = 0;
-    uint64_t amount;
+    bytes signature, pubDer, signedData;
+    ripemd160digest inputHash, outputHash;
+    const struct utxo *out;
+    key pub;
 
     // Compute the fee based on inputs and outputs
-    // TODO: script validation
     for (const auto &i : tx.inputs)
     {
-        if ((amount = utxo.getCoin(i.txid, i.vout)) == -1)
+        if ((out = utxo.get(i.txid, i.vout)) == nullptr || out->amount == -1)
             return;
 
-        fee += amount;
+        // Extract public key
+        pubDer.assign(i.signatureScript.begin() + SIGSIZE, i.signatureScript.end());
+        pub = deserializePublic(pubDer);
+
+        // Compute/extract hashes
+        inputHash = ripemd160(sha256(pubDer.data(), pubDer.size()).data(), SHA256_DIGEST_LENGTH);
+        std::copy_n(out->pubkeyScript.begin(), RIPEMD160_DIGEST_LENGTH, outputHash);
+
+        // Extract signature data
+        signedData = toBytes(&out->amount, sizeof(out->amount));
+        signature.assign(i.signatureScript.begin(), i.signatureScript.begin() + SIGSIZE);
+
+        // Verify
+        if (inputHash != outputHash || verify(pub, signedData, signature) == false)
+            return;
+
+        fee += out->amount;
     }
 
     for (const auto &o : tx.outputs)
