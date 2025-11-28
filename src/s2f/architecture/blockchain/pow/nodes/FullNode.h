@@ -60,6 +60,28 @@ namespace s2f::chain::pow
          * @param t transaction object.
          */
         void addToMempool(Transaction t);
+
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+        // Temporary test modules
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+
+        /**
+         * Calls the crypto api methods
+         */
+        void dummyCryptoApiTest();
+        void dummyBlockCreationTest();
     };
 }
 #endif

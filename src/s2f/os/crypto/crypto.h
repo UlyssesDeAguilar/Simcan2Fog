@@ -175,5 +175,10 @@ namespace s2f::os::crypto
     {
         return sha256(sha256(data, size).data(), SHA256_DIGEST_LENGTH);
     }
+
+    inline ripemd160digest hashPublic(bytes &pubDer)
+    {
+        return ripemd160(sha256(pubDer.data(), pubDer.size()).data(), SHA256_DIGEST_LENGTH);
+    }
 }
 #endif

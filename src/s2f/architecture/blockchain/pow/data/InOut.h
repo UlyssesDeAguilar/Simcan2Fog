@@ -28,6 +28,15 @@ namespace s2f::chain::pow
          * @return byte array representation of this object.
          */
         bytes getBytes() const;
+
+        /**
+         * Wrapper to decapsulate a pubkey script.
+         *
+         * @param[out] pubHash  Public key hash.
+         */
+        void getPubkeyScript(ripemd160digest &pubHash) const;
+
+        void buildPubkeyScript(bytes &pubDer);
     };
 
     /**
@@ -51,6 +60,26 @@ namespace s2f::chain::pow
          * @return byte array representation of this object.
          */
         bytes getBytes() const;
+
+        /**
+         * Wrapper that creates a signature script to access inputs.
+         *
+         * @param amount    Satoshis in the input.
+         * @param priv      Private key used to sign the amount.
+         * @param pubDer    Serialized public key to verify the signature.
+         *
+         */
+        void buildSignatureScript(uint64_t amount, const key &priv, const bytes &pubDer);
+
+        /**
+         * Wrapper to decapsulate a signature script.
+         *
+         * @param[out] signature    Signed data.
+         * @param[out] pubDer       Serialized public key.
+         * @param[out] pub          Openssl format public key. De-serialized from
+         *                          from pubDer on-the-fly.
+         */
+        void getSignatureScript(bytes &signature, bytes &pubDer, key &pub) const;
     };
 }
 
