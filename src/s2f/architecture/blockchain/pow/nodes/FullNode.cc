@@ -169,6 +169,7 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
 
     dummyCryptoApiTest();
     dummyBlockCreationTest();
+    mineBlock();
     return;
 }
 
@@ -180,7 +181,7 @@ void FullNode::mineBlock()
 
     block.header = {
         .version = 1,
-        .parentBlockHash = blockchain.back().hash(),
+        .parentBlockHash = blockchain.size() ? blockchain.back().hash() : GENESIS_HASH,
         .merkleRootHash = {},
         .time = static_cast<uint32_t>(time(nullptr)),
         .nBits = getDifficulty(blockchain, blockchain.size() - 1),
@@ -195,7 +196,8 @@ void FullNode::mineBlock()
     }
     addCoinbase(block);
 
-    sha256digest target = block.header.getTarget(999);
+    // TODO: change hard-coding for configurable value
+    sha256digest target = block.header.getTarget(2);
 
     // Proof-of-Work: Mine nonce until hash <= target
     // PERF: favors false scenario in branch prediction
@@ -227,9 +229,7 @@ void FullNode::addCoinbase(Block &block)
     };
 
     pubDer = serializePublic(priv);
-    outputHash = ripemd160(sha256(pubDer.data(), pubDer.size()).data(), SHA256_DIGEST_LENGTH);
-
-    coinbase.outputs[0].pubkeyScript = toBytes(outputHash.data(), outputHash.size());
+    coinbase.outputs[0].buildPubkeyScript(pubDer);
 
     block.transactions.insert(block.transactions.begin(), TxFee{.tx = coinbase});
     block.header.merkleRootHash = block.merkleRoot();

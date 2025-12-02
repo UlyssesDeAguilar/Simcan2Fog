@@ -6,15 +6,19 @@ namespace s2f::chain::pow
 {
     uint32_t getDifficulty(const std::vector<Block> &blockchain, int height)
     {
+        if (height == -1)
+            return 0x1dffffff;
+
         int lastDiff = height - (height % BLOCK_DIFFUPDATE);
         uint32_t nBits = blockchain[lastDiff].header.nBits;
-        uint32_t targetspan = BLOCK_MINETIME * BLOCK_DIFFUPDATE;
-        uint32_t timespan, exponent, coefficient;
+        uint32_t targetspan, timespan;
+        uint32_t exponent, coefficient;
 
         // Only compute on new interval
         if ((height + 1) % BLOCK_DIFFUPDATE)
             return nBits;
 
+        targetspan = BLOCK_MINETIME * BLOCK_DIFFUPDATE;
         exponent = nBits >> 24;
         coefficient = nBits & 0x007FFFFF;
         timespan = blockchain[height].header.time - blockchain[lastDiff].header.time;

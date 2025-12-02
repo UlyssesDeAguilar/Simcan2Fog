@@ -2,17 +2,20 @@
 #define __POW_BLOCK_H__
 
 #include "TxComparator.h"
+#include "omnetpp/clog.h"
 #include "s2f/os/crypto/crypto.h"
 #include <algorithm>
 #include <cstdint>
 #include <omnetpp.h>
 #include <openssl/sha.h>
+#include <optional>
 
 using namespace s2f::os::crypto;
 
 namespace s2f::chain::pow
 {
 
+    constexpr sha256digest GENESIS_HASH = {};
     /**
      * Data representation of a block header
      */
@@ -35,8 +38,7 @@ namespace s2f::chain::pow
         {
             sha256digest target{};
 
-            uint32_t i = std::clamp(32 - (nBits >> 24) - fakeness, 0u, 32 - (nBits >> 24));
-
+            int i = std::clamp<int>(32 - (nBits >> 24) - fakeness, 0, 32 - (nBits >> 24));
             uint32_t coefficient = nBits & 0x00FFFFFF;
 
             target[i] = std::byte((coefficient >> 16) & 0xFF);
@@ -73,7 +75,7 @@ namespace s2f::chain::pow
          *
          * @param parent    The previous element in the chain.
          */
-        bool isValid(Block &parent) const { return header.parentBlockHash == parent.hash() && header.merkleRootHash == merkleRoot(); }
+        bool isValid(const Block *parent) const { return header.parentBlockHash == (parent ? parent->hash() : GENESIS_HASH) && header.merkleRootHash == merkleRoot(); }
 
         /**
          * Computes the merkle root hash of this block. This value is computed

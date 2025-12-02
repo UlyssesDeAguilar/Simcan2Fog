@@ -7,8 +7,8 @@
 namespace s2f::chain::pow
 {
     constexpr uint32_t GENESIS_NBITS = 0x1D00FFFF;
-    constexpr uint32_t SATOSHIS_PER_BTC = 1e9;
-    constexpr uint32_t BASE_SUBSIDY = 50 * SATOSHIS_PER_BTC;
+    constexpr uint64_t SATOSHIS_PER_BTC = 1e9;
+    constexpr uint64_t BASE_SUBSIDY = 50 * SATOSHIS_PER_BTC;
 
     constexpr uint32_t BLOCK_MINETIME = 600;      // 10 minutes per block
     constexpr uint32_t BLOCK_DIFFUPDATE = 2016;   // ~2 weeks
