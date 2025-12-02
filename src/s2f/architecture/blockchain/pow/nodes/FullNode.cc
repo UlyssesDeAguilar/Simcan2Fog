@@ -92,7 +92,7 @@ void FullNode::dummyBlockCreationTest()
         .version = 1,
         .outputs = {
             {
-                .amount = 3000,
+                .amount = 3009,
                 .pubkeyScript = {},
             }},
         .inputs = {},
@@ -102,6 +102,11 @@ void FullNode::dummyBlockCreationTest()
     funds.outputs[0].buildPubkeyScript(pubDer);
 
     utxo.add(funds);
+
+    auto funds2 = funds;
+    funds2.outputs[0].amount = 3001;
+
+    utxo.add(funds2);
 
     auto test = utxo.get(funds.hash(), 0);
     EV << test->amount << "\n";
@@ -121,14 +126,26 @@ void FullNode::dummyBlockCreationTest()
     };
 
     // Sign transaction
-    // signatureData = toBytes(&funds.outputs[0].amount, sizeof(funds.outputs[0].amount));
-    // signature = sign(priv, signatureData);
-    //
-    // append(signature.data(), spending.inputs[0].signatureScript, signature.size());
-    // append(pubDer.data(), spending.inputs[0].signatureScript, pubDer.size());
-    spending.inputs[0].buildSignatureScript(3000, priv, pubDer);
+    spending.inputs[0].buildSignatureScript(3009, priv, pubDer);
+
+    Transaction spending2 = {
+        .version = 1,
+        .outputs = {}, // Pay all to miner
+        .inputs = {{
+            .txid = funds2.hash(),
+            .vout = 0,
+            .signatureScript = {},
+            .sequenceNumber = 0,
+        }},
+        .locktime = 100,
+    };
+
+    spending2.inputs[0].buildSignatureScript(3001, priv, pubDer);
 
     addToMempool(spending);
+    addToMempool(spending2);
+
+    assert(mempool.top().fee == 3009);
     return;
 }
 

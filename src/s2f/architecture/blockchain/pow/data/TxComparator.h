@@ -35,9 +35,9 @@ namespace s2f::chain::pow
          * @param tx1 Transaction A.
          * @param tx2 Transaction B.
          *
-         * @return True if the fee for tx1 is higher than tx2, False otherwise.
+         * @return True if the fee for tx1 is lower than tx2, False otherwise.
          */
-        bool operator()(const TxFee &tx1, const TxFee &tx2) { return tx1.fee > tx2.fee; }
+        bool operator()(const TxFee &tx1, const TxFee &tx2) { return tx1.fee < tx2.fee; }
     };
 }
 #endif

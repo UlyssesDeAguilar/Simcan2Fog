@@ -18,6 +18,8 @@ bytes utxo::getBytes() const
 
 void utxo::getPubkeyScript(ripemd160digest &pubHash) const
 {
+    assert(pubkeyScript.size() >= RIPEMD160_DIGEST_LENGTH);
+
     std::copy_n(pubkeyScript.begin(), RIPEMD160_DIGEST_LENGTH, pubHash.begin());
 }
 
@@ -26,6 +28,7 @@ void utxo::buildPubkeyScript(bytes &pubDer)
     ripemd160digest pubHash = hashPublic(pubDer);
     pubkeyScript = toBytes(pubHash.data(), pubHash.size());
 }
+
 bytes txi::getBytes() const
 {
     bytes buf;
@@ -52,6 +55,8 @@ void txi::buildSignatureScript(uint64_t amount, const key &priv, const bytes &pu
 
 void txi::getSignatureScript(bytes &signature, bytes &pubDer, key &pub) const
 {
+    assert(signatureScript.size() > SIGSIZE);
+
     signature.assign(signatureScript.begin(), signatureScript.begin() + SIGSIZE);
     pubDer.assign(signatureScript.begin() + SIGSIZE, signatureScript.end());
     pub = deserializePublic(pubDer);
