@@ -4,6 +4,7 @@
 #include "InOut.h"
 #include "s2f/os/crypto/crypto.h"
 #include <cstddef>
+#include <cstdint>
 #include <omnetpp.h>
 
 using namespace s2f::os::crypto;
@@ -26,6 +27,7 @@ namespace s2f::chain::pow
         std::vector<struct txi> inputs;   //!< Funds for transaction
         int locktime;                     //!< Earliest time the transaction can be added to the blockchain
 
+        Transaction();
         /**
          * Creates a transaction from received JSON data.
          *
@@ -35,6 +37,11 @@ namespace s2f::chain::pow
          */
         Transaction fromJSON(std::string data);
 
+        void addOutput(struct utxo o) { outputs.push_back(o); }
+        void addInput(struct txi i) { inputs.push_back(i); }
+
+        void addOutput(uint64_t amount, bytes &pubDer);
+        void addInput(sha256digest txid, uint32_t vout, uint64_t amount, key &priv, const bytes &pubDer);
         /**
          * Computes the txid of this transaction from transaction data.
          *

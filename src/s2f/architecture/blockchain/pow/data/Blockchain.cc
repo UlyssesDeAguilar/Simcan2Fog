@@ -7,7 +7,7 @@ namespace s2f::chain::pow
     uint32_t getDifficulty(const std::vector<Block> &blockchain, int height)
     {
         if (height == -1)
-            return 0x1dffffff;
+            return GENESIS_NBITS;
 
         int lastDiff = height - (height % BLOCK_DIFFUPDATE);
         uint32_t nBits = blockchain[lastDiff].header.nBits;

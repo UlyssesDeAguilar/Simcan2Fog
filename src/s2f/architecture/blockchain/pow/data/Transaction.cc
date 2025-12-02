@@ -10,6 +10,39 @@ Transaction Transaction::fromJSON(std::string data)
     return *this;
 }
 
+Transaction::Transaction()
+{
+    version = 1;
+    locktime = 100;
+}
+
+void Transaction::addOutput(uint64_t amount, bytes &pubDer)
+{
+    struct utxo o = {.amount = amount};
+    ripemd160digest pubHash = hashPublic(pubDer);
+
+    o.pubkeyScript = toBytes(pubHash.data(), pubHash.size());
+
+    outputs.push_back(o);
+}
+
+void Transaction::addInput(sha256digest txid, uint32_t vout, uint64_t amount, key &priv, const bytes &pubDer)
+{
+    struct txi i = {
+        .txid = txid,
+        .vout = vout,
+        .sequenceNumber = 0,
+    };
+
+    bytes signatureData = toBytes(&amount, sizeof(amount));
+    bytes signature = sign(priv, signatureData);
+
+    append(signature.data(), i.signatureScript, signature.size());
+    append(pubDer.data(), i.signatureScript, pubDer.size());
+
+    inputs.push_back(i);
+}
+
 sha256digest Transaction::hash() const
 {
     bytes buf;

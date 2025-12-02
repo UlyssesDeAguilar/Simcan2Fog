@@ -84,65 +84,22 @@ void FullNode::dummyCryptoApiTest()
 
 void FullNode::dummyBlockCreationTest()
 {
-    bytes pubDer = serializePublic(priv);
-
     // Add fake funds for the chain
+    Transaction funds, funds2;
+    Transaction spending, spending2;
+
     EV << "Adding fake funds for the chain...\n";
-    Transaction funds = {
-        .version = 1,
-        .outputs = {
-            {
-                .amount = 3009,
-                .pubkeyScript = {},
-            }},
-        .inputs = {},
-        .locktime = 100,
-    };
-
-    funds.outputs[0].buildPubkeyScript(pubDer);
-
+    funds.addOutput(3009, pubDer);
     utxo.add(funds);
 
-    auto funds2 = funds;
-    funds2.outputs[0].amount = 3001;
-
+    funds2.addOutput(3001, pubDer);
     utxo.add(funds2);
 
-    auto test = utxo.get(funds.hash(), 0);
-    EV << test->amount << "\n";
-
     EV << "Adding a transaction to the mempool...\n";
-    // Add a transaction
-    Transaction spending = {
-        .version = 1,
-        .outputs = {}, // Pay all to miner
-        .inputs = {{
-            .txid = funds.hash(),
-            .vout = 0,
-            .signatureScript = {},
-            .sequenceNumber = 0,
-        }},
-        .locktime = 100,
-    };
-
-    // Sign transaction
-    spending.inputs[0].buildSignatureScript(3009, priv, pubDer);
-
-    Transaction spending2 = {
-        .version = 1,
-        .outputs = {}, // Pay all to miner
-        .inputs = {{
-            .txid = funds2.hash(),
-            .vout = 0,
-            .signatureScript = {},
-            .sequenceNumber = 0,
-        }},
-        .locktime = 100,
-    };
-
-    spending2.inputs[0].buildSignatureScript(3001, priv, pubDer);
-
+    spending.addInput(funds.hash(), 0, 3009, priv, pubDer);
     addToMempool(spending);
+
+    spending2.addInput(funds2.hash(), 0, 3001, priv, pubDer);
     addToMempool(spending2);
 
     assert(mempool.top().fee == 3009);
@@ -158,6 +115,7 @@ void FullNode::initialize(int stage)
     blockchain.clear();
 
     priv = createKeyPair();
+    pubDer = serializePublic(priv);
 
     cMessage *msg = new cMessage("btcstartup");
     send(msg, "out");
@@ -213,23 +171,20 @@ void FullNode::addCoinbase(Block &block)
 {
 
     uint64_t fee = 0;
-    bytes pubDer;
-    ripemd160digest outputHash;
     int chainSize = blockchain.size();
+    Transaction coinbase;
 
     for (const auto &txfee : block.transactions)
         fee += txfee.fee;
 
-    // TODO: version, sequenceNumber/witness
-    Transaction coinbase{
-        .version = 1,
-        .outputs = {{.amount = fee + getSubsidy(blockchain.size()), .pubkeyScript = {}}},
-        .inputs = {{.txid = {}, .vout = std::numeric_limits<uint32_t>::max(), .signatureScript = toBytes(&chainSize, sizeof(chainSize)), .sequenceNumber = 0}},
-        .locktime = 100,
-    };
-
-    pubDer = serializePublic(priv);
-    coinbase.outputs[0].buildPubkeyScript(pubDer);
+    // TODO: sequenceNumber/witness
+    coinbase.addOutput(fee + getSubsidy(blockchain.size()), pubDer);
+    coinbase.addInput({
+        .txid = {},
+        .vout = std::numeric_limits<uint32_t>::max(),
+        .signatureScript = toBytes(&chainSize, sizeof(chainSize)),
+        .sequenceNumber = 0,
+    });
 
     block.transactions.insert(block.transactions.begin(), TxFee{.tx = coinbase});
     block.header.merkleRootHash = block.merkleRoot();

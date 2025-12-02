@@ -19,6 +19,7 @@ namespace s2f::chain::pow
         std::vector<Block> blockchain;
         UtxoSet utxo;
         key priv;
+        bytes pubDer;
 
         TxComparator txc;
         std::priority_queue<TxFee, std::vector<TxFee>, TxComparator> mempool{txc};
