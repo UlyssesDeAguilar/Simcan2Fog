@@ -37,11 +37,38 @@ namespace s2f::chain::pow
          */
         Transaction fromJSON(std::string data);
 
+        /**
+         * Add an output to this transaction.
+         *
+         * @param o Output.
+         */
         void addOutput(struct utxo o) { outputs.push_back(o); }
+
+        /**
+         * Add an input to this transaction.
+         *
+         * @param i Input.
+         */
         void addInput(struct txi i) { inputs.push_back(i); }
 
+        /**
+         * Build and add an output to a transaction.
+         *
+         * @param amount    Amount to pay.
+         * @param pubDer    Address to pay to.
+         */
         void addOutput(uint64_t amount, bytes &pubDer);
+
+        /**
+         * Build and add an input to a transaction.
+         *
+         * @param txid      Transaction where the funds are.
+         * @param vout      Txid outpoint offset.
+         * @param priv      Key that signs the amount, proving ownership.
+         * @param pubDer    Ownership indicator at txid:vout.
+         */
         void addInput(sha256digest txid, uint32_t vout, uint64_t amount, key &priv, const bytes &pubDer);
+
         /**
          * Computes the txid of this transaction from transaction data.
          *

@@ -10,13 +10,12 @@ namespace s2f::chain::pow
     constexpr uint64_t SATOSHIS_PER_BTC = 1e9;
     constexpr uint64_t BASE_SUBSIDY = 50 * SATOSHIS_PER_BTC;
 
-    constexpr uint32_t BLOCK_MINETIME = 600;      // 10 minutes per block
-    constexpr uint32_t BLOCK_DIFFUPDATE = 2016;   // ~2 weeks
-    constexpr uint32_t HALVING_INTERVAL = 210000; // ~2 weeks
-                                                  //
-    // constexpr uint32_t MAX_BLOCK_SERIALIZED_SIZE = 4000000;
-    constexpr uint32_t MAX_BLOCK_SERIALIZED_SIZE = 1000; // Temporary Test value
-    constexpr uint32_t COINBASE_SIZE = 80;               // Temporary Test value
+    constexpr uint32_t BLOCK_MINETIME = 600;      //<! 10 minutes per block
+    constexpr uint32_t BLOCK_DIFFUPDATE = 2016;   //<! ~2 weeks
+    constexpr uint32_t HALVING_INTERVAL = 210000; //<! ~4 years
+
+    constexpr uint32_t MAX_BLOCK_SERIALIZED_SIZE = 1000; //<! Maximum size to transmit over the network
+    constexpr uint32_t COINBASE_SIZE = 80;               //<! Size of the coinbase transaction
 
     /**
      * Compute the compact difficulty for a blockchain at a certain height.

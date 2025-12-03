@@ -19,7 +19,7 @@ namespace s2f::chain::pow
     class UtxoSet
     {
       public:
-        std::map<sha256digest, std::vector<struct utxo>> database;
+        std::map<sha256digest, std::vector<struct utxo>> database; //<! Unspent outputs.
 
         /**
          * Adds outputs from a transaction to the unspent set.

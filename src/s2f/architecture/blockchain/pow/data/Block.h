@@ -15,7 +15,8 @@ using namespace s2f::os::crypto;
 namespace s2f::chain::pow
 {
 
-    constexpr sha256digest GENESIS_HASH = {};
+    constexpr sha256digest GENESIS_HASH = {}; //<! Empty first block hash
+
     /**
      * Data representation of a block header
      */
