@@ -4,6 +4,7 @@
 #include "omnetpp/regmacros.h"
 #include "s2f/architecture/blockchain/pow/data/Block.h"
 #include "s2f/architecture/blockchain/pow/data/Blockchain.h"
+#include "s2f/architecture/blockchain/pow/data/Transaction.h"
 #include "s2f/os/crypto/crypto.h"
 #include <cassert>
 #include <cstddef>
@@ -107,8 +108,98 @@ void FullNode::dummyBlockCreationTest()
 }
 
 // ------------------------------------------------------------------------- //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
 //                              THE MODULE ITSELF                            //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
+//                                                                           //
 // ------------------------------------------------------------------------- //
+
 void FullNode::initialize(int stage)
 {
     cSimpleModule::initialize(stage);
@@ -127,11 +218,11 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
 
     dummyCryptoApiTest();
     dummyBlockCreationTest();
-    mineBlock();
+    Block b = mineBlock();
     return;
 }
 
-void FullNode::mineBlock()
+Block FullNode::mineBlock()
 {
 
     Block block;
@@ -165,6 +256,7 @@ void FullNode::mineBlock()
 
     // TODO: send to chain after completing PoW
     // TODO: add 10 minutes of execution time on CPU
+    return block;
 }
 
 void FullNode::addCoinbase(Block &block)
@@ -190,14 +282,16 @@ void FullNode::addCoinbase(Block &block)
     block.header.merkleRootHash = block.merkleRoot();
 }
 
-void FullNode::addToMempool(Transaction tx)
+int FullNode::validateTransaction(const Transaction &tx) const
 {
     uint64_t fee = 0;
     const struct utxo *out;
 
-    key pub;
-    ripemd160digest pubHash;
-    bytes signature, pubDer, signedData;
+    key inputPub;
+    bytes inputSignature, inputPubDer;
+
+    ripemd160digest outputPubHash;
+    bytes outputSignature;
 
     // Compute the fee based on inputs and outputs
     for (const auto &i : tx.inputs)
@@ -205,19 +299,21 @@ void FullNode::addToMempool(Transaction tx)
         if ((out = utxo.get(i.txid, i.vout)) == nullptr || out->amount == -1)
         {
             EV_DEBUG << "Could not find unspent outpoint.\n";
-            return;
+            return -1;
         }
 
         // Extract script data
-        i.getSignatureScript(signature, pubDer, pub);
-        out->getPubkeyScript(pubHash);
+        i.getSignatureScript(inputSignature, inputPubDer, inputPub);
+        out->getPubkeyScript(outputPubHash);
 
         // Verify fields
-        signedData = toBytes(&out->amount, sizeof(out->amount));
-        if (hashPublic(pubDer) != pubHash || verify(pub, signedData, signature) == false)
+        outputSignature = toBytes(&out->amount, sizeof(out->amount));
+
+        if (hashPublic(inputPubDer) != outputPubHash ||
+            verify(inputPub, outputSignature, inputSignature) == false)
         {
             EV_DEBUG << "P2PKH validation failed.\n";
-            return;
+            return -1;
         }
 
         fee += out->amount;
@@ -226,7 +322,66 @@ void FullNode::addToMempool(Transaction tx)
     for (const auto &o : tx.outputs)
         fee -= o.amount;
 
-    if (fee < 0)
+    return fee;
+}
+
+void FullNode::addBlock(const Block b)
+{
+    const Transaction &coinbase = b.transactions.front().tx;
+    int chainSize = blockchain.size();
+    uint64_t fee = 0;
+
+    // Verify merkle and parent
+    if (!b.isValid(blockchain.empty() ? nullptr : &blockchain.back()))
+        return;
+
+    // Validate transactions and recompute fee
+    for (auto it = std::next(b.transactions.begin()); it != b.transactions.end(); it++)
+    {
+        const auto &t = *it;
+
+        if (t.fee < 0 || t.fee != validateTransaction(t.tx))
+            return;
+
+        fee += t.fee;
+    }
+
+    // Validate the coinbase transaction
+    if (coinbase.inputs.size() != 1 || coinbase.outputs.empty())
+        return;
+
+    const struct txi &input = coinbase.inputs[0];
+    const std::vector<struct utxo> &outputs = coinbase.outputs;
+
+    //  1. Input format
+    if (input.txid != GENESIS_HASH || input.vout != std::numeric_limits<uint32_t>::max())
+        return;
+
+    if (input.signatureScript != toBytes(&chainSize, sizeof(chainSize)))
+        return;
+
+    //  2. Output fee
+    for (const auto &o : outputs)
+        fee -= o.amount;
+
+    if (fee != 0)
+        return;
+
+    // Update utxo set and add block
+    for (auto it = std::next(b.transactions.begin()); it != b.transactions.end(); it++)
+        for (auto &i : (*it).tx.inputs)
+            utxo.spendCoin(i.txid, i.vout);
+
+    utxo.add(coinbase);
+
+    blockchain.push_back(b);
+}
+
+void FullNode::addToMempool(Transaction tx)
+{
+    uint64_t fee;
+
+    if ((fee = validateTransaction(tx)) < 0)
         return;
 
     // TODO: add BIP125 compatibility

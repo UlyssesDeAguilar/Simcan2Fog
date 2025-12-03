@@ -41,7 +41,14 @@ namespace s2f::chain::pow
          *
          * Respects the maximum size for a serialized block.
          */
-        void mineBlock();
+        Block mineBlock();
+
+        /**
+         * Add a block to the chain after validation.
+         *
+         * @param b Block received from a peer (or self).
+         */
+        void addBlock(const Block b);
 
       private:
         /**
@@ -49,6 +56,8 @@ namespace s2f::chain::pow
          *
          * Since the coinbase transaction is chronologically added last,
          * this method also internally computes and sets the blcok merkle root.
+         *
+         * @param block The block that the transaction goes into.
          */
         void addCoinbase(Block &block);
 
@@ -61,6 +70,15 @@ namespace s2f::chain::pow
          * @param t transaction object.
          */
         void addToMempool(Transaction t);
+
+        /**
+         * Validate a tranasction against the node's utxo set.
+         *
+         * @param t Transaction to validate.
+         *
+         * @return True if the transaction is valid, false otherwise.
+         */
+        int validateTransaction(const Transaction &tx) const;
 
         //
         //
