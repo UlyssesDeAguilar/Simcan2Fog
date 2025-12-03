@@ -219,6 +219,8 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
     dummyCryptoApiTest();
     dummyBlockCreationTest();
     Block b = mineBlock();
+
+    addBlock(b);
     return;
 }
 
@@ -248,9 +250,8 @@ Block FullNode::mineBlock()
     // TODO: change hard-coding for configurable value
     sha256digest target = block.header.getTarget(2);
 
-    // Proof-of-Work: Mine nonce until hash <= target
-    // PERF: favors false scenario in branch prediction
-    while (std::memcmp(block.hash().data(), target.data(), target.size()) > 0)
+    // PERF: PoW with branch prediction optimization
+    while (gt(block.hash(), target))
         if (__builtin_expect(++block.header.nonce == 0, false))
             block.header.time = time(nullptr);
 
@@ -282,6 +283,7 @@ void FullNode::addCoinbase(Block &block)
     block.header.merkleRootHash = block.merkleRoot();
 }
 
+// FIXME: Vulnerable against double-spending
 int FullNode::validateTransaction(const Transaction &tx) const
 {
     uint64_t fee = 0;
@@ -325,14 +327,21 @@ int FullNode::validateTransaction(const Transaction &tx) const
     return fee;
 }
 
+// FIXME: Vulnerable against double-spending
 void FullNode::addBlock(const Block b)
 {
     const Transaction &coinbase = b.transactions.front().tx;
     int chainSize = blockchain.size();
-    uint64_t fee = 0;
+    uint64_t fee = getSubsidy(chainSize);
+    sha256digest t = b.header.getTarget(2);
+    uint32_t nBits = getDifficulty(blockchain, blockchain.size() - 1);
 
     // Verify merkle and parent
     if (!b.isValid(blockchain.empty() ? nullptr : &blockchain.back()))
+        return;
+
+    // Verify target was reached
+    if (nBits != b.header.nBits || gt(b.hash(), t))
         return;
 
     // Validate transactions and recompute fee
@@ -374,6 +383,7 @@ void FullNode::addBlock(const Block b)
 
     utxo.add(coinbase);
 
+    EV_DEBUG << "Added block with index " << chainSize << " to the chain";
     blockchain.push_back(b);
 }
 

@@ -3,6 +3,7 @@
 
 #include "omnetpp/clog.h"
 #include <array>
+#include <cstring>
 #include <memory>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -179,6 +180,11 @@ namespace s2f::os::crypto
     inline ripemd160digest hashPublic(bytes &pubDer)
     {
         return ripemd160(sha256(pubDer.data(), pubDer.size()).data(), SHA256_DIGEST_LENGTH);
+    }
+
+    inline bool gt(sha256digest a, sha256digest b)
+    {
+        return std::memcmp(a.data(), b.data(), b.size()) > 0;
     }
 }
 #endif

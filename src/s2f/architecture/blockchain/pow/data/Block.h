@@ -34,7 +34,7 @@ namespace s2f::chain::pow
          * @param fakeness  Difficulty easing factor. Makes the required hash require
          *                  N leading zeroes less.
          */
-        sha256digest getTarget(int fakeness)
+        sha256digest getTarget(int fakeness) const
         {
             sha256digest target{};
 
