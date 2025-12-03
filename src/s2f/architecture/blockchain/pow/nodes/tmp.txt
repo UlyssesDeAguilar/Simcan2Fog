@@ -1,0 +1,81 @@
+
+//
+// Dummy tests for the Fullnode module
+//
+//
+//
+//
+
+
+
+template <typename Container>
+void printHex(const Container &bytes)
+{
+    EV << std::hex;
+    for (const auto &byte : bytes)
+    {
+        EV
+            << std::setw(2)
+            << std::setfill('0')
+            << std::hex
+            << std::to_integer<uint32_t>(byte)
+            << "";
+    }
+    EV << std::dec;
+    EV << "\n";
+}
+
+void FullNode::dummyCryptoApiTest()
+{
+    // Serialize and deserialize
+    auto ser = serializePublic(priv);
+    key pub = deserializePublic(ser);
+
+    // Sign and verify -- True
+    EV << "Verifying signed serialization: ";
+    auto signature = sign(priv, ser);
+    EV << std::boolalpha << verify(pub, ser, signature) << "\n";
+    assert(verify(pub, ser, signature) == true);
+
+    // Alter and verify -- False
+    EV << "Verifying altered signature: ";
+    signature[0] = (std::byte)0;
+    EV << std::boolalpha << verify(pub, ser, signature) << "\n";
+    assert(verify(pub, ser, signature) == false);
+
+    Block b(nullptr, GENESIS_NBITS);
+
+    EV << "Trying sha256 hash: ";
+    auto sha = sha256(ser.data(), ser.size());
+    printHex(sha);
+    assert(sha.size() == SHA256_DIGEST_LENGTH);
+
+    EV << "Trying ripemd160 hash: ";
+    auto ripemd = ripemd160(ser.data(), ser.size());
+    printHex(ripemd160(ser.data(), ser.size()));
+    assert(ripemd.size() == RIPEMD160_DIGEST_LENGTH);
+}
+
+void FullNode::dummyBlockCreationTest()
+{
+    // Add fake funds for the chain
+    Transaction funds, funds2;
+    Transaction spending, spending2;
+
+    EV << "Adding fake funds for the chain...\n";
+    funds.addOutput(3009, pubDer);
+    utxo.add(funds);
+
+    funds2.addOutput(3001, pubDer);
+    utxo.add(funds2);
+
+    EV << "Adding a transaction to the mempool...\n";
+    spending.addInput(funds.hash(), 0, 3009, priv, pubDer);
+    addToMempool(spending);
+
+    spending2.addInput(funds2.hash(), 0, 3001, priv, pubDer);
+    addToMempool(spending2);
+
+    assert(mempool.top().fee == 3009);
+    return;
+}
