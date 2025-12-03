@@ -63,6 +63,8 @@ namespace s2f::chain::pow
         BlockHeader header;
         std::vector<TxFee> transactions;
 
+        Block(const Block *parent, uint32_t difficulty);
+
         /**
          * Computes the hash for this block.
          *

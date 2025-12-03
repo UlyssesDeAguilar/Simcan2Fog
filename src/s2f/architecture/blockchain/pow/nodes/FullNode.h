@@ -51,6 +51,7 @@ namespace s2f::chain::pow
         void addBlock(const Block b);
 
       private:
+        const Block *last() const { return blockchain.empty() ? nullptr : &blockchain.back(); }
         /**
          * Creates a coinbase transaction and adds it to the current block.
          *

@@ -44,7 +44,6 @@ void printHex(const Container &bytes)
 
 void FullNode::dummyCryptoApiTest()
 {
-
     // Serialize and deserialize
     auto ser = serializePublic(priv);
     key pub = deserializePublic(ser);
@@ -61,16 +60,7 @@ void FullNode::dummyCryptoApiTest()
     EV << std::boolalpha << verify(pub, ser, signature) << "\n";
     assert(verify(pub, ser, signature) == false);
 
-    Block b;
-
-    b.header = {
-        .version = 1,
-        .parentBlockHash = {},
-        .merkleRootHash = {},
-        .time = static_cast<uint32_t>(time(nullptr)),
-        .nBits = 0x1dffffff,
-        .nonce = 0,
-    };
+    Block b(nullptr, GENESIS_NBITS);
 
     EV << "Trying sha256 hash: ";
     auto sha = sha256(ser.data(), ser.size());
@@ -227,17 +217,8 @@ void FullNode::handleMessage(omnetpp::cMessage *msg)
 Block FullNode::mineBlock()
 {
 
-    Block block;
+    Block block(last(), getDifficulty(blockchain, blockchain.size() - 1));
     size_t blockSize = sizeof(BlockHeader);
-
-    block.header = {
-        .version = 1,
-        .parentBlockHash = blockchain.size() ? blockchain.back().hash() : GENESIS_HASH,
-        .merkleRootHash = {},
-        .time = static_cast<uint32_t>(time(nullptr)),
-        .nBits = getDifficulty(blockchain, blockchain.size() - 1),
-        .nonce = 0,
-    };
 
     while (blockSize < MAX_BLOCK_SERIALIZED_SIZE - COINBASE_SIZE && mempool.size())
     {
@@ -337,7 +318,7 @@ void FullNode::addBlock(const Block b)
     uint32_t nBits = getDifficulty(blockchain, blockchain.size() - 1);
 
     // Verify merkle and parent
-    if (!b.isValid(blockchain.empty() ? nullptr : &blockchain.back()))
+    if (!b.isValid(last()))
         return;
 
     // Verify target was reached
@@ -382,9 +363,9 @@ void FullNode::addBlock(const Block b)
             utxo.spendCoin(i.txid, i.vout);
 
     utxo.add(coinbase);
-
-    EV_DEBUG << "Added block with index " << chainSize << " to the chain";
     blockchain.push_back(b);
+
+    EV_DEBUG << "Added block with index " << chainSize << " to the chain\n";
 }
 
 void FullNode::addToMempool(Transaction tx)

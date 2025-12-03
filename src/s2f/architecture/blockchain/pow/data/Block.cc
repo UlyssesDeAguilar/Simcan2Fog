@@ -5,6 +5,17 @@
 using namespace s2f::chain::pow;
 using namespace s2f::os::crypto;
 
+Block::Block(const Block *parent, uint32_t difficulty)
+{
+    header = {
+        .version = 1,
+        .parentBlockHash = parent ? parent->hash() : GENESIS_HASH,
+        .merkleRootHash = {},
+        .time = static_cast<uint32_t>(time(nullptr)),
+        .nBits = difficulty,
+        .nonce = 0,
+    };
+}
 sha256digest Block::merkleRoot() const
 {
     std::vector<sha256digest> hashes;
