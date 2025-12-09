@@ -1,6 +1,6 @@
 #include "UtxoSet.h"
 
-using namespace s2f::chain::pow;
+using namespace s2f::p2p::pow;
 
 const utxo *UtxoSet::get(const sha256digest &txid, int vout) const
 {

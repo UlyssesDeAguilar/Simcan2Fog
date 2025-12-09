@@ -4,7 +4,7 @@
 #include "Transaction.h"
 #include "UtxoSet.h"
 
-namespace s2f::chain::pow
+namespace s2f::p2p::pow
 {
 
     /**

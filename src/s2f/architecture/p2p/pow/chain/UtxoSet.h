@@ -1,11 +1,11 @@
 #ifndef __POW_TX_INDEX_H__
 #define __POW_TX_INDEX_H__
 
-#include "../data/Transaction.h"
+#include "Transaction.h"
 #include "s2f/os/crypto/crypto.h"
 #include <omnetpp.h>
 
-namespace s2f::chain::pow
+namespace s2f::p2p::pow
 {
 
     /**

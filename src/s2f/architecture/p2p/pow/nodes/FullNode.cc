@@ -1,17 +1,15 @@
 #include "FullNode.h"
+#include "../chain/Blockchain.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
-#include "s2f/architecture/blockchain/pow/data/Block.h"
-#include "s2f/architecture/blockchain/pow/data/Blockchain.h"
-#include "s2f/architecture/blockchain/pow/data/Transaction.h"
 #include "s2f/os/crypto/crypto.h"
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <sys/types.h>
 
-using namespace s2f::chain::pow;
+using namespace s2f::p2p::pow;
 using namespace s2f::os::crypto;
 using namespace omnetpp;
 

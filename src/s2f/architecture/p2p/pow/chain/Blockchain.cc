@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace s2f::chain::pow
+namespace s2f::p2p::pow
 {
     uint32_t getDifficulty(const std::vector<Block> &blockchain, int height)
     {

@@ -8,7 +8,7 @@
 #include <omnetpp.h>
 
 using namespace s2f::os::crypto;
-namespace s2f::chain::pow
+namespace s2f::p2p::pow
 {
 
     /**

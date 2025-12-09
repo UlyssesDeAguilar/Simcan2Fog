@@ -2,7 +2,7 @@
 #include "s2f/os/crypto/crypto.h"
 #include <openssl/sha.h>
 
-using namespace s2f::chain::pow;
+using namespace s2f::p2p::pow;
 using namespace s2f::os::crypto;
 
 Block::Block(const Block *parent, uint32_t difficulty)

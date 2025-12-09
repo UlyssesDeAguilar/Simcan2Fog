@@ -14,7 +14,7 @@
 // 
 
 package s2f.simulations.BlockchainTest;
-import s2f.architecture.blockchain.pow.nodes.FullNode;
+import s2f.architecture.p2p.pow.nodes.FullNode;
 
 network LocalNodeTest
 {

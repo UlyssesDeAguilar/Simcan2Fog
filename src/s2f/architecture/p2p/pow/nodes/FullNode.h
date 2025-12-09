@@ -1,16 +1,16 @@
 #ifndef __POW_FULLNODE_H__
 #define __POW_FULLNODE_H__
 
-#include "../data/Block.h"
-#include "../data/TxComparator.h"
-#include "../data/UtxoSet.h"
+#include "../chain/Block.h"
+#include "../chain/TxComparator.h"
+#include "../chain/UtxoSet.h"
 #include "omnetpp/csimplemodule.h"
 #include <cstdint>
 #include <omnetpp.h>
 #include <queue>
 #include <vector>
 
-namespace s2f::chain::pow
+namespace s2f::p2p::pow
 {
 
     class FullNode : public omnetpp::cSimpleModule
