@@ -41,13 +41,6 @@ OBJS = \
     $O/s2f/apps/p2p/P2PBase.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
-    $O/s2f/architecture/blockchain/pow/data/Block.o \
-    $O/s2f/architecture/blockchain/pow/data/Blockchain.o \
-    $O/s2f/architecture/blockchain/pow/data/InOut.o \
-    $O/s2f/architecture/blockchain/pow/data/Transaction.o \
-    $O/s2f/architecture/blockchain/pow/data/TxComparator.o \
-    $O/s2f/architecture/blockchain/pow/data/UtxoSet.o \
-    $O/s2f/architecture/blockchain/pow/nodes/FullNode.o \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
     $O/s2f/architecture/dns/DnsCommon.o \
@@ -72,12 +65,18 @@ OBJS = \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
     $O/s2f/architecture/p2p/pow/PowP2PApp.o \
+    $O/s2f/architecture/p2p/pow/chain/Block.o \
+    $O/s2f/architecture/p2p/pow/chain/Blockchain.o \
+    $O/s2f/architecture/p2p/pow/chain/InOut.o \
+    $O/s2f/architecture/p2p/pow/chain/Transaction.o \
+    $O/s2f/architecture/p2p/pow/chain/UtxoSet.o \
     $O/s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.o \
     $O/s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.o \
     $O/s2f/architecture/p2p/pow/consumers/PingMsgConsumer.o \
     $O/s2f/architecture/p2p/pow/consumers/PongMsgConsumer.o \
     $O/s2f/architecture/p2p/pow/consumers/VerackMsgConsumer.o \
     $O/s2f/architecture/p2p/pow/consumers/VersionMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/nodes/FullNode.o \
     $O/s2f/architecture/p2p/pow/producers/PingMsgProducer.o \
     $O/s2f/architecture/p2p/pow/producers/VersionMsgProducer.o \
     $O/s2f/core/cSIMCAN_Core.o \

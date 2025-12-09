@@ -2,7 +2,7 @@
 #include "s2f/os/crypto/crypto.h"
 #include <algorithm>
 
-using namespace s2f::chain::pow;
+using namespace s2f::p2p::pow;
 using namespace s2f::os::crypto;
 
 bytes utxo::getBytes() const

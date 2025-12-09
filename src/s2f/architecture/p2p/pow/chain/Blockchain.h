@@ -4,7 +4,7 @@
 #include "Block.h"
 #include "s2f/os/crypto/crypto.h"
 
-namespace s2f::chain::pow
+namespace s2f::p2p::pow
 {
     constexpr uint32_t GENESIS_NBITS = 0x1D00FFFF;
     constexpr uint64_t SATOSHIS_PER_BTC = 1e9;
