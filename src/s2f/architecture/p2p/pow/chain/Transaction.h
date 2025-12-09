@@ -2,7 +2,6 @@
 #define __POW_TRANSACTION_H__
 
 #include "InOut.h"
-#include "s2f/os/crypto/crypto.h"
 #include <cstddef>
 #include <cstdint>
 #include <omnetpp.h>

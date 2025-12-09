@@ -1,7 +1,9 @@
 #ifndef __POW_INOUT_H__
 #define __POW_INOUT_H__
 
-#include "s2f/os/crypto/crypto.h"
+#include "s2f/os/crypto/base.h"
+#include "s2f/os/crypto/hash.h"
+#include "s2f/os/crypto/keypair.h"
 #include <cstddef>
 #include <omnetpp.h>
 

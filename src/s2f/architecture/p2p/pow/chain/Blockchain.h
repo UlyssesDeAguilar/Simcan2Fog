@@ -2,7 +2,6 @@
 #define __POW_BLOCKCHAIN_H__
 
 #include "Block.h"
-#include "s2f/os/crypto/crypto.h"
 
 namespace s2f::p2p::pow
 {
