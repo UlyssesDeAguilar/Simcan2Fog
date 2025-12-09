@@ -2,7 +2,7 @@
 #define __POW_TX_INDEX_H__
 
 #include "Transaction.h"
-#include "s2f/os/crypto/crypto.h"
+#include "s2f/os/crypto/hash.h"
 #include <omnetpp.h>
 
 namespace s2f::p2p::pow

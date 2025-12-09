@@ -3,7 +3,6 @@
 
 #include "TxComparator.h"
 #include "omnetpp/clog.h"
-#include "s2f/os/crypto/crypto.h"
 #include <algorithm>
 #include <cstdint>
 #include <omnetpp.h>

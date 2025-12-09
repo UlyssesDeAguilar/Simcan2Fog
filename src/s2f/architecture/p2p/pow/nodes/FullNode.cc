@@ -3,7 +3,8 @@
 #include "omnetpp/clog.h"
 #include "omnetpp/csimplemodule.h"
 #include "omnetpp/regmacros.h"
-#include "s2f/os/crypto/crypto.h"
+#include "s2f/os/crypto/hash.h"
+#include "s2f/os/crypto/keypair.h"
 #include <cstddef>
 #include <cstdint>
 #include <limits>

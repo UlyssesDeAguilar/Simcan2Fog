@@ -1,5 +1,4 @@
 #include "Block.h"
-#include "s2f/os/crypto/crypto.h"
 #include <openssl/sha.h>
 
 using namespace s2f::p2p::pow;

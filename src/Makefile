@@ -120,7 +120,8 @@ OBJS = \
     $O/s2f/os/control/ControlEntries.o \
     $O/s2f/os/control/ProcessDemux.o \
     $O/s2f/os/control/VmControlTable.o \
-    $O/s2f/os/crypto/crypto.o \
+    $O/s2f/os/crypto/base.o \
+    $O/s2f/os/crypto/keypair.o \
     $O/s2f/os/hardwaremanagers/DcHardwareManager.o \
     $O/s2f/os/hardwaremanagers/EdgeHardwareManager.o \
     $O/s2f/os/hardwaremanagers/HardwareManager.o \
