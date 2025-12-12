@@ -17,7 +17,6 @@ import inet.common.packet.chunk.Chunk;
 
 import Inventory;
 
-
 namespace s2f::p2p::pow;
 
 class Inv extends inet::FieldsChunk

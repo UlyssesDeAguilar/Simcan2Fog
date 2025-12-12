@@ -161,6 +161,7 @@ OBJS = \
     $O/s2f/architecture/p2p/pow/messages/Inv_m.o \
     $O/s2f/architecture/p2p/pow/messages/Inventory_m.o \
     $O/s2f/architecture/p2p/pow/messages/MerkleBlock_m.o \
+    $O/s2f/architecture/p2p/pow/messages/MsgMetadata_m.o \
     $O/s2f/architecture/p2p/pow/messages/PingPong_m.o \
     $O/s2f/architecture/p2p/pow/messages/SendCmpct_m.o \
     $O/s2f/architecture/p2p/pow/messages/Tx_m.o \
@@ -205,6 +206,7 @@ MSGFILES = \
     s2f/architecture/p2p/pow/messages/Inv.msg \
     s2f/architecture/p2p/pow/messages/Inventory.msg \
     s2f/architecture/p2p/pow/messages/MerkleBlock.msg \
+    s2f/architecture/p2p/pow/messages/MsgMetadata.msg \
     s2f/architecture/p2p/pow/messages/PingPong.msg \
     s2f/architecture/p2p/pow/messages/SendCmpct.msg \
     s2f/architecture/p2p/pow/messages/Tx.msg \

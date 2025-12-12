@@ -3,24 +3,9 @@
 //
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
-
-cplusplus {{
-  #include <s2f/architecture/p2p/pow/chain/Transaction.h>
-  #include <s2f/os/crypto/hash.h>
-}}
-
-class s2f::os::crypto::sha256digest {  
-    @existingClass;  
-    @opaque;
-}
-
+import MsgMetadata;
 
 namespace s2f::p2p::pow;
-
-class Transaction {  
-    @existingClass;  
-    @opaque;
-}
 
 //
 // Serialized block from a chain.

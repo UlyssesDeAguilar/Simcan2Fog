@@ -3,30 +3,9 @@
 //
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
-
-cplusplus {{
-  #include <s2f/architecture/p2p/pow/chain/Block.h>
-  #include <s2f/architecture/p2p/pow/chain/Transaction.h>
-  #include <s2f/os/crypto/hash.h>
-}}
-
-class s2f::os::crypto::sha256digest {  
-    @existingClass;  
-    @opaque;
-}
-
+import MsgMetadata;
 
 namespace s2f::p2p::pow;
-
-struct BlockHeader {  
-    @existingClass;  
-    @opaque;
-}
-
-class Transaction {  
-    @existingClass;  
-    @opaque;
-}
 
 struct PrefilledTransaction {
     uint8_t index;

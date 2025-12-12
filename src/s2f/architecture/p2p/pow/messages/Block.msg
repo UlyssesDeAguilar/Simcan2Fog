@@ -4,17 +4,10 @@
 //
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
-
-cplusplus {{
-  #include <s2f/architecture/p2p/pow/chain/Block.h>
-}}
+import MsgMetadata;
 
 namespace s2f::p2p::pow;
 
-class Block {  
-    @existingClass;  
-    @opaque;
-}
 //
 // Serialized block from a chain.
 //
