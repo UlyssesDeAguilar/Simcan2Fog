@@ -1,3 +1,11 @@
+//
+// Bitcoin 'addr' message.
+// https://developer.bitcoin.org/reference/p2p_networking.html#addr
+//
+// Relays connection information for peers.
+// - Sent in response to 'getaddr'
+// - Sent unsolicited
+//
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import inet.networklayer.common.L3Address;

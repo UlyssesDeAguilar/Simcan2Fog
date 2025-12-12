@@ -1,11 +1,12 @@
+//
+// Bitcoin message header.
+// https://developer.bitcoin.org/reference/p2p_networking.html#message-headers
+//
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 
 namespace s2f::p2p::pow;
 
-//
-// Header inspired in the bitcoin p2p message header
-//
 class Header extends inet::FieldsChunk
 {
     chunkLength = inet::B(32);

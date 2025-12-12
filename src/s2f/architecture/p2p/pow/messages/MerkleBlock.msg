@@ -1,5 +1,8 @@
 //
-// Simplified BlockHeader transmission message.
+// Bitcoin 'merkleblock' message.
+// https://developer.bitcoin.org/reference/p2p_networking.html#merkleblock
+//
+// - Sent in response to 'getdata' with MSG_MERKLEBLOCK flags.
 //
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
@@ -7,9 +10,6 @@ import MsgMetadata;
 
 namespace s2f::p2p::pow;
 
-//
-// Serialized block from a chain.
-//
 class MerkleBlock extends inet::FieldsChunk
 {
     chunkLength = inet::B(80);

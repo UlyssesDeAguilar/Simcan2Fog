@@ -1,5 +1,9 @@
 //
-// Simplified BlockHeader transmission message.
+// Bitcoin 'cmpctblock' message.
+// https://developer.bitcoin.org/reference/p2p_networking.html#cmpctblock
+//
+// - Sent in response to 'getdata' with MSG_CMPCT_BLOCK.
+// - Sent in response to 'sendcmpct' if the block is recent enough.
 //
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
@@ -12,9 +16,6 @@ struct PrefilledTransaction {
     Transaction tx;
 }
 
-//
-// Serialized block from a chain.
-//
 class CmpctBlock extends inet::FieldsChunk
 {
     chunkLength = inet::B(80);

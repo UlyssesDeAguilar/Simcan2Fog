@@ -1,3 +1,7 @@
+//
+// Bitcoin definition of an 'inventory', used by many data messages.
+// https://developer.bitcoin.org/reference/p2p_networking.html#data-messages
+//
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import MsgMetadata;
@@ -13,10 +17,6 @@ enum InventoryIdentifier
     MSG_WITNESS_TX = 4; // Identical to MSGBLOCK. When used in getdata, indicates the response is block with transactions that has witness.
 };
 
-
-//
-// Inventory datatype used to send transactions and blocks
-//
 class Inventory extends inet::FieldsChunk
 {
     chunkLength = inet::B(36);
