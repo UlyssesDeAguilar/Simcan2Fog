@@ -1,4 +1,10 @@
-
+//
+// Bitcoin 'ping' and 'pong' messages.
+// https://developer.bitcoin.org/reference/p2p_networking.html#ping
+// https://developer.bitcoin.org/reference/p2p_networking.html#pong
+//
+// Used to keep a connection between two peers alive.
+//
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 

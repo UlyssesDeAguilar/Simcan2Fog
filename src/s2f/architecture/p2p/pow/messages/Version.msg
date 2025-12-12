@@ -1,12 +1,13 @@
+//
+// Bitcoin 'version' message.
+// https://developer.bitcoin.org/reference/p2p_networking.html#version
+//
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import inet.networklayer.common.L3Address;
 
 namespace s2f::p2p::pow;
 
-//
-// Version message payload 
-//
 class Version extends inet::FieldsChunk
 {
     chunkLength = inet::B(90);    // TODO: change dummy size

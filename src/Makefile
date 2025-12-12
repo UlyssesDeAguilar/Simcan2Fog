@@ -151,8 +151,20 @@ OBJS = \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
     $O/s2f/architecture/p2p/pow/PowNetworkPeer_m.o \
     $O/s2f/architecture/p2p/pow/messages/Address_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Block_m.o \
+    $O/s2f/architecture/p2p/pow/messages/BlockTxn_m.o \
+    $O/s2f/architecture/p2p/pow/messages/CmpctBlock_m.o \
+    $O/s2f/architecture/p2p/pow/messages/GetBlocks_m.o \
+    $O/s2f/architecture/p2p/pow/messages/GetBlockTxn_m.o \
     $O/s2f/architecture/p2p/pow/messages/Header_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Headers_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Inv_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Inventory_m.o \
+    $O/s2f/architecture/p2p/pow/messages/MerkleBlock_m.o \
+    $O/s2f/architecture/p2p/pow/messages/MsgMetadata_m.o \
     $O/s2f/architecture/p2p/pow/messages/PingPong_m.o \
+    $O/s2f/architecture/p2p/pow/messages/SendCmpct_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Tx_m.o \
     $O/s2f/architecture/p2p/pow/messages/Version_m.o \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
@@ -184,8 +196,20 @@ MSGFILES = \
     s2f/architecture/nodes/iot/IotPayload.msg \
     s2f/architecture/p2p/pow/PowNetworkPeer.msg \
     s2f/architecture/p2p/pow/messages/Address.msg \
+    s2f/architecture/p2p/pow/messages/Block.msg \
+    s2f/architecture/p2p/pow/messages/BlockTxn.msg \
+    s2f/architecture/p2p/pow/messages/CmpctBlock.msg \
+    s2f/architecture/p2p/pow/messages/GetBlocks.msg \
+    s2f/architecture/p2p/pow/messages/GetBlockTxn.msg \
     s2f/architecture/p2p/pow/messages/Header.msg \
+    s2f/architecture/p2p/pow/messages/Headers.msg \
+    s2f/architecture/p2p/pow/messages/Inv.msg \
+    s2f/architecture/p2p/pow/messages/Inventory.msg \
+    s2f/architecture/p2p/pow/messages/MerkleBlock.msg \
+    s2f/architecture/p2p/pow/messages/MsgMetadata.msg \
     s2f/architecture/p2p/pow/messages/PingPong.msg \
+    s2f/architecture/p2p/pow/messages/SendCmpct.msg \
+    s2f/architecture/p2p/pow/messages/Tx.msg \
     s2f/architecture/p2p/pow/messages/Version.msg \
     s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \
