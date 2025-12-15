@@ -63,7 +63,7 @@ namespace s2f::p2p::pow
         BlockHeader header;
         std::vector<TxFee> transactions;
 
-        Block();
+        Block() = default;
         Block(const Block *parent, uint32_t difficulty);
 
         /**
