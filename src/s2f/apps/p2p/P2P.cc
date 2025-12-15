@@ -1,4 +1,4 @@
-#include "P2PBase.h"
+#include "P2P.h"
 #include "inet/common/Ptr.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
@@ -14,12 +14,12 @@
 
 using namespace s2f::dns;
 
-Define_Module(P2PBase);
+Define_Module(P2P);
 
 // ------------------------------------------------------------------------- //
 //                                  OVERRIDES                                //
 // ------------------------------------------------------------------------- //
-void P2PBase::initialize()
+void P2P::initialize()
 {
     AppBase::initialize();
     setReturnCallback(this);
@@ -42,7 +42,7 @@ void P2PBase::initialize()
     runStartTime = time(nullptr);
 }
 
-void P2PBase::processSelfMessage(cMessage *msg)
+void P2P::processSelfMessage(cMessage *msg)
 {
 
     if (msg->getKind() == EXEC_START)
@@ -73,8 +73,8 @@ void P2PBase::processSelfMessage(cMessage *msg)
 }
 
 // TODO: remove from base class
-void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions,
-                                       bool resolved)
+void P2P::handleResolutionFinished(const std::set<L3Address> ipResolutions,
+                                   bool resolved)
 {
     if (!resolved)
         error("No peers connected on DNS seed %s.", dnsSeed);
@@ -93,7 +93,7 @@ void P2PBase::handleResolutionFinished(const std::set<L3Address> ipResolutions,
 }
 
 // TODO: remove from base class
-void P2PBase::handleConnectReturn(int sockFd, bool connected)
+void P2P::handleConnectReturn(int sockFd, bool connected)
 {
     if (!connected)
         error("Cannot connect to DNS to join the network");
@@ -120,7 +120,7 @@ void P2PBase::handleConnectReturn(int sockFd, bool connected)
 }
 
 // TODO: remove from base class
-void P2PBase::handleDataArrived(int sockFd, Packet *p)
+void P2P::handleDataArrived(int sockFd, Packet *p)
 {
     auto httpResponse = p->peekData<RestfulResponse>();
     if (httpResponse->getResponseCode() == ResponseCode::OK)
@@ -130,7 +130,7 @@ void P2PBase::handleDataArrived(int sockFd, Packet *p)
     scheduleAfter(1.0, event);
 }
 
-bool P2PBase::handlePeerClosed(int sockFd)
+bool P2P::handlePeerClosed(int sockFd)
 {
     EV << "Peer" << peerData[sockFd]->getIpAddress() << "closed the connection"
        << "\n";
@@ -140,7 +140,7 @@ bool P2PBase::handlePeerClosed(int sockFd)
     return true;
 }
 
-void P2PBase::finish()
+void P2P::finish()
 {
     // Calculate the total runtime
     double runtime = difftime(time(nullptr), runStartTime);
@@ -171,7 +171,7 @@ void P2PBase::finish()
 //                                 METHODS                                   //
 // ------------------------------------------------------------------------- //
 
-void P2PBase::handleConnectFailure(int sockFd)
+void P2P::handleConnectFailure(int sockFd)
 {
     EV_INFO << "Connection failed for IP " << peerData[sockFd]->getIpAddress()
             << "on sockFd" << sockFd << "\n";
@@ -180,7 +180,7 @@ void P2PBase::handleConnectFailure(int sockFd)
     peerData.erase(sockFd);
 }
 
-void P2PBase::connectToPeer()
+void P2P::connectToPeer()
 {
     L3Address destIp = resolutionList.back();
     resolutionList.pop_back();
@@ -192,7 +192,7 @@ void P2PBase::connectToPeer()
     connect(sockFd, destIp, listeningPort);
 }
 
-int P2PBase::getSockFd(L3Address ip)
+int P2P::getSockFd(L3Address ip)
 {
     auto it = std::find_if(peerData.begin(), peerData.end(), [&](const auto &p)
                            { return p.second->getIpAddress() == ip; });

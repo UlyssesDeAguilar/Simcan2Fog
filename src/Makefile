@@ -38,7 +38,7 @@ OBJS = \
     $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
-    $O/s2f/apps/p2p/P2PBase.o \
+    $O/s2f/apps/p2p/P2P.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
@@ -64,7 +64,7 @@ OBJS = \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
-    $O/s2f/architecture/p2p/pow/PowP2PApp.o \
+    $O/s2f/architecture/p2p/pow/PowP2P.o \
     $O/s2f/architecture/p2p/pow/chain/Block.o \
     $O/s2f/architecture/p2p/pow/chain/Blockchain.o \
     $O/s2f/architecture/p2p/pow/chain/InOut.o \
@@ -136,7 +136,8 @@ OBJS = \
     $O/s2f/users/generators/UserGenerator_simple.o \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
-    $O/s2f/apps/p2p/NetworkPeer_m.o \
+    $O/s2f/apps/p2p/Peer_m.o \
+    $O/s2f/apps/p2p/discovery/DiscoveryResolution_m.o \
     $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
     $O/s2f/architecture/dns/ResourceRecord_m.o \
@@ -149,7 +150,7 @@ OBJS = \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
-    $O/s2f/architecture/p2p/pow/PowNetworkPeer_m.o \
+    $O/s2f/architecture/p2p/pow/PowPeer_m.o \
     $O/s2f/architecture/p2p/pow/messages/Address_m.o \
     $O/s2f/architecture/p2p/pow/messages/Block_m.o \
     $O/s2f/architecture/p2p/pow/messages/BlockTxn_m.o \
@@ -181,7 +182,8 @@ OBJS = \
 
 # Message files
 MSGFILES = \
-    s2f/apps/p2p/NetworkPeer.msg \
+    s2f/apps/p2p/Peer.msg \
+    s2f/apps/p2p/discovery/DiscoveryResolution.msg \
     s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
     s2f/architecture/dns/ResourceRecord.msg \
@@ -194,7 +196,7 @@ MSGFILES = \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
-    s2f/architecture/p2p/pow/PowNetworkPeer.msg \
+    s2f/architecture/p2p/pow/PowPeer.msg \
     s2f/architecture/p2p/pow/messages/Address.msg \
     s2f/architecture/p2p/pow/messages/Block.msg \
     s2f/architecture/p2p/pow/messages/BlockTxn.msg \

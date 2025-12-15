@@ -8,7 +8,7 @@ import inet.networklayer.common.L3Address;
 // 
 // @author Tomás Daniel Expósito Torre
 // @version 1.0
-class NetworkPeer
+class Peer
 {
     inet::L3Address ipAddress;
 };

@@ -16,9 +16,9 @@
 package s2f.apps.p2p;
 import s2f.apps.AppBase;
 
-simple P2PBase extends AppBase {
+simple P2P extends AppBase {
 	parameters:
-	    @class(P2PBase);
+	    @class(P2P);
 		int listeningPort;
     int discoveryAttempts = 3;
     int discoveryThreshold = 5;

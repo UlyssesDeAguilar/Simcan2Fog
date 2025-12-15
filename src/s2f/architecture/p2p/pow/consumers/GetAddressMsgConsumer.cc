@@ -11,7 +11,7 @@ inet::Packet *GetAddressMsgConsumer::buildResponse(IPowMsgContext &ictx)
     // Send a copy of active peer info
     for (const auto &iter : ictx.peers)
     {
-        PowNetworkPeer *p = new PowNetworkPeer(*iter.second);
+        PowPeer *p = new PowPeer(*iter.second);
         payload->appendIpAddress(p);
     }
 

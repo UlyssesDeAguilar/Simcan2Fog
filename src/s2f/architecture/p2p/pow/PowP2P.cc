@@ -1,10 +1,10 @@
-#include "PowP2PApp.h"
+#include "PowP2P.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
-#include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
+#include "s2f/architecture/p2p/pow/PowPeer_m.h"
 #include "s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.h"
 #include "s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.h"
 #include "s2f/architecture/p2p/pow/consumers/PingMsgConsumer.h"
@@ -17,13 +17,13 @@
 #include <memory>
 
 using namespace s2f::p2p::pow;
-Define_Module(PowP2PApp);
+Define_Module(PowP2P);
 
 // ------------------------------------------------------------------------- //
 //                                  OVERRIDES                                //
 // ------------------------------------------------------------------------- //
 
-void PowP2PApp::initialize()
+void PowP2P::initialize()
 {
     peerConnection.clear();
 
@@ -41,10 +41,10 @@ void PowP2PApp::initialize()
 
     self.setServices(pow::NODE_NETWORK);
     self.setTime(time(nullptr));
-    P2PBase::initialize();
+    P2P::initialize();
 }
 
-void PowP2PApp::finish()
+void PowP2P::finish()
 {
     for (auto &[_, event] : peerConnection)
         cancelAndDelete(event);
@@ -52,10 +52,10 @@ void PowP2PApp::finish()
     peerConnection.clear();
     consumers.clear();
     producers.clear();
-    P2PBase::finish();
+    P2P::finish();
 }
 
-void PowP2PApp::processConnectionState(cMessage *msg)
+void PowP2P::processConnectionState(cMessage *msg)
 {
     if (msg->getKind() == pow::SEND_PING)
     {
@@ -81,7 +81,7 @@ void PowP2PApp::processConnectionState(cMessage *msg)
     }
 }
 
-void PowP2PApp::processNodeState(cMessage *msg)
+void PowP2P::processNodeState(cMessage *msg)
 {
 
     // TODO: merge NODE_UP and PEER_DISCOVERY, change for call to various
@@ -104,14 +104,14 @@ void PowP2PApp::processNodeState(cMessage *msg)
         }
     }
     else
-        P2PBase::processSelfMessage(msg);
+        P2P::processSelfMessage(msg);
 }
 
-void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
+void PowP2P::handleConnectReturn(int sockFd, bool connected)
 {
     if (sockFd == dnsSock)
     {
-        P2PBase::handleConnectReturn(sockFd, connected);
+        P2P::handleConnectReturn(sockFd, connected);
         return;
     }
 
@@ -121,7 +121,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    PowNetworkPeer *p;
+    PowPeer *p;
     TcpSocket *sock;
     int oldSock;
     IPowMsgContext ictx = {
@@ -149,7 +149,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    p = oldSock ? powPeers[oldSock] : new PowNetworkPeer;
+    p = oldSock ? powPeers[oldSock] : new PowPeer;
     p->setServices(oldSock ? p->getServices() : pow::UNNAMED);
     p->setIpAddress(sock->getRemoteAddress());
     p->setPort(sock->getRemotePort());
@@ -171,12 +171,12 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         _send(sockFd, response);
 }
 
-void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
+void PowP2P::handleDataArrived(int sockFd, Packet *p)
 {
 
     if (sockFd == dnsSock)
     {
-        P2PBase::handleDataArrived(sockFd, p);
+        P2P::handleDataArrived(sockFd, p);
         return;
     }
 

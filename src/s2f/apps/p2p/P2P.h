@@ -4,13 +4,13 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/checkandcast.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/apps/p2p/NetworkPeer_m.h"
+#include "s2f/apps/p2p/Peer_m.h"
 #include "s2f/messages/Syscall_m.h"
 #include <omnetpp.h>
 #include <vector>
 
 /**
- * @class P2PBase P2PBase.h "P2PBase.h"
+ * @class P2P P2P.h "P2P.h"
  *
  * Base application for the peer-to-peer protocol.
  * Manages all existing connextions to the peer
@@ -18,7 +18,7 @@
  * @author Tomás Daniel Expósito Torre
  * @date 2025-09-08
  */
-class P2PBase : public AppBase, public AppBase::ICallback
+class P2P : public AppBase, public AppBase::ICallback
 {
   protected:
     enum P2PEvent
@@ -30,7 +30,7 @@ class P2PBase : public AppBase, public AppBase::ICallback
         CONNECTED        //!< Node is ready and connected to the network
     };
 
-    std::map<int, NetworkPeer *> peerData; //!< Peer data
+    std::map<int, Peer *> peerData;        //!< Peer data
     std::vector<L3Address> resolutionList; //!< Addresses obtained through discovery services
     std::set<L3Address> peers;             //<! Active peers
     L3Address localIp;                     //!< Local address
