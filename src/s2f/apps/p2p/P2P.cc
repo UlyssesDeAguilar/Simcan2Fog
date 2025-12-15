@@ -1,18 +1,12 @@
 #include "P2P.h"
-#include "inet/common/Ptr.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/csimulation.h"
 #include "omnetpp/regmacros.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/architecture/dns/ResourceRecord_m.h"
-#include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
-#include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 #include "s2f/messages/Syscall_m.h"
 #include <algorithm>
-
-using namespace s2f::dns;
 
 Define_Module(P2P);
 
@@ -70,64 +64,6 @@ void P2P::processSelfMessage(cMessage *msg)
             scheduleAfter(1.0, event);
         }
     }
-}
-
-// TODO: remove from base class
-void P2P::handleResolutionFinished(const std::set<L3Address> ipResolutions,
-                                   bool resolved)
-{
-    if (!resolved)
-        error("No peers connected on DNS seed %s.", dnsSeed);
-
-    EV_INFO << "DNS seed resolved to " << ipResolutions.size()
-            << " possible addresses" << "\n";
-
-    // Add peer candidates from resolution
-    for (const auto &ip : ipResolutions)
-        if (ip != localIp && !peers.count(ip))
-            resolutionList.push_back(ip);
-
-    // Start connecting to discovered peers
-    event->setKind(PEER_CONNECTION);
-    scheduleAfter(1.0, event);
-}
-
-// TODO: remove from base class
-void P2P::handleConnectReturn(int sockFd, bool connected)
-{
-    if (!connected)
-        error("Cannot connect to DNS to join the network");
-
-    EV_INFO << "Registering service on port " << listeningPort
-            << " on dns seed " << dnsSeed << "\n";
-
-    // Register as peer into DNS seed
-    ResourceRecord record;
-
-    auto packet = new Packet("Registration request");
-    const auto &request = makeShared<DnsRegistrationRequest>();
-
-    record.type = RecordType::A;
-    record.domain = dnsSeed;
-    record.ip = localIp;
-
-    request->appendRecords(record);
-    request->setZone("mainnet.com"); // TODO: parse from dnsSeed
-    request->setVerb(Verb::PUT);
-
-    packet->insertAtBack(request);
-    _send(dnsSock, packet);
-}
-
-// TODO: remove from base class
-void P2P::handleDataArrived(int sockFd, Packet *p)
-{
-    auto httpResponse = p->peekData<RestfulResponse>();
-    if (httpResponse->getResponseCode() == ResponseCode::OK)
-        EV_INFO << "Service registered at DNS seed " << dnsSeed << "\n";
-
-    event->setKind(PEER_DISCOVERY);
-    scheduleAfter(1.0, event);
 }
 
 bool P2P::handlePeerClosed(int sockFd)

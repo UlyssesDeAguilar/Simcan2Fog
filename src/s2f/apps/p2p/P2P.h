@@ -1,5 +1,5 @@
-#ifndef __P2P_APPLICATION_H__
-#define __P2P_APPLICATION_H__
+#ifndef __P2P_PROTOCOL_H__
+#define __P2P_PROTOCOL_H__
 
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/checkandcast.h"
@@ -107,45 +107,11 @@ class P2P : public AppBase, public AppBase::ICallback
     virtual void processSelfMessage(cMessage *msg) override;
 
     /**
-     * Handle hook for resolutions sent by the DNS.
-     *
-     * @param ip        IP Address received on a successful resolution.
-     * @param resolved  Resolution status.
-     */
-    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
-
-    /**
-     * Handle hook for resolutions sent by the DNS.
-     *
-     * @param ipResolutions IP Address list received on successful resolution.
-     * @param resolved      Resolution status.
-     */
-    virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override;
-
-    /**
      * Handle hook for peer disconnection.
      *
      * @param sockFd    Connection file descriptor.
      */
     virtual bool handlePeerClosed(int sockFd) override;
-
-    /**
-     * Handles connections related to the DNS service.
-     * Peer connections should be handled by specific protocol implementations.
-     *
-     * @param sockFd    Connection file descriptor.
-     * @param connected Connection status.
-     */
-    virtual void handleConnectReturn(int sockFd, bool connected) override;
-
-    /**
-     * Handles packets arrived from an existing connection to the DNS service.
-     * Peer connections should be handled by specific protocol implementations.
-     *
-     * @param sockFd    Connection file descriptor.
-     * @param p         Connection incoming data.
-     */
-    virtual void handleDataArrived(int sockFd, Packet *p) override;
 
     /**
      * Handle hook for socket connection initiated by a possible peer.
@@ -159,10 +125,10 @@ class P2P : public AppBase, public AppBase::ICallback
         return true;
     }
 
-    // --------------------------------------------------------------------- //
-    //                          CHILDREN OVERRIDES                           //
-    // --------------------------------------------------------------------- //
-
+    virtual void handleConnectReturn(int sockFd, bool connected) override {};
+    virtual void handleDataArrived(int sockFd, Packet *p) override {};
+    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
+    virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override {};
     virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {}
     virtual void returnRead(simtime_t timeElapsed) override {}
     virtual void returnWrite(simtime_t timeElapsed) override {}
