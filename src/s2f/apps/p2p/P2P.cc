@@ -1,54 +1,84 @@
 #include "P2P.h"
+#include "discovery/DiscoveryResolution_m.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
+#include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/csimulation.h"
 #include "omnetpp/regmacros.h"
 #include "s2f/apps/AppBase.h"
 #include "s2f/messages/Syscall_m.h"
-#include <algorithm>
 
 Define_Module(P2P);
 
 // ------------------------------------------------------------------------- //
 //                                  OVERRIDES                                //
 // ------------------------------------------------------------------------- //
-void P2P::initialize()
+void P2P::initialize(int stage)
 {
-    AppBase::initialize();
-    setReturnCallback(this);
 
-    // DNS seed resolution params
-    dnsSock = open(-1, SOCK_STREAM);
-    dnsSeed = par("dnsSeed");
-    dnsIp = L3Address(par("dnsIp"));
+    if (stage == INITSTAGE_LOCAL)
+    {
+        AppBase::initialize();
+        setReturnCallback(this);
+    }
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
+        // P2P params
+        peers.clear();
+        resolutionList.clear();
 
-    // P2P params
-    peers.clear();
-    resolutionList.clear();
+        listeningPort = par("listeningPort");
+        discoveryAttempts = par("discoveryAttempts");
+        discoveryThreshold = par("discoveryThreshold");
 
-    listeningPort = par("listeningPort");
-    discoveryAttempts = par("discoveryAttempts");
-    discoveryThreshold = par("discoveryThreshold");
+        // Simulation params
+        simStartTime = simTime();
+        runStartTime = time(nullptr);
 
-    // Simulation params
-    simStartTime = simTime();
-    runStartTime = time(nullptr);
+        localIp = L3AddressResolver().addressOf(getModuleByPath("^.^."));
+        listeningSocket = open(listeningPort, SOCK_STREAM);
+        listen(listeningSocket);
+    }
+}
+
+void P2P::handleMessage(cMessage *msg)
+{
+    auto arrivalGate = msg->getArrivalGate();
+
+    if (strncmp(arrivalGate->getName(), "discoveryIn", 11) == 0)
+    {
+        auto response = check_and_cast<DiscoveryResolution *>(msg);
+
+        for (int i = 0; i < response->getResolutionArraySize(); i++)
+            resolutionList.insert(response->getResolution(i));
+
+        delete response;
+    }
+    else
+    {
+        AppBase::handleMessage(msg);
+    }
 }
 
 void P2P::processSelfMessage(cMessage *msg)
 {
-
     if (msg->getKind() == EXEC_START)
     {
-        // Open the P2P protocol socket
-        localIp = L3AddressResolver().addressOf(getModuleByPath("^.^."));
-        listeningSocket = open(listeningPort, SOCK_STREAM);
-        listen(listeningSocket);
-
         // Join the network at an arbitrary time
-        event->setKind(NODE_UP);
+        event->setKind(PEER_DISCOVERY);
         scheduleAfter(uniform(30, 120), event);
+    }
+    else if (msg->getKind() == PEER_DISCOVERY)
+    {
+        if (peers.size() < discoveryThreshold && discoveryAttempts > 0)
+            send(new cMessage("discovery"), "discoveryOut", 0);
+        else if (peers.size() > 0)
+            event->setKind(CONNECTED);
+        else
+        {
+            // NOTE: temporary fallback to avoid infinite loops
+        }
     }
     else if (msg->getKind() == PEER_CONNECTION)
     {
@@ -97,7 +127,6 @@ void P2P::finish()
 
     peers.clear();
     resolutionList.clear();
-    close(dnsSock);
 
     // Finish the super-class
     AppBase::finish();
@@ -118,8 +147,8 @@ void P2P::handleConnectFailure(int sockFd)
 
 void P2P::connectToPeer()
 {
-    L3Address destIp = resolutionList.back();
-    resolutionList.pop_back();
+    L3Address destIp = *resolutionList.begin();
+    resolutionList.erase(resolutionList.begin());
 
     if (peers.count(destIp))
         return;

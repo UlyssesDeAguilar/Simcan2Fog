@@ -30,19 +30,15 @@ class P2P : public AppBase, public AppBase::ICallback
         CONNECTED        //!< Node is ready and connected to the network
     };
 
-    std::map<int, Peer *> peerData;        //!< Peer data
-    std::vector<L3Address> resolutionList; //!< Addresses obtained through discovery services
-    std::set<L3Address> peers;             //<! Active peers
-    L3Address localIp;                     //!< Local address
-    L3Address dnsIp;                       //!< DNS address
-    const char *dnsSeed{};                 //!< DNS A record seed
-    int listeningPort;                     //!< Protocol port
-    int listeningSocket;                   //!< TCP socket for p2p requesting
-    int dnsSock;                           //!< Active DNS connection
+    std::map<int, Peer *> peerData; //!< Peer data
+    std::set<L3Address> peers;      //<! Active peers
+    L3Address localIp;              //!< Local address
+    int listeningPort;              //!< Protocol port
+    int listeningSocket;            //!< TCP socket for p2p requesting
 
-    int discoveryAttempts;  //!< Number of times to run discovery services
-    int discoveryThreshold; //!< Number of nodes before considering oneself
-                            //!< connected
+    std::set<L3Address> resolutionList; //!< Addresses obtained through discovery services
+    int discoveryAttempts;              //!< Number of times to run discovery services
+    int discoveryThreshold;             //!< Minimum number of peers to konw
 
     simtime_t simStartTime; //!< Simulation Starting timestamp
     time_t runStartTime;    //!< Real execution time
@@ -92,12 +88,14 @@ class P2P : public AppBase, public AppBase::ICallback
     /**
      * Initialization hook for this module.
      */
-    virtual void initialize() override;
+    virtual void initialize(int stage) override;
 
     /**
      * Finish hook that runs when the simulation is terminated without errors.
      */
     virtual void finish() override;
+
+    virtual void handleMessage(cMessage *msg) override;
 
     /**
      * Handle hook for messages sent by this module.
@@ -129,9 +127,9 @@ class P2P : public AppBase, public AppBase::ICallback
     virtual void handleDataArrived(int sockFd, Packet *p) override {};
     virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
     virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override {};
-    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {}
-    virtual void returnRead(simtime_t timeElapsed) override {}
-    virtual void returnWrite(simtime_t timeElapsed) override {}
-    virtual void handleParameterChange(const char *parameterName) override {}
+    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {};
+    virtual void returnRead(simtime_t timeElapsed) override {};
+    virtual void returnWrite(simtime_t timeElapsed) override {};
+    virtual void handleParameterChange(const char *parameterName) override {};
 };
 #endif

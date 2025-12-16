@@ -37,7 +37,7 @@ namespace s2f::p2p::pow
         /**
          * Initialization hook for this module.
          */
-        virtual void initialize() override;
+        virtual void initialize(int stage) override;
 
         /**
          * Finish hook that runs when the simulation is terminated without errors.
@@ -49,23 +49,7 @@ namespace s2f::p2p::pow
          *
          * @param msg   Message to process.
          */
-        virtual void processSelfMessage(cMessage *msg) override
-        {
-            if (msg != event)
-                processConnectionState(msg);
-            else
-                processNodeState(msg);
-        }
-
-        /**
-         * Handle hook for events related to other peers.
-         */
-        void processConnectionState(cMessage *msg);
-
-        /**
-         * Handle hook for self-events.
-         */
-        void processNodeState(cMessage *msg);
+        virtual void processSelfMessage(cMessage *msg) override;
 
         /**
          * Handles the initial connection to another peer candidate in the

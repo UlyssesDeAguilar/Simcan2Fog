@@ -39,7 +39,7 @@ OBJS = \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
     $O/s2f/apps/p2p/P2P.o \
-    $O/s2f/apps/p2p/discovery/DnsDiscoveryService.o \
+    $O/s2f/apps/p2p/discovery/dns/DnsDiscoveryService.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \

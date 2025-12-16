@@ -73,6 +73,11 @@ class DnsDiscoveryService : public AppBase, public AppBase::ICallback
      */
     virtual void handleDataArrived(int sockFd, Packet *p) override;
 
-    void registerNode(int sockFd, L3Address ipAddress, int listeningPort);
+    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {};
+    virtual void returnRead(simtime_t timeElapsed) override {};
+    virtual void returnWrite(simtime_t timeElapsed) override {};
+    virtual void handleParameterChange(const char *parameterName) override {};
+    virtual bool handlePeerClosed(int sockFd) override { return true; };
+    virtual void processSelfMessage(cMessage *msg) override {};
 };
 #endif

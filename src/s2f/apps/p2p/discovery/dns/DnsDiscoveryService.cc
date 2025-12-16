@@ -7,6 +7,8 @@
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
 #include "s2f/architecture/net/protocol/RestfulResponse_m.h"
 
+Define_Module(DnsDiscoveryService);
+
 using namespace s2f::dns;
 
 void DnsDiscoveryService::initialize(int stage)
@@ -14,6 +16,7 @@ void DnsDiscoveryService::initialize(int stage)
     if (stage == INITSTAGE_LOCAL)
     {
         AppBase::initialize();
+        setReturnCallback(this);
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
@@ -25,26 +28,13 @@ void DnsDiscoveryService::initialize(int stage)
     }
 }
 
-void DnsDiscoveryService::registerNode(int sockFd, L3Address ipAddress, int listeningPort)
+void DnsDiscoveryService::handleMessage(omnetpp::cMessage *msg)
 {
-    EV_INFO << "Registering node on port " << listeningPort
-            << " on dns seed " << dnsSeed << "\n";
 
-    ResourceRecord record;
-
-    auto packet = new Packet("Registration request");
-    const auto &request = makeShared<DnsRegistrationRequest>();
-
-    record.type = RecordType::A;
-    record.domain = dnsSeed;
-    record.ip = ipAddress;
-
-    request->appendRecords(record);
-    request->setZone("mainnet.com"); // TODO: parse from dnsSeed
-    request->setVerb(Verb::PUT);
-
-    packet->insertAtBack(request);
-    _send(dnsSock, packet);
+    if (msg->getArrivalGate() == inGate)
+        resolve(dnsSeed);
+    else
+        AppBase::handleMessage(msg);
 }
 
 void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
@@ -67,8 +57,32 @@ void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipR
 
 void DnsDiscoveryService::handleConnectReturn(int sockFd, bool connected)
 {
+    if (sockFd != dnsSock)
+        return;
     if (!connected)
         error("Cannot connect to DNS to join the network");
+
+    L3Address localIp = L3AddressResolver().addressOf(getModuleByPath("^.^.^."));
+    int listeningPort = par("listeningPort");
+
+    EV << "Registering node on port " << listeningPort
+       << " on dns seed " << dnsSeed << "\n";
+
+    ResourceRecord record;
+
+    auto packet = new Packet("Registration request");
+    const auto &request = makeShared<DnsRegistrationRequest>();
+
+    record.type = RecordType::A;
+    record.domain = dnsSeed;
+    record.ip = localIp;
+
+    request->appendRecords(record);
+    request->setZone("mainnet.com"); // TODO: parse from dnsSeed
+    request->setVerb(Verb::PUT);
+
+    packet->insertAtBack(request);
+    _send(dnsSock, packet);
 }
 
 void DnsDiscoveryService::handleDataArrived(int sockFd, Packet *p)
