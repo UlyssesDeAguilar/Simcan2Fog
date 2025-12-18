@@ -1,5 +1,6 @@
 #include "P2P.h"
 #include "discovery/DiscoveryResolution_m.h"
+#include "inet/common/InitStages.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "omnetpp/checkandcast.h"
@@ -16,14 +17,11 @@ Define_Module(P2P);
 // ------------------------------------------------------------------------- //
 void P2P::initialize(int stage)
 {
-
     if (stage == INITSTAGE_LOCAL)
     {
         AppBase::initialize();
         setReturnCallback(this);
-    }
-    else if (stage == INITSTAGE_APPLICATION_LAYER)
-    {
+
         // P2P params
         peers.clear();
         resolutionList.clear();
@@ -35,7 +33,9 @@ void P2P::initialize(int stage)
         // Simulation params
         simStartTime = simTime();
         runStartTime = time(nullptr);
-
+    }
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
         localIp = L3AddressResolver().addressOf(getModuleByPath("^.^."));
         listeningSocket = open(listeningPort, SOCK_STREAM);
         listen(listeningSocket);
@@ -45,15 +45,14 @@ void P2P::initialize(int stage)
 void P2P::handleMessage(cMessage *msg)
 {
     auto arrivalGate = msg->getArrivalGate();
+    EV << "Is it here???\n\n\n\n\n";
 
-    if (strncmp(arrivalGate->getName(), "discoveryIn", 11) == 0)
+    if (arrivalGate && strncmp(arrivalGate->getName(), "discoveryIn", 11) == 0)
     {
         auto response = check_and_cast<DiscoveryResolution *>(msg);
 
         for (int i = 0; i < response->getResolutionArraySize(); i++)
             resolutionList.insert(response->getResolution(i));
-
-        delete response;
     }
     else
     {

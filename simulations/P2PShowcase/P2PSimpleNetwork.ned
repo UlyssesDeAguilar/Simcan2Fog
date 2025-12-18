@@ -46,8 +46,8 @@ module PeerNode extends StandardHost
         resolver.socketIn <-- at.out++;
 
         // Discovery services
-        at.in++ <-- protocol.serviceSocketOut++;
-        at.out++ --> protocol.serviceSocketIn++;
+        //at.in++ <-- protocol.serviceSocketOut++;
+        //at.out++ --> protocol.serviceSocketIn++;
 }
 
 //

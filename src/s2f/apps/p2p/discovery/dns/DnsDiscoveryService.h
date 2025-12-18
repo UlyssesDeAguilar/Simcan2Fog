@@ -1,6 +1,7 @@
 #ifndef __P2P_DISCOVERY_H__
 #define __P2P_DISCOVERY_H__
 
+#include "inet/common/InitStages.h"
 #include "inet/common/packet/Packet.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/cmessage.h"
@@ -63,6 +64,8 @@ class DnsDiscoveryService : public AppBase, public AppBase::ICallback
      * @param connected Connection status.
      */
     virtual void handleConnectReturn(int sockFd, bool connected) override;
+
+    virtual int numInitStages() const override { return INITSTAGE_APPLICATION_LAYER + 1; }
 
     /**
      * Handles packets arrived from an existing connection to the DNS service.

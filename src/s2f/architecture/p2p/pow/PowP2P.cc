@@ -23,6 +23,8 @@ Define_Module(PowP2P);
 
 void PowP2P::initialize(int stage)
 {
+    P2P::initialize(stage);
+
     if (stage == INITSTAGE_LOCAL)
     {
         peerConnection.clear();
@@ -38,15 +40,13 @@ void PowP2P::initialize(int stage)
         // Message producers
         producers.emplace("version", std::make_unique<VersionMsgProducer>());
         producers.emplace("ping", std::make_unique<PingMsgProducer>());
-
-        self.setServices(pow::NODE_NETWORK);
-        self.setTime(time(nullptr));
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
+        self.setServices(pow::NODE_NETWORK);
+        self.setTime(time(nullptr));
         self.setIpAddress(localIp);
     }
-    P2P::initialize(stage);
 }
 
 void PowP2P::finish()

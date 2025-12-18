@@ -17,13 +17,13 @@ void DnsDiscoveryService::initialize(int stage)
     {
         AppBase::initialize();
         setReturnCallback(this);
+        dnsSeed = par("dnsSeed");
+
+        dnsSock = open(-1, SOCK_STREAM);
+        dnsIp = L3Address(par("dnsIp"));
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
-        dnsSock = open(-1, SOCK_STREAM);
-        dnsSeed = par("dnsSeed");
-        dnsIp = L3Address(par("dnsIp"));
-
         connect(dnsSock, dnsIp, 443);
     }
 }

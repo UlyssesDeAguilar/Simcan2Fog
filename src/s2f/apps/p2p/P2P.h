@@ -111,6 +111,7 @@ class P2P : public AppBase, public AppBase::ICallback
      */
     virtual bool handlePeerClosed(int sockFd) override;
 
+    virtual int numInitStages() const override { return INITSTAGE_APPLICATION_LAYER + 1; }
     /**
      * Handle hook for socket connection initiated by a possible peer.
      *
