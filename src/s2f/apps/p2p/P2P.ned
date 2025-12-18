@@ -22,4 +22,11 @@ module P2P extends AppBase {
 	  @class(P2P);
     int discoveryAttempts = 3;
     int discoveryThreshold = 5;
+    int listeningPort;
+    
+    gates:
+        input internalIn[];
+        output internalOut[];
+        input discoveryIn[];
+        output discoveryOut[];
 }

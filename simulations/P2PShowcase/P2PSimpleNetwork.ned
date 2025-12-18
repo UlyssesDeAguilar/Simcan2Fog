@@ -33,8 +33,6 @@ module PeerNode extends StandardHost
             @display("p=932.554,60.966003");
         }
 
-        discoveryService: DnsDiscoveryService;
-
         resolver: DnsResolver {
             @display("p=1106.42,60.966003");
         }
@@ -47,13 +45,9 @@ module PeerNode extends StandardHost
         resolver.socketOut --> at.in++;
         resolver.socketIn <-- at.out++;
 
-        // Discovery services connect to TCP/UDP if required
-        at.in++ <-- discoveryService.socketOut;
-        at.out++ --> discoveryService.socketIn;
-
-        // Connect discovery services with protocol
-        protocol.discoveryIn++ <-- discoveryService.out;
-        protocol.discoveryOut++ --> discoveryService.in;
+        // Discovery services
+        at.in++ <-- protocol.serviceSocketOut++;
+        at.out++ --> protocol.serviceSocketIn++;
 }
 
 //
@@ -63,13 +57,13 @@ network P2PNetwork
 {
     parameters:
         int numPeers = default(2);
-    
+
     submodules:
         configurator: Ipv4NetworkConfigurator {
             @display("p=67,36");
         }
         switch: EthernetSwitch {
-            @display("p=165,157");
+            @display("p=181,137");
         }
         peers[numPeers]: PeerNode;
         dns: DnsSimplified {
