@@ -8,6 +8,7 @@
 #include "omnetpp/csimulation.h"
 #include "omnetpp/regmacros.h"
 #include "s2f/apps/AppBase.h"
+#include "s2f/apps/p2p/InternalRequest_m.h"
 #include "s2f/messages/Syscall_m.h"
 
 Define_Module(P2P);
@@ -33,6 +34,8 @@ void P2P::initialize(int stage)
         // Simulation params
         simStartTime = simTime();
         runStartTime = time(nullptr);
+
+        discoveryService = getModuleByPath(par("discoveryPath"))->gate("internal");
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
@@ -45,19 +48,18 @@ void P2P::initialize(int stage)
 void P2P::handleMessage(cMessage *msg)
 {
     auto arrivalGate = msg->getArrivalGate();
-    EV << "Is it here???\n\n\n\n\n";
 
-    if (arrivalGate && strncmp(arrivalGate->getName(), "discoveryIn", 11) == 0)
+    if (arrivalGate && strncmp(arrivalGate->getName(), "discovery", 9) == 0)
     {
         auto response = check_and_cast<DiscoveryResolution *>(msg);
 
         for (int i = 0; i < response->getResolutionArraySize(); i++)
             resolutionList.insert(response->getResolution(i));
+
+        delete msg;
     }
     else
-    {
         AppBase::handleMessage(msg);
-    }
 }
 
 void P2P::processSelfMessage(cMessage *msg)
@@ -71,7 +73,11 @@ void P2P::processSelfMessage(cMessage *msg)
     else if (msg->getKind() == PEER_DISCOVERY)
     {
         if (peers.size() < discoveryThreshold && discoveryAttempts > 0)
-            send(new cMessage("discovery"), "discoveryOut", 0);
+        {
+            auto discoveryRequest = new InternalRequest("discovery");
+            discoveryRequest->setModuleId(getId());
+            sendDirect(discoveryRequest, discoveryService);
+        }
         else if (peers.size() > 0)
             event->setKind(CONNECTED);
         else

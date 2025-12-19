@@ -2,6 +2,7 @@
 #include "inet/common/InitStages.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/apps/AppBase.h"
+#include "s2f/apps/p2p/InternalRequest_m.h"
 #include "s2f/apps/p2p/discovery/DiscoveryResolution_m.h"
 #include "s2f/architecture/dns/ResourceRecord_m.h"
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
@@ -24,6 +25,7 @@ void DnsDiscoveryService::initialize(int stage)
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
+        localIp = L3AddressResolver().addressOf(getModuleByPath("^.^."));
         connect(dnsSock, dnsIp, 443);
     }
 }
@@ -31,8 +33,17 @@ void DnsDiscoveryService::initialize(int stage)
 void DnsDiscoveryService::handleMessage(omnetpp::cMessage *msg)
 {
 
-    if (msg->getArrivalGate() == inGate)
+    auto arrivalGate = msg->getArrivalGate();
+
+    if (arrivalGate && strncmp(arrivalGate->getName(), "internal", 9) == 0)
+    {
+        auto request = static_cast<InternalRequest *>(msg);
+
+        caller = getSimulation()->getModule(request->getModuleId());
         resolve(dnsSeed);
+
+        delete msg;
+    }
     else
         AppBase::handleMessage(msg);
 }
@@ -52,7 +63,7 @@ void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipR
     for (const auto &ip : ipResolutions)
         response->appendResolution(ip);
 
-    send(response, "out");
+    sendDirect(response, caller, "discovery");
 }
 
 void DnsDiscoveryService::handleConnectReturn(int sockFd, bool connected)
@@ -62,10 +73,7 @@ void DnsDiscoveryService::handleConnectReturn(int sockFd, bool connected)
     if (!connected)
         error("Cannot connect to DNS to join the network");
 
-    L3Address localIp = L3AddressResolver().addressOf(getModuleByPath("^.^.^."));
-    int listeningPort = par("listeningPort");
-
-    EV << "Registering node on port " << listeningPort
+    EV << "Registering node with ip" << localIp
        << " on dns seed " << dnsSeed << "\n";
 
     ResourceRecord record;

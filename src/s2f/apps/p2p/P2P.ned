@@ -24,9 +24,10 @@ module P2P extends AppBase {
     int discoveryThreshold = 5;
     int listeningPort;
     
+    string internalPath = default("");
+    string discoveryPath = default("");
+    
     gates:
-        input internalIn[];
-        output internalOut[];
-        input discoveryIn[];
-        output discoveryOut[];
+        input internal @directIn; // for communication with other internal modules
+        input discovery @directIn; // for communication with discovery services
 }

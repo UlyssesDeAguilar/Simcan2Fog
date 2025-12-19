@@ -1,10 +1,9 @@
 package s2f.apps.p2p.discovery.dns;
-import s2f.apps.AppBase;
+import s2f.apps.p2p.discovery.DiscoveryService;
 
-simple DnsDiscoveryService extends AppBase {
+simple DnsDiscoveryService extends DiscoveryService {
 	parameters:
 	  @class(DnsDiscoveryService);
-		int listeningPort;
 		string dnsSeed @mutable;
 		string dnsIp @mutable;
 }

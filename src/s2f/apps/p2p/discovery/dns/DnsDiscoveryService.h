@@ -5,6 +5,7 @@
 #include "inet/common/packet/Packet.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/cmessage.h"
+#include "omnetpp/cmodule.h"
 #include "omnetpp/csimplemodule.h"
 #include "s2f/apps/AppBase.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
@@ -27,6 +28,9 @@ class DnsDiscoveryService : public AppBase, public AppBase::ICallback
     inet::L3Address dnsIp; //!< DNS address
     const char *dnsSeed{}; //!< DNS A record seed
     int dnsSock;           //!< Active DNS connection
+    inet::L3Address localIp;
+    cModule *caller;
+
   public:
     /**
      * Initialization hook for this module.

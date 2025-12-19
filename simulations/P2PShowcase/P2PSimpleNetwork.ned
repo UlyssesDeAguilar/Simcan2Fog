@@ -14,7 +14,7 @@
 // 
 package s2f.simulations.P2PShowcase;
 
-import s2f.apps.p2p.P2Protocol;
+import s2f.apps.UserAppModule;
 import s2f.apps.p2p.discovery.dns.DnsDiscoveryService;
 import s2f.architecture.net.stack.proxy.AppProxy;
 import s2f.architecture.net.stack.proxy.ServiceTable;
@@ -29,9 +29,10 @@ import inet.node.inet.StandardHost;
 module PeerNode extends StandardHost
 {
     submodules:
-        protocol: P2Protocol {
+        protocol: UserAppModule {
             @display("p=932.554,60.966003");
         }
+        discoveryService: UserAppModule;
 
         resolver: DnsResolver {
             @display("p=1106.42,60.966003");
@@ -45,9 +46,9 @@ module PeerNode extends StandardHost
         resolver.socketOut --> at.in++;
         resolver.socketIn <-- at.out++;
 
-        // Discovery services
-        //at.in++ <-- protocol.serviceSocketOut++;
-        //at.out++ --> protocol.serviceSocketIn++;
+        // Discovery Services connect to the TCP/UDP layer
+        at.in++ <-- discoveryService.socketOut;
+        at.out++ --> discoveryService.socketIn;
 }
 
 //
