@@ -8,7 +8,7 @@
 #include "omnetpp/csimulation.h"
 #include "omnetpp/regmacros.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/apps/p2p/InternalRequest_m.h"
+#include "s2f/apps/p2p/InnerRequest_m.h"
 #include "s2f/messages/Syscall_m.h"
 
 Define_Module(P2P);
@@ -74,7 +74,7 @@ void P2P::processSelfMessage(cMessage *msg)
     {
         if (peers.size() < discoveryThreshold && discoveryAttempts > 0)
         {
-            auto discoveryRequest = new InternalRequest("discovery");
+            auto discoveryRequest = new InnerRequest("discovery");
             discoveryRequest->setModuleId(getId());
             sendDirect(discoveryRequest, discoveryService);
         }

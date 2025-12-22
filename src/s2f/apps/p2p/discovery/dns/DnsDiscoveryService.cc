@@ -2,7 +2,7 @@
 #include "inet/common/InitStages.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/apps/p2p/InternalRequest_m.h"
+#include "s2f/apps/p2p/InnerRequest_m.h"
 #include "s2f/apps/p2p/discovery/DiscoveryResolution_m.h"
 #include "s2f/architecture/dns/ResourceRecord_m.h"
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
@@ -37,7 +37,7 @@ void DnsDiscoveryService::handleMessage(omnetpp::cMessage *msg)
 
     if (arrivalGate && strncmp(arrivalGate->getName(), "internal", 9) == 0)
     {
-        auto request = static_cast<InternalRequest *>(msg);
+        auto request = static_cast<InnerRequest *>(msg);
 
         caller = getSimulation()->getModule(request->getModuleId());
         resolve(dnsSeed);
@@ -100,4 +100,10 @@ void DnsDiscoveryService::handleDataArrived(int sockFd, Packet *p)
         EV_INFO << "Service registered at DNS seed " << dnsSeed << "\n";
 
     delete p;
+}
+
+void DnsDiscoveryService::finish()
+{
+    close(dnsSock);
+    AppBase::finish();
 }
