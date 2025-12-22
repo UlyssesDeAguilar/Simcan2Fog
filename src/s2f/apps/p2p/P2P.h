@@ -36,7 +36,8 @@ class P2P : public AppBase, public AppBase::ICallback
     int listeningPort;              //!< Protocol port
     int listeningSocket;            //!< TCP socket for p2p requesting
 
-    cGate *discoveryService{};
+    std::vector<cGate *> discoveryServices{};
+    int numServices;
     std::set<L3Address> resolutionList; //!< Addresses obtained through discovery services
     int discoveryAttempts;              //!< Number of times to run discovery services
     int discoveryThreshold;             //!< Minimum number of peers to konw

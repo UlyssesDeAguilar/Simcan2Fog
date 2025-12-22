@@ -31,20 +31,21 @@ void HardcodedDiscoveryService::initialize(int stage)
 void HardcodedDiscoveryService::handleMessage(omnetpp::cMessage *msg)
 {
     auto arrivalGate = msg->getArrivalGate();
-
-    if (arrivalGate && strncmp(arrivalGate->getName(), "internal", 9) == 0)
+    if (!arrivalGate || strncmp(arrivalGate->getName(), "internal", 9) != 0)
     {
-        auto request = static_cast<InnerRequest *>(msg);
-        caller = getSimulation()->getModule(request->getModuleId());
-
-        const auto &response = new DiscoveryResolution("Hardcoded");
-
-        for (const auto &ip : addressList)
-            response->appendResolution(ip);
-
-        sendDirect(response, caller, "discovery");
-        delete msg;
-    }
-    else
         AppBase::handleMessage(msg);
+        return;
+    }
+
+    // Handle a discovery request
+    auto request = static_cast<InnerRequest *>(msg);
+    caller = getSimulation()->getModule(request->getModuleId());
+
+    const auto &response = new DiscoveryResolution("Hardcoded");
+
+    for (const auto &ip : addressList)
+        response->appendResolution(ip);
+
+    sendDirect(response, caller, "discovery");
+    delete msg;
 }

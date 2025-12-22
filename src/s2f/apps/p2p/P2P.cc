@@ -35,7 +35,12 @@ void P2P::initialize(int stage)
         simStartTime = simTime();
         runStartTime = time(nullptr);
 
-        discoveryService = getModuleByPath(par("discoveryPath"))->gate("internal");
+        numServices = getParentModule()->getParentModule()->par("numServices");
+        for (int i = 0; i < numServices; i++)
+        {
+            std::string path = "^.^.discoveryService[" + std::to_string(i) + "].app";
+            discoveryServices.push_back(getModuleByPath(path.c_str())->gate("internal"));
+        }
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
@@ -48,24 +53,31 @@ void P2P::initialize(int stage)
 void P2P::handleMessage(cMessage *msg)
 {
     auto arrivalGate = msg->getArrivalGate();
-    EV << "soy de discovery...?\n";
 
-    if (arrivalGate && strncmp(arrivalGate->getName(), "discovery", 9) == 0)
+    // Non-discovery messages handled by the parent
+    if (!arrivalGate || strncmp(arrivalGate->getName(), "discovery", 9) != 0)
     {
-        EV << "es aca...?\n";
-        auto response = check_and_cast<DiscoveryResolution *>(msg);
-
-        EV << "o es aca...?\n";
-        for (int i = 0; i < response->getResolutionArraySize(); i++)
-            resolutionList.insert(response->getResolution(i));
-
-        EV << "aca ni de chiste...?\n";
-        delete msg;
-    }
-    else
         AppBase::handleMessage(msg);
+        return;
+    }
 
-    EV << "si sali, tenemos problemS...?\n";
+    // Add all IP addressess as candidates
+    auto response = check_and_cast<DiscoveryResolution *>(msg);
+
+    for (int i = 0; i < response->getResolutionArraySize(); i++)
+        resolutionList.insert(response->getResolution(i));
+
+    delete msg;
+
+    // Handle state transition
+    numServices--;
+
+    if (numServices)
+        return;
+
+    event->setKind(PEER_CONNECTION);
+    scheduleAfter(1.0, event);
+    numServices = discoveryServices.size();
 }
 
 void P2P::processSelfMessage(cMessage *msg)
@@ -76,33 +88,30 @@ void P2P::processSelfMessage(cMessage *msg)
         event->setKind(PEER_DISCOVERY);
         scheduleAfter(uniform(30, 120), event);
     }
-    else if (msg->getKind() == PEER_DISCOVERY)
-    {
-        if (peers.size() < discoveryThreshold && discoveryAttempts > 0)
+    else if (msg->getKind() == PEER_DISCOVERY && discoveryAttempts)
+        for (auto &service : discoveryServices)
         {
             auto discoveryRequest = new InnerRequest("discovery");
             discoveryRequest->setModuleId(getId());
-            sendDirect(discoveryRequest, discoveryService);
+            sendDirect(discoveryRequest, service);
         }
-        else if (peers.size() > 0)
-            event->setKind(CONNECTED);
-        else
-        {
-            // NOTE: temporary fallback to avoid infinite loops
-        }
-    }
     else if (msg->getKind() == PEER_CONNECTION)
     {
+        return;
         if (!resolutionList.empty())
         {
             connectToPeer();
             scheduleAfter(1.0, event);
         }
-        else
+        else if (peers.size() < discoveryThreshold)
         {
             discoveryAttempts--;
             event->setKind(PEER_DISCOVERY);
-            scheduleAfter(1.0, event);
+            scheduleAfter(uniform(30, 120), event);
+        }
+        else
+        {
+            event->setKind(CONNECTED);
         }
     }
 }

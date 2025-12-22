@@ -34,18 +34,19 @@ void DnsDiscoveryService::handleMessage(omnetpp::cMessage *msg)
 {
 
     auto arrivalGate = msg->getArrivalGate();
-
-    if (arrivalGate && strncmp(arrivalGate->getName(), "internal", 9) == 0)
+    if (!arrivalGate || strncmp(arrivalGate->getName(), "internal", 9) != 0)
     {
-        auto request = static_cast<InnerRequest *>(msg);
-
-        caller = getSimulation()->getModule(request->getModuleId());
-        resolve(dnsSeed);
-
-        delete msg;
-    }
-    else
         AppBase::handleMessage(msg);
+        return;
+    }
+
+    // Handle a discovery request
+    auto request = static_cast<InnerRequest *>(msg);
+
+    caller = getSimulation()->getModule(request->getModuleId());
+    resolve(dnsSeed);
+
+    delete msg;
 }
 
 void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
