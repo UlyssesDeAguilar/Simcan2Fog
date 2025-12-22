@@ -2,7 +2,7 @@
 #include "inet/common/InitStages.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/apps/p2p/InternalRequest_m.h"
+#include "s2f/apps/p2p/InnerRequest_m.h"
 #include "s2f/apps/p2p/discovery/DiscoveryResolution_m.h"
 #include "s2f/architecture/dns/ResourceRecord_m.h"
 #include "s2f/architecture/dns/registry/DnsRegistrationRequest_m.h"
@@ -34,18 +34,19 @@ void DnsDiscoveryService::handleMessage(omnetpp::cMessage *msg)
 {
 
     auto arrivalGate = msg->getArrivalGate();
-
-    if (arrivalGate && strncmp(arrivalGate->getName(), "internal", 9) == 0)
+    if (!arrivalGate || strncmp(arrivalGate->getName(), "internal", 9) != 0)
     {
-        auto request = static_cast<InternalRequest *>(msg);
-
-        caller = getSimulation()->getModule(request->getModuleId());
-        resolve(dnsSeed);
-
-        delete msg;
-    }
-    else
         AppBase::handleMessage(msg);
+        return;
+    }
+
+    // Handle a discovery request
+    auto request = static_cast<InnerRequest *>(msg);
+
+    caller = getSimulation()->getModule(request->getModuleId());
+    resolve(dnsSeed);
+
+    delete msg;
 }
 
 void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved)
@@ -58,7 +59,7 @@ void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipR
 
     // Add peer candidates from resolution
 
-    const auto &response = new DiscoveryResolution("Dns Discovery Resolution");
+    const auto &response = new DiscoveryResolution("DNS");
 
     for (const auto &ip : ipResolutions)
         response->appendResolution(ip);
@@ -100,4 +101,10 @@ void DnsDiscoveryService::handleDataArrived(int sockFd, Packet *p)
         EV_INFO << "Service registered at DNS seed " << dnsSeed << "\n";
 
     delete p;
+}
+
+void DnsDiscoveryService::finish()
+{
+    close(dnsSock);
+    AppBase::finish();
 }

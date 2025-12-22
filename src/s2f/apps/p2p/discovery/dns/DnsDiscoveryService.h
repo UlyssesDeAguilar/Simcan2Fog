@@ -1,5 +1,5 @@
-#ifndef __P2P_DISCOVERY_H__
-#define __P2P_DISCOVERY_H__
+#ifndef __P2P_DNS_DISCOVERY_H__
+#define __P2P_DNS_DISCOVERY_H__
 
 #include "inet/common/InitStages.h"
 #include "inet/common/packet/Packet.h"
@@ -39,6 +39,8 @@ class DnsDiscoveryService : public AppBase, public AppBase::ICallback
      */
     virtual void initialize(int stage) override;
 
+    virtual void finish() override;
+
     /**
      * Handler for received messages.
      */
@@ -69,6 +71,9 @@ class DnsDiscoveryService : public AppBase, public AppBase::ICallback
      */
     virtual void handleConnectReturn(int sockFd, bool connected) override;
 
+    /**
+     * Number of initialization stages for this module.
+     */
     virtual int numInitStages() const override { return INITSTAGE_APPLICATION_LAYER + 1; }
 
     /**

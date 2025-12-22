@@ -28,11 +28,13 @@ import inet.node.inet.StandardHost;
 
 module PeerNode extends StandardHost
 {
+    parameters:
+        int numServices = default(2);
     submodules:
         protocol: UserAppModule {
             @display("p=932.554,60.966003");
         }
-        discoveryService: UserAppModule;
+        discoveryService[numServices]: UserAppModule;
 
         resolver: DnsResolver {
             @display("p=1106.42,60.966003");
@@ -47,8 +49,10 @@ module PeerNode extends StandardHost
         resolver.socketIn <-- at.out++;
 
         // Discovery Services connect to the TCP/UDP layer
-        at.in++ <-- discoveryService.socketOut;
-        at.out++ --> discoveryService.socketIn;
+        for i=0..numServices-1 {
+        	at.in++ <-- discoveryService[i].socketOut;
+        	at.out++ --> discoveryService[i].socketIn;
+        }
 }
 
 //

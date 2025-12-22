@@ -40,6 +40,7 @@ OBJS = \
     $O/s2f/apps/iot/LocalIotApplication.o \
     $O/s2f/apps/p2p/P2P.o \
     $O/s2f/apps/p2p/discovery/dns/DnsDiscoveryService.o \
+    $O/s2f/apps/p2p/discovery/hardcoded/HardcodedDiscoveryService.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
@@ -137,7 +138,7 @@ OBJS = \
     $O/s2f/users/generators/UserGenerator_simple.o \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
-    $O/s2f/apps/p2p/InternalRequest_m.o \
+    $O/s2f/apps/p2p/InnerRequest_m.o \
     $O/s2f/apps/p2p/Peer_m.o \
     $O/s2f/apps/p2p/discovery/DiscoveryResolution_m.o \
     $O/s2f/apps/services/SimServiceReq_m.o \
@@ -184,7 +185,7 @@ OBJS = \
 
 # Message files
 MSGFILES = \
-    s2f/apps/p2p/InternalRequest.msg \
+    s2f/apps/p2p/InnerRequest.msg \
     s2f/apps/p2p/Peer.msg \
     s2f/apps/p2p/discovery/DiscoveryResolution.msg \
     s2f/apps/services/SimServiceReq.msg \
