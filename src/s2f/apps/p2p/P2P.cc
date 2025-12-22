@@ -48,18 +48,24 @@ void P2P::initialize(int stage)
 void P2P::handleMessage(cMessage *msg)
 {
     auto arrivalGate = msg->getArrivalGate();
+    EV << "soy de discovery...?\n";
 
     if (arrivalGate && strncmp(arrivalGate->getName(), "discovery", 9) == 0)
     {
+        EV << "es aca...?\n";
         auto response = check_and_cast<DiscoveryResolution *>(msg);
 
+        EV << "o es aca...?\n";
         for (int i = 0; i < response->getResolutionArraySize(); i++)
             resolutionList.insert(response->getResolution(i));
 
+        EV << "aca ni de chiste...?\n";
         delete msg;
     }
     else
         AppBase::handleMessage(msg);
+
+    EV << "si sali, tenemos problemS...?\n";
 }
 
 void P2P::processSelfMessage(cMessage *msg)

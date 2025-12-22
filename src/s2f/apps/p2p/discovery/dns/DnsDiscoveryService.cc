@@ -58,7 +58,7 @@ void DnsDiscoveryService::handleResolutionFinished(const std::set<L3Address> ipR
 
     // Add peer candidates from resolution
 
-    const auto &response = new DiscoveryResolution("Dns Discovery Resolution");
+    const auto &response = new DiscoveryResolution("DNS");
 
     for (const auto &ip : ipResolutions)
         response->appendResolution(ip);
