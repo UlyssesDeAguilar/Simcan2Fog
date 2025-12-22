@@ -1,16 +1,16 @@
-#ifndef __P2P_APPLICATION_H__
-#define __P2P_APPLICATION_H__
+#ifndef __P2P_PROTOCOL_H__
+#define __P2P_PROTOCOL_H__
 
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/checkandcast.h"
 #include "s2f/apps/AppBase.h"
-#include "s2f/apps/p2p/NetworkPeer_m.h"
+#include "s2f/apps/p2p/Peer_m.h"
 #include "s2f/messages/Syscall_m.h"
 #include <omnetpp.h>
 #include <vector>
 
 /**
- * @class P2PBase P2PBase.h "P2PBase.h"
+ * @class P2P P2P.h "P2P.h"
  *
  * Base application for the peer-to-peer protocol.
  * Manages all existing connextions to the peer
@@ -18,7 +18,7 @@
  * @author Tomás Daniel Expósito Torre
  * @date 2025-09-08
  */
-class P2PBase : public AppBase, public AppBase::ICallback
+class P2P : public AppBase, public AppBase::ICallback
 {
   protected:
     enum P2PEvent
@@ -30,19 +30,16 @@ class P2PBase : public AppBase, public AppBase::ICallback
         CONNECTED        //!< Node is ready and connected to the network
     };
 
-    std::map<int, NetworkPeer *> peerData; //!< Peer data
-    std::vector<L3Address> resolutionList; //!< Addresses obtained through discovery services
-    std::set<L3Address> peers;             //<! Active peers
-    L3Address localIp;                     //!< Local address
-    L3Address dnsIp;                       //!< DNS address
-    const char *dnsSeed{};                 //!< DNS A record seed
-    int listeningPort;                     //!< Protocol port
-    int listeningSocket;                   //!< TCP socket for p2p requesting
-    int dnsSock;                           //!< Active DNS connection
+    std::map<int, Peer *> peerData; //!< Peer data
+    std::set<L3Address> peers;      //<! Active peers
+    L3Address localIp;              //!< Local address
+    int listeningPort;              //!< Protocol port
+    int listeningSocket;            //!< TCP socket for p2p requesting
 
-    int discoveryAttempts;  //!< Number of times to run discovery services
-    int discoveryThreshold; //!< Number of nodes before considering oneself
-                            //!< connected
+    cGate *discoveryService{};
+    std::set<L3Address> resolutionList; //!< Addresses obtained through discovery services
+    int discoveryAttempts;              //!< Number of times to run discovery services
+    int discoveryThreshold;             //!< Minimum number of peers to konw
 
     simtime_t simStartTime; //!< Simulation Starting timestamp
     time_t runStartTime;    //!< Real execution time
@@ -92,12 +89,14 @@ class P2PBase : public AppBase, public AppBase::ICallback
     /**
      * Initialization hook for this module.
      */
-    virtual void initialize() override;
+    virtual void initialize(int stage) override;
 
     /**
      * Finish hook that runs when the simulation is terminated without errors.
      */
     virtual void finish() override;
+
+    virtual void handleMessage(cMessage *msg) override;
 
     /**
      * Handle hook for messages sent by this module.
@@ -107,46 +106,13 @@ class P2PBase : public AppBase, public AppBase::ICallback
     virtual void processSelfMessage(cMessage *msg) override;
 
     /**
-     * Handle hook for resolutions sent by the DNS.
-     *
-     * @param ip        IP Address received on a successful resolution.
-     * @param resolved  Resolution status.
-     */
-    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
-
-    /**
-     * Handle hook for resolutions sent by the DNS.
-     *
-     * @param ipResolutions IP Address list received on successful resolution.
-     * @param resolved      Resolution status.
-     */
-    virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override;
-
-    /**
      * Handle hook for peer disconnection.
      *
      * @param sockFd    Connection file descriptor.
      */
     virtual bool handlePeerClosed(int sockFd) override;
 
-    /**
-     * Handles connections related to the DNS service.
-     * Peer connections should be handled by specific protocol implementations.
-     *
-     * @param sockFd    Connection file descriptor.
-     * @param connected Connection status.
-     */
-    virtual void handleConnectReturn(int sockFd, bool connected) override;
-
-    /**
-     * Handles packets arrived from an existing connection to the DNS service.
-     * Peer connections should be handled by specific protocol implementations.
-     *
-     * @param sockFd    Connection file descriptor.
-     * @param p         Connection incoming data.
-     */
-    virtual void handleDataArrived(int sockFd, Packet *p) override;
-
+    virtual int numInitStages() const override { return INITSTAGE_APPLICATION_LAYER + 1; }
     /**
      * Handle hook for socket connection initiated by a possible peer.
      *
@@ -159,13 +125,13 @@ class P2PBase : public AppBase, public AppBase::ICallback
         return true;
     }
 
-    // --------------------------------------------------------------------- //
-    //                          CHILDREN OVERRIDES                           //
-    // --------------------------------------------------------------------- //
-
-    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {}
-    virtual void returnRead(simtime_t timeElapsed) override {}
-    virtual void returnWrite(simtime_t timeElapsed) override {}
-    virtual void handleParameterChange(const char *parameterName) override {}
+    virtual void handleConnectReturn(int sockFd, bool connected) override {};
+    virtual void handleDataArrived(int sockFd, Packet *p) override {};
+    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
+    virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override {};
+    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {};
+    virtual void returnRead(simtime_t timeElapsed) override {};
+    virtual void returnWrite(simtime_t timeElapsed) override {};
+    virtual void handleParameterChange(const char *parameterName) override {};
 };
 #endif

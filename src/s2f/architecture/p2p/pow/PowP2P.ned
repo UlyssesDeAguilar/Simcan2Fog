@@ -14,11 +14,11 @@
 // 
 
 package s2f.architecture.p2p.pow;
-import s2f.apps.p2p.P2PBase;
+import s2f.apps.p2p.P2P;
 
-simple PowP2PApp extends P2PBase
+module PowP2P extends P2P
 {
     parameters:
-    	@class(PowP2PApp);
+    	@class(PowP2P);
     	listeningPort=8333;
 }

@@ -23,9 +23,6 @@ void FullNode::initialize(int stage)
 
     priv = createKeyPair();
     pubDer = serializePublic(priv);
-
-    cMessage *msg = new cMessage("btcstartup");
-    send(msg, "out");
 }
 
 void FullNode::handleMessage(omnetpp::cMessage *msg)

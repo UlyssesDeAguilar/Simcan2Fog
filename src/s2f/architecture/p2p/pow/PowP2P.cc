@@ -1,10 +1,11 @@
-#include "PowP2PApp.h"
+#include "PowP2P.h"
+#include "inet/common/InitStages.h"
 #include "inet/transportlayer/contract/tcp/TcpSocket.h"
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
-#include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
+#include "s2f/architecture/p2p/pow/PowPeer_m.h"
 #include "s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.h"
 #include "s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.h"
 #include "s2f/architecture/p2p/pow/consumers/PingMsgConsumer.h"
@@ -17,34 +18,38 @@
 #include <memory>
 
 using namespace s2f::p2p::pow;
-Define_Module(PowP2PApp);
 
-// ------------------------------------------------------------------------- //
-//                                  OVERRIDES                                //
-// ------------------------------------------------------------------------- //
+Define_Module(PowP2P);
 
-void PowP2PApp::initialize()
+void PowP2P::initialize(int stage)
 {
-    peerConnection.clear();
+    P2P::initialize(stage);
 
-    // Message consumers
-    consumers.emplace("version", std::make_unique<VersionMsgConsumer>());
-    consumers.emplace("verack", std::make_unique<VerackMsgConsumer>());
-    consumers.emplace("getaddr", std::make_unique<GetAddressMsgConsumer>());
-    consumers.emplace("addr", std::make_unique<AddressMsgConsumer>());
-    consumers.emplace("ping", std::make_unique<PingMsgConsumer>());
-    consumers.emplace("pong", std::make_unique<PongMsgConsumer>());
+    if (stage == INITSTAGE_LOCAL)
+    {
+        peerConnection.clear();
 
-    // Message producers
-    producers.emplace("version", std::make_unique<VersionMsgProducer>());
-    producers.emplace("ping", std::make_unique<PingMsgProducer>());
+        // Message consumers
+        consumers.emplace("version", std::make_unique<VersionMsgConsumer>());
+        consumers.emplace("verack", std::make_unique<VerackMsgConsumer>());
+        consumers.emplace("getaddr", std::make_unique<GetAddressMsgConsumer>());
+        consumers.emplace("addr", std::make_unique<AddressMsgConsumer>());
+        consumers.emplace("ping", std::make_unique<PingMsgConsumer>());
+        consumers.emplace("pong", std::make_unique<PongMsgConsumer>());
 
-    self.setServices(pow::NODE_NETWORK);
-    self.setTime(time(nullptr));
-    P2PBase::initialize();
+        // Message producers
+        producers.emplace("version", std::make_unique<VersionMsgProducer>());
+        producers.emplace("ping", std::make_unique<PingMsgProducer>());
+    }
+    else if (stage == INITSTAGE_APPLICATION_LAYER)
+    {
+        self.setServices(pow::NODE_NETWORK);
+        self.setTime(time(nullptr));
+        self.setIpAddress(localIp);
+    }
 }
 
-void PowP2PApp::finish()
+void PowP2P::finish()
 {
     for (auto &[_, event] : peerConnection)
         cancelAndDelete(event);
@@ -52,10 +57,10 @@ void PowP2PApp::finish()
     peerConnection.clear();
     consumers.clear();
     producers.clear();
-    P2PBase::finish();
+    P2P::finish();
 }
 
-void PowP2PApp::processConnectionState(cMessage *msg)
+void PowP2P::processSelfMessage(cMessage *msg)
 {
     if (msg->getKind() == pow::SEND_PING)
     {
@@ -79,49 +84,19 @@ void PowP2PApp::processConnectionState(cMessage *msg)
     {
         // TODO: add disconnection after timeout
     }
-}
-
-void PowP2PApp::processNodeState(cMessage *msg)
-{
-
-    // TODO: merge NODE_UP and PEER_DISCOVERY, change for call to various
-    // discovery services.
-    if (msg->getKind() == NODE_UP)
-    {
-        self.setIpAddress(localIp);
-        EV << "Connecting to DNS registry service" << "\n";
-        connect(dnsSock, dnsIp, 443);
-    }
-    else if (msg->getKind() == PEER_DISCOVERY)
-    {
-        if (peers.size() < discoveryThreshold && discoveryAttempts > 0)
-            resolve(dnsSeed);
-        else if (peers.size() > 0)
-            event->setKind(CONNECTED);
-        else
-        {
-            // NOTE: temporary fallback to avoid infinite loops
-        }
-    }
     else
-        P2PBase::processSelfMessage(msg);
+        P2P::processSelfMessage(msg);
 }
 
-void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
+void PowP2P::handleConnectReturn(int sockFd, bool connected)
 {
-    if (sockFd == dnsSock)
-    {
-        P2PBase::handleConnectReturn(sockFd, connected);
-        return;
-    }
-
     if (!connected)
     {
         handleConnectFailure(sockFd);
         return;
     }
 
-    PowNetworkPeer *p;
+    PowPeer *p;
     TcpSocket *sock;
     int oldSock;
     IPowMsgContext ictx = {
@@ -149,7 +124,7 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         return;
     }
 
-    p = oldSock ? powPeers[oldSock] : new PowNetworkPeer;
+    p = oldSock ? powPeers[oldSock] : new PowPeer;
     p->setServices(oldSock ? p->getServices() : pow::UNNAMED);
     p->setIpAddress(sock->getRemoteAddress());
     p->setPort(sock->getRemotePort());
@@ -171,14 +146,8 @@ void PowP2PApp::handleConnectReturn(int sockFd, bool connected)
         _send(sockFd, response);
 }
 
-void PowP2PApp::handleDataArrived(int sockFd, Packet *p)
+void PowP2P::handleDataArrived(int sockFd, Packet *p)
 {
-
-    if (sockFd == dnsSock)
-    {
-        P2PBase::handleDataArrived(sockFd, p);
-        return;
-    }
 
     EV << "Packet arrived from peer with connection " << sockFd << "\n";
 

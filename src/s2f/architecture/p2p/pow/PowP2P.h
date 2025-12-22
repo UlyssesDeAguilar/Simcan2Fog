@@ -5,8 +5,8 @@
 #include "consumers/IPowMsgConsumer.h"
 #include "inet/common/Ptr.h"
 #include "producers/IPowMsgProducer.h"
-#include "s2f/apps/p2p/P2PBase.h"
-#include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
+#include "s2f/apps/p2p/P2P.h"
+#include "s2f/architecture/p2p/pow/PowPeer_m.h"
 #include <memory>
 
 namespace s2f::p2p::pow
@@ -20,15 +20,15 @@ namespace s2f::p2p::pow
      * @author Tomás Daniel Expósito Torre
      * @date 2025-09-23
      */
-    class PowP2PApp : public P2PBase
+    class PowP2P : public P2P
     {
       protected:
-        PowNetworkPeer self;                                               //!< Representation of this node
+        PowPeer self;                                                      //!< Representation of this node
         std::map<int, cMessage *> peerConnection;                          //!< Peer event handlers
         std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
         std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
-        std::map<int, PowNetworkPeer *> &powPeers =
-            reinterpret_cast<std::map<int, PowNetworkPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
+        std::map<int, PowPeer *> &powPeers =
+            reinterpret_cast<std::map<int, PowPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
 
         // ------------------------------------------------------------- //
         //                           OVERRIDES                           //
@@ -37,7 +37,7 @@ namespace s2f::p2p::pow
         /**
          * Initialization hook for this module.
          */
-        virtual void initialize() override;
+        virtual void initialize(int stage) override;
 
         /**
          * Finish hook that runs when the simulation is terminated without errors.
@@ -49,23 +49,7 @@ namespace s2f::p2p::pow
          *
          * @param msg   Message to process.
          */
-        virtual void processSelfMessage(cMessage *msg) override
-        {
-            if (msg != event)
-                processConnectionState(msg);
-            else
-                processNodeState(msg);
-        }
-
-        /**
-         * Handle hook for events related to other peers.
-         */
-        void processConnectionState(cMessage *msg);
-
-        /**
-         * Handle hook for self-events.
-         */
-        void processNodeState(cMessage *msg);
+        virtual void processSelfMessage(cMessage *msg) override;
 
         /**
          * Handles the initial connection to another peer candidate in the

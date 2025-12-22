@@ -15,13 +15,19 @@
 
 package s2f.apps.p2p;
 import s2f.apps.AppBase;
+import s2f.apps.p2p.discovery.dns.DnsDiscoveryService;
 
-simple P2PBase extends AppBase {
+module P2P extends AppBase {
 	parameters:
-	    @class(P2PBase);
-		int listeningPort;
+	  @class(P2P);
     int discoveryAttempts = 3;
     int discoveryThreshold = 5;
-		string dnsSeed @mutable;
-		string dnsIp @mutable;
+    int listeningPort;
+    
+    string internalPath = default("");
+    string discoveryPath = default("");
+    
+    gates:
+        input internal @directIn; // for communication with other internal modules
+        input discovery @directIn; // for communication with discovery services
 }

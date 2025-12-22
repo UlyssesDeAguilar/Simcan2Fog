@@ -5,7 +5,7 @@
 #include "inet/networklayer/common/L3Address.h"
 #include "omnetpp/cmessage.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
-#include "s2f/architecture/p2p/pow/PowNetworkPeer_m.h"
+#include "s2f/architecture/p2p/pow/PowPeer_m.h"
 #include "s2f/architecture/p2p/pow/messages/Header_m.h"
 #include <omnetpp.h>
 #include <vector>
@@ -29,11 +29,11 @@ namespace s2f::p2p::pow
      */
     struct IPowMsgResponse
     {
-        enum IPowMsgAction action;           //<! Action to execute
-        short eventKind;                     //<! Event type to schedule
-        int eventDelayMin;                   //<! Minimum delay for self event
-        int eventDelayMax;                   //<! Maximum delay for self event
-        std::vector<PowNetworkPeer *> peers; //<! New peers to connect to
+        enum IPowMsgAction action;    //<! Action to execute
+        short eventKind;              //<! Event type to schedule
+        int eventDelayMin;            //<! Minimum delay for self event
+        int eventDelayMax;            //<! Maximum delay for self event
+        std::vector<PowPeer *> peers; //<! New peers to connect to
     };
 
     /**
@@ -42,11 +42,11 @@ namespace s2f::p2p::pow
      */
     struct IPowMsgContext
     {
-        inet::Packet *msg;                      //!< Received message
-        std::map<int, PowNetworkPeer *> &peers; //<! All known peers
-        bool isClient;                          //!< For messages only initiated by one peer
-        int sockFd;                             //!< Active connection
-        PowNetworkPeer &self;                   //!< Caller information
+        inet::Packet *msg;               //!< Received message
+        std::map<int, PowPeer *> &peers; //<! All known peers
+        bool isClient;                   //!< For messages only initiated by one peer
+        int sockFd;                      //!< Active connection
+        PowPeer &self;                   //!< Caller information
     };
 
     /**

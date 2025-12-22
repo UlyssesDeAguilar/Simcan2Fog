@@ -2,7 +2,7 @@
 
 using namespace s2f::p2p::pow;
 
-int findIpInPeers(std::map<int, PowNetworkPeer *> &peers, inet::L3Address ip)
+int findIpInPeers(std::map<int, PowPeer *> &peers, inet::L3Address ip)
 {
     auto it = std::find_if(peers.begin(), peers.end(), [&](const auto &p)
                            { return p.second->getIpAddress() == ip; });
@@ -17,7 +17,7 @@ IPowMsgResponse AddressMsgConsumer::handleMessage(IPowMsgContext &ictx)
     response.action = OPEN;
     for (int i = 0; i < payload->getIpAddressArraySize(); i++)
     {
-        auto p = const_cast<PowNetworkPeer *>(payload->getIpAddress(i));
+        auto p = const_cast<PowPeer *>(payload->getIpAddress(i));
 
         if (p->getIpAddress() == ictx.self.getIpAddress() || findIpInPeers(ictx.peers, p->getIpAddress()))
             delete p;

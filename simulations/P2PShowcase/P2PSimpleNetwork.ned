@@ -15,6 +15,7 @@
 package s2f.simulations.P2PShowcase;
 
 import s2f.apps.UserAppModule;
+import s2f.apps.p2p.discovery.dns.DnsDiscoveryService;
 import s2f.architecture.net.stack.proxy.AppProxy;
 import s2f.architecture.net.stack.proxy.ServiceTable;
 import s2f.architecture.net.stack.resolver.DnsResolver;
@@ -25,24 +26,29 @@ import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.EthernetSwitch;
 import inet.node.inet.StandardHost;
 
-// Removes the need for a proxy, should allow UDP (i.e. DNS registration)
-module DnsSimplifiedHost extends StandardHost
+module PeerNode extends StandardHost
 {
     submodules:
-        hostedApp: UserAppModule {
+        protocol: UserAppModule {
             @display("p=932.554,60.966003");
         }
+        discoveryService: UserAppModule;
+
         resolver: DnsResolver {
             @display("p=1106.42,60.966003");
         }
-    connections:
-        // App connects to the TCP/UDP Layer
-        at.in++ <-- hostedApp.socketOut;
-        at.out++ --> hostedApp.socketIn;
+    connections allowunconnected:
+        // Protocol connects to the TCP/UDP Layer to handle peers
+        at.in++ <-- protocol.socketOut;
+        at.out++ --> protocol.socketIn;
 
         // Resolver connects to the TCP/UDP layer
         resolver.socketOut --> at.in++;
         resolver.socketIn <-- at.out++;
+
+        // Discovery Services connect to the TCP/UDP layer
+        at.in++ <-- discoveryService.socketOut;
+        at.out++ --> discoveryService.socketIn;
 }
 
 //
@@ -52,30 +58,15 @@ network P2PNetwork
 {
     parameters:
         int numPeers = default(2);
-    
+
     submodules:
         configurator: Ipv4NetworkConfigurator {
             @display("p=67,36");
         }
         switch: EthernetSwitch {
-            @display("p=165,157");
+            @display("p=181,137");
         }
-        peers[numPeers]: DnsSimplifiedHost;
-        //peerA: DnsSimplifiedHost {
-        //    @display("p=67,158");
-        //}
-        //peerB: DnsSimplifiedHost {
-        //    @display("p=272,176");
-        //}
-        //peerC: DnsSimplifiedHost {
-        //    @display("p=165,268");
-        //}
-        //peerD: DnsSimplifiedHost {
-        //    @display("p=80,255");
-        //}
-        //peerE: DnsSimplifiedHost {
-        //    @display("p=258,268");
-        //}
+        peers[numPeers]: PeerNode;
         dns: DnsSimplified {
             @display("p=246,87");
         }
