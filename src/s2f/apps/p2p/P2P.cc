@@ -35,10 +35,12 @@ void P2P::initialize(int stage)
         simStartTime = simTime();
         runStartTime = time(nullptr);
 
+        std::string discoveryPath = par("discoveryPath");
+
         numServices = getParentModule()->getParentModule()->par("numServices");
         for (int i = 0; i < numServices; i++)
         {
-            std::string path = "^.^.discoveryService[" + std::to_string(i) + "].app";
+            std::string path = discoveryPath + "[" + std::to_string(i) + "].app";
             discoveryServices.push_back(getModuleByPath(path.c_str())->gate("internal"));
         }
     }
