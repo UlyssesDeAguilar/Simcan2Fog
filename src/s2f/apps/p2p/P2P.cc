@@ -26,23 +26,26 @@ void P2P::initialize(int stage)
         // P2P params
         peers.clear();
         resolutionList.clear();
+        discoveryServices.clear();
 
         listeningPort = par("listeningPort");
         discoveryAttempts = par("discoveryAttempts");
         discoveryThreshold = par("discoveryThreshold");
 
-        // Simulation params
-        simStartTime = simTime();
-        runStartTime = time(nullptr);
-
+        // Discovery Services
         std::string discoveryPath = par("discoveryPath");
-
         numServices = getParentModule()->getParentModule()->par("numServices");
+        discoveryServices.reserve(numServices);
+
         for (int i = 0; i < numServices; i++)
         {
             std::string path = discoveryPath + "[" + std::to_string(i) + "].app";
             discoveryServices.push_back(getModuleByPath(path.c_str())->gate("internal"));
         }
+
+        // Simulation params
+        simStartTime = simTime();
+        runStartTime = time(nullptr);
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER)
     {
@@ -99,7 +102,6 @@ void P2P::processSelfMessage(cMessage *msg)
         }
     else if (msg->getKind() == PEER_CONNECTION)
     {
-        return;
         if (!resolutionList.empty())
         {
             connectToPeer();
@@ -172,7 +174,7 @@ void P2P::connectToPeer()
     L3Address destIp = *resolutionList.begin();
     resolutionList.erase(resolutionList.begin());
 
-    if (peers.count(destIp))
+    if (peers.count(destIp) || destIp == localIp)
         return;
 
     int sockFd = open(-1, SOCK_STREAM);
