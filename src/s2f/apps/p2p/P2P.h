@@ -23,11 +23,9 @@ class P2P : public AppBase, public AppBase::ICallback
   protected:
     enum P2PEvent
     {
-        NODE_UP = 4,     //!< Post-startup action for protocol implementation
-        PEER_DISCOVERY,  //!< Peer discovery handling for protocol implementation
-        PEER_CONNECTION, //!< Connection to peer candidates from discovery
-                         //!< process
-        CONNECTED        //!< Node is ready and connected to the network
+        PEER_DISCOVERY,  //!< Get addresses using discovery services
+        PEER_CONNECTION, //!< Connect to addreesses from services
+        CONNECTED        //!< Node is ready to handle petitions
     };
 
     std::map<int, Peer *> peerData; //!< Peer data
@@ -101,6 +99,8 @@ class P2P : public AppBase, public AppBase::ICallback
 
     /**
      * Handle hook for messages sent by this module.
+     *
+     * TODO: in the PEER_CONNECTION status,
      *
      * @param msg   Message to process.
      */
