@@ -35,13 +35,13 @@ Here are some high level instructions on how to install the simultator.
 
 ### Dependencies
 As of today, Simcan2Fog relies on:
-* **OMNeT++ 6.1.0** : The development framework and simulation kernel.
-* **INET4 4.5.2**: The OMNeT++ networking models library and framework.
+* **OMNeT++ 6.3.0** : The development framework and simulation kernel.
+* **INET4 4.5.4**: The OMNeT++ networking models library and framework.
 
 ### Installing the project
 
 #### Installing OMNeT
-1. Head to https://omnetpp.org/download/old.html and download OMNeT++ 6.1.0 with the IDE (not the core version). There's variety of architectures and operating systems.
+1. Head to https://omnetpp.org/download/old.html and download OMNeT++ 6.3.0 with the IDE (not the core version). There's variety of architectures and operating systems.
 2. Decompress the file in your user directory
 3. Follow the steps included in ```doc/InstallGuide.pdf``` in order to complete the installation.
 > Also check out the InstallGuide of the later version (available at: https://doc.omnetpp.org/omnetpp/InstallGuide.pdf) for newer development environements (like Ubuntu 22.04 LTS or 24.04 LTS)
@@ -58,15 +58,15 @@ The easiest way to install this framework is from the IDE wizard:
 After the installation is complete you can run a tutorial, example or showcase provided by INET to verify that everything is working correctly.
 
 #### Installing Simcan2Fog
-1. Clone the repo inside the ```omnetpp-6.1``` installation folder
+1. Clone the repo inside the ```omnetpp-6.3.0``` installation folder
 2. Add the environment variables into your ```.bashrc```
 
 At this point your ```.bashrc``` (or shell equivalent) should have a section like this:
 ```
 # These statements load into the session the environment variables
-[ -f "$HOME/omnetpp-6.1/setenv" ] && source "$HOME/omnetpp-6.1/setenv" -q
-[ -f "$HOME/omnetpp-6.1/inet4.5/setenv" ] && source "$HOME/omnetpp-6.1/inet4.5/setenv" -q
-[ -f "$HOME/omnetpp-6.1/Simcan2Fog/setenv" ] && source "$HOME/omnetpp-6.1/Simcan2Fog/setenv" -q
+[ -f "$HOME/omnetpp-6.3.0/setenv" ] && source "$HOME/omnetpp-6.3.0/setenv" -q
+[ -f "$HOME/omnetpp-6.3.0/inet4.5/setenv" ] && source "$HOME/omnetpp-6.3.0/inet4.5/setenv" -q
+[ -f "$HOME/omnetpp-6.3.0/Simcan2Fog/setenv" ] && source "$HOME/omnetpp-6.3.0/Simcan2Fog/setenv" -q
 ```
 
 2. Open the OMNeT++ IDE and select **build proyect**
@@ -84,6 +84,17 @@ Start navigating and exploring with the showcases included in the folder ```show
 A useful reference for model development and usage is the NED documentation which is currently being hosted at https://ulyssesdeaguilar.github.io/s2f-ned-docs/
 
 Coming soon is the C++ model API documentation.
+
+## Extensions
+Currently there's a fork of this proyect, Simcan2Chain by Tommy (check it out here: https://github.com/eltaters/simcan2chain), that has backported enhancements for the DNS module and extra features. In order to not break the current users installations there is now a feature flag named Simcan2Chain, disabled by default, that makes optional the dependencies for the extra features of said proyect.
+
+If one wants to enable the Simcan2Chain P2P and cryptology features:
+1. Right click on the Simcan2Fog proyect
+2. Go to "Properties"
+3. In the new menu go to "OMNeT++" > "Proyect features"
+4. Enable the checkbox for "Simcan2Chain dependencies"
+5. Click on "Apply" or "Apply and close"
+6. Clean and recompile the proyect
 
 ## Acknowledgements
 Special thanks to the following authors for the different custom icons included in the simulator:
