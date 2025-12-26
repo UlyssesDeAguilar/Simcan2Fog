@@ -2,24 +2,26 @@
 #define SIMCAN_EX_DNS_RESOLVER
 
 #include "s2f/architecture/dns/DnsCommon.h"
-#include "s2f/architecture/dns/db/DnsDb.h"
 #include "s2f/architecture/dns/client/DnsClientCommand_m.h"
+#include "s2f/architecture/dns/db/DnsDb.h"
 #include "s2f/architecture/net/stack/resolver/StubDnsRequest_m.h"
+
+using namespace s2f::dns;
 
 class StubDnsResolver : public omnetpp::cSimpleModule
 {
 
-protected:
+  protected:
     struct RequestContext
     {
         uint16_t id;
         StubDnsRequest *request{};
-        
+
         RequestContext() : id(0), request(nullptr) {}
         RequestContext(uint16_t id, StubDnsRequest *request) : id(id), request(request) {}
         RequestContext(const RequestContext &other) noexcept : id(other.id), request(other.request->dup()) {}
         RequestContext(RequestContext &&other) noexcept : id(other.id), request(other.request) { other.request = nullptr; }
-        
+
         RequestContext &operator=(RequestContext &&other) noexcept
         {
             id = other.id;
@@ -27,7 +29,7 @@ protected:
             other.request = nullptr;
             return *this;
         }
-        
+
         RequestContext &operator=(const RequestContext &other) noexcept
         {
             id = other.id;
@@ -40,7 +42,7 @@ protected:
 
     std::map<uint16_t, RequestContext> pendingRequests;
     inet::L3Address ispResolver;
-    s2f::dns::DnsDb *dnsDatabase;
+    DnsDb *dnsDatabase;
     uint16_t lastId{}; // Last reserved id (gives linearity and better likelyhood of finding a free one)
 
     // Kernel lifecycle
@@ -49,9 +51,9 @@ protected:
     virtual void handleMessage(omnetpp::cMessage *msg) override;
 
     void handleRequest(StubDnsRequest *request);
-    void handleResponse(s2f::dns::DnsClientIndication *msg);
-    const s2f::dns::ResourceRecord *processIndication(s2f::dns::DnsClientIndication *msg);
-    void sendResponse(const RequestContext &context, const s2f::dns::ResourceRecord *record);
+    void handleResponse(DnsClientIndication *msg);
+    std::set<ResourceRecord> processIndication(DnsClientIndication *msg);
+    void sendResponse(const RequestContext &context, std::set<ResourceRecord> records);
 };
 
 #endif

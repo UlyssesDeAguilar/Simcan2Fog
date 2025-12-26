@@ -116,5 +116,16 @@
             "replySize": "20B",
             "responseDelay": "400ms"
         }
+    },
+    {
+        "name": "P2PDiscoveryApp",
+        "model": "P2PApplication",
+        "package": "s2f.apps.p2p",
+        "parameters": {
+            "dnsSeed": "",
+            "synthSize": "100B",
+            "pingsThreshold": "10",
+            "processingMIs": "10"
+        }
     }
 ]
