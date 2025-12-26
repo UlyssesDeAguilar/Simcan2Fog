@@ -1,0 +1,57 @@
+#ifndef __P2P_HARDCODED_DISCOVERY_H__
+#define __P2P_HARDCODED_DISCOVERY_H__
+
+#include "inet/common/InitStages.h"
+#include "inet/common/packet/Packet.h"
+#include "inet/networklayer/common/L3Address.h"
+#include "omnetpp/cmessage.h"
+#include "omnetpp/cmodule.h"
+#include "omnetpp/csimplemodule.h"
+#include "s2f/apps/AppBase.h"
+#include "s2f/architecture/p2p/pow/PowCommon.h"
+#include "s2f/architecture/p2p/pow/PowPeer_m.h"
+#include "s2f/architecture/p2p/pow/messages/Header_m.h"
+#include <omnetpp.h>
+#include <vector>
+
+/**
+ * @class DnsDiscoveryService DnsDiscveryService.h "DnsDiscoveryService.h"
+ *
+ * Discovery service base class for the peer-to-peer protocol.
+ *
+ * @author Tomás Daniel Expósito Torre
+ * @date 2025-10-29
+ */
+class HardcodedDiscoveryService : public AppBase, public AppBase::ICallback
+{
+  private:
+    std::vector<inet::L3Address> addressList;
+    cModule *caller;
+
+  public:
+    /**
+     * Initialization hook for this module.
+     *
+     * @param stage Initialization stage.
+     */
+    virtual void initialize(int stage) override;
+
+    /**
+     * Handler for received messages.
+     */
+    virtual void handleMessage(omnetpp::cMessage *msg) override;
+
+    virtual int numInitStages() const override { return INITSTAGE_APPLICATION_LAYER + 1; }
+
+    virtual void handleDataArrived(int sockFd, Packet *p) override {};
+    virtual void handleConnectReturn(int sockFd, bool connected) override {};
+    virtual void returnExec(simtime_t timeElapsed, SM_CPU_Message *sm) override {};
+    virtual void returnRead(simtime_t timeElapsed) override {};
+    virtual void returnWrite(simtime_t timeElapsed) override {};
+    virtual void handleParameterChange(const char *parameterName) override {};
+    virtual bool handlePeerClosed(int sockFd) override { return true; };
+    virtual void processSelfMessage(cMessage *msg) override {};
+    virtual void handleResolutionFinished(const L3Address ip, bool resolved) override {};
+    virtual void handleResolutionFinished(const std::set<L3Address> ipResolutions, bool resolved) override {};
+};
+#endif
