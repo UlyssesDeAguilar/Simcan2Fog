@@ -1,2 +1,13 @@
-<features cppSourceRoots = "src" definesFile = "src/s2f/features.h">
+<features cppSourceRoots="src" definesFile="src/s2f/features.h">
+    <feature id="Simcan2Chain" 
+        name="Simcan2Chain dependencies"
+        description="Enables Simcan2Chain features (P2P, cryptographic functions, ...)" 
+        initiallyEnabled="false"
+        labels="Extension" nedPackages="s2f.os.crypto
+s2f.architecture.p2p
+s2f.apps.p2p
+s2f.simulations.BlockchainTest" 
+        extraSourceFolders="" 
+        compileFlags="-DSimcan2Chain" 
+        linkerFlags="-lcrypto -lssl" />
 </features>
