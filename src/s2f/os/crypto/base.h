@@ -34,5 +34,10 @@ namespace s2f::os::crypto
      * @param size  Length of src.
      */
     bytes toBytes(const void *buf, size_t size);
+
+    inline unsigned char *toUnsigned(bytes &buf)
+    {
+        return reinterpret_cast<unsigned char *>(buf.data());
+    }
 }
 #endif

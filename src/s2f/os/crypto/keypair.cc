@@ -5,11 +5,6 @@
 namespace s2f::os::crypto
 {
 
-    inline unsigned char *toUnsigned(bytes &buf)
-    {
-        return reinterpret_cast<unsigned char *>(buf.data());
-    }
-
     key createKeyPair()
     {
         EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, "ED25519", NULL);

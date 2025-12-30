@@ -24,7 +24,7 @@ namespace s2f::p2p::pow
          * @param ictx  Callback context.
          * @return Action context to run by the main module.
          */
-        virtual IPowMsgResponse handleMessage(struct IPowMsgContext &ictx) { return {NOACTION}; };
+        virtual std::vector<IPowMsgDirective> handleMessage(struct IPowMsgContext &ictx) { return {}; };
 
         /**
          * Callback to build a message response.

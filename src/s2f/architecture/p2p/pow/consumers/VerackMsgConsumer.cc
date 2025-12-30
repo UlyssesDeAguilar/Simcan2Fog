@@ -2,13 +2,17 @@
 
 using namespace s2f::p2p::pow;
 
-IPowMsgResponse VerackMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
+std::vector<IPowMsgDirective> VerackMsgConsumer::handleMessage(struct IPowMsgContext &ictx)
 {
-    return {
-        .action = SCHEDULE,
+
+    ActionSchedule newMsg = {
+        .id = ictx.sockFd,
         .eventKind = pow::SEND_PING,
         .eventDelayMin = pow::PING_POLLING_MIN,
         .eventDelayMax = pow::PING_POLLING_MAX,
+    };
+    return {
+        {.action = SCHEDULE, .data = static_cast<void *>(&newMsg)},
     };
 }
 

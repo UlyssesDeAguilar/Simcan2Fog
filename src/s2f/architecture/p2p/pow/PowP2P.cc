@@ -4,6 +4,7 @@
 #include "omnetpp/checkandcast.h"
 #include "omnetpp/clog.h"
 #include "omnetpp/cmessage.h"
+#include "s2f/architecture/p2p/pow/IPowMsgActions.h"
 #include "s2f/architecture/p2p/pow/PowCommon.h"
 #include "s2f/architecture/p2p/pow/PowPeer_m.h"
 #include "s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.h"
@@ -164,32 +165,38 @@ void PowP2P::handleDataArrived(int sockFd, Packet *p)
     if (handler == consumers.end())
         error("Message kind not yet implemented! %s", header->getCommandName());
 
-    auto result = handler->second->handleMessage(ictx);
+    auto directives = handler->second->handleMessage(ictx);
     auto response = handler->second->buildResponse(ictx);
 
-    switch (result.action)
-    {
-    case OPEN:
-        for (auto &p : result.peers)
+    for (const auto &d : directives)
+        switch (d.action)
         {
-            p->setPort(listeningPort);
-            powPeers[open(-1, SOCK_STREAM)] = p;
+        case OPEN:
+        {
+            auto data = *static_cast<ActionOpen *>(d.data);
+            for (auto &p : data.peers)
+            {
+                p->setPort(listeningPort);
+                powPeers[open(-1, SOCK_STREAM)] = p;
+            }
+            break;
         }
-        break;
-    case CANCEL:
-        cancelEvent(peerConnection[sockFd]);
-        // NOTE: purposely not adding a break here
-    case SCHEDULE:
-        if (result.eventDelayMin)
+        case CANCEL:
         {
-            peerConnection[sockFd]->setKind(result.eventKind);
+            cancelEvent(peerConnection[sockFd]);
+            break;
+        }
+        case SCHEDULE:
+        {
+            auto data = *static_cast<ActionSchedule *>(d.data);
+            peerConnection[sockFd]->setKind(data.eventKind);
             peerConnection[sockFd]->setContextPointer(static_cast<void *>(new int(sockFd)));
-            scheduleAfter(uniform(result.eventDelayMin, result.eventDelayMax), peerConnection[sockFd]);
+            scheduleAfter(uniform(data.eventDelayMin, data.eventDelayMax), peerConnection[sockFd]);
+            break;
         }
-        break;
-    default:
-        break;
-    }
+        default:
+            break;
+        }
 
     if (response)
         _send(sockFd, response);
