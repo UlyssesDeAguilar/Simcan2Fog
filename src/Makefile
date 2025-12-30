@@ -1,14 +1,16 @@
 #
-# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)Simcan2Fog
+# OMNeT++/OMNEST Makefile for $(LIB_PREFIX)simcan2chain
 #
 # This file was generated with the command:
-#  opp_makemake --make-so -f --deep -O out -KINET4_5_PROJ=../../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -lINET$$\(D\) -Xs2f/apps/p2p -Xs2f/architecture/p2p -Xs2f/os/crypto
+#  opp_makemake --make-so -f --deep -O out -KINET4_5_PROJ=../../inet4.5 -DINET_IMPORT -I. -I$$\(INET4_5_PROJ\)/src -L$$\(INET4_5_PROJ\)/src -lINET$$\(D\) -lcrypto -lssl
 #
 
 # Name of target to be created (-o option)
 TARGET_DIR = .
-TARGET_NAME = $(LIB_PREFIX)Simcan2Fog$(D)
+TARGET_NAME = $(LIB_PREFIX)simcan2chain$(D)
 TARGET = $(TARGET_NAME)$(SHARED_LIB_SUFFIX)
+TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
+TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
 TARGET_FILES = $(TARGET_DIR)/$(TARGET)
 
 # C++ include paths (with -I)
@@ -18,7 +20,7 @@ INCLUDE_PATH = -I. -I$(INET4_5_PROJ)/src
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS = $(LDFLAG_LIBPATH)$(INET4_5_PROJ)/src  -lINET$(D)
+LIBS = $(LDFLAG_LIBPATH)$(INET4_5_PROJ)/src  -lINET$(D) -lcrypto -lssl
 
 # Output directory
 PROJECT_OUTPUT_DIR = ../out
@@ -36,6 +38,9 @@ OBJS = \
     $O/s2f/apps/endpoints/ServerEndpoint.o \
     $O/s2f/apps/iot/IotApplication.o \
     $O/s2f/apps/iot/LocalIotApplication.o \
+    $O/s2f/apps/p2p/P2P.o \
+    $O/s2f/apps/p2p/discovery/dns/DnsDiscoveryService.o \
+    $O/s2f/apps/p2p/discovery/hardcoded/HardcodedDiscoveryService.o \
     $O/s2f/apps/services/IotService.o \
     $O/s2f/apps/services/SimService.o \
     $O/s2f/architecture/cpu/CpuCore.o \
@@ -61,6 +66,21 @@ OBJS = \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
+    $O/s2f/architecture/p2p/pow/PowP2P.o \
+    $O/s2f/architecture/p2p/pow/chain/Block.o \
+    $O/s2f/architecture/p2p/pow/chain/Blockchain.o \
+    $O/s2f/architecture/p2p/pow/chain/InOut.o \
+    $O/s2f/architecture/p2p/pow/chain/Transaction.o \
+    $O/s2f/architecture/p2p/pow/chain/UtxoSet.o \
+    $O/s2f/architecture/p2p/pow/consumers/AddressMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/GetAddressMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/PingMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/PongMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/VerackMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/consumers/VersionMsgConsumer.o \
+    $O/s2f/architecture/p2p/pow/nodes/FullNode.o \
+    $O/s2f/architecture/p2p/pow/producers/PingMsgProducer.o \
+    $O/s2f/architecture/p2p/pow/producers/VersionMsgProducer.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \
     $O/s2f/core/include/signals.o \
@@ -102,6 +122,8 @@ OBJS = \
     $O/s2f/os/control/ControlEntries.o \
     $O/s2f/os/control/ProcessDemux.o \
     $O/s2f/os/control/VmControlTable.o \
+    $O/s2f/os/crypto/base.o \
+    $O/s2f/os/crypto/keypair.o \
     $O/s2f/os/hardwaremanagers/DcHardwareManager.o \
     $O/s2f/os/hardwaremanagers/EdgeHardwareManager.o \
     $O/s2f/os/hardwaremanagers/HardwareManager.o \
@@ -116,6 +138,9 @@ OBJS = \
     $O/s2f/users/generators/UserGenerator_simple.o \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
+    $O/s2f/apps/p2p/InnerRequest_m.o \
+    $O/s2f/apps/p2p/Peer_m.o \
+    $O/s2f/apps/p2p/discovery/DiscoveryResolution_m.o \
     $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
     $O/s2f/architecture/dns/ResourceRecord_m.o \
@@ -128,6 +153,23 @@ OBJS = \
     $O/s2f/architecture/net/stack/proxy/ProxyServiceRequest_m.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsRequest_m.o \
     $O/s2f/architecture/nodes/iot/IotPayload_m.o \
+    $O/s2f/architecture/p2p/pow/PowPeer_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Address_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Block_m.o \
+    $O/s2f/architecture/p2p/pow/messages/BlockTxn_m.o \
+    $O/s2f/architecture/p2p/pow/messages/CmpctBlock_m.o \
+    $O/s2f/architecture/p2p/pow/messages/GetBlocks_m.o \
+    $O/s2f/architecture/p2p/pow/messages/GetBlockTxn_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Header_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Headers_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Inv_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Inventory_m.o \
+    $O/s2f/architecture/p2p/pow/messages/MerkleBlock_m.o \
+    $O/s2f/architecture/p2p/pow/messages/MsgMetadata_m.o \
+    $O/s2f/architecture/p2p/pow/messages/PingPong_m.o \
+    $O/s2f/architecture/p2p/pow/messages/SendCmpct_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Tx_m.o \
+    $O/s2f/architecture/p2p/pow/messages/Version_m.o \
     $O/s2f/management/cloudprovider/NodeUpdate_m.o \
     $O/s2f/messages/INET_AppMessage_m.o \
     $O/s2f/messages/SIMCAN_Message_m.o \
@@ -143,6 +185,9 @@ OBJS = \
 
 # Message files
 MSGFILES = \
+    s2f/apps/p2p/InnerRequest.msg \
+    s2f/apps/p2p/Peer.msg \
+    s2f/apps/p2p/discovery/DiscoveryResolution.msg \
     s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsRequest.msg \
     s2f/architecture/dns/ResourceRecord.msg \
@@ -155,6 +200,23 @@ MSGFILES = \
     s2f/architecture/net/stack/proxy/ProxyServiceRequest.msg \
     s2f/architecture/net/stack/resolver/StubDnsRequest.msg \
     s2f/architecture/nodes/iot/IotPayload.msg \
+    s2f/architecture/p2p/pow/PowPeer.msg \
+    s2f/architecture/p2p/pow/messages/Address.msg \
+    s2f/architecture/p2p/pow/messages/Block.msg \
+    s2f/architecture/p2p/pow/messages/BlockTxn.msg \
+    s2f/architecture/p2p/pow/messages/CmpctBlock.msg \
+    s2f/architecture/p2p/pow/messages/GetBlocks.msg \
+    s2f/architecture/p2p/pow/messages/GetBlockTxn.msg \
+    s2f/architecture/p2p/pow/messages/Header.msg \
+    s2f/architecture/p2p/pow/messages/Headers.msg \
+    s2f/architecture/p2p/pow/messages/Inv.msg \
+    s2f/architecture/p2p/pow/messages/Inventory.msg \
+    s2f/architecture/p2p/pow/messages/MerkleBlock.msg \
+    s2f/architecture/p2p/pow/messages/MsgMetadata.msg \
+    s2f/architecture/p2p/pow/messages/PingPong.msg \
+    s2f/architecture/p2p/pow/messages/SendCmpct.msg \
+    s2f/architecture/p2p/pow/messages/Tx.msg \
+    s2f/architecture/p2p/pow/messages/Version.msg \
     s2f/management/cloudprovider/NodeUpdate.msg \
     s2f/messages/INET_AppMessage.msg \
     s2f/messages/SIMCAN_Message.msg \
@@ -211,11 +273,8 @@ endif
 
 # On Windows, the target has additional file(s). An import lib and an optional debug symbol file is created too.
 ifeq ($(PLATFORM),win32)
-  TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
-  TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
   TARGET_FILES+= $(TARGET_DIR)/$(TARGET_IMPLIB)
   LDFLAGS+= $(LDFLAG_IMPLIB)$O/$(TARGET_IMPLIB)
-  OUT_TARGET_EXTRA_FILES = $O/$(TARGET_IMPLIB)
   ifeq ($(TOOLCHAIN_NAME),clang-msabi)
     ifeq ($(MODE),debug)
       TARGET_FILES+=$(TARGET_DIR)/$(TARGET_NAME).pdb
@@ -223,7 +282,6 @@ ifeq ($(PLATFORM),win32)
   else
     TARGET_FILES+= $(TARGET_DIR)/$(TARGET_IMPDEF)
     LDFLAGS+= $(LDFLAG_IMPDEF)$O/$(TARGET_IMPDEF)
-    OUT_TARGET_EXTRA_FILES+= $O/$(TARGET_IMPDEF)
   endif
 endif
 
@@ -245,7 +303,7 @@ ifeq ($(TOOLCHAIN_NAME),clang-msabi)
 $O/$(TARGET_NAME).pdb: $O/$(TARGET)
 endif
 
-$O/$(TARGET) $(OUT_TARGET_EXTRA_FILES) &: $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
+$O/$(TARGET) $O/$(TARGET_IMPDEF) $O/$(TARGET_IMPLIB) &: $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
 	@$(MKPATH) $O
 	@echo Creating shared library: $@
 	$(Q)$(SHLIB_LD) -o $O/$(TARGET) $(OBJS) $(EXTRA_OBJS) $(AS_NEEDED_OFF) $(WHOLE_ARCHIVE_ON) $(LIBS) $(WHOLE_ARCHIVE_OFF) $(OMNETPP_LIBS) $(LDFLAGS)
@@ -267,11 +325,11 @@ $O/%.o: %.cc $(COPTS_FILE) | msgheaders smheaders
 
 %_m.cc %_m.h: %.msg
 	$(qecho) MSGC: $<
-	$(Q)$(MSGC) -s _m.cc -MD -MP -MF $O/$(basename $<)_m.h.d $(MSGCOPTS) $<
+	$(Q)$(MSGC) -s _m.cc -MD -MP -MF $O/$(basename $<)_m.h.d $(MSGCOPTS) $?
 
 %_sm.cc %_sm.h: %.sm
 	$(qecho) SMC: $<
-	$(Q)$(SMC) -c++ -suffix cc $(SMCOPTS) $<
+	$(Q)$(SMC) -c++ -suffix cc $(SMCOPTS) $?
 
 msgheaders: $(MSGFILES:.msg=_m.h)
 

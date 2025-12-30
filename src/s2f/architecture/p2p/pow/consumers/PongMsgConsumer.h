@@ -23,7 +23,7 @@ namespace s2f::p2p::pow
          * @param ictx  Callback context.
          * @return Peer data to add.
          */
-        virtual IPowMsgResponse handleMessage(IPowMsgContext &ictx) override;
+        virtual std::vector<IPowMsgDirective> handleMessage(IPowMsgContext &ictx) override;
     };
 }
 #endif

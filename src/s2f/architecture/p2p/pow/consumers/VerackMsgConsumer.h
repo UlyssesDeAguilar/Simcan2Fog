@@ -21,7 +21,7 @@ namespace s2f::p2p::pow
          * @param ictx  Callback context.
          * @return Peer data to add.
          */
-        virtual IPowMsgResponse handleMessage(struct IPowMsgContext &ictx) override;
+        virtual std::vector<IPowMsgDirective> handleMessage(struct IPowMsgContext &ictx) override;
         /**
          * Callback to build a response for a "verack" message.
          * The response is a "getaddr" message on the node that initiated the
