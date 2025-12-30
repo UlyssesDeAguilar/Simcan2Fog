@@ -4,6 +4,5 @@ simple FullNode
 	parameters:
 	    @class(FullNode);
   gates:
-      input in;
-      output out;
+      input internal @directIn;
 }

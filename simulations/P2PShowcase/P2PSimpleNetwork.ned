@@ -21,6 +21,7 @@ import s2f.architecture.net.stack.proxy.ServiceTable;
 import s2f.architecture.net.stack.resolver.DnsResolver;
 import s2f.architecture.dns.resolver.DnsResolverServer;
 import s2f.architecture.dns.DnsSimplified;
+import s2f.architecture.p2p.pow.nodes.FullNode;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.ethernet.Eth10M;
 import inet.node.ethernet.EthernetSwitch;
@@ -35,7 +36,7 @@ module PeerNode extends StandardHost
             @display("p=932.554,60.966003");
         }
         discoveryService[numServices]: UserAppModule;
-
+		node: FullNode;
         resolver: DnsResolver {
             @display("p=1106.42,60.966003");
         }

@@ -34,16 +34,9 @@ namespace s2f::p2p::pow
 
     struct ActionSchedule
     {
-        int id;            //!< Message identifier
         short eventKind;   //<! Event type to schedule
         int eventDelayMin; //<! Minimum delay for self event
         int eventDelayMax; //<! Maximum delay for self event
     };
-
-    struct ActionCancel
-    {
-        int id; //!< Message identifier
-    };
-
 }
 #endif

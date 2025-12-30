@@ -23,9 +23,9 @@ class P2P : public AppBase, public AppBase::ICallback
   protected:
     enum P2PEvent
     {
-        PEER_DISCOVERY,  //!< Get addresses using discovery services
-        PEER_CONNECTION, //!< Connect to addreesses from services
-        CONNECTED        //!< Node is ready to handle petitions
+        PEER_DISCOVERY = SEND_DELAYED + 1, //!< Get addresses using discovery services
+        PEER_CONNECTION,                   //!< Connect to addreesses from services
+        CONNECTED                          //!< Node is ready to handle petitions
     };
 
     std::map<int, Peer *> peerData; //!< Peer data

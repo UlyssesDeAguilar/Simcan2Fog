@@ -23,12 +23,12 @@ namespace s2f::p2p::pow
     class PowP2P : public P2P
     {
       protected:
-        PowPeer self;                                                      //!< Representation of this node
-        std::map<int, cMessage *> peerConnection;                          //!< Peer event handlers
-        std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers; //!< Message handlers
-        std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers; //!< Message handlers
-        std::map<int, PowPeer *> &powPeers =
-            reinterpret_cast<std::map<int, PowPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
+        PowPeer self;                                                                                //!< Representation of this node
+        std::map<int, cMessage *> peerConnection;                                                    //!< Peer event handlers
+        std::map<std::string, std::unique_ptr<IPowMsgConsumer>> consumers;                           //!< Message handlers
+        std::map<std::string, std::unique_ptr<IPowMsgProducer>> producers;                           //!< Message handlers
+        std::map<int, PowPeer *> &powPeers = reinterpret_cast<std::map<int, PowPeer *> &>(peerData); //!< Peer list in PowNetworkPeer format
+        cGate *node{};                                                                               //!< Processing node, SPV client, etc
 
         // ------------------------------------------------------------- //
         //                           OVERRIDES                           //

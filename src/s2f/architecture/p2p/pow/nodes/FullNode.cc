@@ -27,7 +27,8 @@ void FullNode::initialize(int stage)
 
 void FullNode::handleMessage(omnetpp::cMessage *msg)
 {
-    delete msg;
+    if (msg)
+        delete msg;
     return;
 }
 

@@ -16,6 +16,5 @@ namespace s2f::p2p::pow;
 class Address extends inet::FieldsChunk
 {
 	  chunkLength = inet::B(20); // Packet length
-    uint16_t ipAddressCount;
 	  PowPeer *ipAddress[]; 
 }

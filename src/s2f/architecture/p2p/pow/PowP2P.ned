@@ -16,9 +16,8 @@
 package s2f.architecture.p2p.pow;
 import s2f.apps.p2p.P2P;
 
-module PowP2P extends P2P
-{
-    parameters:
-    	@class(PowP2P);
-    	listeningPort=8333;
+module PowP2P extends P2P {
+  parameters:
+    @class(PowP2P);
+    listeningPort=8333;
 }

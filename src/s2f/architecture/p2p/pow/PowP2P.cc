@@ -30,6 +30,10 @@ void PowP2P::initialize(int stage)
     {
         peerConnection.clear();
 
+        // Internal node
+        std::string nodePath = par("nodePath");
+        node = getModuleByPath(nodePath.c_str())->gate("internal");
+
         // Message consumers
         consumers.emplace("version", std::make_unique<VersionMsgConsumer>());
         consumers.emplace("verack", std::make_unique<VerackMsgConsumer>());
@@ -162,23 +166,30 @@ void PowP2P::handleDataArrived(int sockFd, Packet *p)
         .self = self,
     };
 
+    // Cannot handle at current level, pass along the chain
     if (handler == consumers.end())
-        error("Message kind not yet implemented! %s", header->getCommandName());
+    {
+        sendDirect(p, node);
+        return;
+    }
 
     auto directives = handler->second->handleMessage(ictx);
     auto response = handler->second->buildResponse(ictx);
 
     for (const auto &d : directives)
+    {
+
         switch (d.action)
         {
         case OPEN:
         {
-            auto data = *static_cast<ActionOpen *>(d.data);
-            for (auto &p : data.peers)
+            auto data = static_cast<ActionOpen *>(d.data);
+            for (auto &p : data->peers)
             {
                 p->setPort(listeningPort);
                 powPeers[open(-1, SOCK_STREAM)] = p;
             }
+            delete data;
             break;
         }
         case CANCEL:
@@ -188,15 +199,17 @@ void PowP2P::handleDataArrived(int sockFd, Packet *p)
         }
         case SCHEDULE:
         {
-            auto data = *static_cast<ActionSchedule *>(d.data);
-            peerConnection[sockFd]->setKind(data.eventKind);
+            auto data = static_cast<ActionSchedule *>(d.data);
+            peerConnection[sockFd]->setKind(data->eventKind);
             peerConnection[sockFd]->setContextPointer(static_cast<void *>(new int(sockFd)));
-            scheduleAfter(uniform(data.eventDelayMin, data.eventDelayMax), peerConnection[sockFd]);
+            scheduleAfter(uniform(data->eventDelayMin, data->eventDelayMax), peerConnection[sockFd]);
+            delete data;
             break;
         }
         default:
             break;
         }
+    }
 
     if (response)
         _send(sockFd, response);

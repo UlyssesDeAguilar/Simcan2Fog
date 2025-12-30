@@ -12,7 +12,7 @@ int findIpInPeers(std::map<int, PowPeer *> &peers, inet::L3Address ip)
 
 std::vector<IPowMsgDirective> AddressMsgConsumer::handleMessage(IPowMsgContext &ictx)
 {
-    ActionOpen action{};
+    ActionOpen *action = new ActionOpen({.peers = {}});
     auto payload = ictx.msg->peekData<Address>();
 
     for (int i = 0; i < payload->getIpAddressArraySize(); i++)
@@ -22,8 +22,8 @@ std::vector<IPowMsgDirective> AddressMsgConsumer::handleMessage(IPowMsgContext &
         if (p->getIpAddress() == ictx.self.getIpAddress() || findIpInPeers(ictx.peers, p->getIpAddress()))
             delete p;
         else
-            action.peers.push_back(p);
+            action->peers.push_back(p);
     }
 
-    return {{.action = OPEN, .data = static_cast<void *>(&action)}};
+    return {{.action = OPEN, .data = static_cast<void *>(action)}};
 }
