@@ -11,7 +11,7 @@
 #include "inet/transportlayer/contract/udp/UdpControlInfo_m.h"
 
 using namespace inet;
-using namespace iot;
+using namespace s2f::iot;
 
 Define_Module(IotSensorModel);
 

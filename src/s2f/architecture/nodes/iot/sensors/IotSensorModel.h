@@ -1,5 +1,5 @@
-#ifndef  SIMCAN_EX_IOT_SENSOR_MODEL_H
-#define  SIMCAN_EX_IOT_SENSOR_MODEL_H
+#ifndef SIMCAN_EX_IOT_SENSOR_MODEL_H
+#define SIMCAN_EX_IOT_SENSOR_MODEL_H
 
 #include <omnetpp.h>
 #include "inet/common/INETDefs.h"
@@ -8,18 +8,25 @@
 
 using namespace omnetpp;
 
-class IotSensorModel : public inet::ApplicationBase, public inet::UdpSocket::ICallback
+namespace s2f::iot
 {
+  class IotSensorModel : public inet::ApplicationBase, public inet::UdpSocket::ICallback
+  {
   protected:
-    enum SelfMsgKinds { START = 1, SEND, STOP };
+    enum SelfMsgKinds
+    {
+      START = 1,
+      SEND,
+      STOP
+    };
 
     // parameters
     inet::L3Address controllerAddress;
     int localPort = -1, destPort = -1;
-    
+
     simtime_t startTime;
     simtime_t stopTime;
-    
+
     const char *tag = nullptr;
     cPar *value = nullptr;
     const char *unit = nullptr;
@@ -56,6 +63,7 @@ class IotSensorModel : public inet::ApplicationBase, public inet::UdpSocket::ICa
 
   public:
     virtual ~IotSensorModel();
-};
+  };
+}
 
 #endif

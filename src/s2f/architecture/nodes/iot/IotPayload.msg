@@ -1,11 +1,21 @@
 import inet.common.packet.chunk.Chunk;
 
-namespace iot;
+namespace s2f::iot;
 
-enum IotCommand
+enum PowerState
 {
-    TURN_OFF = 0;
-    TURN_ON = 1;
+    OFF = 0;
+    ON = 1;
+}
+
+message IotPowerEvent
+{
+    PowerState powerStateToTransition;
+}
+
+class IotCommand extends inet::FieldsChunk
+{
+    PowerState powerState;
 }
 
 class IotPayload extends inet::FieldsChunk
