@@ -16,7 +16,16 @@
 package s2f.architecture.nodes.iot.actuators;
 import inet.applications.contract.IApp;
 
-
+//
+// Iot Actuator model
+//
+// Models a simple actuator with ON/OFF states (like irrigation or smart bulbs).
+//
+// It responds to controller commands (IotCommand) that indicate the next PowerState.
+// If it's the same as the current one then it's ignored.
+//
+// @author Ulysses de Aguilar Gudmundsson
+// @version 1.0
 simple IotActuatorModel like IApp
 {
     parameters:
@@ -25,9 +34,9 @@ simple IotActuatorModel like IApp
         double powerOffTime @unit(ms) = default(200ms); // Time to power off from ON state
         bool poweredOnStart = default(true); // If the sensor is ON right at the start of the simulation
 
-        @signal[powerState](type=long);
-        @statistic[powerState](source=powerState;record=vector;enumname=s2f::iot::PowerState);
+        @signal[powerState](type=long); // Power state signal (values from PowerState enum)
+        @statistic[powerState](source=powerState;record=vector;enumname=s2f::iot::PowerState); // Vector that records the transitions of the power state
 	gates:
-	    output socketOut;
-	    input socketIn;
+	    output socketOut @labels(ITransportPacket/up); // Socket output
+	    input socketIn @labels(ITransportPacket/down); // Socket input
 }

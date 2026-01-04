@@ -24,6 +24,7 @@ Future objectives: containerizing the simulator.
 * [Simulating][usage]
 * [Testing][testing]
 * [Documentation](#documentation)
+* [Extensions](#extensions)
 * [Acknowledgements](#acknowledgements)
 
 [design]: docs/design.md
@@ -76,9 +77,14 @@ If the build succeded, congratulations! You can now move forward to [running exp
 
 ## Quick Start
 Start navigating and exploring with the showcases included in the folder ```showcases/```:
-+ Datacentre: Shows how an user may request a cloud vm, deploy an service and even how to instruct the model to deploy a local application that will communicate with the previous service.
-+ IoT: Introduces a quick configuration and topology for the IoT models. In this case a smart house is being modelled.
-+ Proxy: Dives into a key component of the simulation framework, the Proxy module. Here you will have the choice to include DNS into the mix or not.
++ **Datacentre**: Shows how an user may request a cloud vm, deploy an service and even how to instruct the model to deploy a local application that will communicate with the previous service.
++ **IoT**: Introduces a quick configuration and topology for the IoT models. In this case a smart house is being modelled.
++ **Proxy**: Dives into a key component of the simulation framework, the Proxy module. Here you will have the choice to include DNS into the mix or not.
++ **Statistics**: Demonstrates how to configure a simulation for statistical and event capture. Also the secuence chart can be generated to see the 
+different interactions (see below picture).
+<div align="center">
+  <img src="docs/SequenceDiagram.png" alt="Logo" width="80%"/>
+</div>
 
 ## Documentation
 A useful reference for model development and usage is the NED documentation which is currently being hosted at https://ulyssesdeaguilar.github.io/s2f-ned-docs/
