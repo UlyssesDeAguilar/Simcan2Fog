@@ -5,7 +5,7 @@
 Define_Module(LocalIotApplication);
 
 using namespace s2f::os;
-using namespace iot;
+using namespace s2f::iot;
 
 void LocalIotApplication::initialize()
 {
@@ -28,7 +28,8 @@ void LocalIotApplication::initialize()
         if (matcher.matches(submodule->getFullName()))
         {
             actuators.push_back(L3AddressResolver().addressOf(submodule));
-            EV_INFO << "Detected actuator " << submodule->getFullName() << " with address: " << actuators.back();
+            EV_INFO << "Detected actuator " << submodule->getFullName()
+                    << " with address: " << actuators.back() << "\n";
         }
     }
 
@@ -72,13 +73,11 @@ void LocalIotApplication::returnExec(simtime_t timeElapsed, SM_CPU_Message *sm)
         EV << "Sending command to actuator\n";
         // Send command to actuator
         Packet *packet = new Packet("Controller command");
-        const auto &payload = makeShared<IotPayload>();
+        const auto &payload = makeShared<IotCommand>();
         payload->setChunkLength(B(20));
         payload->addTag<CreationTimeTag>()->setCreationTime(simTime());
-        payload->setTag("Controller command");
-        payload->setValue(on);
-        payload->setUnit("");
-        packet->insertAtBack(payload);
+        payload->setPowerState(on == 1 ? PowerState::ON : PowerState::OFF);
+        packet->insertData(payload);
 
         _send(udpSocket, packet, actuators[randAcutator].toIpv4().getInt(), listeningPort);
     }

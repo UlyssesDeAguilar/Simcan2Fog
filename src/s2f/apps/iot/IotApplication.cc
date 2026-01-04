@@ -9,7 +9,7 @@
 Define_Module(IotApplication);
 
 using namespace s2f::os;
-using namespace iot;
+using namespace s2f::iot;
 
 simsignal_t roundTripTime = cComponent::registerSignal("roundTripTime");
 

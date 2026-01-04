@@ -15,5 +15,6 @@ extern omnetpp::simsignal_t allocatedRam;   //!< Signal id for the event of RAM 
 extern omnetpp::simsignal_t allocatedDisk;  //!< Signal id for the event of Disk space being allocated
 extern omnetpp::simsignal_t allocatedVms;   //!< Signal id for the event of VMs being allocated
 
+extern omnetpp::simsignal_t powerStateSignal;   //!< Signal id for the changes in power states. Currently used on IoT devices but it can be extended
 
 #endif /* SIMCAN_EX_SIGNALS_H_ */

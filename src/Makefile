@@ -60,6 +60,7 @@ OBJS = \
     $O/s2f/architecture/net/stack/registry/ServiceRegistrar.o \
     $O/s2f/architecture/net/stack/resolver/StubDnsResolver.o \
     $O/s2f/architecture/net/switch/Switch.o \
+    $O/s2f/architecture/nodes/iot/actuators/IotActuatorModel.o \
     $O/s2f/architecture/nodes/iot/sensors/IotSensorModel.o \
     $O/s2f/core/cSIMCAN_Core.o \
     $O/s2f/core/include/internal_types.o \

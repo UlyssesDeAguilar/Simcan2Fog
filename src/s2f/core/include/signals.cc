@@ -10,3 +10,4 @@ simsignal_t allocatedCores = cComponent::registerSignal("allocatedCores");
 simsignal_t allocatedRam = cComponent::registerSignal("allocatedRam");
 simsignal_t allocatedDisk = cComponent::registerSignal("allocatedDisk");
 simsignal_t allocatedVms = cComponent::registerSignal("allocatedVms");
+simsignal_t powerStateSignal = cComponent::registerSignal("powerState");
