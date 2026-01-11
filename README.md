@@ -116,7 +116,7 @@ If you use **Simcan2Fog** in your research, please cite the following paper publ
   year = {2025},
   issn = {2352-7110},
   doi = {10.1016/j.softx.2025.102424},
-  url = {[https://doi.org/10.1016/j.softx.2025.102424](https://doi.org/10.1016/j.softx.2025.102424)},
+  url = {https://doi.org/10.1016/j.softx.2025.102424},
   author = {Ulysses {de Aguilar} and Pablo C. Cañizares and Alberto Núñez}
 }
 
