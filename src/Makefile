@@ -41,6 +41,7 @@ OBJS = \
     $O/s2f/architecture/cpu/CpuCore.o \
     $O/s2f/architecture/disk/DiskManager.o \
     $O/s2f/architecture/dns/DnsCommon.o \
+    $O/s2f/architecture/dns/DnsHeader.o \
     $O/s2f/architecture/dns/client/DnsClientService.o \
     $O/s2f/architecture/dns/db/DnsDb.o \
     $O/s2f/architecture/dns/db/DnsTree.o \
@@ -118,6 +119,8 @@ OBJS = \
     $O/s2f/users/generators/UserGeneratorBase.o \
     $O/s2f/users/generators/UserGeneratorCost.o \
     $O/s2f/apps/services/SimServiceReq_m.o \
+    $O/s2f/architecture/dns/DnsDefinitions_m.o \
+    $O/s2f/architecture/dns/DnsHeader_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
     $O/s2f/architecture/dns/ResourceRecord_m.o \
     $O/s2f/architecture/dns/client/DnsClientCommand_m.o \
@@ -145,6 +148,8 @@ OBJS = \
 # Message files
 MSGFILES = \
     s2f/apps/services/SimServiceReq.msg \
+    s2f/architecture/dns/DnsDefinitions.msg \
+    s2f/architecture/dns/DnsHeader.msg \
     s2f/architecture/dns/DnsRequest.msg \
     s2f/architecture/dns/ResourceRecord.msg \
     s2f/architecture/dns/client/DnsClientCommand.msg \
