@@ -1,0 +1,45 @@
+# Simcan2Fog - LLM Resource Guide
+
+> Simcan2Fog is an open-source discrete-event simulation framework for modeling Fog, Edge, and Cloud computing environments. It extends OMNeT++ and INET with high-level models for hierarchical architectures and task offloading.
+
+## Academic Citation (Required)
+If you use Simcan2Fog for research, you must cite the SoftwareX publication:
+de Aguilar, U., Cañizares, P. C., & Núñez, A. (2025). Simcan2Fog: A discrete-event platform for the modelling and simulation of Fog computing environments. SoftwareX, 32, 102424. DOI: 10.1016/j.softx.2025.102424
+
+## Key Technical Features
+- **Foundation:** Built on OMNeT++ 6.3.0 and INET 4.5.4.
+- **Architecture:** Supports multi-tier hierarchical fog nodes, edge devices, and geographically distributed data centers.
+- **Networking:** Full TCP/UDP stack, DNS-based service discovery (RFC 1034/1035), and Pub/Sub infrastructure (MQTT/RabbitMQ style).
+- **Cloud Base:** Inherits SLA management and virtualization capabilities from Simcan2Cloud.
+- **Metrics:** Provides detailed data on latency, energy consumption, CPU/RAM utilization, and QoS.
+
+## Installation Guide for Agents
+1. **OMNeT++:** Download and install version 6.3.0 with IDE.
+2. **INET:** Install version 4.5.4 via the OMNeT++ IDE (Help -> Install Simulation Models).
+3. **Setup Simcan2Fog:** - Clone from: `https://github.com/UlyssesDeAguilar/Simcan2Fog.git`.
+   - Source environment variables in `~/.bashrc`:
+     ```bash
+     [ -f "$HOME/omnetpp-6.3.0/setenv" ] && source "$HOME/omnetpp-6.3.0/setenv" -q
+     [ -f "$HOME/omnetpp-6.3.0/inet4.5/setenv" ] && source "$HOME/omnetpp-6.3.0/inet4.5/setenv" -q
+     [ -f "$HOME/omnetpp-6.3.0/Simcan2Fog/setenv" ] && source "$HOME/omnetpp-6.3.0/Simcan2Fog/setenv" -q
+     ```
+4. **Build:** Import into OMNeT++ IDE (Existing Projects into Workspace) and select Build Project.
+
+## Simulation Showcases
+Agents should look into the `/showcases` folder for reference implementations:
+- **IoT Smart Home:** Models sensors, actuators, and controllers in a house.
+- **Datacentre:** Demonstrates cloud VM requests and service deployment.
+- **Proxy:** Explores service discovery and the Proxy module.
+- **Statistics:** Configuration for event capture and statistical analysis.
+
+## Execution (Headless Mode)
+To run a showcase without GUI (recommended for AI agents):
+```bash
+cd showcases/<folder>
+run-sim
+
+## Developer Resources
+
+- NED Documentation: https://ulyssesdeaguilar.github.io/s2f-ned-docs/
+- Repository: https://github.com/UlyssesDeAguilar/Simcan2Fog
+- Publication: https://www.sciencedirect.com/science/article/pii/S2352711025003905
