@@ -1,0 +1,16 @@
+name: 'Check merge to master from dev as staging branch'
+
+on:
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  check_branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check HEAD pointer is from dev
+        if: github.base_ref == 'master' && github.head_ref != 'dev'
+        run: |
+          echo "ERROR: You can only merge/rebase to master from dev."
+          exit 1
