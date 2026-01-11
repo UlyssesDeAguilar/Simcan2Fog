@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "de Aguilar"
+    given-names: "Ulysses"
+  - family-names: "Cañizares"
+    given-names: "Pablo C."
+  - family-names: "Núñez"
+    given-names: "Alberto"
+title: "Simcan2Fog: A discrete-event platform for the modelling and simulation of Fog computing environments"
+version: "1.2.0"
+doi: "10.1016/j.softx.2025.102424"
+date-released: 2025-01-01
+url: "https://github.com/UlyssesDeAguilar/Simcan2Fog"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "de Aguilar"
+      given-names: "Ulysses"
+    - family-names: "Cañizares"
+      given-names: "Pablo C."
+    - family-names: "Núñez"
+      given-names: "Alberto"
+  doi: "10.1016/j.softx.2025.102424"
+  journal: "SoftwareX"
+  month: 1
+  title: "Simcan2Fog: A discrete-event platform for the modelling and simulation of Fog computing environments"
+  volume: 32
+  year: 2025
+  pages: 102424

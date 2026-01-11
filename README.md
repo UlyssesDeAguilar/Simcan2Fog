@@ -102,6 +102,24 @@ If one wants to enable the Simcan2Chain P2P and cryptology features:
 5. Click on "Apply" or "Apply and close"
 6. Clean and recompile the proyect
 
+## Citation
+
+If you use **Simcan2Fog** in your research, please cite the following paper published in *SoftwareX*:
+
+**BibTeX:**
+```bibtex
+@article{deaguilar2025,
+  title = {Simcan2Fog: A discrete-event platform for the modelling and simulation of Fog computing environments},
+  journal = {SoftwareX},
+  volume = {32},
+  pages = {102424},
+  year = {2025},
+  issn = {2352-7110},
+  doi = {10.1016/j.softx.2025.102424},
+  url = {https://doi.org/10.1016/j.softx.2025.102424},
+  author = {Ulysses {de Aguilar} and Pablo C. Cañizares and Alberto Núñez}
+}
+
 ## Acknowledgements
 Special thanks to the following authors for the different custom icons included in the simulator:
 
