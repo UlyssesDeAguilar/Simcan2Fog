@@ -37,6 +37,7 @@ To run a showcase without GUI (recommended for AI agents):
 ```bash
 cd showcases/<folder>
 run-sim
+```
 
 ## Developer Resources
 

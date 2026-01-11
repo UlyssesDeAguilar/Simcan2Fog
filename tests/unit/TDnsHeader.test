@@ -1,0 +1,235 @@
+%description:
+
+Tests the functionality of the DnsHeader methods, more specifically
+the ones that involve bitwise manipulation.
+
+%includes:
+#include "s2f/architecture/dns/DnsHeader.h"
+#include <bitset>
+
+%activity:
+using namespace s2f::dns;
+using namespace inet;
+
+DnsHeader header;
+std::bitset<8> x;
+
+// See if initialization is correct
+EV << "[Stage 0] Starting state:" << "\n";
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n\n";
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 2 values: " << x << "\n\n";
+
+// Set flags of field 1
+EV << "[Stage 1] Setting fields to true/opcodes:" << "\n";
+EV_INFO << "Setting flag QR to 1" << "\n";
+header.setQueryOrResponseFlag(true);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "QR Flag : " << header.getQueryOrResponseFlag() << "\n\n";
+
+EV_INFO << "Setting OperationCode to Query" << "\n";
+header.setOperationCode(QUERY);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "OperationCode : " << header.getOperationCode() << "\n\n";
+
+EV_INFO << "Setting OperationCode to IQuery" << "\n";
+header.setOperationCode(IQUERY);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "OperationCode : " << header.getOperationCode() << "\n\n";
+
+
+EV_INFO << "Setting OperationCode to Status" << "\n";
+header.setOperationCode(STATUS);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "OperationCode : " << header.getOperationCode() << "\n\n";
+
+
+EV_INFO << "Setting OperationCode to Notify" << "\n";
+header.setOperationCode(NOTIFY);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "OperationCode : " << header.getOperationCode() << "\n\n";
+
+
+EV_INFO << "Setting flag AA to 1" << "\n";
+header.setAuthoritativeAnswerFlag(true);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "AA Flag : " << header.getAuthoritativeAnswerFlag() << "\n\n";
+
+EV_INFO << "Setting flag TC to 1" << "\n";
+header.setTruncationFlag(true);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "TC Flag : " << header.getTruncationFlag() << "\n\n";
+
+EV_INFO << "Setting flag RD to 1" << "\n";
+header.setRecursionDesiredFlag(true);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "RD Flag : " << header.getRecursionDesiredFlag() << "\n\n";
+
+// Unset bits of the flags
+EV << "[Stage 2] Setting fields to false/opcodes:" << "\n";
+
+EV_INFO << "Setting flag QR to 0" << "\n";
+header.setQueryOrResponseFlag(false);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "QR Flag : " << header.getQueryOrResponseFlag() << "\n\n";
+
+EV_INFO << "Setting flag AA to 0" << "\n";
+header.setAuthoritativeAnswerFlag(false);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "AA Flag : " << header.getAuthoritativeAnswerFlag() << "\n\n";
+
+EV_INFO << "Setting flag TC to 0" << "\n";
+header.setTruncationFlag(false);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "TC Flag : " << header.getTruncationFlag() << "\n\n";
+
+EV_INFO << "Setting flag RD to 0" << "\n";
+header.setRecursionDesiredFlag(false);
+x = header.getFlag_field_1();
+EV_INFO << "Flag field 1 values: " << x << "\n";
+EV_INFO << "RD Flag : " << header.getRecursionDesiredFlag() << "\n\n";
+
+
+// Set bits of the flags
+EV << "[Stage 3] Setting fields to true/opcodes:" << "\n";
+EV_INFO << "Setting flag RA to 1" << "\n";
+header.setRecursionAvailableFlag(true);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "RA Flag : " << header.getRecursionAvailableFlag() << "\n\n";
+
+EV_INFO << "Setting ResponseCode to NOERROR" << "\n";
+header.setResponseCode(NOERROR);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "ResponseCode : " << header.getResponseCode() << "\n\n";
+
+EV_INFO << "Setting ResponseCode to FORMERR" << "\n";
+header.setResponseCode(FORMERR);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "ResponseCode : " << header.getResponseCode() << "\n\n";
+
+EV_INFO << "Setting ResponseCode to SERVFAIL" << "\n";
+header.setResponseCode(SERVFAIL);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "ResponseCode : " << header.getResponseCode() << "\n\n";
+
+EV_INFO << "Setting ResponseCode to XRRSET" << "\n";
+header.setResponseCode(XRRSET);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "ResponseCode : " << header.getResponseCode() << "\n\n";
+
+EV_INFO << "Setting ResponseCode to NOTZONE" << "\n";
+header.setResponseCode(NOTZONE);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "ResponseCode : " << header.getResponseCode() << "\n\n";
+
+// Unset bits of the flags
+EV << "[Stage 4] Setting fields to false/opcodes:" << "\n";
+EV_INFO << "Setting flag RA to 0" << "\n";
+header.setRecursionAvailableFlag(false);
+x = header.getFlag_field_2();
+EV_INFO << "Flag field 2 values: " << x << "\n";
+EV_INFO << "RA Flag : " << header.getRecursionAvailableFlag() << "\n";
+
+%contains: stdout
+[Stage 0] Starting state:
+Flag field 1 values: 00000000
+
+Flag field 2 values: 00000000
+
+[Stage 1] Setting fields to true/opcodes:
+Setting flag QR to 1
+Flag field 1 values: 10000000
+QR Flag : 1
+
+Setting OperationCode to Query
+Flag field 1 values: 10000000
+OperationCode : 0
+
+Setting OperationCode to IQuery
+Flag field 1 values: 10001000
+OperationCode : 1
+
+Setting OperationCode to Status
+Flag field 1 values: 10010000
+OperationCode : 2
+
+Setting OperationCode to Notify
+Flag field 1 values: 10011000
+OperationCode : 3
+
+Setting flag AA to 1
+Flag field 1 values: 10011100
+AA Flag : 1
+
+Setting flag TC to 1
+Flag field 1 values: 10011110
+TC Flag : 1
+
+Setting flag RD to 1
+Flag field 1 values: 10011111
+RD Flag : 1
+
+[Stage 2] Setting fields to false/opcodes:
+Setting flag QR to 0
+Flag field 1 values: 00011111
+QR Flag : 0
+
+Setting flag AA to 0
+Flag field 1 values: 00011011
+AA Flag : 0
+
+Setting flag TC to 0
+Flag field 1 values: 00011001
+TC Flag : 0
+
+Setting flag RD to 0
+Flag field 1 values: 00011000
+RD Flag : 0
+
+[Stage 3] Setting fields to true/opcodes:
+Setting flag RA to 1
+Flag field 2 values: 10000000
+RA Flag : 1
+
+Setting ResponseCode to NOERROR
+Flag field 2 values: 10000000
+ResponseCode : 0
+
+Setting ResponseCode to FORMERR
+Flag field 2 values: 10000001
+ResponseCode : 1
+
+Setting ResponseCode to SERVFAIL
+Flag field 2 values: 10000010
+ResponseCode : 2
+
+Setting ResponseCode to XRRSET
+Flag field 2 values: 10000111
+ResponseCode : 7
+
+Setting ResponseCode to NOTZONE
+Flag field 2 values: 10001001
+ResponseCode : 9
+
+[Stage 4] Setting fields to false/opcodes:
+Setting flag RA to 0
+Flag field 2 values: 00001001
+RA Flag : 0

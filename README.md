@@ -119,6 +119,7 @@ If you use **Simcan2Fog** in your research, please cite the following paper publ
   url = {https://doi.org/10.1016/j.softx.2025.102424},
   author = {Ulysses {de Aguilar} and Pablo C. Cañizares and Alberto Núñez}
 }
+```
 
 ## Acknowledgements
 Special thanks to the following authors for the different custom icons included in the simulator:

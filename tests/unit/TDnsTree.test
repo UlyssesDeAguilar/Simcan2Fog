@@ -174,7 +174,7 @@ Current tree representation
    |->com[TLD]
     + Record :  [ domain: ns1.example.com. | type: NS | ip: 2.2.2.2 | text:  ]
       |->example[AUTHORITATIVE]
-       + Record :  [ domain: example.com. | type: A | ip: 3.3.3.3 | text:  ]
        + Record :  [ domain: test.example.com. | type: CNAME | ip: <none> | text: example.com ]
+       + Record :  [ domain: example.com. | type: A | ip: 3.3.3.3 | text:  ]
       |->us-east-1[AUTHORITATIVE]
        + Record :  [ domain: *.us-east-1.com. | type: A | ip: 3.3.3.3 | text:  ]
