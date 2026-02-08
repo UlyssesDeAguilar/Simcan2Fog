@@ -1,4 +1,4 @@
-name: 'Check merge to master from dev as staging branch'
+name: 'Check merge to master from dev as staging branch (on this repo)'
 
 on:
   pull_request:
@@ -10,7 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check HEAD pointer is from dev
-        if: github.base_ref == 'master' && github.head_ref != 'dev'
         run: |
-          echo "ERROR: You can only merge/rebase to master from dev."
-          exit 1
+          BASE="${{ github.base_ref }}"
+          HEAD="${{ github.head_ref }}"
+          THIS_REPO = "${{ github.repository }}"
+          HEAD_REPO = "${{ github.event.pull_request.head.repo.full_name }}"
+
+          echo "Check if allowed to merge $HEAD_REPO:$HEAD into $THIS_REPO:$BASE"
+          
+          if [[ "$BASE" == "master" && "HEAD_REPO" == "$THIS_REPO" && "$HEAD" != "dev" ]]; then
+            echo "ERROR: Internal PRs to master must come from the dev branch."
+            exit 1
+          fi
+          
+          echo "OK, all good"
+          exit 0
