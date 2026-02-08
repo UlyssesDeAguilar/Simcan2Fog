@@ -13,12 +13,12 @@ jobs:
         run: |
           BASE="${{ github.base_ref }}"
           HEAD="${{ github.head_ref }}"
-          THIS_REPO = "${{ github.repository }}"
-          HEAD_REPO = "${{ github.event.pull_request.head.repo.full_name }}"
+          THIS_REPO="${{ github.repository }}"
+          HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
 
           echo "Check if allowed to merge $HEAD_REPO:$HEAD into $THIS_REPO:$BASE"
           
-          if [[ "$BASE" == "master" && "HEAD_REPO" == "$THIS_REPO" && "$HEAD" != "dev" ]]; then
+          if [[ "$BASE" == "master" && "$HEAD_REPO" == "$THIS_REPO" && "$HEAD" != "dev" ]]; then
             echo "ERROR: Internal PRs to master must come from the dev branch."
             exit 1
           fi
