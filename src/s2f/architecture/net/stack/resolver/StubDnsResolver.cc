@@ -36,7 +36,7 @@ void StubDnsResolver::handleRequest(StubDnsRequest *request)
     // Search for the record
     DnsQuestion question;
     question.setDomain(request->getDomain());
-    question.setQuestionType(RecordType::A);
+    question.setQuestionType(QType::A);
     const DnsTreeNode *node = dnsDatabase->searchRecords(question);
 
     // We might have the record cached
@@ -106,7 +106,7 @@ void StubDnsResolver::sendResponse(const RequestContext &context, std::set<Resou
 
         int i = 0;
         for (const auto &record : records)
-            response->setAddress(i++, record.ip);
+            response->setAddress(i++, record.getData().getDataAsAddress());
     }
     else
         response->setResult(1);

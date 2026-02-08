@@ -8,6 +8,7 @@ Define_Module(DnsDb);
 void DnsDb::initialize()
 {
     cValueArray *zoneConfig = check_and_cast<cValueArray *>(par("zoneConfig").objectValue());
+    cEnum *recordTypeEnum = cEnum::find("RRType", "s2f::dns");
 
     EV_DEBUG << "Loading zone configuration\n";
     for (int i = 0; i < zoneConfig->size(); i++)
@@ -22,34 +23,50 @@ void DnsDb::initialize()
         EV_DEBUG << "Inserting records for zone " << zone << "\n";
         for (int j = 0; j < records->size(); j++)
         {
-            const char *text = nullptr;
-            L3Address ip;
-
             auto recordMap = check_and_cast<cValueMap *>(records->get(j).objectValue());
-            const char *domain = recordMap->get("domain").stringValue();
-            RecordType type = getRecordType(recordMap->get("type").stringValue());
-
-            if (type == RecordType::CNAME || type == RecordType::TXT)
-                text = recordMap->get("text").stringValue();
-            else
-                ip = L3Address(recordMap->get("ip").stringValue());
-
-            ResourceRecord record;
-            record.domain = domain;
-            record.type = type;
-            record.ip = ip;
-            record.contents = text;
-
-            EV_DEBUG << "Inserting record " << record << "\n";
-            tree.insertRecord(zone, &record);
-            WATCH(tree);
+            readAndInsertRecord(zone, recordMap, recordTypeEnum);
         }
     }
 
     EV_DEBUG << "DnsDb initialized\n";
     EV_DEBUG << tree;
+    WATCH(tree);
 }
 
+void DnsDb::readAndInsertRecord(const char *zone, omnetpp::cValueMap *recordMap, cEnum *recordTypeEnum)
+{
+    std::string domain = recordMap->get("domain").stdstringValue();
+    RRType type = static_cast<RRType>(recordTypeEnum->resolve(recordMap->get("type").stringValue()));
+    uint32_t ttl = recordMap->get("ttl").intValue();
+
+    ResourceRecord record = buildRecord(domain, type, ttl, recordMap);
+
+    EV_DEBUG << "Inserting record " << record << "\n";
+    tree.insertRecord(zone, &record);
+}
+
+ResourceRecord DnsDb::buildRecord(std::string &name, RRType type, uint32_t ttl, omnetpp::cValueMap *recordMap)
+{
+    recordMap->get("text").stringValue();
+    L3Address(recordMap->get("ip").stringValue());
+
+    if (type == RRType::A || type == RRType::AAAA)
+    {
+        return ResourceRecord(name, L3Address(recordMap->get("ip").stringValue()), ttl);
+    }
+    else if (type == RRType::CNAME)
+    {
+        return ResourceRecord(name, recordMap->get("cname").stdstringValue(), ttl);
+    }
+    else if (type == RRType::TXT)
+    {
+        return ResourceRecord(name, recordMap->get("text").stdstringValue(), ttl);
+    }
+    else{
+        error("Unsupported record type");
+    return ResourceRecord();
+    }
+}
 void DnsDb::insertRecord(const char *zone, const ResourceRecord &record)
 {
     EV_INFO << "Inserting record for zone " << zone << " : " << record << "\n";

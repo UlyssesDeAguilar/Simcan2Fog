@@ -42,6 +42,9 @@ namespace s2f
             virtual void finish() override { tree.clear(); };
             virtual void handleMessage(omnetpp::cMessage *msg) override { error("This module doesn't take any messages"); }
 
+            void readAndInsertRecord(const char *zone, omnetpp::cValueMap *recordMap, omnetpp::cEnum *recordTypeEnum);
+            ResourceRecord buildRecord(std::string &name, RRType type, uint32_t ttl, omnetpp::cValueMap *recordMap);
+
             /**
              * @brief Inserts a DNS record into a given DNS zone
              *

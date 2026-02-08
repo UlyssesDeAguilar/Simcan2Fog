@@ -1,0 +1,100 @@
+%description:
+
+Tests the functionality of the DnsName methods, more specifically
+the ones that involve bitwise manipulation.
+
+%includes:
+#include "s2f/architecture/dns/DnsName.h"
+
+%global:
+using namespace s2f::dns;
+
+constexpr char error[] = "[ ERR ] ";
+constexpr char ok[] = "[ OK ] ";
+
+DnsName test_build(opp_string domain_name, bool expected_failure)
+{
+    EV << "Building DNS domain name with : " << domain_name << "\n";
+    try 
+    {
+        DnsName name(domain_name);
+        EV << (expected_failure ? "[ ERR ] " : "[ OK ] ") << "\n";
+        return name;
+    } catch (const cRuntimeError& e)
+    {
+        EV << (expected_failure ? "[ OK ] " : "[ ERR ] ") << e.what() << "\n";
+        return DnsName();
+    };
+}
+
+void test_num_tags(const DnsName &name, int numTags)
+{
+    if (name.getNumTags() == numTags)
+        EV << ok << "Tag count matches expected count\n";
+    else
+        EV << error << " num tags dont match, expected: " << numTags << " got: " << std::to_string(name.getNumTags()) << "\n";
+}
+
+void print_name(const DnsName &name)
+{
+    EV << "Contents of dns name: " << name << "\n";
+}
+
+void loop_get_tags(const DnsName &name)
+{
+    EV << "Looping over tags of name: " << name << "\n";
+    for (int i = 0; i < name.getNumTags(); i++)
+    {
+        EV << "Tag " << i << " : " << name.getTag(i) << "\n";
+    }
+}
+
+void check_wildcard(const DnsName &name, bool expected_wildcard)
+{
+    if (expected_wildcard == name.isWildcard())
+        EV << ok << " matches in expected wildcard " << expected_wildcard << "\n";
+    else
+        EV << error << " does not match in expected wildcard\n";
+}
+
+%activity:
+
+DnsName name;
+
+// These should fail
+test_build(".google.com", true);
+test_build("google..com", true);
+test_build("google..", true);
+test_build("google.!", true);
+test_build("google.{}", true);
+
+
+name = test_build("google.com", false);
+print_name(name);
+test_num_tags(name,2);
+loop_get_tags(name);
+check_wildcard(name,false);
+
+name = test_build("pepe.google.com", false);
+print_name(name);
+test_num_tags(name,3);
+loop_get_tags(name);
+check_wildcard(name,false);
+
+name = test_build("*.google.com", false);
+print_name(name);
+test_num_tags(name,3);
+check_wildcard(name,true);
+
+name = test_build("com", false);
+print_name(name);
+test_num_tags(name,1);
+check_wildcard(name,false);
+
+name = test_build("google.com.", false);
+print_name(name);
+test_num_tags(name,2);
+check_wildcard(name,false);
+
+%not-contains: stdout
+[ ERR ]

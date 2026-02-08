@@ -42,6 +42,9 @@ OBJS = \
     $O/s2f/architecture/disk/DiskManager.o \
     $O/s2f/architecture/dns/DnsCommon.o \
     $O/s2f/architecture/dns/DnsHeader.o \
+    $O/s2f/architecture/dns/DnsName.o \
+    $O/s2f/architecture/dns/RecordData.o \
+    $O/s2f/architecture/dns/ResourceRecord.o \
     $O/s2f/architecture/dns/client/DnsClientService.o \
     $O/s2f/architecture/dns/db/DnsDb.o \
     $O/s2f/architecture/dns/db/DnsTree.o \
@@ -121,7 +124,9 @@ OBJS = \
     $O/s2f/apps/services/SimServiceReq_m.o \
     $O/s2f/architecture/dns/DnsDefinitions_m.o \
     $O/s2f/architecture/dns/DnsHeader_m.o \
+    $O/s2f/architecture/dns/DnsName_m.o \
     $O/s2f/architecture/dns/DnsRequest_m.o \
+    $O/s2f/architecture/dns/RecordData_m.o \
     $O/s2f/architecture/dns/ResourceRecord_m.o \
     $O/s2f/architecture/dns/client/DnsClientCommand_m.o \
     $O/s2f/architecture/dns/registry/DnsRegistrationRequest_m.o \
@@ -150,7 +155,9 @@ MSGFILES = \
     s2f/apps/services/SimServiceReq.msg \
     s2f/architecture/dns/DnsDefinitions.msg \
     s2f/architecture/dns/DnsHeader.msg \
+    s2f/architecture/dns/DnsName.msg \
     s2f/architecture/dns/DnsRequest.msg \
+    s2f/architecture/dns/RecordData.msg \
     s2f/architecture/dns/ResourceRecord.msg \
     s2f/architecture/dns/client/DnsClientCommand.msg \
     s2f/architecture/dns/registry/DnsRegistrationRequest.msg \

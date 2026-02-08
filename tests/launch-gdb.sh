@@ -5,5 +5,6 @@ S2F_NEDFOLDERS=$(cat $SIMCAN_HOME/.nedfolders | sed "s|^|$SIMCAN_HOME/|" | tr '\
 
 gdb --args ./work/testing_dbg \
     -r 0 -u Cmdenv \
-    -n $S2F_NEDFOLDERS:$INET_NEDFOLDERS:$SIMCAN_HOME/tests/work/TDnsHeader \
-    ./work/TDnsHeader/_defaults.ini
+    -n $S2F_NEDFOLDERS:$INET_NEDFOLDERS:$SIMCAN_HOME/tests/work/TDnsName \
+    ./work/TDnsName/_defaults.ini
+

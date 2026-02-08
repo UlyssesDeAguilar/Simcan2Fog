@@ -186,10 +186,10 @@ void DnsResolverService::processAuthResolution(Resolution &resolution, const Dns
         const ResourceRecord &record = *iter;
         if (matchWithWildcard(record, resolution.getCurrentQuestion()))
         {
-            if (record.type == CNAME)
+            if (record.getType() == RRType::CNAME)
             {
                 // Change the question, resolve again!
-                resolution.current_question.setDomain(record.contents.c_str());
+                resolution.current_question.setDomain(record.getData().getDataAsText().c_str());
                 processResolution(resolution, true);
                 return;
             }
@@ -253,16 +253,16 @@ void DnsResolverService::registerQuestion(const DnsQuestion &question, const Dns
 
         // Get the right authoritative NS!
         for (auto record : *records)
-            if (record.type == NS && matchesAuthorityDomain(record, question.getDomain()))
-                command->appendIpPool(record.ip);
+            if (record.getType() == RRType::NS && matchesAuthorityDomain(record, question.getDomain()))
+                command->appendIpPool(record.getData().getDataAsAddress());
     }
     else
     {
         auto records = node->getRecords();
         for (auto record : *records)
         {
-            if (record.type == NS)
-                command->appendIpPool(record.ip);
+            if (record.getType() == RRType::NS)
+                command->appendIpPool(record.getData().getDataAsAddress());
         }
     }
 

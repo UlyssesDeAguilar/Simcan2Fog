@@ -65,7 +65,7 @@ void DnsTestClient::prepareAndSendNextResolution()
 	// Create the question
 	DnsQuestion question;
 	question.setDomain(domainsToResolve[requestId].c_str());
-	question.setQuestionType(RecordType::ANY);
+	question.setQuestionType(QType::WILDCARD);
 
 	// DNS request
 	auto packet = new Packet("DNS request");
@@ -104,15 +104,16 @@ void DnsTestClient::handleMessage(cMessage *msg)
 		for (size_t i = 0; i < authCount; i++)
 		{
 			const auto &answer = reply->getAuthoritativeAnswer(i);
-			EV_INFO << "Answer (auth) => domain: " << answer.domain << ", type: " << answer.type
-					<< ", ip: " << answer.ip << ", text: " << answer.contents << "\n";
+			EV_INFO << "Answer (auth) => domain: " << answer.getName() 
+			<< ", type: " << answer.getType() << "\n";
+			//		<< ", ip: " << answer. << ", text: " << answer.contents << "\n";
 		}
 
 		for (size_t i = 0; i < nonAuthCount; i++)
 		{
 			const auto &answer = reply->getNonAuthoritativeAnswer(i);
-			EV_INFO << "Answer (non auth) => domain: " << answer.domain << ", type: " << answer.type
-					<< ", ip: " << answer.ip << ", text: " << answer.contents << "\n";
+			EV_INFO << "Answer (non auth) => domain: " << answer.getName() 
+			<< ", type: " << answer.getType() << "\n";
 		}
 	}
 

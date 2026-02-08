@@ -11,43 +11,38 @@ using namespace s2f::dns;
 using namespace inet;
 
 // We have the following records
-ResourceRecord comRecord, exampleRecord, ipRecord, wildcard, cname;
+// ResourceRecord comRecord, exampleRecord, ;
 
 // TLD Record
-comRecord.domain = "a.gtld-servers.net.";
-comRecord.type = RecordType::NS;
-comRecord.ip = L3Address("1.1.1.1");
+//comRecord.domain = "a.gtld-servers.net.";
+//comRecord.type = RecordType::NS;
+//comRecord.ip = L3Address("1.1.1.1");
+
 
 // AUTH Record
-exampleRecord.domain = "ns1.example.com.";
-exampleRecord.type = RecordType::NS;
-exampleRecord.ip = L3Address("2.2.2.2");
+//exampleRecord.domain = "ns1.example.com.";
+//exampleRecord.type = RecordType::NS;
+//exampleRecord.ip = L3Address("2.2.2.2");
 
 // An IP record
-ipRecord.domain ="example.com.";
-ipRecord.type = RecordType::A;
-ipRecord.ip = L3Address("3.3.3.3");
+ResourceRecord ipRecord(opp_string("example.com."), L3Address("3.3.3.3"),48);
 
 // An CNAME record
-cname.domain ="test.example.com.";
-cname.type = RecordType::CNAME;
-cname.contents = "example.com";
+ResourceRecord cname(opp_string("example.com."), L3Address("3.3.3.3"), 48);
 
 // A wildcard record
-wildcard.domain ="*.us-east-1.com.";
-wildcard.type = RecordType::A;
-wildcard.ip = L3Address("3.3.3.3");
+ResourceRecord wildcard(opp_string("*.us-east-1.com."), L3Address("3.3.3.3"), 48);
 
 EV << "Records to be inserted" << "\n";
-EV << "Record 1: " << comRecord << "\n";
-EV << "Record 2: " << exampleRecord << "\n";
-EV << "Record 3: " << comRecord << "\n";
+//EV << "Record 1: " << comRecord << "\n";
+//EV << "Record 2: " << exampleRecord << "\n";
+//EV << "Record 3: " << comRecord << "\n";
 EV << "Record 4: " << wildcard << "\n";
 
 DnsTree tree;
 const DnsTreeNode *node; 
 EV << "\nInserting record 1 in zone . " << "\n";
-tree.insertRecord(".", &comRecord);
+//tree.insertRecord(".", &comRecord);
 
 EV << "Query: . in the database" << "\n";
 node = tree.searchRecords("example.com");
@@ -72,7 +67,7 @@ else
 
 
 EV << "\nInserting record 2 in zone com " << "\n";
-tree.insertRecord("com", &exampleRecord);
+//tree.insertRecord("com", &exampleRecord);
 
 EV << "Query: com in the database" << "\n";
 node = tree.searchRecords("com");
@@ -89,7 +84,7 @@ else
     EV << "No node found on the tree\n";
 
 EV << "\nInserting record 3 in zone example.com " << "\n";
-tree.insertRecord("example.com", &ipRecord);
+//tree.insertRecord("example.com", &ipRecord);
 
 EV << "Query: example.com in the database" << "\n";
 node = tree.searchRecords("example.com");

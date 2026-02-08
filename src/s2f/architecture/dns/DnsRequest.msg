@@ -14,7 +14,7 @@ namespace s2f::dns;
 class DnsQuestion
 {
     string domain; // Domain which is the subject of the question
-    RecordType questionType; // The record type for the expected result
+    QType questionType; // The record type for the expected result
 };
 
 //
